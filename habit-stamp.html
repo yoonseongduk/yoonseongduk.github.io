@@ -70,11 +70,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .cell {
   aspect-ratio: 1; border-radius: 50%; border: 1.5px dashed var(--line); background: transparent;
-  display: grid; place-items: center; font-size: .8rem; color: var(--muted); padding: 0; position: relative;
+  display: grid; place-items: center; font-size: .85rem; color: var(--muted); padding: 0; position: relative;
 }
 .cell.today { border: 2px solid var(--fg); color: var(--fg); font-weight: 700; }
 .cell.future { opacity: .4; cursor: default; }
-.cell.on { border: 0; background: var(--ink); color: var(--ink-fg); font-size: 1.1rem; font-weight: 700; transform: rotate(var(--r, 0deg)); box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--ink-fg) 25%, transparent); }
+.cell.on { border: 0; background: var(--ink); color: var(--ink-fg); font-size: .9rem; font-weight: 700; transform: rotate(var(--r, 0deg)); box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--ink-fg) 25%, transparent); }
 .cell.pop { animation: pop .3s ease-out; }
 @keyframes pop { 0% { transform: scale(1.7) rotate(-25deg); opacity: .3; } 100% { transform: scale(1) rotate(var(--r, 0deg)); opacity: 1; } }
 
@@ -141,15 +141,21 @@ function streak(h) {
   let c = 0; while (h.days[d]) { c++; d = addDays(d, -1); } return c;
 }
 const dayIdx = h => diff(h.start, today);          // 오늘이 도전의 몇 번째 날인지 (0부터)
+const WD = "일월화수목금토";
+const md = s => { const x = parse(s); return (x.getMonth() + 1) + "/" + x.getDate(); };
+const lastStamp = h => { const k = Object.keys(h.days).sort(); return k.length ? k[k.length - 1] : ""; };
 
 function card(h) {
   const c = count(h), idx = dayIdx(h), st = streak(h), inWindow = idx >= 0 && idx < N, done = c >= N;
   const cells = Array.from({ length: N }, (_, i) => {
     const d = addDays(h.start, i), on = !!h.days[d], future = d > today, isToday = d === today;
     const rot = ((i * 37) % 17) - 8;        // 도장이 살짝씩 기울어지게
+    const dt = parse(d), dd = dt.getDate();
+    const label = (i === 0 || dd === 1) ? (dt.getMonth() + 1) + "/" + dd : dd;   // 첫 칸과 매달 1일에는 월/일로 표시
+    const full = (dt.getMonth() + 1) + "월 " + dd + "일(" + WD[dt.getDay()] + ")";
     const cls = ["cell", on ? "on" : "", future ? "future" : "", isToday ? "today" : "", popKey === h.id + d ? "pop" : ""].join(" ");
     return `<button class="${cls}" style="--r:${rot}deg" data-act="cell" data-id="${h.id}" data-d="${d}" ${future ? "disabled" : ""}
-      aria-label="${i + 1}일째 ${on ? "도장 찍음" : "도장 없음"}" aria-pressed="${on}">${on ? "✔" : i + 1}</button>`;
+      title="${full} · ${i + 1}일째" aria-label="${full} ${i + 1}일째 ${on ? "도장 찍음" : "도장 없음"}" aria-pressed="${on}">${label}</button>`;
   }).join("");
   let main = "";
   if (done) main = `<div class="win"><b>🎉 30일 도전 성공!</b><p class="muted">정말 대단해요. 새 도전을 시작해 볼까요?</p>
@@ -165,10 +171,11 @@ function card(h) {
   return `<article class="card">
     <div class="top"><span class="ic" aria-hidden="true">${esc(h.icon)}</span>
       <div class="nm"><h2>${esc(h.name)}${h.example ? '<span class="badge">예시</span>' : ""}</h2>
-        <p class="muted">${inWindow ? (idx + 1) + "일째" : idx < 0 ? "아직 시작 전" : "도전 끝"} · 시작 ${h.start.slice(5).replace("-", "/")}${h.runs ? " · " + h.runs + "번 완주" : ""}</p></div>
+        <p class="muted">${inWindow ? (idx + 1) + "일째" : idx < 0 ? "아직 시작 전" : "도전 끝"} · ${md(h.start)} ~ ${md(addDays(h.start, N - 1))}${h.runs ? " · " + h.runs + "번 완주" : ""}</p></div>
       <div class="streak"><b>🔥 ${st}</b><span class="muted">연속</span></div></div>
     <div><div class="meta"><span class="muted">진행</span><b>${c} / ${N}</b></div><div class="bar"><i style="width:${c / N * 100}%"></i></div></div>
-    <div class="grid">${cells}</div>${main}
+    <div class="grid">${cells}</div>
+    <p class="muted">${lastStamp(h) ? "마지막 도장 " + md(lastStamp(h)) + " (" + WD[parse(lastStamp(h)).getDay()] + ")" : "아직 찍은 도장이 없어요"} · 칸의 숫자는 날짜예요</p>${main}
     <div class="foot"><span class="muted">${h.example ? "예시 습관이에요. 지워도 돼요." : ""}</span>${del}</div></article>`;
 }
 

@@ -6,57 +6,62 @@
 <title>우리 가족 미니 게임</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
-/* 레이아웃: 제목 아래에 게임 카드 세 장을 세로로 쌓는다. 카드 전체가 링크다. */
+/* 레이아웃: 제목, 검색칸, 분류 버튼, 그 아래에 분류별로 묶인 게임 카드(두 칸 격자). 게임은 아래 스크립트의 GAMES 목록에 한 줄씩 적는다 */
 :root {
   --bg: #f4f1ec;
   --surface: #ffffff;
   --fg: #231f1a;
   --muted: #6b655c;
   --line: #e0dacf;
-  --accent: #e4572e;
-  --c1: #e4572e;
-  --c2: #4f8f2f;
-  --c3: #2f5bea;
-  --c4: #c0392b;
-  --c5: #8e5bd6;
-  --c6: #1f7a4d;
   --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
   --font-body: "Noto Sans KR", system-ui, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #1a1815; --surface: #26231f; --fg: #f1ede4; --muted: #a69f92; --line: #3a362f;
-    --accent: #ff7a50; --c1: #ff7a50; --c2: #86c964; --c3: #7b9bff; --c4: #ff6b5e; --c5: #b794f6; --c6: #3fb878; color-scheme: dark;
-  }
+  :root:not([data-theme="light"]) { --bg: #1a1815; --surface: #26231f; --fg: #f1ede4; --muted: #a69f92; --line: #3a362f; color-scheme: dark; }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
   background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
-  padding-block: 32px 48px;
+  padding-block: 28px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-main { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+main { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
 h1 { font-family: var(--font-display); font-weight: 400; font-size: 2.2rem; line-height: 1.2; margin: 0; text-wrap: balance; }
 .sub { margin: 0; color: var(--muted); }
-.list { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; list-style: none; }
-.game {
-  display: flex; align-items: center; gap: 16px; min-width: 0;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px;
-  color: inherit; text-decoration: none; border-left: 6px solid var(--c);
+input[type=search] {
+  width: 100%; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 12px;
+  padding: 11px 14px; font: inherit;
 }
-.game.hh { --c: hsl(var(--h) 55% 42%); }
-@media (prefers-color-scheme: dark) { .game.hh { --c: hsl(var(--h) 70% 68%); } }
+input[type=search]:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #e8643f; outline-offset: 2px; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-inline: -2px; padding-inline: 2px; scrollbar-width: thin; }
+.chip {
+  flex: none; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 14px; font: inherit; font-size: .92rem; cursor: pointer; white-space: nowrap;
+}
+.chip[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--bg); font-weight: 700; }
+#list { display: flex; flex-direction: column; gap: 26px; }
+section { display: flex; flex-direction: column; gap: 10px; }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.35rem; margin: 0; display: flex; align-items: baseline; gap: 8px; }
+h2 span { font-family: var(--font-body); font-size: .85rem; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.game {
+  --c: hsl(var(--h) 55% 42%);
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-top: 5px solid var(--c); border-radius: 14px; padding: 12px;
+  color: inherit; text-decoration: none;
+}
+@media (prefers-color-scheme: dark) { .game { --c: hsl(var(--h) 70% 68%); } }
 .game:hover { border-color: var(--c); }
-.game:focus-visible { outline: 3px solid var(--c); outline-offset: 2px; }
 .game:active { transform: scale(.98); }
-.icon { font-size: 2.6rem; line-height: 1; flex: none; }
-.text { min-width: 0; }
-.text h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.4rem; margin: 0; }
-.text p { margin: 2px 0 0; color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
-.go { margin-left: auto; color: var(--c); font-size: 1.4rem; flex: none; }
+.icon { font-size: 2rem; line-height: 1.1; }
+.game h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; margin: 0; line-height: 1.25; overflow-wrap: anywhere; }
+.game p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.4; overflow-wrap: anywhere; }
+.empty { text-align: center; color: var(--muted); padding: 30px 10px; border: 1.5px dashed var(--line); border-radius: 14px; }
 footer { color: var(--muted); font-size: .85rem; }
 </style>
 </head>
@@ -64,85 +69,66 @@ footer { color: var(--muted); font-size: .85rem; }
 <main>
   <header>
     <h1>우리 가족 미니 게임</h1>
-    <p class="sub">하고 싶은 게임을 눌러 보세요.</p>
+    <p class="sub" id="count"></p>
   </header>
-
-  <ul class="list">
-    <li><a class="game" style="--c: var(--c1)" href="decision-roulette.html">
-      <span class="icon" aria-hidden="true">🎡</span>
-      <span class="text"><h2>결정 룰렛</h2><p>점심 메뉴, 커피 내기, 벌칙까지 고민을 대신 정해 줘요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game" style="--c: var(--c2)" href="whack-a-mole.html">
-      <span class="icon" aria-hidden="true">🐹</span>
-      <span class="text"><h2>두더지 잡기</h2><p>30초 동안 튀어나오는 두더지를 잡아요. 폭탄은 조심!</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game" style="--c: var(--c3)" href="rps-tournament.html">
-      <span class="icon" aria-hidden="true">✌️</span>
-      <span class="text"><h2>가위바위보 대회</h2><p>4명이 준결승과 결승을 치르고 누적 우승을 기록해요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game" style="--c: var(--c4)" href="habit-stamp.html">
-      <span class="icon" aria-hidden="true">✅</span>
-      <span class="text"><h2>30일 도장판</h2><p>매일 한 번 도장을 찍으면 30칸이 채워져요. 연속 일수도 세 줘요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game" style="--c: var(--c5)" href="slide-puzzle.html">
-      <span class="icon" aria-hidden="true">🧩</span>
-      <span class="text"><h2>숫자 퍼즐 4×4</h2><p>빈칸을 이용해 1부터 15까지 순서대로 맞춰요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game" style="--c: var(--c6)" href="number-baseball.html">
-      <span class="icon" aria-hidden="true">⚾</span>
-      <span class="text"><h2>숫자 야구</h2><p>스트라이크와 볼 힌트로 비밀 숫자를 추리해서 맞혀요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 35" href="game-2048.html">
-      <span class="icon" aria-hidden="true">🔢</span>
-      <span class="text"><h2>2048</h2><p>같은 숫자를 밀어서 합쳐 2048을 만들어요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 210" href="minesweeper.html">
-      <span class="icon" aria-hidden="true">💣</span>
-      <span class="text"><h2>지뢰찾기</h2><p>숫자 힌트로 지뢰를 피해 모든 칸을 열어요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 265" href="memory-match.html">
-      <span class="icon" aria-hidden="true">🃏</span>
-      <span class="text"><h2>카드 짝 맞추기</h2><p>같은 그림 카드를 찾아 짝을 맞춰요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 160" href="tic-tac-toe.html">
-      <span class="icon" aria-hidden="true">⭕</span>
-      <span class="text"><h2>틱택토</h2><p>컴퓨터나 가족과 3목을 먼저 이어요. 어려움은 절대 안 져요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 120" href="snake.html">
-      <span class="icon" aria-hidden="true">🐍</span>
-      <span class="text"><h2>스네이크</h2><p>먹이를 먹고 길어지는 뱀. 벽과 몸에 닿지 않게 조심!</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 0" href="reaction-test.html">
-      <span class="icon" aria-hidden="true">⚡</span>
-      <span class="text"><h2>반응속도 테스트</h2><p>초록색이 되는 순간 눌러서 내 반응속도를 재요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 290" href="simon.html">
-      <span class="icon" aria-hidden="true">🎵</span>
-      <span class="text"><h2>사이먼</h2><p>켜지는 색의 순서를 기억해서 똑같이 눌러요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 25" href="quick-math.html">
-      <span class="icon" aria-hidden="true">🧮</span>
-      <span class="text"><h2>암산 퀴즈</h2><p>60초 동안 덧셈, 뺄셈, 구구단을 최대한 많이 풀어요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 48" href="lights-out.html">
-      <span class="icon" aria-hidden="true">💡</span>
-      <span class="text"><h2>라이츠 아웃</h2><p>누르면 주변 불도 같이 바뀌어요. 모든 불을 꺼 보세요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 330" href="color-match.html">
-      <span class="icon" aria-hidden="true">🎨</span>
-      <span class="text"><h2>색깔 맞추기</h2><p>글자의 뜻이 아니라 색을 눌러요. 은근히 헷갈려요!</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 85" href="ladder-game.html">
-      <span class="icon" aria-hidden="true">🪜</span>
-      <span class="text"><h2>사다리타기</h2><p>이름과 결과를 적고 사다리를 타요. 내기나 당번 정할 때 좋아요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-    <li><a class="game hh" style="--h: 230" href="tetris.html">
-      <span class="icon" aria-hidden="true">🧱</span>
-      <span class="text"><h2>테트리스</h2><p>블록을 쌓아 가로 한 줄을 채워 없애요.</p></span>
-      <span class="go" aria-hidden="true">›</span></a></li>
-  </ul>
-
+  <input type="search" id="q" placeholder="게임 이름이나 설명으로 찾기" autocomplete="off" aria-label="게임 검색">
+  <div class="chips" id="chips" role="group" aria-label="분류"></div>
+  <div id="list"></div>
   <footer>점수와 설정은 이 휴대폰(브라우저)에만 저장돼요.</footer>
 </main>
+<script>
+// 분류: id, 이름, 아이콘, 색(hue 0~360)
+const GROUPS = [
+  { id: "brain", n: "두뇌·퍼즐", e: "🧠", h: 265 },
+  { id: "react", n: "반응·기억", e: "🎯", h: 200 },
+  { id: "arcade", n: "아케이드", e: "🕹️", h: 15 },
+  { id: "together", n: "함께 즐기기", e: "🎲", h: 150 },
+  { id: "life", n: "생활", e: "📅", h: 40 }
+];
+// 게임 목록: [파일 이름, 아이콘, 제목, 설명, 분류 id]. 새 게임은 여기에 한 줄만 추가하면 된다
+const GAMES = [
+  ["slide-puzzle.html", "🧩", "숫자 퍼즐 4×4", "빈칸을 이용해 1부터 15까지 순서대로 맞춰요.", "brain"],
+  ["game-2048.html", "🔢", "2048", "같은 숫자를 밀어서 합쳐 2048을 만들어요.", "brain"],
+  ["minesweeper.html", "💣", "지뢰찾기", "숫자 힌트로 지뢰를 피해 모든 칸을 열어요.", "brain"],
+  ["lights-out.html", "💡", "라이츠 아웃", "누르면 주변 불도 같이 바뀌어요. 모든 불을 꺼 보세요.", "brain"],
+  ["number-baseball.html", "⚾", "숫자 야구", "스트라이크와 볼 힌트로 비밀 숫자를 추리해서 맞혀요.", "brain"],
+  ["quick-math.html", "🧮", "암산 퀴즈", "60초 동안 덧셈, 뺄셈, 구구단을 최대한 많이 풀어요.", "brain"],
+  ["memory-match.html", "🃏", "카드 짝 맞추기", "같은 그림 카드를 찾아 짝을 맞춰요.", "react"],
+  ["simon.html", "🎵", "사이먼", "켜지는 색의 순서를 기억해서 똑같이 눌러요.", "react"],
+  ["reaction-test.html", "⚡", "반응속도 테스트", "초록색이 되는 순간 눌러서 내 반응속도를 재요.", "react"],
+  ["color-match.html", "🎨", "색깔 맞추기", "글자의 뜻이 아니라 색을 눌러요. 은근히 헷갈려요!", "react"],
+  ["whack-a-mole.html", "🐹", "두더지 잡기", "30초 동안 튀어나오는 두더지를 잡아요. 폭탄은 조심!", "react"],
+  ["snake.html", "🐍", "스네이크", "먹이를 먹고 길어지는 뱀. 벽과 몸에 닿지 않게 조심!", "arcade"],
+  ["tetris.html", "🧱", "테트리스", "블록을 쌓아 가로 한 줄을 채워 없애요.", "arcade"],
+  ["tic-tac-toe.html", "⭕", "틱택토", "컴퓨터나 가족과 3목을 먼저 이어요. 어려움은 절대 안 져요.", "together"],
+  ["rps-tournament.html", "✌️", "가위바위보 대회", "4명이 준결승과 결승을 치르고 누적 우승을 기록해요.", "together"],
+  ["decision-roulette.html", "🎡", "결정 룰렛", "점심 메뉴, 커피 내기, 벌칙까지 고민을 대신 정해 줘요.", "together"],
+  ["ladder-game.html", "🪜", "사다리타기", "이름과 결과를 적고 사다리를 타요. 내기나 당번 정할 때 좋아요.", "together"],
+  ["habit-stamp.html", "✅", "30일 도장판", "매일 한 번 도장을 찍으면 30칸이 채워져요. 연속 일수도 세 줘요.", "life"]
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let group = "all", query = "";
+
+function render() {
+  const q = query.trim().toLowerCase();
+  const shown = GAMES.filter(g => (group === "all" || g[4] === group) && (!q || (g[2] + " " + g[3]).toLowerCase().includes(q)));
+  $("count").textContent = q || group !== "all" ? `${shown.length}개를 찾았어요 (전체 ${GAMES.length}개)` : `게임 ${GAMES.length}개`;
+  $("chips").innerHTML = [{ id: "all", n: "전체", e: "" }, ...GROUPS].map(g => {
+    const n = g.id === "all" ? GAMES.length : GAMES.filter(x => x[4] === g.id).length;
+    return `<button type="button" class="chip" data-g="${g.id}" aria-pressed="${g.id === group}">${g.e} ${g.n} ${n}</button>`;
+  }).join("");
+  const html = GROUPS.map(gr => {
+    const items = shown.filter(g => g[4] === gr.id); if (!items.length) return "";
+    return `<section><h2>${gr.e} ${gr.n}<span>${items.length}개</span></h2><div class="grid">${items.map(g =>
+      `<a class="game" style="--h:${gr.h}" href="${esc(g[0])}"><span class="icon" aria-hidden="true">${g[1]}</span><h3>${esc(g[2])}</h3><p>${esc(g[3])}</p></a>`).join("")}</div></section>`;
+  }).join("");
+  $("list").innerHTML = html || `<div class="empty">찾는 게임이 없어요. 다른 단어로 찾아보세요.</div>`;
+}
+$("chips").addEventListener("click", e => { const b = e.target.closest("[data-g]"); if (b) { group = b.dataset.g; render(); } });
+$("q").addEventListener("input", e => { query = e.target.value; render(); });
+render();
+</script>
 </body>
 </html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>색깔 맞추기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 시간 막대와 점수, 가운데 큰 글자(글자의 '뜻'과 '색'이 다르다), 아래 네 개의 색 버튼. 글자 색을 누른다 */
+:root{--bg:#f2f2f6;--surface:#fff;--fg:#1d2030;--muted:#646a80;--line:#dcdfea;--accent:#e8643f;--accent-fg:#fff;--c0:#d6332b;--c1:#2563d6;--c2:#e2a800;--c3:#1f9d55;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#11131c;--surface:#1b1f2e;--fg:#eceff8;--muted:#98a0b8;--line:#2d3348;--accent:#ff7f5a;--accent-fg:#11131c;--c0:#ff5a4f;--c1:#5b9bff;--c2:#ffcb2e;--c3:#3fd37f;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;width:100%;background:var(--accent);transition:width .2s linear}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px}
+.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.word{background:var(--surface);border:1px solid var(--line);border-radius:20px;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:14px}
+.word .w{font-family:var(--font-display);font-size:clamp(3.4rem,20vw,5rem);line-height:1.1}
+.word.good{border-color:var(--c3);box-shadow:0 0 0 2px var(--c3)}.word.bad{border-color:var(--c0);box-shadow:0 0 0 2px var(--c0);animation:sh .25s}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{border:0;border-radius:16px;min-height:64px;background:var(--surface);border:3px solid var(--line);display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:1.1rem;color:var(--fg)}
+.opt i{width:28px;height:28px;border-radius:50%;display:block}
+.opt:disabled{opacity:.45;cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.4rem}
+@media(prefers-reduced-motion:reduce){.word.bad{animation:none}.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>색깔 맞추기 🎨</h1>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="stats"><div class="stat"><small>남은 시간</small><b id="time">30</b></div><div class="stat"><small>점수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="word" id="word"><div class="w" id="w">준비!</div><div class="muted" id="sub">글자의 <b>뜻</b>이 아니라 <b>색</b>을 누르세요</div></div>
+  <div class="opts" id="opts"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="start" type="button">시작</button>
+  <p class="muted">예를 들어 <b style="color:var(--c1)">빨강</b>이라는 글자가 파란색으로 쓰여 있으면 <b>파랑</b> 버튼을 눌러야 해요. 30초 동안 맞히면 +1점, 틀리면 시간이 2초 줄어요. 연속으로 맞히면 보너스가 있어요!</p>
+</main>
+<script>
+const DUR = 30, KEY = "colormatch-best-v1";
+const COLORS = [{ n: "빨강", v: "--c0" }, { n: "파랑", v: "--c1" }, { n: "노랑", v: "--c2" }, { n: "초록", v: "--c3" }];
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let best = ld(KEY) || 0, score = 0, streak = 0, tried = 0, hits = 0, ink = 0, word = 0, endAt = 0, timer = 0, state = "idle", lock = false;
+
+function nextWord() {                                       // 70%는 글자 뜻과 색이 다르게 낸다 (그래야 헷갈려요)
+  const prevInk = ink; word = Math.floor(Math.random() * 4);
+  do { ink = Math.random() < .7 ? (word + 1 + Math.floor(Math.random() * 3)) % 4 : word; } while (ink === prevInk && Math.random() < .6);
+  $("w").textContent = COLORS[word].n; $("w").style.color = `var(${COLORS[ink].v})`; $("sub").textContent = "";
+}
+function render() {
+  $("score").textContent = score; $("best").textContent = best;
+  $("opts").innerHTML = COLORS.map((c, i) => `<button class="opt" type="button" data-c="${i}" ${state === "play" ? "" : "disabled"}><i style="background:var(${c.v})"></i>${c.n}</button>`).join("");
+  $("start").hidden = state === "play"; $("start").textContent = state === "over" ? "다시 하기" : "시작";
+}
+function tick() {
+  const left = Math.max(0, (endAt - Date.now()) / 1000);
+  $("time").textContent = Math.ceil(left); $("bar").style.width = (left / DUR * 100) + "%";
+  if (left <= 0) finish();
+}
+function start() { score = 0; streak = 0; tried = 0; hits = 0; state = "play"; endAt = Date.now() + DUR * 1000; $("res").hidden = true; clearInterval(timer); timer = setInterval(tick, 100); nextWord(); render(); tick(); }
+function pick(i) {
+  if (state !== "play" || lock) return; tried++;
+  const ok = i === ink, box = $("word"); lock = true;
+  if (ok) { hits++; streak++; score += 1 + (streak % 5 === 0 ? 2 : 0); }          // 5연속마다 보너스 +2
+  else { streak = 0; endAt -= 2000; }
+  box.className = "word " + (ok ? "good" : "bad"); setTimeout(() => { box.className = "word"; lock = false; }, 140);
+  $("sub").textContent = ok && streak && streak % 5 === 0 ? `🔥 ${streak}연속! 보너스 +2` : "";
+  nextWord(); render(); tick();
+}
+function finish() {
+  clearInterval(timer); state = "over"; $("bar").style.width = "0%"; $("time").textContent = 0;
+  let note = ""; if (score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("w").textContent = "끝!"; $("w").style.color = "var(--fg)"; $("res").innerHTML = `<b>${score}점</b><p class="muted">${tried}번 중 ${hits}번 맞혔어요 (정확도 ${tried ? Math.round(hits / tried * 100) : 0}%)${note}</p>`; $("res").hidden = false; render();
+}
+$("opts").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) pick(+b.dataset.c); });
+document.addEventListener("keydown", e => { const i = ["1", "2", "3", "4"].indexOf(e.key); if (i >= 0) pick(i); });
+$("start").onclick = start;
+render();
+</script>
+</body>
+</html>

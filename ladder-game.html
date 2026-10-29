@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>사다리타기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 먼저 참가자와 결과를 적는 설정 화면, 그다음 사다리 화면(위에 이름 버튼, 아래에 가려진 결과). 이름을 누르면 길을 따라 내려간다 */
+:root{--bg:#eef2f0;--surface:#fff;--fg:#1b2924;--muted:#5c726a;--line:#d0ddd7;--rail:#9db3aa;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#101a16;--surface:#192622;--fg:#e8f2ee;--muted:#97b0a6;--line:#2a3d36;--rail:#4d6a5f;--accent:#ff7f5a;--accent-fg:#101a16;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}
+h2{font-family:var(--font-display);font-weight:400;font-size:1.3rem;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.cnt{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.step{display:flex;align-items:center;gap:10px}.step button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-size:1.3rem;line-height:1}
+.step b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;min-width:2ch;text-align:center}
+.rows{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.rows .h{font-size:.8rem;color:var(--muted);font-weight:700}
+input[type=text]{width:100%;min-width:0;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.35rem}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.names,.outs{display:grid;gap:4px}
+.names button{border:0;border-radius:10px;padding:8px 2px;font-weight:700;font-size:.85rem;color:#fff;overflow-wrap:anywhere;line-height:1.25;min-width:0}
+.names button.done{opacity:.45}
+.outs div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 2px;text-align:center;font-size:.85rem;font-weight:700;overflow-wrap:anywhere;line-height:1.25;min-width:0;min-height:2.3em}
+.outs div.sh{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+canvas{width:100%;display:block}
+.list{display:flex;flex-direction:column;gap:6px}
+.list div{display:flex;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px}
+.list i{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:8px}
+</style>
+</head>
+<body>
+<main>
+  <h1>사다리타기 🪜</h1>
+  <section id="setup">
+    <div class="card"><div class="cnt"><h2>참가자 수</h2><div class="step"><button id="minus" type="button" aria-label="한 명 줄이기">−</button><b id="n">4</b><button id="plus" type="button" aria-label="한 명 늘리기">＋</button></div></div>
+      <div class="rows" id="rows"></div>
+      <p class="muted">오른쪽 칸에 <b>결과</b>를 적어요. (예: 당첨 1명, 나머지는 꽝) 결과를 비워 두면 기본 문구가 들어가요.</p></div>
+    <button class="btn" id="make" type="button" style="margin-top:14px">사다리 만들기</button>
+  </section>
+  <section id="play" hidden>
+    <div class="card">
+      <div class="names" id="names"></div>
+      <canvas id="cv" aria-label="사다리"></canvas>
+      <div class="outs" id="outs"></div>
+    </div>
+    <div class="two" style="margin-top:14px"><button class="btn ghost" id="all" type="button">전체 결과 보기</button><button class="btn ghost" id="again" type="button">사다리 다시 만들기</button></div>
+    <div class="list" id="list" style="margin-top:14px"></div>
+    <button class="btn ghost" id="edit" type="button" style="margin-top:14px">이름·결과 고치기</button>
+  </section>
+  <p class="muted" id="how">사다리의 줄을 따라 내려가다가 가로줄을 만나면 반드시 옆으로 건너가요. 이름을 눌러서 결과를 확인하세요!</p>
+</main>
+<script>
+const KEY = "ladder-v1", COLORS = ["#d6453a","#2f6fd0","#d19a00","#1f9d62","#8e5bd6","#e07a2b","#1aa0a8","#c0408f"];
+const ROWS = 11;                                         // 가로줄을 놓을 수 있는 높이 칸 수
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let cfg = ld(KEY) || { n: 4, names: [], outs: [] }, ladder = [], shown = new Set(), anim = 0;
+cfg.n = Math.min(8, Math.max(2, cfg.n || 4));
+const nm = i => (cfg.names[i] || "").trim() || (i + 1) + "번";
+const defOut = i => (i === 0 ? "당첨" : "꽝");
+
+// 사다리 만들기: ladder[r][c]가 true면 r번째 높이에서 c번 줄과 c+1번 줄이 가로줄로 이어진다. 한 줄이 같은 높이에서 두 가로줄에 걸리지 않게 한다.
+function makeLadder(n) {
+  const L = Array.from({ length: ROWS }, () => Array(n - 1).fill(false));
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < n - 1; c++) if (Math.random() < .45 && !(c > 0 && L[r][c - 1])) L[r][c] = true;
+  for (let c = 0; c < n - 1; c++) if (!L.some(row => row[c])) { const r = Math.floor(Math.random() * ROWS); if (!(c > 0 && L[r][c - 1]) && !L[r][c + 1]) L[r][c] = true; }   // 비어 있는 칸 사이에도 하나는 놓는다
+  return L;
+}
+// start 줄에서 내려갔을 때 지나는 지점 [열, 높이(0~ROWS)] 들과 도착 줄
+function trace(L, start) {
+  const pts = [[start, 0]]; let c = start;
+  for (let r = 0; r < L.length; r++) {
+    pts.push([c, r + .5]);
+    if (c < L[r].length && L[r][c]) { c++; pts.push([c, r + .5]); }
+    else if (c > 0 && L[r][c - 1]) { c--; pts.push([c, r + .5]); }
+  }
+  pts.push([c, L.length]); return { pts, end: c };
+}
+
+/* ---------- 설정 화면 ---------- */
+function drawSetup() {
+  $("n").textContent = cfg.n;
+  $("rows").innerHTML = `<div class="h">참가자</div><div class="h">결과</div>` + Array.from({ length: cfg.n }, (_, i) =>
+    `<input type="text" data-k="names" data-i="${i}" maxlength="6" placeholder="${i + 1}번" value="${esc(cfg.names[i] || "")}" aria-label="참가자 ${i + 1}">` +
+    `<input type="text" data-k="outs" data-i="${i}" maxlength="8" placeholder="${defOut(i)}" value="${esc(cfg.outs[i] || "")}" aria-label="결과 ${i + 1}">`).join("");
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const outOf = i => (cfg.outs[i] || "").trim() || defOut(i);
+
+/* ---------- 사다리 화면 ---------- */
+let positions = [];                                       // 사람마다 도착한 줄
+function begin() {
+  ladder = makeLadder(cfg.n); shown = new Set(); positions = Array.from({ length: cfg.n }, (_, i) => trace(ladder, i).end);
+  // 도착 줄마다 결과를 하나씩 붙이려면 결과 순서도 섞어서 정해야 한다 (같은 사다리에서 결과 위치가 예측되지 않게)
+  perm = Array.from({ length: cfg.n }, (_, i) => i); for (let i = perm.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+  $("setup").hidden = true; $("play").hidden = false; $("how").hidden = true; drawPlay(); draw();
+}
+let perm = [];
+const resultAt = col => outOf(perm[col]);                  // 도착한 줄(col)에 붙어 있는 결과
+function drawPlay() {
+  $("names").style.gridTemplateColumns = $("outs").style.gridTemplateColumns = `repeat(${cfg.n}, 1fr)`;
+  $("names").innerHTML = Array.from({ length: cfg.n }, (_, i) => `<button type="button" data-i="${i}" class="${shown.has(i) ? "done" : ""}" style="background:${COLORS[i]}">${esc(nm(i))}</button>`).join("");
+  $("outs").innerHTML = Array.from({ length: cfg.n }, (_, c) => { const who = [...shown].some(i => positions[i] === c); return `<div class="${who ? "sh" : ""}">${who ? esc(resultAt(c)) : "?"}</div>`; }).join("");
+  $("list").innerHTML = [...shown].sort((a, b) => a - b).map(i => `<div><span><i style="background:${COLORS[i]}"></i>${esc(nm(i))}</span><b>${esc(resultAt(positions[i]))}</b></div>`).join("");
+}
+function draw(partial) {                                  // partial: {i, upto}  i번 사람의 길을 upto번째 지점까지만 그린다
+  const cv = $("cv"), w = cv.clientWidth, h = 300, dpr = window.devicePixelRatio || 1; if (!w) return;
+  cv.width = w * dpr; cv.height = h * dpr; cv.style.height = h + "px";
+  const c = cv.getContext("2d"); c.scale(dpr, dpr); const n = cfg.n, X = k => (k + .5) * w / n, Y = r => 6 + r * (h - 12) / ROWS;
+  const css = getComputedStyle(document.documentElement), rail = css.getPropertyValue("--rail").trim();
+  c.lineCap = "round"; c.lineJoin = "round"; c.strokeStyle = rail; c.lineWidth = 3;
+  for (let k = 0; k < n; k++) { c.beginPath(); c.moveTo(X(k), Y(0)); c.lineTo(X(k), Y(ROWS)); c.stroke(); }
+  ladder.forEach((row, r) => row.forEach((on, k) => { if (on) { c.beginPath(); c.moveTo(X(k), Y(r + .5)); c.lineTo(X(k + 1), Y(r + .5)); c.stroke(); } }));
+  const route = (i, upto) => { const t = trace(ladder, i).pts.slice(0, upto); c.strokeStyle = COLORS[i]; c.lineWidth = 6; c.beginPath(); t.forEach(([k, r], idx) => idx ? c.lineTo(X(k), Y(r)) : c.moveTo(X(k), Y(r))); c.stroke(); };
+  shown.forEach(i => route(i, 999));
+  if (partial) route(partial.i, partial.upto);
+}
+function go(i) {
+  if (anim) return; if (shown.has(i)) return;
+  const total = trace(ladder, i).pts.length; let k = 1; anim = setInterval(() => {
+    draw({ i, upto: ++k }); if (k >= total) { clearInterval(anim); anim = 0; shown.add(i); drawPlay(); draw(); }
+  }, 70);
+}
+function showAll() { if (anim) return; for (let i = 0; i < cfg.n; i++) shown.add(i); drawPlay(); draw(); }
+
+$("rows").addEventListener("input", e => { const t = e.target; if (t.dataset.k) { cfg[t.dataset.k][+t.dataset.i] = t.value; sv(KEY, cfg); } });
+$("minus").onclick = () => { if (cfg.n > 2) { cfg.n--; sv(KEY, cfg); drawSetup(); } };
+$("plus").onclick = () => { if (cfg.n < 8) { cfg.n++; sv(KEY, cfg); drawSetup(); } };
+$("make").onclick = () => { sv(KEY, cfg); begin(); };
+$("names").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b) go(+b.dataset.i); });
+$("all").onclick = showAll; $("again").onclick = () => { clearInterval(anim); anim = 0; begin(); };
+$("edit").onclick = () => { clearInterval(anim); anim = 0; $("play").hidden = true; $("setup").hidden = false; $("how").hidden = false; drawSetup(); };
+window.addEventListener("resize", () => { if (!$("play").hidden) draw(); });
+drawSetup();
+</script>
+</body>
+</html>

@@ -43,8 +43,8 @@ p { margin: 0; }
 button { font: inherit; cursor: pointer; color: inherit; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 .hdr { display: flex; flex-direction: column; gap: 2px; }
-.today { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.today b { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; color: var(--ink); }
+.daybar { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.daybar b { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; color: var(--ink); }
 
 .add { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .add .row { display: flex; gap: 8px; }
@@ -93,7 +93,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 <main>
   <header class="hdr">
     <h1>30일 도장판 ✅</h1>
-    <div class="today"><span class="muted" id="date"></span><b id="summary"></b></div>
+    <div class="daybar"><span class="muted" id="date"></span><b id="summary"></b></div>
   </header>
 
   <form class="add" id="form">

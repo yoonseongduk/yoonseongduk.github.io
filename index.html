@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>우리 가족 미니 게임</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 게임 카드 세 장을 세로로 쌓는다. 카드 전체가 링크다. */
+:root {
+  --bg: #f4f1ec;
+  --surface: #ffffff;
+  --fg: #231f1a;
+  --muted: #6b655c;
+  --line: #e0dacf;
+  --accent: #e4572e;
+  --c1: #e4572e;
+  --c2: #4f8f2f;
+  --c3: #2f5bea;
+  --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
+  --font-body: "Noto Sans KR", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1a1815; --surface: #26231f; --fg: #f1ede4; --muted: #a69f92; --line: #3a362f;
+    --accent: #ff7a50; --c1: #ff7a50; --c2: #86c964; --c3: #7b9bff; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-block: 32px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 2.2rem; line-height: 1.2; margin: 0; text-wrap: balance; }
+.sub { margin: 0; color: var(--muted); }
+.list { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; list-style: none; }
+.game {
+  display: flex; align-items: center; gap: 16px; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px;
+  color: inherit; text-decoration: none; border-left: 6px solid var(--c);
+}
+.game:hover { border-color: var(--c); }
+.game:focus-visible { outline: 3px solid var(--c); outline-offset: 2px; }
+.game:active { transform: scale(.98); }
+.icon { font-size: 2.6rem; line-height: 1; flex: none; }
+.text { min-width: 0; }
+.text h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.4rem; margin: 0; }
+.text p { margin: 2px 0 0; color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+.go { margin-left: auto; color: var(--c); font-size: 1.4rem; flex: none; }
+footer { color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>우리 가족 미니 게임</h1>
+    <p class="sub">하고 싶은 게임을 눌러 보세요.</p>
+  </header>
+
+  <ul class="list">
+    <li><a class="game" style="--c: var(--c1)" href="decision-roulette.html">
+      <span class="icon" aria-hidden="true">🎡</span>
+      <span class="text"><h2>결정 룰렛</h2><p>점심 메뉴, 커피 내기, 벌칙까지 고민을 대신 정해 줘요.</p></span>
+      <span class="go" aria-hidden="true">›</span></a></li>
+    <li><a class="game" style="--c: var(--c2)" href="whack-a-mole.html">
+      <span class="icon" aria-hidden="true">🐹</span>
+      <span class="text"><h2>두더지 잡기</h2><p>30초 동안 튀어나오는 두더지를 잡아요. 폭탄은 조심!</p></span>
+      <span class="go" aria-hidden="true">›</span></a></li>
+    <li><a class="game" style="--c: var(--c3)" href="rps-tournament.html">
+      <span class="icon" aria-hidden="true">✌️</span>
+      <span class="text"><h2>가위바위보 대회</h2><p>4명이 준결승과 결승을 치르고 누적 우승을 기록해요.</p></span>
+      <span class="go" aria-hidden="true">›</span></a></li>
+  </ul>
+
+  <footer>점수와 설정은 이 휴대폰(브라우저)에만 저장돼요.</footer>
+</main>
+</body>
+</html>

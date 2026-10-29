@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>사이먼 순서 기억</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 점수 줄 아래에 네 가지 색 패드(2×2), 가운데에 상태 문구. 패드가 켜지는 순서를 기억해서 따라 누른다 */
+:root{--bg:#eceef5;--surface:#fff;--fg:#1c2033;--muted:#626b84;--line:#d6dbe8;--accent:#e8643f;--accent-fg:#fff;--r:#d6453a;--b:#2f6fe0;--y:#e5b21b;--g:#2aa55a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10131d;--surface:#1a1f30;--fg:#e8ecf7;--muted:#96a0ba;--line:#2b3350;--accent:#ff7f5a;--accent-fg:#10131d;--r:#ff6f61;--b:#6a9bff;--y:#ffd04a;--g:#4fd486;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tog{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.9rem}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px}
+.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+.msg{text-align:center;font-family:var(--font-display);font-size:1.5rem;min-height:1.8em}
+.pads{display:grid;grid-template-columns:1fr 1fr;gap:10px;aspect-ratio:1}
+.pad{border:0;border-radius:24px;opacity:.55;transition:opacity .08s,transform .08s,filter .08s;min-height:0}
+.pad.r{background:var(--r);border-top-left-radius:100%}.pad.b{background:var(--b);border-top-right-radius:100%}.pad.y{background:var(--y);border-bottom-left-radius:100%}.pad.g{background:var(--g);border-bottom-right-radius:100%}
+.pad.lit{opacity:1;transform:scale(.97);filter:brightness(1.25) saturate(1.2)}
+.pads.lock .pad{cursor:default}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.4rem}
+@media(prefers-reduced-motion:reduce){.pad{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><h1>사이먼 🎵</h1><button class="tog" id="sound" type="button"></button></div>
+  <div class="stats"><div class="stat"><small>현재 단계</small><b id="lvl">0</b></div><div class="stat"><small>최고 단계</small><b id="best">0</b></div></div>
+  <div class="msg" id="msg" aria-live="polite"></div>
+  <div class="pads" id="pads">
+    <button class="pad r" data-p="0" type="button" aria-label="빨강"></button><button class="pad b" data-p="1" type="button" aria-label="파랑"></button>
+    <button class="pad y" data-p="2" type="button" aria-label="노랑"></button><button class="pad g" data-p="3" type="button" aria-label="초록"></button>
+  </div>
+  <button class="btn" id="start" type="button">시작</button>
+  <p class="muted">색이 켜지는 <b>순서를 기억</b>했다가 똑같이 눌러 보세요. 단계가 올라갈수록 한 번씩 더 길어지고 빨라져요. 틀리면 끝! (소리가 나요. 끄고 싶으면 위의 버튼)</p>
+</main>
+<script>
+const KEY = "simon-best-v1", SKEY = "simon-sound-v1", FREQ = [330, 262, 392, 523];
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let seq = [], pos = 0, state = "idle", best = ld(KEY) || 0, sound = ld(SKEY) !== false, audio = null, tempo = 1, gen = 0;
+const sleep = ms => new Promise(r => setTimeout(r, ms * tempo));
+
+function beep(i, ms = 260) {
+  if (!sound || !audio) return;
+  try { const o = audio.createOscillator(), g = audio.createGain(); o.type = "triangle"; o.frequency.value = FREQ[i]; g.gain.setValueAtTime(.2, audio.currentTime); g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + ms / 1000); o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + ms / 1000); } catch (e) {}
+}
+async function light(i, ms) {
+  const el = document.querySelector(`[data-p="${i}"]`); el.classList.add("lit"); beep(i, ms); await sleep(ms); el.classList.remove("lit");
+}
+function ui(msg) {
+  $("lvl").textContent = Math.max(0, seq.length - (state === "input" || state === "show" ? 0 : state === "over" ? 1 : 0)); $("best").textContent = best;
+  if (msg !== undefined) $("msg").textContent = msg;
+  $("pads").classList.toggle("lock", state !== "input"); $("sound").textContent = sound ? "🔊 소리 켬" : "🔇 소리 끔";
+  $("start").hidden = state === "show" || state === "input"; $("start").textContent = state === "over" ? "다시 하기" : "시작";
+}
+async function play() {                                  // 지금까지의 순서를 보여 준다. 단계가 오를수록 빨라진다
+  const my = ++gen; state = "show"; pos = 0; ui("잘 보세요… 👀");
+  await sleep(600);
+  const on = Math.max(130, 420 - seq.length * 18), off = Math.max(60, 180 - seq.length * 6);
+  for (const i of seq) { if (my !== gen) return; await light(i, on); await sleep(off); }
+  if (my !== gen) return; state = "input"; ui("이제 따라 눌러 보세요! 👆");
+}
+function next() { seq.push(Math.floor(Math.random() * 4)); play(); }
+function start() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch (e) {} seq = []; next(); }
+async function press(i) {
+  if (state !== "input") return;
+  if (seq[pos] !== i) { state = "over"; gen++; const score = seq.length - 1; if (score > best) { best = score; sv(KEY, best); } beep(0, 500); ui(`틀렸어요! ${score}단계까지 성공${score && score >= best ? " 🏆" : ""}`); return; }
+  pos++; light(i, 160);
+  if (pos === seq.length) { state = "wait"; ui("정답! 👍"); await sleep(700); next(); }
+}
+$("pads").addEventListener("pointerdown", e => { const p = e.target.closest("[data-p]"); if (p) { e.preventDefault(); press(+p.dataset.p); } });
+$("start").onclick = start;
+$("sound").onclick = () => { sound = !sound; sv(SKEY, sound); ui(); };
+ui("시작 버튼을 눌러 주세요");
+</script>
+</body>
+</html>

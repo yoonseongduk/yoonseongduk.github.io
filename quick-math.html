@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>암산 퀴즈</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 시간 막대와 점수, 큰 문제 글씨, 답 입력 칸, 숫자 키패드. 60초 동안 몇 문제를 맞히는지 겨룬다 */
+:root{--bg:#f4f1ee;--surface:#fff;--fg:#2a2320;--muted:#7a6e66;--line:#e0d8d1;--accent:#e8643f;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--key:#fbf9f7;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#1a1613;--surface:#262019;--fg:#f2ebe5;--muted:#a89b90;--line:#3b332b;--accent:#ff7f5a;--accent-fg:#1a1613;--ok:#4cc98a;--bad:#ff7b68;--key:#2e2720;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}
+.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.seg button:disabled{opacity:.5;cursor:default}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;width:100%;background:var(--accent);transition:width .25s linear}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px}
+.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 12px;text-align:center}
+.q .t{font-family:var(--font-display);font-size:clamp(2.2rem,12vw,3.2rem);line-height:1.2}
+.q .a{font-family:var(--font-display);font-size:2.4rem;min-height:1.3em;letter-spacing:.05em;color:var(--accent)}
+.q.good{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok)}.q.bad{border-color:var(--bad);box-shadow:0 0 0 2px var(--bad);animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.key{background:var(--key);border:1px solid var(--line);border-radius:14px;min-height:52px;font-family:var(--font-display);font-size:1.6rem;box-shadow:0 2px 0 var(--line)}
+.key:active{transform:translateY(1px);box-shadow:none}.key:disabled{opacity:.4;cursor:default}
+.key.fn{font-family:var(--font-body);font-size:1rem;font-weight:700}.key.ok{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.7rem}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.4rem}
+@media(prefers-reduced-motion:reduce){.q.bad{animation:none}.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>암산 퀴즈 🧮</h1>
+  <div class="seg" id="modes" role="radiogroup" aria-label="종류"></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="stats"><div class="stat"><small>남은 시간</small><b id="time">60</b></div><div class="stat"><small>맞힌 문제</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="q" id="q"><div class="t" id="qt">준비되셨나요?</div><div class="a" id="qa"></div><div class="muted" id="fb" style="min-height:1.5em"></div></div>
+  <div class="res" id="res" hidden></div>
+  <div class="pad" id="pad"></div>
+  <button class="btn" id="start" type="button">시작</button>
+  <p class="muted">60초 동안 최대한 많이 맞혀 보세요. 답을 넣고 <b>확인</b>(컴퓨터는 Enter)을 누르면 다음 문제가 나와요. 틀려도 시간은 줄지 않고, 맞힌 수만 세요.</p>
+</main>
+<script>
+const DUR = 60, KEY = "quickmath-best-v1", MKEY = "quickmath-mode-v1";
+const MODES = { add: { label: "덧셈·뺄셈", hint: "두 자리 수" }, times: { label: "구구단", hint: "2~9단" }, mul: { label: "곱셈", hint: "두 자리×한 자리" } };
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+let mode = (ld(MKEY) in MODES) ? ld(MKEY) : "add", best = ld(KEY) || {}, q = null, input = "", score = 0, tried = 0, endAt = 0, timer = 0, state = "idle", lastQ = "";
+
+function makeQ(m) {                                       // 문제와 정답을 만든다
+  if (m === "add") { const a = rnd(10, 99); if (Math.random() < .5) { const b = rnd(10, 99); return { t: `${a} + ${b}`, a: a + b }; } const b = rnd(10, a); return { t: `${a} − ${b}`, a: a - b }; }
+  if (m === "times") { const a = rnd(2, 9), b = rnd(2, 9); return { t: `${a} × ${b}`, a: a * b }; }
+  const a = rnd(12, 99), b = rnd(3, 9); return { t: `${a} × ${b}`, a: a * b };
+}
+function nextQ() { do { q = makeQ(mode); } while (q.t === lastQ); lastQ = q.t; input = ""; draw(); }
+function draw() {
+  $("qt").textContent = state === "play" ? q.t + " = ?" : $("qt").textContent; $("qa").textContent = state === "play" ? input : "";
+  $("score").textContent = score; $("best").textContent = best[mode] || 0;
+  $("modes").innerHTML = Object.keys(MODES).map(k => `<button type="button" class="${k === mode ? "on" : ""}" data-m="${k}" role="radio" aria-checked="${k === mode}" ${state === "play" ? "disabled" : ""}>${MODES[k].label}<small>${MODES[k].hint}</small></button>`).join("");
+  $("pad").innerHTML = [1,2,3,4,5,6,7,8,9].map(d => `<button class="key" type="button" data-d="${d}" ${state === "play" ? "" : "disabled"}>${d}</button>`).join("")
+    + `<button class="key fn" type="button" data-k="del" ${state === "play" ? "" : "disabled"}>지우기</button><button class="key" type="button" data-d="0" ${state === "play" ? "" : "disabled"}>0</button><button class="key fn ok" type="button" data-k="ok" ${state === "play" ? "" : "disabled"}>확인</button>`;
+  $("start").hidden = state === "play";
+}
+function tick() {
+  const left = Math.max(0, (endAt - Date.now()) / 1000);
+  $("time").textContent = Math.ceil(left); $("bar").style.width = (left / DUR * 100) + "%";
+  if (left <= 0) finish();
+}
+function start() {
+  score = 0; tried = 0; state = "play"; $("res").hidden = true; $("fb").textContent = ""; endAt = Date.now() + DUR * 1000; clearInterval(timer); timer = setInterval(tick, 200); tick(); nextQ();
+}
+function submit() {
+  if (state !== "play" || !input) return;
+  tried++; const ok = Number(input) === q.a, box = $("q");
+  if (ok) score++;
+  box.className = "q " + (ok ? "good" : "bad"); setTimeout(() => { box.className = "q"; }, 220);
+  $("fb").textContent = ok ? "" : `틀렸어요 · 정답은 ${q.t} = ${q.a}`;     // 틀리면 직전 문제의 정답을 작게 알려 준다
+  nextQ();
+}
+function finish() {
+  clearInterval(timer); state = "over"; $("bar").style.width = "0%"; $("time").textContent = 0;
+  let note = ""; if (score > (best[mode] || 0)) { best[mode] = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  const acc = tried ? Math.round(score / tried * 100) : 0;
+  $("qt").textContent = "끝!"; $("res").innerHTML = `<b>${score}문제 맞혔어요</b><p class="muted">${tried}문제 중 정확도 ${acc}%${note}</p>`; $("res").hidden = false;
+  $("start").textContent = "다시 하기"; draw();
+}
+$("pad").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || b.disabled || state !== "play") return;
+  if (b.dataset.d !== undefined) { if (input.length < 5) { input += b.dataset.d; $("qa").textContent = input; } }
+  else if (b.dataset.k === "del") { input = input.slice(0, -1); $("qa").textContent = input; } else submit();
+});
+document.addEventListener("keydown", e => {
+  if (state !== "play") return;
+  if (/^[0-9]$/.test(e.key) && input.length < 5) { input += e.key; $("qa").textContent = input; }
+  else if (e.key === "Backspace") { input = input.slice(0, -1); $("qa").textContent = input; }
+  else if (e.key === "Enter") { e.preventDefault(); submit(); }
+});
+$("modes").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b || b.disabled) return; mode = b.dataset.m; sv(MKEY, mode); state = "idle"; $("qt").textContent = "준비되셨나요?"; $("res").hidden = true; draw(); });
+$("start").onclick = start;
+draw();
+</script>
+</body>
+</html>

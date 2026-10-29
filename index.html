@@ -19,6 +19,7 @@
   --c3: #2f5bea;
   --c4: #c0392b;
   --c5: #8e5bd6;
+  --c6: #1f7a4d;
   --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
   --font-body: "Noto Sans KR", system-ui, sans-serif;
   color-scheme: light;
@@ -26,7 +27,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #1a1815; --surface: #26231f; --fg: #f1ede4; --muted: #a69f92; --line: #3a362f;
-    --accent: #ff7a50; --c1: #ff7a50; --c2: #86c964; --c3: #7b9bff; --c4: #ff6b5e; --c5: #b794f6; color-scheme: dark;
+    --accent: #ff7a50; --c1: #ff7a50; --c2: #86c964; --c3: #7b9bff; --c4: #ff6b5e; --c5: #b794f6; --c6: #3fb878; color-scheme: dark;
   }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -84,6 +85,10 @@ footer { color: var(--muted); font-size: .85rem; }
     <li><a class="game" style="--c: var(--c5)" href="slide-puzzle.html">
       <span class="icon" aria-hidden="true">🧩</span>
       <span class="text"><h2>숫자 퍼즐 4×4</h2><p>빈칸을 이용해 1부터 15까지 순서대로 맞춰요.</p></span>
+      <span class="go" aria-hidden="true">›</span></a></li>
+    <li><a class="game" style="--c: var(--c6)" href="number-baseball.html">
+      <span class="icon" aria-hidden="true">⚾</span>
+      <span class="text"><h2>숫자 야구</h2><p>스트라이크와 볼 힌트로 비밀 숫자를 추리해서 맞혀요.</p></span>
       <span class="go" aria-hidden="true">›</span></a></li>
   </ul>
 

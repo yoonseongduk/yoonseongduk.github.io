@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>숫자 야구</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목과 모드, 입력 칸, 기록(최근 추리가 위), 숫자 키패드 순서로 한 줄로 쌓는다 */
+:root {
+  --bg: #edf3ee;
+  --surface: #ffffff;
+  --fg: #19261e;
+  --muted: #5b6e61;
+  --line: #d3e0d6;
+  --grass: #1f7a4d;          /* 스트라이크, 주요 버튼 */
+  --grass-fg: #ffffff;
+  --ball: #c99700;           /* 볼 */
+  --ball-fg: #1c1500;
+  --out: #8795a3;            /* 아웃 */
+  --bad: #c8412f;
+  --key: #f9fcf9;
+  --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
+  --font-body: "Noto Sans KR", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101a14; --surface: #182419; --fg: #e8f2ea; --muted: #9bb0a1; --line: #2a3d2f;
+    --grass: #3fb878; --grass-fg: #0b1a11; --ball: #e6b422; --ball-fg: #1c1500; --out: #7f8d9a; --bad: #ff7b68; --key: #21322a;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  user-select: none; -webkit-user-select: none;
+}
+main { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 2rem; margin: 0; }
+p { margin: 0; }
+.muted { color: var(--muted); font-size: .9rem; }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:focus-visible { outline: 3px solid var(--grass); outline-offset: 2px; }
+
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.seg button { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px 4px; font-weight: 700; line-height: 1.3; }
+.seg button small { display: block; font-weight: 400; color: var(--muted); font-size: .72rem; }
+.seg button.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.seg button.on small { color: var(--bg); opacity: .8; }
+
+.status { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.status b { font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.boxes { display: grid; gap: 10px; }
+.box { aspect-ratio: 1 / 1.1; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; display: grid; place-items: center; font-family: var(--font-display); font-size: clamp(2.2rem, 12vw, 3.2rem); line-height: 1; }
+.box.fill { border-color: var(--grass); }
+.msg { text-align: center; min-height: 3em; }
+.msg.err { color: var(--bad); font-weight: 700; }
+
+.hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+.hist li { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; }
+.hist .n { color: var(--muted); font-size: .8rem; width: 2.2em; flex: none; font-variant-numeric: tabular-nums; }
+.hist .g { font-family: var(--font-display); font-size: 1.5rem; letter-spacing: .12em; flex: 1; min-width: 0; }
+.chips { display: flex; gap: 6px; flex: none; }
+.chip { border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: .9rem; white-space: nowrap; }
+.chip.s { background: var(--grass); color: var(--grass-fg); }
+.chip.b { background: var(--ball); color: var(--ball-fg); }
+.chip.o { background: var(--out); color: #fff; }
+.empty { text-align: center; padding: 14px; border: 1.5px dashed var(--line); border-radius: 12px; }
+
+.result { text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.result b { font-family: var(--font-display); font-weight: 400; font-size: 1.6rem; }
+.result .ans { font-family: var(--font-display); font-size: 2rem; letter-spacing: .2em; color: var(--grass); }
+
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.key { background: var(--key); border: 1px solid var(--line); border-radius: 14px; min-height: 54px; font-family: var(--font-display); font-size: 1.6rem; box-shadow: 0 2px 0 var(--line); }
+.key:active { transform: translateY(1px); box-shadow: none; }
+.key:disabled { opacity: .35; cursor: default; }
+.key.fn { font-family: var(--font-body); font-size: 1rem; font-weight: 700; }
+.key.ok { background: var(--grass); color: var(--grass-fg); border-color: var(--grass); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.new { background: transparent; border: 1px solid var(--line); border-radius: 12px; padding: 10px; font-weight: 700; }
+.how { font-size: .85rem; color: var(--muted); }
+.how b { color: var(--fg); }
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><h1>숫자 야구 ⚾</h1><span class="muted" id="record"></span></div>
+  <div class="seg" id="modes" role="radiogroup" aria-label="자릿수"></div>
+
+  <div class="status"><span class="muted">남은 기회</span><b id="left"></b></div>
+  <div class="boxes" id="boxes" aria-live="polite"></div>
+  <p class="msg muted" id="msg"></p>
+
+  <section id="resultBox" class="result" hidden></section>
+  <ul class="hist" id="hist" aria-label="지난 추리"></ul>
+
+  <div class="pad" id="pad"></div>
+  <button class="new" id="newGame" type="button">새 게임</button>
+
+  <p class="how">컴퓨터가 <b>서로 다른 숫자</b>로 된 비밀 숫자를 정했어요. 숫자를 넣어 추리해 보세요.<br>
+    <b>스트라이크(S)</b> 숫자와 자리가 모두 맞음 · <b>볼(B)</b> 숫자는 있지만 자리가 다름 · <b>아웃</b> 하나도 없음</p>
+</main>
+
+<script>
+const MODES = { 3: { len: 3, tries: 10, label: "3자리", hint: "10번 기회" }, 4: { len: 4, tries: 12, label: "4자리", hint: "12번 기회" } };
+const GAME_KEY = "number-baseball-v1", STAT_KEY = "number-baseball-stats-v1";
+const $ = id => document.getElementById(id);
+const load = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+let game, cur = "", stats = load(STAT_KEY) || {}, msgText = "", msgErr = false;
+
+function makeAnswer(len) {                   // 0~9 중 서로 다른 숫자를 len개 뽑는다
+  const d = [..."0123456789"];
+  for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
+  return d.slice(0, len).join("");
+}
+function score(g, a) {                       // 스트라이크: 숫자와 자리 모두 같음, 볼: 숫자만 같음
+  let s = 0, b = 0;
+  for (let i = 0; i < g.length; i++) { if (g[i] === a[i]) s++; else if (a.includes(g[i])) b++; }
+  return { s, b };
+}
+const mode = () => MODES[game.mode];
+const over = () => game.state !== "play";
+
+function newGame(m = game ? game.mode : 3) {
+  game = { mode: m, answer: makeAnswer(MODES[m].len), guesses: [], state: "play" };
+  cur = ""; msgText = "서로 다른 숫자 " + MODES[m].len + "개를 넣고 확인을 눌러 보세요."; msgErr = false;
+  persist(); render();
+}
+const persist = () => store(GAME_KEY, game);
+
+/* ---------- 입력 ---------- */
+function addDigit(d) {
+  if (over()) return;
+  if (cur.length >= mode().len) return;
+  if (cur.includes(d)) { say("같은 숫자는 한 번만 쓸 수 있어요.", true); return; }
+  cur += d; say("", false); render();
+}
+function del() { if (over()) return; cur = cur.slice(0, -1); say("", false); render(); }
+function say(t, err) { msgText = t; msgErr = err; if ($("msg")) { $("msg").textContent = t; $("msg").classList.toggle("err", err); } }
+
+function submit() {
+  if (over()) return;
+  if (cur.length < mode().len) { say(mode().len + "자리를 모두 넣어 주세요.", true); return; }
+  const r = score(cur, game.answer);
+  game.guesses.push(cur);
+  const n = game.guesses.length;
+  if (r.s === mode().len) { game.state = "win"; record(true, n); msgText = ""; }
+  else if (n >= mode().tries) { game.state = "lose"; record(false, n); msgText = ""; }
+  else { msgText = r.s === 0 && r.b === 0 ? "아웃! 하나도 없어요." : r.s + "스트라이크 " + r.b + "볼"; msgErr = false; }
+  cur = ""; persist(); render();
+}
+function record(won, tries) {
+  const m = stats[game.mode] || (stats[game.mode] = { plays: 0, wins: 0, best: 0 });
+  m.plays++; if (won) { m.wins++; m.best = m.best ? Math.min(m.best, tries) : tries; }
+  store(STAT_KEY, stats);
+}
+
+/* ---------- 화면 ---------- */
+function render() {
+  const m = mode(), n = game.guesses.length;
+  $("modes").innerHTML = Object.keys(MODES).map(k =>
+    `<button type="button" class="${+k === game.mode ? "on" : ""}" data-m="${k}" role="radio" aria-checked="${+k === game.mode}">${MODES[k].label}<small>${MODES[k].hint}</small></button>`).join("");
+  const st = stats[game.mode];
+  $("record").textContent = st ? st.wins + "승 " + (st.plays - st.wins) + "패" + (st.best ? " · 최고 " + st.best + "번" : "") : "";
+  $("left").textContent = (m.tries - n) + " / " + m.tries;
+  $("boxes").style.gridTemplateColumns = "repeat(" + m.len + ", 1fr)";
+  $("boxes").innerHTML = Array.from({ length: m.len }, (_, i) => `<div class="box ${cur[i] !== undefined ? "fill" : ""}">${cur[i] ?? ""}</div>`).join("");
+  $("msg").textContent = msgText; $("msg").classList.toggle("err", msgErr);
+
+  $("hist").innerHTML = n ? game.guesses.map((g, i) => {
+    const r = score(g, game.answer);
+    const chips = r.s === 0 && r.b === 0 ? `<span class="chip o">아웃</span>` : (r.s ? `<span class="chip s">${r.s}S</span>` : "") + (r.b ? `<span class="chip b">${r.b}B</span>` : "");
+    return `<li><span class="n">${i + 1}회</span><span class="g">${g}</span><span class="chips">${chips}</span></li>`;
+  }).reverse().join("") : `<li class="empty muted" style="display:block">아직 추리한 기록이 없어요.</li>`;
+
+  const rb = $("resultBox");
+  rb.hidden = !over();
+  if (over()) rb.innerHTML = game.state === "win"
+    ? `<b>🎉 홈런! 정답이에요</b><span class="ans">${game.answer}</span><p class="muted">${n}번 만에 맞혔어요.${stats[game.mode] && stats[game.mode].best === n ? " 🏆 최고 기록이에요!" : ""}</p>`
+    : `<b>😢 기회를 모두 썼어요</b><p class="muted">정답은</p><span class="ans">${game.answer}</span>`;
+
+  $("pad").innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => keyBtn(d)).join("")
+    + `<button class="key fn" type="button" data-k="del" ${over() ? "disabled" : ""}>지우기</button>` + keyBtn(0)
+    + `<button class="key fn ok" type="button" data-k="ok" ${over() ? "disabled" : ""}>확인</button>`;
+}
+function keyBtn(d) {
+  const dis = over() || cur.includes(String(d)) || cur.length >= mode().len;
+  return `<button class="key" type="button" data-d="${d}" ${dis ? "disabled" : ""}>${d}</button>`;
+}
+
+$("pad").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || b.disabled) return;
+  if (b.dataset.d !== undefined) addDigit(b.dataset.d); else if (b.dataset.k === "del") del(); else if (b.dataset.k === "ok") submit();
+});
+$("modes").addEventListener("click", e => {
+  const b = e.target.closest("[data-m]"); if (!b || +b.dataset.m === game.mode) return;
+  newGame(+b.dataset.m);
+});
+$("newGame").onclick = () => newGame();
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (/^[0-9]$/.test(e.key)) addDigit(e.key);
+  else if (e.key === "Backspace") { e.preventDefault(); del(); }
+  else if (e.key === "Enter") { e.preventDefault(); submit(); }
+});
+
+const saved = load(GAME_KEY);
+const okSaved = saved && MODES[saved.mode] && typeof saved.answer === "string" && saved.answer.length === MODES[saved.mode].len
+  && new Set(saved.answer).size === saved.answer.length && Array.isArray(saved.guesses) && ["play", "win", "lose"].includes(saved.state);
+if (okSaved) { game = saved; msgText = game.state === "play" && game.guesses.length ? "이어서 추리해 보세요." : ""; render(); } else newGame(3);
+</script>
+</body>
+</html>

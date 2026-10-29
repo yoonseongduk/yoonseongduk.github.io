@@ -97,6 +97,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 .hist .strip i { flex: 1; min-width: 0; height: 10px; border-radius: 3px; background: var(--line); }
 .hist .strip i.on { background: var(--ink); }
 .win .stamp, .win .ghost { width: 100%; }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.editpanel .row { display: flex; gap: 8px; align-items: stretch; }
+.editpanel .stamp { padding: 10px; }
+.editname { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--ink); border-radius: 10px; padding: 8px 10px; font-family: var(--font-display); font-size: 1.2rem; }
+.editpanel { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 14px; background: var(--bg); border: 1px dashed var(--line); }
+.err { color: var(--ink); font-weight: 700; font-size: .9rem; margin: 0; }
 .empty { text-align: center; padding: 28px 16px; border: 1.5px dashed var(--line); border-radius: 18px; }
 @media (prefers-reduced-motion: reduce) { .cell.pop { animation: none; } .bar i { transition: none; } }
 </style>
@@ -133,6 +139,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 
 let today = ymd(new Date()), icon = ICONS[0], confirmDel = "", popKey = "", openHist = {};
+let editing = "", editDraft = "", editIcon = "", editErr = "";
 
 function seed() {          // 처음 열었을 때 보여 줄 예시 (지워도 돼요)
   const mk = (name, ic, ago, offs) => {
@@ -201,19 +208,31 @@ function card(h) {
     const strip = Array.from({ length: N }, (_, i) => `<i class="${h.days[addDays(e.start, i)] ? "on" : ""}"></i>`).join("");
     return `<li><div class="hr"><span>${md(e.start)} ~ ${md(addDays(e.start, N - 1))}</span><b>${n} / ${N}${n >= N ? " 🎉" : ""}</b></div><div class="strip" aria-hidden="true">${strip}</div></li>`;
   }).join("")}</ul>` : "";
+  // 이름·아이콘 수정: 입력 중인 내용(editDraft, editIcon)은 변수에 들고 있어서 화면이 다시 그려져도 사라지지 않는다
+  const isEdit = editing === h.id;
+  const editIcons = ICONS.includes(editIcon) ? ICONS : [editIcon, ...ICONS];
+  const editPanel = isEdit ? `<div class="editpanel">
+      <div class="icons" role="radiogroup" aria-label="아이콘 고르기">${editIcons.map(i =>
+        `<button type="button" class="${i === editIcon ? "on" : ""}" data-act="eicon" data-v="${i}" role="radio" aria-checked="${i === editIcon}" aria-label="아이콘 ${i}">${i}</button>`).join("")}</div>
+      ${editErr ? `<p class="err">${editErr}</p>` : ""}
+      <div class="row"><button class="stamp" style="flex:1" data-act="save-edit" data-id="${h.id}">저장</button><button class="ghost" data-act="cancel-edit">취소</button></div></div>` : "";
   const del = confirmDel === h.id
     ? `<span class="row" style="display:flex;gap:6px"><button class="ghost danger" data-act="del-yes" data-id="${h.id}">정말 삭제</button><button class="ghost" data-act="del-no">취소</button></span>`
     : `<button class="ghost" data-act="del" data-id="${h.id}">삭제</button>`;
   return `<article class="card">
-    <div class="top"><span class="ic" aria-hidden="true">${esc(h.icon)}</span>
-      <div class="nm"><h2>${esc(h.name)}${h.example ? '<span class="badge">예시</span>' : ""}</h2>
+    <div class="top"><span class="ic" aria-hidden="true">${esc(isEdit ? editIcon : h.icon)}</span>
+      <div class="nm">${isEdit
+        ? `<input type="text" id="edit-name" class="editname" value="${esc(editDraft)}" maxlength="14" aria-label="습관 이름" autocomplete="off">`
+        : `<h2>${esc(h.name)}${h.example ? '<span class="badge">예시</span>' : ""}</h2>`}
         <p class="muted">${inWindow ? (idx + 1) + "일째" : idx < 0 ? "시작 전" : "도전 끝"} · ${md(h.start)} ~ ${md(addDays(h.start, N - 1))}${fullRuns(h) ? " · " + fullRuns(h) + "번 완주" : ""}</p></div>
       <div class="streak"><b>🔥 ${st}</b><span class="muted">연속</span></div></div>
+    ${isEdit ? editPanel : ""}
     <div><div class="meta"><span class="muted">진행</span><b>${c} / ${N}</b></div><div class="bar"><i style="width:${c / N * 100}%"></i></div></div>
     <div class="grid">${head}${blanks}${cells}</div>
     <p class="muted">${lastStamp(h) ? "마지막 도장 " + md(lastStamp(h)) + " (" + WD[parse(lastStamp(h)).getDay()] + ")" : "아직 찍은 도장이 없어요"} · 칸의 숫자는 날짜예요</p>${main}
     ${histList}
-    <div class="foot">${histBtn || `<span class="muted">${h.example ? "예시 습관이에요. 지워도 돼요." : ""}</span>`}${del}</div></article>`;
+    <div class="foot">${histBtn || `<span class="muted">${h.example ? "예시 습관이에요. 지워도 돼요." : ""}</span>`}
+      <span class="acts">${isEdit ? "" : `<button class="ghost" data-act="edit" data-id="${h.id}">수정</button>`}${del}</span></div></article>`;
 }
 
 function render() {
@@ -248,10 +267,27 @@ document.addEventListener("click", e => {
         h.history = h.history || []; h.history.push({ start: h.start });
         h.start = nextStart(h, d.mode); delete h.example; save(); render(); } break;
     case "hist": openHist[d.id] = !openHist[d.id]; render(); break;
+    case "edit": if (h) { editing = h.id; editDraft = h.name; editIcon = h.icon; editErr = ""; confirmDel = ""; render(); const i = $("edit-name"); if (i) i.focus(); } break;
+    case "eicon": editIcon = d.v; render(); break;
+    case "cancel-edit": editing = ""; editErr = ""; render(); break;
+    case "save-edit": saveEdit(); break;
     case "del": confirmDel = d.id; render(); break;
     case "del-no": confirmDel = ""; render(); break;
     case "del-yes": habits = habits.filter(x => x.id !== d.id); confirmDel = ""; save(); render(); break;
   }
+});
+function saveEdit() {
+  const h = habits.find(x => x.id === editing); if (!h) { editing = ""; render(); return; }
+  const name = editDraft.trim();
+  if (!name) { editErr = "이름을 입력해 주세요."; render(); const i = $("edit-name"); if (i) i.focus(); return; }
+  h.name = name; h.icon = editIcon; delete h.example;      // 직접 고친 습관은 더 이상 "예시"가 아니다
+  editing = ""; editErr = ""; save(); render();
+}
+document.addEventListener("input", e => { if (e.target.id === "edit-name") editDraft = e.target.value; });
+document.addEventListener("keydown", e => {
+  if (e.target.id !== "edit-name") return;
+  if (e.key === "Enter") { e.preventDefault(); saveEdit(); }
+  if (e.key === "Escape") { editing = ""; editErr = ""; render(); }
 });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });   // 자정이 지나면 날짜 갱신
 render();

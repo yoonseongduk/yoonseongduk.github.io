@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>세계 수도 퀴즈</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 방향 선택(나라→수도 / 수도→나라), 점수 줄, 문제 카드, 네 개의 보기 */
+:root{--bg:#edf3ef;--surface:#fff;--fg:#17261f;--muted:#5a7066;--line:#d0ddd6;--accent:#1f8a6b;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1a15;--surface:#182620;--fg:#e8f2ec;--muted:#95b0a4;--line:#29403a;--accent:#3fbf99;--accent-fg:#0f1a15;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 4px;font-weight:700}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 16px;text-align:center;font-family:var(--font-display);font-size:clamp(1.5rem,7vw,2rem);line-height:1.5}
+.q em{font-style:normal;color:var(--accent);font-size:1.25em}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:58px;padding:8px;font-weight:700;font-size:1.05rem;overflow-wrap:anywhere}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}.opt:disabled{cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>세계 수도 퀴즈 🌍</h1>
+  <div class="seg" id="dir" role="radiogroup" aria-label="방향"></div>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <p class="muted">나라의 수도를 맞히거나, 수도를 보고 나라를 맞혀 보세요. 10문제를 풀면 결과가 나와요.</p>
+</main>
+<script>
+const C = "대한민국:서울 일본:도쿄 중국:베이징 미국:워싱턴(D.C.) 영국:런던 프랑스:파리 독일:베를린 이탈리아:로마 스페인:마드리드 캐나다:오타와 호주:캔버라 브라질:브라질리아 아르헨티나:부에노스아이레스 이집트:카이로 인도:뉴델리 러시아:모스크바 태국:방콕 베트남:하노이 터키:앙카라 그리스:아테네 포르투갈:리스본 네덜란드:암스테르담 스위스:베른 오스트리아:빈 스웨덴:스톡홀름 노르웨이:오슬로 핀란드:헬싱키 필리핀:마닐라 인도네시아:자카르타 멕시코:멕시코시티 페루:리마 칠레:산티아고 케냐:나이로비 뉴질랜드:웰링턴 몽골:울란바토르 폴란드:바르샤바 헝가리:부다페스트 체코:프라하".split(" ").map(s => s.split(":"));
+const $ = id => document.getElementById(id), KEY = "capital-best-v1";
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let dir = 0, qs = [], i = 0, score = 0, best = ld(KEY) || [0, 0], locked = false;     // dir 0: 나라→수도, 1: 수도→나라 (최고 기록도 방향별로)
+
+function start() {
+  qs = shuf(C).slice(0, 10).map(c => {
+    const a = dir ? c[0] : c[1], wrong = shuf(C.filter(x => x !== c)).slice(0, 3).map(x => dir ? x[0] : x[1]);
+    return { q: dir ? c[1] : c[0], a, opts: shuf([a, ...wrong]) };
+  }); i = 0; score = 0; $("res").hidden = true; show();
+}
+function show() {
+  const { q, opts } = qs[i]; locked = false; $("next").hidden = true;
+  $("q").innerHTML = dir ? `<em>${q}</em>은(는)<br>어느 나라의 수도일까요?` : `<em>${q}</em>의<br>수도는 어디일까요?`;
+  $("opts").innerHTML = opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${o}</button>`).join("");
+  $("dir").innerHTML = ["나라 → 수도", "수도 → 나라"].map((t, k) => `<button type="button" class="${k === dir ? "on" : ""}" data-d="${k}" role="radio" aria-checked="${k === dir}">${t}</button>`).join("");
+  $("no").textContent = (i + 1) + "/10"; $("score").textContent = score; $("best").textContent = best[dir];
+}
+function pick(k) {
+  if (locked) return; locked = true; const { a, opts } = qs[i]; if (opts[k] === a) score++;
+  document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === a) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
+  $("score").textContent = score; $("next").textContent = i === 9 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
+}
+function finish() {
+  let note = ""; if (score > best[dir]) { best[dir] = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("next").hidden = true;
+  $("res").innerHTML = `<b>10문제 중 ${score}개 정답</b><p class="muted">${score >= 9 ? "세계 일주 완료! ✈️" : score >= 6 ? "잘했어요 👍" : "다음엔 더 잘할 수 있어요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
+  $("res").hidden = false; $("best").textContent = best[dir]; $("again").onclick = start;
+}
+$("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); });
+$("dir").addEventListener("click", e => { const b = e.target.closest("[data-d]"); if (b && +b.dataset.d !== dir) { dir = +b.dataset.d; start(); } });
+$("next").onclick = () => { if (i === 9) finish(); else { i++; show(); } };
+start();
+</script>
+</body>
+</html>

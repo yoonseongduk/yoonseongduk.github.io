@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>벽돌깨기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 점수·목숨·단계 줄, 세로로 긴 캔버스(막대를 손가락으로 끌어 움직임), 아래에 시작·일시정지 버튼 */
+:root{--bg:#e9eef6;--surface:#fff;--fg:#1b2133;--muted:#5f6881;--line:#d3d9ea;--field:#101a33;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0d1120;--surface:#181d33;--fg:#e8ecf8;--muted:#95a0c0;--line:#2a3252;--field:#070a16;--accent:#ff7f5a;--accent-fg:#0d1120;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.85rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 10px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.68rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.wrap{position:relative;border-radius:12px;overflow:hidden;border:2px solid var(--line);background:var(--field);touch-action:none;aspect-ratio:3/4}
+canvas{width:100%;height:100%;display:block}
+.ov{position:absolute;inset:0;background:rgba(5,8,20,.6);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px}
+.ov b{font-family:var(--font-display);font-weight:400;font-size:1.9rem;line-height:1.2}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:12px;padding:10px 22px;font-family:var(--font-display);font-size:1.25rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>벽돌깨기 🧱</h1>
+  <div class="stats"><div class="stat"><small>점수</small><b id="score">0</b></div><div class="stat"><small>목숨</small><b id="lives">3</b></div><div class="stat"><small>단계</small><b id="stage">1</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="wrap" id="wrap"><canvas id="cv" aria-label="벽돌깨기 게임 판"></canvas><div class="ov" id="ov"></div></div>
+  <p class="muted">화면 아래를 <b>손가락으로 좌우로 끌어서</b> 막대를 움직이고, 공을 받아 벽돌을 모두 깨세요. 막대의 어느 쪽에 맞느냐에 따라 공이 튀는 방향이 달라져요. (컴퓨터: ← → 키, 스페이스로 시작·정지)</p>
+</main>
+<script>
+const W = 300, H = 400, COLS = 8, ROWS = 5, BW = W / COLS, BH = 18, TOP = 40, KEY = "breakout-best-v1";
+const COLORS = ["#e8453c", "#f08a24", "#f2c200", "#3cc46a", "#3f6fe0"];
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let bricks, ball, pad, score = 0, lives = 3, stage = 1, best = ld(KEY) || 0, state = "ready", raf = 0, last = 0, keys = { l: 0, r: 0 }, dead = false;
+
+function build() { bricks = []; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) bricks.push({ x: c * BW, y: TOP + r * (BH + 3), alive: true, r }); }
+function serve() { const sp = 210 + stage * 22; ball = { x: pad.x + pad.w / 2, y: H - 40, vx: sp * (Math.random() < .5 ? -.45 : .45), vy: -sp * .9, r: 6, sp }; }
+function reset() { score = 0; lives = 3; stage = 1; pad = { x: W / 2 - 30, y: H - 22, w: 60, h: 10 }; build(); serve(); state = "ready"; ui(); draw(); }
+
+function step(dt) {
+  pad.x += (keys.r - keys.l) * 320 * dt; pad.x = Math.max(0, Math.min(W - pad.w, pad.x));
+  ball.x += ball.vx * dt; ball.y += ball.vy * dt;
+  if (ball.x < ball.r) { ball.x = ball.r; ball.vx = Math.abs(ball.vx); } if (ball.x > W - ball.r) { ball.x = W - ball.r; ball.vx = -Math.abs(ball.vx); }
+  if (ball.y < ball.r) { ball.y = ball.r; ball.vy = Math.abs(ball.vy); }
+  // 막대: 맞은 위치(왼쪽 끝 -1 ~ 오른쪽 끝 +1)로 튀는 각도를 정한다
+  if (ball.vy > 0 && ball.y + ball.r >= pad.y && ball.y - ball.r <= pad.y + pad.h && ball.x >= pad.x - ball.r && ball.x <= pad.x + pad.w + ball.r) {
+    const hit = Math.max(-1, Math.min(1, (ball.x - (pad.x + pad.w / 2)) / (pad.w / 2))), ang = hit * 1.05;
+    ball.vx = ball.sp * Math.sin(ang); ball.vy = -ball.sp * Math.cos(ang); ball.y = pad.y - ball.r;
+  }
+  for (const b of bricks) if (b.alive && ball.x + ball.r > b.x && ball.x - ball.r < b.x + BW && ball.y + ball.r > b.y && ball.y - ball.r < b.y + BH) {
+    b.alive = false; score += (ROWS - b.r) * 10;
+    const ox = Math.min(ball.x + ball.r - b.x, b.x + BW - (ball.x - ball.r)), oy = Math.min(ball.y + ball.r - b.y, b.y + BH - (ball.y - ball.r));
+    if (ox < oy) ball.vx = -ball.vx; else ball.vy = -ball.vy; break;
+  }
+  if (!bricks.some(b => b.alive)) { stage++; build(); serve(); state = "ready"; ui(); return; }
+  if (ball.y > H + 10) { lives--; if (lives <= 0) return over(); serve(); state = "ready"; }
+  ui();
+}
+function over() { state = "over"; if (score > best) { best = score; sv(KEY, best); } ui(); draw(); }
+function frame(t) { if (state === "play") { const dt = Math.min(.033, (t - last) / 1000); last = t; step(dt); } draw(); raf = requestAnimationFrame(frame); }
+function go() { if (state === "over") reset(); if (state === "ready" || state === "paused") { state = "play"; last = performance.now(); ui(); } }
+function pause() { if (state === "play") { state = "paused"; ui(); } }
+
+function draw() {
+  const cv = $("cv"), w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!w) return; const s = w / W;
+  const pw = Math.round(w * dpr); if (cv.width !== pw) { cv.width = pw; cv.height = Math.round(w * H / W * dpr); }
+  const c = cv.getContext("2d"); c.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); c.clearRect(0, 0, W, H);
+  bricks.forEach(b => { if (!b.alive) return; c.fillStyle = COLORS[b.r]; c.fillRect(b.x + 1, b.y + 1, BW - 2, BH - 2); c.fillStyle = "rgba(255,255,255,.28)"; c.fillRect(b.x + 1, b.y + 1, BW - 2, 4); });
+  c.fillStyle = "#e9edf8"; c.fillRect(pad.x, pad.y, pad.w, pad.h);
+  c.fillStyle = "#ffd23f"; c.beginPath(); c.arc(ball.x, ball.y, ball.r, 0, 7); c.fill();
+}
+function ui() {
+  $("score").textContent = score; $("lives").textContent = "❤️" + Math.max(0, lives); $("stage").textContent = stage; $("best").textContent = best;
+  const ov = $("ov"); ov.hidden = state === "play";
+  ov.innerHTML = state === "ready" ? `<b>${stage === 1 && score === 0 ? "벽돌깨기" : stage + "단계"}</b><button class="btn" data-a="go" type="button">${stage === 1 && score === 0 ? "시작" : "계속"}</button>`
+    : state === "paused" ? `<b>일시정지</b><button class="btn" data-a="go" type="button">계속하기</button>`
+    : `<b>게임 오버</b><p>${score}점${score && score >= best ? "<br>🏆 최고 기록!" : ""}</p><button class="btn" data-a="go" type="button">다시 하기</button>`;
+}
+function move(clientX) { const r = $("cv").getBoundingClientRect(); pad.x = Math.max(0, Math.min(W - pad.w, (clientX - r.left) / r.width * W - pad.w / 2)); }
+$("wrap").addEventListener("pointermove", e => { if (state === "play" || state === "ready") move(e.clientX); });
+$("wrap").addEventListener("pointerdown", e => { if (e.target.closest("[data-a]")) return; if (state === "play") move(e.clientX); });
+$("ov").addEventListener("click", e => { if (e.target.closest("[data-a]")) go(); });
+document.addEventListener("keydown", e => { if (e.key === "ArrowLeft") { keys.l = 1; e.preventDefault(); } else if (e.key === "ArrowRight") { keys.r = 1; e.preventDefault(); } else if (e.key === " ") { e.preventDefault(); state === "play" ? pause() : go(); } });
+document.addEventListener("keyup", e => { if (e.key === "ArrowLeft") keys.l = 0; if (e.key === "ArrowRight") keys.r = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+window.addEventListener("resize", draw);
+reset(); raf = requestAnimationFrame(frame);
+</script>
+</body>
+</html>

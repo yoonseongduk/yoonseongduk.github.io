@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스도쿠</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 난이도, 시간·실수 줄, 9×9 판(3×3 굵은 선), 숫자 키패드와 힌트. 고른 칸의 가로·세로·상자가 옅게 강조된다 */
+:root{--bg:#eef1f7;--surface:#fff;--fg:#1b2133;--muted:#626b84;--line:#d3d9e8;--thick:#1b2133;--sel:#cfe0ff;--peer:#eaf0fd;--same:#ffe7a8;--given:#1b2133;--mine:#2a5fd0;--bad:#d6453a;--accent:#2a5fd0;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10131d;--surface:#1a1f30;--fg:#e9edf8;--muted:#98a2bc;--line:#2d354c;--thick:#aab4d0;--sel:#2c4a86;--peer:#232c47;--same:#6a5a1e;--given:#e9edf8;--mine:#7fa8ff;--bad:#ff7b68;--accent:#7fa8ff;--accent-fg:#10131d;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:20px 48px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 12px}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.3rem;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(9,1fr);border:3px solid var(--thick);border-radius:6px;background:var(--surface);touch-action:manipulation}
+.c{aspect-ratio:1;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface);font-family:var(--font-display);font-size:clamp(1.15rem,6vw,1.6rem);padding:0;color:var(--mine);line-height:1;min-width:0}
+.c.g{color:var(--given)}.c.p{background:var(--peer)}.c.s{background:var(--sel)}.c.m{background:var(--same)}.c.x{color:var(--bad)}
+.c:nth-child(3n){border-right:2px solid var(--thick)}.c:nth-child(9n){border-right:0}
+.c:nth-child(n+19):nth-child(-n+27),.c:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid var(--thick)}
+.pad{display:grid;grid-template-columns:repeat(9,1fr);gap:5px}
+.k{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-height:48px;font-family:var(--font-display);font-size:1.4rem;padding:0;box-shadow:0 2px 0 var(--line)}.k:active{transform:translateY(1px);box-shadow:none}.k:disabled{opacity:.3;cursor:default}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:11px;font-family:var(--font-display);font-size:1.2rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:.95rem;font-weight:700}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>스도쿠 🔢</h1>
+  <div class="seg" id="lv" role="radiogroup" aria-label="난이도"></div>
+  <div class="stats"><div class="stat"><small>시간</small><b id="time">0:00</b></div><div class="stat"><small>틀린 횟수</small><b id="miss">0</b></div><div class="stat"><small>최고(이 난이도)</small><b id="best">-</b></div></div>
+  <div class="grid" id="grid" role="grid" aria-label="스도쿠 판"></div>
+  <div class="pad" id="pad"></div>
+  <div class="row"><button class="btn ghost" id="erase" type="button">지우기</button><button class="btn ghost" id="hint" type="button">💡 힌트</button><button class="btn" id="newGame" type="button">새 판</button></div>
+  <div class="res" id="res" hidden></div>
+  <p class="muted">빈칸을 누르고 숫자를 넣으세요. 가로줄, 세로줄, 굵은 선의 3×3 상자 안에 1~9가 한 번씩만 들어가야 해요. 틀린 숫자는 빨갛게 보여요. 힌트를 쓰면 기록이 남지 않아요.</p>
+</main>
+<script>
+const LV = { easy: { clues: 40, label: "쉬움", hint: "힌트 많음" }, normal: { clues: 32, label: "보통", hint: "기본" }, hard: { clues: 26, label: "어려움", hint: "힌트 적음" } };
+const KEY = "sudoku-best-v1", LKEY = "sudoku-level-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const fmt = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+let lv = (ld(LKEY) in LV) ? ld(LKEY) : "easy", sol, puz, cur, given, sel = -1, miss = 0, hinted = false, t0 = 0, timer = 0, done = false, best = ld(KEY) || {};
+
+/* ---------- 만들기: 완성된 판을 만든 뒤 칸을 하나씩 지우되, 답이 하나뿐인 경우에만 지운다 ---------- */
+const row = i => Math.floor(i / 9), col = i => i % 9, box = i => Math.floor(row(i) / 3) * 3 + Math.floor(col(i) / 3);
+function cands(g, i) {
+  const used = new Set(); for (let k = 0; k < 81; k++) if (g[k] && (row(k) === row(i) || col(k) === col(i) || box(k) === box(i))) used.add(g[k]);
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(v => !used.has(v));
+}
+function solve(g, limit, randomOrder) {                     // 해의 개수를 limit개까지 센다. 가장 후보가 적은 칸부터 채운다
+  let count = 0, first = null;
+  (function rec() {
+    let bi = -1, bc = null, bn = 10;
+    for (let i = 0; i < 81; i++) if (!g[i]) { const c = cands(g, i); if (c.length < bn) { bn = c.length; bi = i; bc = c; if (!bn) return; } }
+    if (bi < 0) { count++; if (!first) first = g.slice(); return; }
+    for (const v of (randomOrder ? shuf(bc) : bc)) { g[bi] = v; rec(); g[bi] = 0; if (count >= limit) return; }
+  })();
+  return { count, first };
+}
+function generate(clues) {
+  const full = solve(Array(81).fill(0), 1, true).first, p = full.slice();
+  for (const i of shuf([...Array(81).keys()])) {
+    if (p.filter(Boolean).length <= clues) break;
+    const v = p[i]; p[i] = 0; if (solve(p.slice(), 2).count !== 1) p[i] = v;
+  }
+  return { sol: full, puz: p };
+}
+
+function newGame() {
+  clearInterval(timer); const g = generate(LV[lv].clues); sol = g.sol; puz = g.puz; cur = puz.slice(); given = puz.map(Boolean);
+  sel = -1; miss = 0; hinted = false; done = false; t0 = 0; $("res").hidden = true; $("time").textContent = "0:00"; render();
+}
+function startTimer() { if (t0 || done) return; t0 = Date.now(); timer = setInterval(() => { $("time").textContent = fmt(Math.floor((Date.now() - t0) / 1000)); }, 500); }
+function put(v) {
+  if (done || sel < 0 || given[sel]) return; startTimer();
+  if (v && v !== sol[sel]) miss++;
+  cur[sel] = v; render(); if (cur.every((x, i) => x === sol[i])) win();
+}
+function win() {
+  done = true; clearInterval(timer); const s = Math.floor((Date.now() - t0) / 1000); let t = `${fmt(s)} 걸렸고, 틀린 횟수는 ${miss}번이에요.`;
+  if (!hinted && (!best[lv] || s < best[lv])) { best[lv] = s; sv(KEY, best); t += " 🏆 최고 기록이에요!"; } else if (hinted) t += " (힌트를 써서 기록은 남지 않아요)";
+  $("res").innerHTML = `<b>🎉 완성!</b><p class="muted">${t}</p>`; $("res").hidden = false; render();
+}
+function hint() {
+  if (done) return; const empties = cur.map((v, i) => (v !== sol[i] ? i : -1)).filter(i => i >= 0); if (!empties.length) return;
+  const i = sel >= 0 && empties.includes(sel) ? sel : empties[Math.floor(Math.random() * empties.length)]; hinted = true; startTimer(); cur[i] = sol[i]; given[i] = false; sel = i; render(); if (cur.every((x, k) => x === sol[k])) win();
+}
+function render() {
+  $("grid").innerHTML = cur.map((v, i) => {
+    const c = ["c"]; if (given[i]) c.push("g");
+    if (sel >= 0) { if (i === sel) c.push("s"); else if (v && v === cur[sel]) c.push("m"); else if (row(i) === row(sel) || col(i) === col(sel) || box(i) === box(sel)) c.push("p"); }
+    if (v && !given[i] && v !== sol[i]) c.push("x");
+    return `<button class="${c.join(" ")}" type="button" data-i="${i}" aria-label="${row(i) + 1}행 ${col(i) + 1}열 ${v || "빈칸"}">${v || ""}</button>`;
+  }).join("");
+  const left = n => 9 - cur.filter((v, i) => v === n && v === sol[i]).length;
+  $("pad").innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="k" type="button" data-n="${n}" ${left(n) <= 0 || done ? "disabled" : ""} aria-label="숫자 ${n}">${n}</button>`).join("");
+  $("miss").textContent = miss; $("best").textContent = best[lv] ? fmt(best[lv]) : "-";
+  $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+}
+$("grid").addEventListener("click", e => { const c = e.target.closest("[data-i]"); if (c) { sel = +c.dataset.i; render(); } });
+$("pad").addEventListener("click", e => { const k = e.target.closest("[data-n]"); if (k && !k.disabled) put(+k.dataset.n); });
+$("erase").onclick = () => put(0); $("hint").onclick = hint; $("newGame").onclick = newGame;
+$("lv").addEventListener("click", e => { const l = e.target.closest("[data-l]"); if (l && l.dataset.l !== lv) { lv = l.dataset.l; sv(LKEY, lv); newGame(); } });
+document.addEventListener("keydown", e => { if (/^[1-9]$/.test(e.key)) put(+e.key); else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0") put(0); else if (sel >= 0 && e.key.startsWith("Arrow")) { e.preventDefault(); const d = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -9, ArrowDown: 9 }[e.key], n = sel + d; if (n >= 0 && n < 81 && !(d === -1 && col(sel) === 0) && !(d === 1 && col(sel) === 8)) { sel = n; render(); } } });
+newGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>상식 퀴즈</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 분류 선택 버튼, 점수 줄, 문제 카드, 네 개의 보기. 고르면 정답이 바로 표시된다 */
+:root{--bg:#eef3f6;--surface:#fff;--fg:#1a2630;--muted:#5d7080;--line:#d3dee6;--accent:#2a7fc4;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f171d;--surface:#18232c;--fg:#e8f0f5;--muted:#95a9b8;--line:#293b48;--accent:#5ab0f0;--accent-fg:#0f171d;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.9rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 16px;text-align:center;font-family:var(--font-display);font-size:clamp(1.3rem,6vw,1.7rem);line-height:1.5;overflow-wrap:anywhere}
+.q small{display:block;color:var(--accent);font-family:var(--font-body);font-weight:700;font-size:.85rem;margin-bottom:4px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:58px;padding:8px;font-weight:700;font-size:1.05rem;overflow-wrap:anywhere}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}.opt:disabled{cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>상식 퀴즈 💡</h1>
+  <div class="chips" id="cats" role="group" aria-label="분류"></div>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <p class="muted">분류를 고르면 그 분류의 문제만 나와요. 10문제를 풀면 결과가 나와요.</p>
+</main>
+<script>
+// [분류, 문제, 정답, 틀린 보기 3개]
+const D = [
+["과학","물이 얼음이 되는 온도는 섭씨 몇 도일까요?","0도",["10도","-10도","100도"]],["과학","지구에서 가장 가까운 별은?","태양",["달","화성","북극성"]],
+["과학","어른 몸의 뼈는 모두 몇 개일까요?","206개",["106개","306개","406개"]],["과학","식물이 광합성을 할 때 흡수하는 기체는?","이산화탄소",["산소","질소","수소"]],
+["과학","태양계에서 가장 큰 행성은?","목성",["토성","지구","해왕성"]],["과학","소리가 전달되지 않는 곳은?","진공(공기가 없는 곳)",["물속","공기 중","철판"]],
+["과학","물의 화학식은?","H₂O",["CO₂","O₂","NaCl"]],["과학","번개가 먼저 보이고 천둥이 나중에 들리는 까닭은?","빛이 소리보다 빠르기 때문",["소리가 더 크기 때문","번개가 더 높이 있기 때문","천둥이 더 늦게 생기기 때문"]],
+["지리","세계에서 가장 큰 대륙은?","아시아",["아프리카","유럽","남아메리카"]],["지리","남한에서 가장 높은 산은?","한라산",["지리산","설악산","북한산"]],
+["지리","우리나라에서 가장 큰 섬은?","제주도",["거제도","강화도","울릉도"]],["지리","세계에서 가장 큰 바다는?","태평양",["대서양","인도양","북극해"]],
+["지리","사하라 사막이 있는 대륙은?","아프리카",["아시아","남아메리카","오세아니아"]],["지리","호주의 수도는?","캔버라",["시드니","멜버른","브리즈번"]],
+["지리","일 년 중 낮이 가장 긴 날은?","하지",["동지","춘분","추분"]],["지리","대한민국의 수도는?","서울",["부산","대전","인천"]],
+["역사","한글을 만든 왕은?","세종대왕",["태조","정조","광개토대왕"]],["역사","한글날은 몇 월 며칠일까요?","10월 9일",["3월 1일","8월 15일","6월 6일"]],
+["역사","임진왜란 때 거북선으로 활약한 장군은?","이순신",["권율","강감찬","을지문덕"]],["역사","광복절은 몇 월 며칠일까요?","8월 15일",["3월 1일","6월 25일","10월 3일"]],
+["역사","고구려를 세운 사람은?","주몽",["온조","박혁거세","왕건"]],["역사","조선을 세운 사람은?","이성계",["왕건","이순신","세종"]],
+["몸","사람의 심장은 몇 개의 방으로 이루어져 있을까요?","4개",["2개","3개","6개"]],["몸","피를 온몸으로 보내는 기관은?","심장",["폐","위","간"]],
+["몸","음식물을 소화하는 데 가장 중요한 주머니 모양 기관은?","위",["폐","심장","콩팥"]],["몸","우리가 숨을 쉴 때 산소를 받아들이는 기관은?","폐",["간","위","대장"]],
+["생활","무지개는 보통 몇 가지 색으로 말할까요?","7가지",["5가지","6가지","8가지"]],["생활","축구는 한 팀에 몇 명이 뛰나요?","11명",["9명","10명","12명"]],
+["생활","올림픽 오륜기의 고리는 몇 개일까요?","5개",["4개","6개","7개"]],["생활","바둑판의 가로줄은 몇 줄일까요?","19줄",["15줄","17줄","21줄"]],
+["생활","피아노 건반은 모두 몇 개일까요?","88개",["76개","66개","100개"]],["생활","컴퓨터가 쓰는 0과 1로 이루어진 수 체계는?","이진법",["십진법","팔진법","십육진법"]],
+["생활","우리나라의 화폐 단위는?","원",["엔","위안","달러"]],["생활","김치의 가장 대표적인 재료는?","배추",["오이","상추","감자"]],
+["생활","일주일은 며칠일까요?","7일",["5일","6일","10일"]]
+];
+const CATS = ["전체", "과학", "지리", "역사", "몸", "생활"];
+const $ = id => document.getElementById(id), KEY = "trivia-best-v1";
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let cat = "전체", qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+
+function start() {
+  const pool = D.filter(d => cat === "전체" || d[0] === cat); qs = shuf(pool).slice(0, 10).map(d => ({ d, opts: shuf([d[2], ...d[3]]) })); i = 0; score = 0; $("res").hidden = true;
+  $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
+}
+function show() {
+  const { d, opts } = qs[i]; locked = false; $("next").hidden = true;
+  $("q").innerHTML = `<small>${d[0]}</small>${esc(d[1])}`;
+  $("opts").innerHTML = opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join("");
+  $("no").textContent = (i + 1) + "/" + qs.length; $("score").textContent = score; $("best").textContent = best;
+}
+function pick(k) {
+  if (locked) return; locked = true; const { d, opts } = qs[i]; if (opts[k] === d[2]) score++;
+  document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === d[2]) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
+  $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
+}
+function finish() {
+  const full = qs.length === 10; let note = ""; if (full && cat === "전체" && score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("next").hidden = true;
+  $("res").innerHTML = `<b>${qs.length}문제 중 ${score}개 정답</b><p class="muted">${score >= qs.length * .9 ? "상식 박사님! 🎓" : score >= qs.length * .6 ? "잘했어요 👍" : "조금만 더 힘내요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
+  $("res").hidden = false; $("best").textContent = best; $("again").onclick = start;
+}
+$("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); });
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; start(); } });
+$("next").onclick = () => { if (i === qs.length - 1) finish(); else { i++; show(); } };
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>숫자 순서 터치</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 시간·다음 숫자 줄, 숫자가 섞여 있는 정사각형 판. 1부터 순서대로 가장 빨리 누르면 이긴다 */
+:root{--bg:#eef2f6;--surface:#fff;--fg:#1c2530;--muted:#5f6d7c;--line:#d3dce6;--accent:#e8643f;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10161c;--surface:#19222b;--fg:#e8eef4;--muted:#93a2b3;--line:#2a3745;--accent:#ff7f5a;--accent-fg:#10161c;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.grid{display:grid;gap:8px;background:var(--line);padding:8px;border-radius:16px;touch-action:manipulation}
+.c{aspect-ratio:1;border:0;border-radius:12px;background:var(--surface);font-family:var(--font-display);font-size:clamp(1.4rem,8vw,2.2rem);padding:0;line-height:1;min-width:0}
+.c.done{background:var(--ok);color:#fff}.c.bad{background:var(--bad);color:#fff;animation:sh .2s}
+@keyframes sh{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+@media(prefers-reduced-motion:reduce){.c.bad{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>숫자 순서 터치 🔟</h1>
+  <div class="seg" id="lv" role="radiogroup" aria-label="판 크기"></div>
+  <div class="stats"><div class="stat"><small>시간</small><b id="time">0.00</b></div><div class="stat"><small>다음 숫자</small><b id="next">1</b></div><div class="stat"><small>최고 기록</small><b id="best">-</b></div></div>
+  <div class="grid" id="grid"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="newGame" type="button">새로 섞기</button>
+  <p class="muted">흩어져 있는 숫자를 <b>1부터 순서대로</b> 최대한 빨리 누르세요. 첫 숫자(1)를 누르는 순간부터 시간이 흘러요. 틀린 숫자를 누르면 칸이 빨갛게 변해요.</p>
+</main>
+<script>
+const LV = { 3: { n: 3, label: "3×3", hint: "9개" }, 4: { n: 4, label: "4×4", hint: "16개" }, 5: { n: 5, label: "5×5", hint: "25개" } };
+const KEY = "numtap-best-v1", LKEY = "numtap-level-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let lv = [3, 4, 5].includes(ld(LKEY)) ? ld(LKEY) : 4, order = [], nxt = 1, t0 = 0, timer = 0, done = false, wrong = 0, best = ld(KEY) || {};
+const total = () => lv * lv;
+const sec = ms => (ms / 1000).toFixed(2);
+
+function newGame() {
+  clearInterval(timer); t0 = 0; nxt = 1; done = false; wrong = 0; $("res").hidden = true; $("time").textContent = "0.00";
+  order = Array.from({ length: total() }, (_, i) => i + 1); for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  render();
+}
+function tap(v, el) {
+  if (done) return;
+  if (v !== nxt) { wrong++; el.classList.add("bad"); setTimeout(() => el.classList.remove("bad"), 220); return; }
+  if (v === 1) { t0 = performance.now(); timer = setInterval(() => { $("time").textContent = sec(performance.now() - t0); }, 50); }
+  nxt++; if (nxt > total()) return win(); render();
+}
+function win() {
+  done = true; clearInterval(timer); const ms = Math.round(performance.now() - t0); $("time").textContent = sec(ms); let t = `${sec(ms)}초 걸렸어요. 틀린 터치 ${wrong}번.`;
+  if (!best[lv] || ms < best[lv]) { best[lv] = ms; sv(KEY, best); t += " 🏆 최고 기록이에요!"; }
+  nxt = total() + 1; render(); $("res").innerHTML = `<b>🎉 끝!</b><p class="muted">${t}</p>`; $("res").hidden = false;
+}
+function render() {
+  $("grid").style.gridTemplateColumns = `repeat(${lv}, 1fr)`;
+  $("grid").innerHTML = order.map(v => `<button class="c ${v < nxt ? "done" : ""}" type="button" data-v="${v}" aria-label="${v}">${v}</button>`).join("");
+  $("next").textContent = nxt > total() ? "✔" : nxt; $("best").textContent = best[lv] ? sec(best[lv]) + "초" : "-";
+  $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${+k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${+k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+}
+$("grid").addEventListener("pointerdown", e => { const c = e.target.closest("[data-v]"); if (c) { e.preventDefault(); tap(+c.dataset.v, c); } });
+$("grid").addEventListener("click", e => e.preventDefault());
+$("lv").addEventListener("click", e => { const l = e.target.closest("[data-l]"); if (l && +l.dataset.l !== lv) { lv = +l.dataset.l; sv(LKEY, lv); newGame(); } });
+$("newGame").onclick = newGame;
+newGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>속담 퀴즈</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 점수 줄, 빈칸이 뚫린 속담, 네 개의 보기 버튼. 고르면 바로 정답과 완성된 속담을 보여 준다 */
+:root{--bg:#f4f1ec;--surface:#fff;--fg:#2a2420;--muted:#76695f;--line:#e0d8cf;--accent:#c4552b;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#1a1613;--surface:#262019;--fg:#f2ebe5;--muted:#aa9d92;--line:#3b332b;--accent:#ff8a5f;--accent-fg:#1a1613;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px 16px;text-align:center;font-family:var(--font-display);font-size:clamp(1.5rem,7vw,2rem);line-height:1.5;overflow-wrap:anywhere}
+.q .blank{display:inline-block;min-width:3.2em;border-bottom:3px solid var(--accent);color:var(--accent);margin:0 2px}
+.q.done .blank{color:var(--ok);border-color:var(--ok)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:58px;padding:8px;font-weight:700;font-size:1.05rem;overflow-wrap:anywhere}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}
+.opt:disabled{cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>속담 퀴즈 📜</h1>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <p class="muted">빈칸에 들어갈 말을 골라 속담을 완성해 보세요. 10문제를 풀면 결과가 나와요.</p>
+</main>
+<script>
+// [앞부분, 빈칸 정답, 뒷부분, 틀린 보기 3개]
+const D = [
+["가는 말이 고와야 오는 말이 ","곱다","",["거칠다","빠르다","많다"]],["낮말은 새가 듣고 밤말은 ","쥐가"," 듣는다",["고양이가","개가","바람이"]],["호랑이도 제 말 하면 ","온다","",["웃는다","운다","떠난다"]],
+["티끌 모아 ","태산","",["바다","부자","보석"]],["백지장도 맞들면 ","낫다","",["가볍다","찢어진다","깨끗하다"]],["소 잃고 ","외양간"," 고친다",["마구간","대문","지붕"]],
+["우물 안 ","개구리","",["두꺼비","올챙이","물고기"]],["원숭이도 ","나무","에서 떨어진다",["바위","지붕","하늘"]],["세 살 버릇 ","여든","까지 간다",["마흔","쉰","예순"]],
+["하늘이 무너져도 ","솟아날"," 구멍이 있다",["숨을","도망갈","올라갈"]],["열 길 물속은 알아도 한 길 ","사람"," 속은 모른다",["바다","하늘","땅"]],["누워서 ","떡"," 먹기",["밥","과자","죽"]],
+["고래 싸움에 ","새우"," 등 터진다",["물고기","멸치","조개"]],["말 한마디로 ","천 냥"," 빚을 갚는다",["만 냥","백 냥","열 냥"]],["가재는 ","게"," 편",["새우","물고기","조개"]],
+["사공이 많으면 배가 ","산으로"," 간다",["바다로","하늘로","집으로"]],["돌다리도 두들겨 보고 ","건너라","",["뛰어라","던져라","부숴라"]],["아니 땐 굴뚝에 ","연기"," 나랴",["불","구름","눈"]],
+["천 리 길도 ","한 걸음","부터",["두 걸음","첫 발","한 시간"]],["콩 심은 데 콩 나고 팥 심은 데 ","팥"," 난다",["쌀","콩","깨"]],["비 온 뒤에 ","땅","이 굳는다",["길","집","산"]],
+["믿는 도끼에 ","발등"," 찍힌다",["손등","머리","무릎"]],["꿩 대신 ","닭","",["오리","참새","비둘기"]],["윗물이 맑아야 ","아랫물","이 맑다",["바닷물","냇물","빗물"]],
+["그림의 ","떡","",["꽃","밥","집"]],["될성부른 나무는 ","떡잎","부터 알아본다",["뿌리","가지","열매"]],["바늘 도둑이 ","소 도둑"," 된다",["큰 도둑","말 도둑","돼지 도둑"]],
+["우물에 가 ","숭늉"," 찾는다",["물","차","국"]],["제 눈에 ","안경","",["거울","보석","눈물"]],["목마른 사람이 ","우물","을 판다",["샘","강","연못"]],
+["병 주고 ","약"," 준다",["밥","돈","꽃"]],["꼬리가 길면 ","밟힌다","",["잘린다","빠진다","떨어진다"]],["작은 고추가 더 ","맵다","",["크다","빨갛다","쓰다"]],
+["앓던 ","이"," 빠진 것 같다",["손톱","머리카락","발톱"]],["공든 ","탑","이 무너지랴",["집","산","담"]],["낫 놓고 ","기역"," 자도 모른다",["니은","디귿","리을"]]
+];
+const $ = id => document.getElementById(id), KEY = "proverb-best-v1";
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+
+function start() { qs = shuf(D).slice(0, 10).map(d => ({ d, opts: shuf([d[1], ...d[3]]) })); i = 0; score = 0; $("res").hidden = true; show(); }
+function show() {
+  const { d, opts } = qs[i]; locked = false; $("next").hidden = true;
+  $("q").className = "q"; $("q").innerHTML = `${esc(d[0])}<span class="blank">&nbsp;?&nbsp;</span>${esc(d[2])}`;
+  $("opts").innerHTML = opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join("");
+  $("no").textContent = (i + 1) + "/10"; $("score").textContent = score; $("best").textContent = best;
+}
+function pick(k) {
+  if (locked) return; locked = true; const { d, opts } = qs[i], ok = opts[k] === d[1];
+  if (ok) score++;
+  document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === d[1]) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
+  $("q").className = "q done"; $("q").innerHTML = `${esc(d[0])}<span class="blank">${esc(d[1])}</span>${esc(d[2])}`;
+  $("score").textContent = score; $("next").textContent = i === 9 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
+}
+function finish() {
+  let note = ""; if (score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("next").hidden = true;
+  $("res").innerHTML = `<b>10문제 중 ${score}개 정답</b><p class="muted">${score >= 9 ? "속담 박사님! 🎓" : score >= 6 ? "잘했어요 👍" : "조금만 더 힘내요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
+  $("res").hidden = false; $("best").textContent = best; $("again").onclick = start;
+}
+$("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); });
+$("next").onclick = () => { if (i === 9) finish(); else { i++; show(); } };
+start();
+</script>
+</body>
+</html>

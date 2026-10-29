@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오셀로</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 위에 난이도, 흑·백 돌 수, 8×8 판(둘 수 있는 곳에 점 표시), 아래에 새 판 버튼 */
+:root{--bg:#e9f1ec;--surface:#fff;--fg:#17261f;--muted:#5a7066;--line:#cddcd3;--felt:#2f8f5b;--felt2:#2a8352;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1a14;--surface:#18271f;--fg:#e8f2ec;--muted:#95b0a4;--line:#29403a;--felt:#1f6b43;--felt2:#1b6039;--accent:#ff7f5a;--accent-fg:#0f1a14;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(2,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.score{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;display:flex;align-items:center;gap:10px}.sc b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}.sc.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.dot{width:22px;height:22px;border-radius:50%;display:inline-block}.dot.k{background:#161616}.dot.w{background:#f4f4f4;border:1px solid #bbb}
+.turn{text-align:center;font-family:var(--font-display);font-size:1.3rem;min-height:1.8em}
+.board{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;background:#1d5a3a;padding:2px;border-radius:10px;touch-action:manipulation}
+.c{aspect-ratio:1;border:0;background:var(--felt);display:grid;place-items:center;padding:0;position:relative}.c:nth-child(even){background:var(--felt)}
+.c .s{width:78%;height:78%;border-radius:50%;box-shadow:0 2px 3px rgba(0,0,0,.35);transition:transform .2s}.c .s.k{background:radial-gradient(circle at 35% 30%,#555,#111)}.c .s.w{background:radial-gradient(circle at 35% 30%,#fff,#cfcfcf)}
+.c .h{width:22%;height:22%;border-radius:50%;background:rgba(255,255,255,.5)}
+.c.last::after{content:"";position:absolute;inset:3px;border:2px solid #ffd23f;border-radius:6px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+@media(prefers-reduced-motion:reduce){.c .s{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>오셀로 ⚫⚪</h1>
+  <div class="seg" id="lv" role="radiogroup" aria-label="난이도"></div>
+  <div class="score"><div class="sc" id="sk"><i class="dot k"></i><span>나(흑)</span><b id="nk">2</b></div><div class="sc" id="sw"><i class="dot w"></i><span>컴퓨터</span><b id="nw">2</b></div></div>
+  <div class="turn" id="turn" aria-live="polite"></div>
+  <div class="board" id="board" role="grid" aria-label="오셀로 판"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="newGame" type="button">새 판</button>
+  <p class="muted">내 돌(흑)을 놓아 상대 돌을 사이에 끼우면 모두 뒤집혀요. 점이 보이는 칸에만 놓을 수 있고, 둘 곳이 없으면 자동으로 넘어가요. 판이 가득 차면 돌이 많은 쪽이 이겨요.</p>
+</main>
+<script>
+const N = 8, DIRS = [[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]], KEY = "othello-level-v1";
+const LV = { easy: ["쉬움", "아무 곳이나"], hard: ["어려움", "구석을 노려요"] };
+// 칸의 값어치: 구석은 매우 좋고, 구석 바로 옆은 나쁘다 (컴퓨터가 어려움일 때 참고)
+const W = [[100,-20,10,5,5,10,-20,100],[-20,-50,-2,-2,-2,-2,-50,-20],[10,-2,1,1,1,1,-2,10],[5,-2,1,0,0,1,-2,5],[5,-2,1,0,0,1,-2,5],[10,-2,1,1,1,1,-2,10],[-20,-50,-2,-2,-2,-2,-50,-20],[100,-20,10,5,5,10,-20,100]];
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let lv = (ld(KEY) in LV) ? ld(KEY) : "easy", b, turn, over, busy, last;      // b[y][x]: 0 빈칸, 1 흑(나), 2 백(컴퓨터)
+
+const inb = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
+function flips(bd, x, y, p) {                                  // (x,y)에 p가 놓이면 뒤집히는 칸 목록 (비어 있으면 둘 수 없는 칸)
+  if (bd[y][x]) return []; const out = [];
+  for (const [dx, dy] of DIRS) { const line = []; let cx = x + dx, cy = y + dy; while (inb(cx, cy) && bd[cy][cx] && bd[cy][cx] !== p) { line.push([cx, cy]); cx += dx; cy += dy; } if (line.length && inb(cx, cy) && bd[cy][cx] === p) out.push(...line); }
+  return out;
+}
+const moves = (bd, p) => { const m = []; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const f = flips(bd, x, y, p); if (f.length) m.push({ x, y, f }); } return m; };
+const count = (bd, p) => bd.flat().filter(v => v === p).length;
+function apply(bd, m, p) { bd[m.y][m.x] = p; m.f.forEach(([x, y]) => { bd[y][x] = p; }); }
+function newGame() {
+  b = Array.from({ length: N }, () => Array(N).fill(0)); b[3][3] = b[4][4] = 2; b[3][4] = b[4][3] = 1; turn = 1; over = false; busy = false; last = null; $("res").hidden = true; render();
+}
+function afterMove() {                                        // 다음 차례를 정한다. 둘 곳이 없으면 넘기고, 둘 다 없으면 끝
+  const next = turn === 1 ? 2 : 1;
+  if (moves(b, next).length) turn = next; else if (!moves(b, turn).length) return end();
+  render(); if (turn === 2) comp();
+}
+function comp() {
+  busy = true; render();
+  setTimeout(() => {
+    const ms = moves(b, 2); if (!ms.length) { busy = false; return afterMove(); }
+    let pick; if (lv === "easy") pick = ms[Math.floor(Math.random() * ms.length)];
+    else { let best = -1e9; for (const m of ms) { const s = W[m.y][m.x] * 3 + m.f.length + Math.random(); if (s > best) { best = s; pick = m; } } }
+    apply(b, pick, 2); last = [pick.x, pick.y]; busy = false; afterMove();
+  }, 450);
+}
+function tap(x, y) {
+  if (over || busy || turn !== 1) return; const f = flips(b, x, y, 1); if (!f.length) return;
+  apply(b, { x, y, f }, 1); last = [x, y]; afterMove();
+}
+function end() {
+  over = true; busy = false; const k = count(b, 1), w = count(b, 2);
+  $("res").innerHTML = `<b>${k > w ? "🎉 내가 이겼어요!" : k < w ? "😢 컴퓨터가 이겼어요" : "🤝 비겼어요"}</b><p class="muted">흑 ${k} : 백 ${w}</p>`; $("res").hidden = false; render();
+}
+function render() {
+  const mv = turn === 1 && !over && !busy ? moves(b, 1) : [];
+  $("board").innerHTML = b.map((row, y) => row.map((v, x) => {
+    const hint = mv.some(m => m.x === x && m.y === y);
+    return `<button class="c ${last && last[0] === x && last[1] === y ? "last" : ""}" type="button" data-x="${x}" data-y="${y}" aria-label="${v === 1 ? "흑" : v === 2 ? "백" : hint ? "둘 수 있는 칸" : "빈 칸"}">${v ? `<span class="s ${v === 1 ? "k" : "w"}"></span>` : hint ? `<span class="h"></span>` : ""}</button>`;
+  }).join("")).join("");
+  $("nk").textContent = count(b, 1); $("nw").textContent = count(b, 2);
+  $("sk").classList.toggle("cur", !over && turn === 1); $("sw").classList.toggle("cur", !over && turn === 2);
+  $("turn").textContent = over ? "게임 끝" : busy ? "컴퓨터가 생각 중…" : "내 차례예요 (점이 있는 칸)";
+  $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === lv}">${LV[k][0]}<small>${LV[k][1]}</small></button>`).join("");
+}
+$("board").addEventListener("click", e => { const c = e.target.closest("[data-x]"); if (c) tap(+c.dataset.x, +c.dataset.y); });
+$("lv").addEventListener("click", e => { const l = e.target.closest("[data-l]"); if (l && l.dataset.l !== lv) { lv = l.dataset.l; sv(KEY, lv); newGame(); } });
+$("newGame").onclick = newGame;
+newGame();
+</script>
+</body>
+</html>

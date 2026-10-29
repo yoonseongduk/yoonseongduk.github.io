@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오목</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 위에 대결 상대 선택, 가운데 15×15 바둑판(교차점을 터치), 아래에 무르기·새 판 버튼 */
+:root{--bg:#f3eee4;--surface:#fff;--fg:#2b251d;--muted:#7a6f60;--line:#ddd3c0;--wood:#e2b96d;--wood-line:#8a6a2f;--accent:#c4552b;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#1a1611;--surface:#262019;--fg:#f2ebdf;--muted:#ab9f8d;--line:#3b332a;--wood:#b88b45;--wood-line:#4a3410;--accent:#ff8a5f;--accent-fg:#1a1611;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.turn{text-align:center;font-family:var(--font-display);font-size:1.4rem;min-height:1.8em}
+.wrap{border-radius:10px;overflow:hidden;border:2px solid var(--wood-line);touch-action:manipulation}
+canvas{width:100%;display:block;aspect-ratio:1}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}
+.btn:disabled{opacity:.45;cursor:default}
+</style>
+</head>
+<body>
+<main>
+  <h1>오목 ⚫⚪</h1>
+  <div class="seg" id="opp" role="radiogroup" aria-label="상대"></div>
+  <div class="turn" id="turn" aria-live="polite"></div>
+  <div class="wrap"><canvas id="cv" aria-label="오목판"></canvas></div>
+  <div class="row"><button class="btn ghost" id="undo" type="button">↶ 무르기</button><button class="btn" id="newGame" type="button">새 판</button></div>
+  <p class="muted">가로, 세로, 대각선으로 내 돌 5개를 먼저 이으면 이겨요. 내가 흑(먼저)이고, 교차점을 터치해서 돌을 놓아요.</p>
+</main>
+<script>
+const N = 15, DIRS = [[1, 0], [0, 1], [1, 1], [1, -1]], KEY = "omok-v1";
+const OPPS = { easy: ["쉬움", "컴퓨터 · 약함"], hard: ["어려움", "컴퓨터 · 강함"], two: ["2명", "번갈아 두기"] };
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let opp = (ld(KEY) in OPPS) ? ld(KEY) : "easy", b, hist, turn, over, winLine, busy;     // b[y][x]: 0 빈칸, 1 흑, 2 백
+
+const inb = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
+function lineOf(x, y, p) {                                  // (x,y)에 p가 놓였을 때 5목 이상이면 그 줄을 돌려준다
+  for (const [dx, dy] of DIRS) {
+    const cells = [[x, y]];
+    for (const s of [1, -1]) { let k = 1; while (inb(x + s * dx * k, y + s * dy * k) && b[y + s * dy * k][x + s * dx * k] === p) { cells.push([x + s * dx * k, y + s * dy * k]); k++; } }
+    if (cells.length >= 5) return cells;
+  }
+  return null;
+}
+// 한 점의 가치: 네 방향의 연속된 돌 수와 양쪽이 열려 있는지로 점수를 매긴다
+function scoreAt(x, y, p) {
+  let tot = 0;
+  for (const [dx, dy] of DIRS) {
+    let cnt = 1, open = 0;
+    for (const s of [1, -1]) { let k = 1; while (inb(x + s * dx * k, y + s * dy * k) && b[y + s * dy * k][x + s * dx * k] === p) { cnt++; k++; } if (inb(x + s * dx * k, y + s * dy * k) && b[y + s * dy * k][x + s * dx * k] === 0) open++; }
+    if (cnt >= 5) tot += 100000; else if (cnt === 4) tot += open === 2 ? 10000 : open === 1 ? 1000 : 0; else if (cnt === 3) tot += open === 2 ? 1000 : open === 1 ? 100 : 0; else if (cnt === 2) tot += open === 2 ? 100 : open === 1 ? 10 : 0; else tot += open;
+  }
+  return tot;
+}
+function aiMove() {
+  const cand = []; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!b[y][x]) {
+    let near = false; for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) if (inb(x + dx, y + dy) && b[y + dy][x + dx]) { near = true; break; }
+    if (near) cand.push([x, y]);
+  }
+  if (!cand.length) return [7, 7];
+  let best = -1, pick = [];
+  for (const [x, y] of cand) {
+    const atk = scoreAt(x, y, 2), def = scoreAt(x, y, 1);
+    const noise = opp === "easy" ? Math.random() * 1500 : Math.random() * 2;          // 쉬운 컴퓨터는 가끔 엉뚱한 곳에 둔다
+    const s = (opp === "easy" ? atk * .8 + def * .6 : atk * 1.05 + def) + noise;
+    if (s > best) { best = s; pick = [[x, y]]; } else if (s === best) pick.push([x, y]);
+  }
+  return pick[Math.floor(Math.random() * pick.length)];
+}
+function newGame() { b = Array.from({ length: N }, () => Array(N).fill(0)); hist = []; turn = 1; over = false; winLine = null; busy = false; render(); }
+function place(x, y) {
+  b[y][x] = turn; hist.push([x, y, turn]); const l = lineOf(x, y, turn);
+  if (l) { over = true; winLine = l; } else if (hist.length === N * N) over = true; else turn = turn === 1 ? 2 : 1;
+  render();
+}
+function tap(x, y) {
+  if (over || busy || b[y][x]) return;
+  if (opp !== "two" && turn !== 1) return;
+  place(x, y);
+  if (!over && opp !== "two") { busy = true; render(); setTimeout(() => { if (!hist.length) return; const [ax, ay] = aiMove(); busy = false; place(ax, ay); }, 350); }
+}
+function undo() {
+  if (busy || !hist.length) return;
+  if (opp === "two") { const [x, y, p] = hist.pop(); b[y][x] = 0; turn = p; }                       // 2명: 마지막 한 수만 되돌린다
+  else { while (hist.length) { const [x, y, p] = hist.pop(); b[y][x] = 0; if (p === 1) break; } turn = 1; }   // 컴퓨터: 내 마지막 수까지 되돌린다
+  over = false; winLine = null; render();
+}
+function render() {
+  const cv = $("cv"), w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!w) return;
+  cv.width = cv.height = Math.round(w * dpr); const c = cv.getContext("2d"); c.scale(dpr, dpr);
+  const css = getComputedStyle(document.documentElement), wood = css.getPropertyValue("--wood").trim(), ln = css.getPropertyValue("--wood-line").trim();
+  const u = w / N; c.fillStyle = wood; c.fillRect(0, 0, w, w); c.strokeStyle = ln; c.lineWidth = 1;
+  for (let i = 0; i < N; i++) { const p = (i + .5) * u; c.beginPath(); c.moveTo(.5 * u, p); c.lineTo((N - .5) * u, p); c.stroke(); c.beginPath(); c.moveTo(p, .5 * u); c.lineTo(p, (N - .5) * u); c.stroke(); }
+  c.fillStyle = ln; for (const [x, y] of [[3, 3], [11, 3], [7, 7], [3, 11], [11, 11]]) { c.beginPath(); c.arc((x + .5) * u, (y + .5) * u, u * .09, 0, 7); c.fill(); }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (b[y][x]) {
+    const cx = (x + .5) * u, cy = (y + .5) * u; c.beginPath(); c.arc(cx, cy, u * .44, 0, 7);
+    const g = c.createRadialGradient(cx - u * .15, cy - u * .15, u * .05, cx, cy, u * .45);
+    if (b[y][x] === 1) { g.addColorStop(0, "#666"); g.addColorStop(1, "#111"); } else { g.addColorStop(0, "#fff"); g.addColorStop(1, "#cfcfcf"); }
+    c.fillStyle = g; c.fill(); if (b[y][x] === 2) { c.strokeStyle = "rgba(0,0,0,.3)"; c.stroke(); }
+  }
+  if (hist.length) { const [x, y] = hist[hist.length - 1]; c.fillStyle = "#e8453c"; c.beginPath(); c.arc((x + .5) * u, (y + .5) * u, u * .1, 0, 7); c.fill(); }
+  if (winLine) { c.strokeStyle = "#e8453c"; c.lineWidth = 3; winLine.forEach(([x, y]) => { c.beginPath(); c.arc((x + .5) * u, (y + .5) * u, u * .47, 0, 7); c.stroke(); }); }
+  const two = opp === "two", nm = p => two ? (p === 1 ? "⚫ 흑" : "⚪ 백") : (p === 1 ? "내" : "컴퓨터");
+  $("turn").textContent = over ? (winLine ? (two ? nm(turn) + " 승리! 🎉" : turn === 1 ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요") : "무승부예요 🤝") : busy ? "컴퓨터가 생각 중…" : (two ? nm(turn) + " 차례예요" : "내 차례예요 (⚫)");
+  $("opp").innerHTML = Object.keys(OPPS).map(k => `<button type="button" class="${k === opp ? "on" : ""}" data-o="${k}" role="radio" aria-checked="${k === opp}">${OPPS[k][0]}<small>${OPPS[k][1]}</small></button>`).join("");
+  $("undo").disabled = busy || !hist.length;
+}
+$("cv").addEventListener("click", e => { const r = e.target.getBoundingClientRect(), u = r.width / N, x = Math.floor((e.clientX - r.left) / u), y = Math.floor((e.clientY - r.top) / u); if (inb(x, y)) tap(x, y); });
+$("opp").addEventListener("click", e => { const o = e.target.closest("[data-o]"); if (o && o.dataset.o !== opp) { opp = o.dataset.o; sv(KEY, opp); newGame(); } });
+$("undo").onclick = undo; $("newGame").onclick = newGame; window.addEventListener("resize", render);
+newGame();
+</script>
+</body>
+</html>

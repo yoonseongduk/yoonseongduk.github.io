@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>라이어 게임</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 설정(인원·주제) → 돌려 보기(한 명씩 카드 확인) → 토론 타이머 → 정답 공개. 휴대폰 한 대를 돌려 가며 쓴다 */
+:root{--bg:#f2eef6;--surface:#fff;--fg:#261f33;--muted:#6f6682;--line:#dfd8ea;--accent:#8e3fc4;--accent-fg:#fff;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15111c;--surface:#201a2b;--fg:#efe9f8;--muted:#a79bbd;--line:#372e49;--accent:#c58cf0;--accent-fg:#15111c;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.3rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
+label.opt{display:flex;gap:10px;align-items:center}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.35rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}
+.secret{min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
+.secret .who{font-family:var(--font-display);font-size:1.6rem}.secret .word{font-family:var(--font-display);font-size:clamp(2.2rem,12vw,3.2rem);color:var(--accent);overflow-wrap:anywhere}.secret .word.liar{color:var(--bad)}
+.timer{font-family:var(--font-display);font-size:3.4rem;text-align:center;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<main>
+  <h1>라이어 게임 🤥</h1>
+  <section id="setup" class="card">
+    <div class="step"><h2>참가 인원</h2><div><button id="minus" type="button" aria-label="한 명 줄이기">−</button><b id="n">4</b><button id="plus" type="button" aria-label="한 명 늘리기">＋</button></div></div>
+    <h2>주제</h2><div class="chips" id="topics" role="radiogroup" aria-label="주제"></div>
+    <label class="opt"><input type="checkbox" id="showTopic" checked> 라이어에게도 <b>주제</b>(예: 동물)는 알려 주기</label>
+    <button class="btn" id="start" type="button">게임 시작</button>
+    <p class="muted">모두가 같은 제시어를 받고, <b>한 명(라이어)만 제시어를 몰라요.</b> 돌아가며 제시어를 설명하면서 라이어를 찾아내는 게임이에요. 휴대폰 한 대를 돌려 가며 자기 카드를 확인하세요.</p>
+  </section>
+  <section id="pass" class="card" hidden>
+    <p class="muted" id="pc"></p>
+    <div class="secret" id="secret"></div>
+    <button class="btn" id="show" type="button">내 카드 보기</button>
+  </section>
+  <section id="talk" class="card" hidden>
+    <h2>토론 시간!</h2><div class="timer" id="tm">3:00</div>
+    <p class="muted">처음 사람부터 돌아가며 제시어를 설명하세요. 라이어는 아는 척 따라 말해야 해요. 시간이 끝나면 모두 동시에 라이어를 손가락으로 가리켜요.</p>
+    <button class="btn" id="reveal" type="button">정답 공개</button>
+  </section>
+  <section id="end" class="card" hidden>
+    <h2>결과</h2><div class="secret" id="result"></div>
+    <p class="muted">라이어가 뽑혔다면 라이어에게 마지막 기회를 주세요. 제시어를 맞히면 라이어의 역전승! 모르면 다른 사람들의 승리예요.</p>
+    <button class="btn" id="again" type="button">한 판 더</button><button class="btn ghost" id="home" type="button">설정으로</button>
+  </section>
+</main>
+<script>
+const TOPICS = {
+  "음식": "김치찌개 비빔밥 떡볶이 삼겹살 냉면 짜장면 치킨 피자 햄버거 라면 초밥 김밥 순대 파스타 갈비",
+  "동물": "코끼리 기린 호랑이 토끼 강아지 고양이 원숭이 펭귄 고래 독수리 하마 사자 거북이 판다 앵무새",
+  "장소": "도서관 학교 병원 공원 놀이공원 박물관 시장 백화점 은행 영화관 수영장 동물원 공항 캠핑장 찜질방",
+  "직업": "의사 선생님 경찰관 소방관 요리사 가수 화가 변호사 농부 간호사 운동선수 과학자 기자 미용사 조종사",
+  "스포츠": "축구 야구 농구 배구 탁구 수영 태권도 스키 볼링 골프 테니스 배드민턴 마라톤 양궁 씨름",
+  "물건": "냉장고 세탁기 텔레비전 우산 연필 가방 시계 안경 자전거 청소기 가위 지우개 거울 칫솔 베개"
+};
+const $ = id => document.getElementById(id), KEY = "liar-v1";
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let cfg = ld(KEY) || { n: 4, topic: "음식", showTopic: true }, game = null, shown = false, tick = 0;
+cfg.n = Math.min(10, Math.max(3, cfg.n || 4)); if (!TOPICS[cfg.topic]) cfg.topic = "음식";
+const show = id => ["setup", "pass", "talk", "end"].forEach(s => { $(s).hidden = s !== id; });
+
+function drawSetup() {
+  $("n").textContent = cfg.n; $("showTopic").checked = cfg.showTopic;
+  $("topics").innerHTML = Object.keys(TOPICS).map(t => `<button type="button" class="chip ${t === cfg.topic ? "on" : ""}" data-t="${t}" role="radio" aria-checked="${t === cfg.topic}">${t}</button>`).join("");
+}
+// 제시어와 라이어를 정한다. 라이어는 정확히 한 명이다
+function deal(n, topic) {
+  const words = TOPICS[topic].split(" "); return { topic, word: words[Math.floor(Math.random() * words.length)], liar: Math.floor(Math.random() * n), n, i: 0 };
+}
+function begin() { game = deal(cfg.n, cfg.topic); sv(KEY, cfg); show("pass"); drawPass(); }
+function drawPass() {
+  shown = false; $("pc").textContent = `${game.i + 1}번째 사람 / 총 ${game.n}명`;
+  $("secret").innerHTML = `<div class="who">${game.i + 1}번 차례</div><p class="muted">다른 사람이 보지 못하게 하고<br>준비되면 아래 버튼을 누르세요</p>`; $("show").textContent = "내 카드 보기";
+}
+function reveal() {
+  if (!shown) {
+    shown = true; const liar = game.i === game.liar;
+    $("secret").innerHTML = liar ? `<div class="who">${game.i + 1}번</div><div class="word liar">당신은 라이어!</div><p class="muted">${cfg.showTopic ? "주제는 <b>" + game.topic + "</b> 이에요" : "주제도 몰라요"}. 들키지 않게 아는 척하세요 🤫</p>`
+      : `<div class="who">${game.i + 1}번</div><p class="muted">주제: ${game.topic}</p><div class="word">${game.word}</div>`;
+    $("show").textContent = game.i + 1 < game.n ? "확인했어요 (카드 가리기)" : "확인했어요 (토론 시작)";
+  } else {
+    game.i++; if (game.i < game.n) drawPass(); else startTalk();
+  }
+}
+function startTalk() {
+  show("talk"); let left = 180; const draw = () => { $("tm").textContent = Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0"); };
+  draw(); clearInterval(tick); tick = setInterval(() => { left = Math.max(0, left - 1); draw(); if (!left) { clearInterval(tick); $("tm").textContent = "시간 끝!"; } }, 1000);
+}
+function end() {
+  clearInterval(tick); show("end");
+  $("result").innerHTML = `<p class="muted">제시어 (주제: ${game.topic})</p><div class="word">${game.word}</div><p class="who" style="margin-top:8px">🤥 라이어는 <b>${game.liar + 1}번</b></p>`;
+}
+$("minus").onclick = () => { if (cfg.n > 3) { cfg.n--; drawSetup(); } }; $("plus").onclick = () => { if (cfg.n < 10) { cfg.n++; drawSetup(); } };
+$("topics").addEventListener("click", e => { const t = e.target.closest("[data-t]"); if (t) { cfg.topic = t.dataset.t; drawSetup(); } });
+$("showTopic").onchange = e => { cfg.showTopic = e.target.checked; };
+$("start").onclick = begin; $("show").onclick = reveal; $("reveal").onclick = end; $("again").onclick = begin;
+$("home").onclick = () => { clearInterval(tick); show("setup"); drawSetup(); };
+drawSetup();
+</script>
+</body>
+</html>

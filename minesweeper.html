@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>지뢰찾기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 위에 지뢰 수·시간·깃발 모드, 아래에 8칸 너비의 판. 누르면 열고, 길게 누르거나 깃발 모드면 깃발을 꽂는다 */
+:root{--bg:#e9eef2;--surface:#fff;--fg:#1c2530;--muted:#5f6d7c;--line:#cfd8e0;--closed:#9fb3c4;--open:#f4f7f9;--accent:#e8643f;--accent-fg:#fff;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10161c;--surface:#19222b;--fg:#e8eef4;--muted:#93a2b3;--line:#2a3745;--closed:#3d5368;--open:#1f2a35;--accent:#ff7f5a;--accent-fg:#10161c;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}
+.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.bar{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:stretch}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px}
+.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.flagbtn{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:0 12px;font-weight:700}
+.flagbtn.on{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
+.grid{display:grid;gap:3px;background:var(--line);padding:3px;border-radius:12px;touch-action:manipulation}
+.c{aspect-ratio:1;border:0;border-radius:5px;background:var(--closed);display:grid;place-items:center;font-family:var(--font-display);font-size:1.25rem;padding:0;line-height:1;min-width:0}
+.c.o{background:var(--open);cursor:default}
+.c.m{background:var(--bad);color:#fff}
+.c.x{background:#f3c5bf}
+.n1{color:#2468d6}.n2{color:#2f8f46}.n3{color:#d6453a}.n4{color:#6a3fc2}.n5{color:#a8571f}.n6{color:#1a8f93}.n7{color:#222}.n8{color:#777}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>지뢰찾기 💣</h1>
+  <div class="seg" id="levels" role="radiogroup" aria-label="난이도"></div>
+  <div class="bar">
+    <div class="stat"><small>남은 지뢰</small><b id="left">0</b></div>
+    <div class="stat"><small>시간</small><b id="time">0</b></div>
+    <button class="flagbtn" id="flagMode" type="button" aria-pressed="false">🚩 깃발 모드</button>
+  </div>
+  <div class="grid" id="grid" role="grid" aria-label="지뢰찾기 판"></div>
+  <div class="res" id="res" hidden></div>
+  <p class="muted">칸을 누르면 열려요. 숫자는 <b>둘레 8칸에 있는 지뢰 수</b>예요. <b>길게 누르거나 깃발 모드</b>에서 누르면 🚩 깃발을 꽂아요. 숫자 칸을 누르면 둘레 깃발 수가 맞을 때 나머지 칸이 한꺼번에 열려요.</p>
+  <button class="btn" id="newGame" type="button">새 게임</button>
+</main>
+<script>
+const LV = { easy: { r: 8, c: 8, m: 10, label: "쉬움", hint: "8×8 · 10개" }, normal: { r: 12, c: 8, m: 20, label: "보통", hint: "12×8 · 20개" }, hard: { r: 16, c: 8, m: 36, label: "어려움", hint: "16×8 · 36개" } };
+const BEST = "minesweeper-best-v1", LVKEY = "minesweeper-level-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let level = (ld(LVKEY) in LV) ? ld(LVKEY) : "easy", cells = [], started = false, state = "play", flagMode = false, t0 = 0, timer = 0, best = ld(BEST) || {}, held = false;
+
+const L = () => LV[level];
+function nb(i) {                      // 둘레 칸 번호들
+  const { r, c } = L(), y = Math.floor(i / c), x = i % c, o = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dy && !dx) continue; const yy = y + dy, xx = x + dx; if (yy >= 0 && yy < r && xx >= 0 && xx < c) o.push(yy * c + xx); }
+  return o;
+}
+function newGame() {
+  clearInterval(timer); timer = 0; started = false; state = "play"; t0 = 0;
+  cells = Array.from({ length: L().r * L().c }, () => ({ mine: false, open: false, flag: false, n: 0 }));
+  $("res").hidden = true; render();
+}
+function place(first) {               // 첫 번째로 연 칸과 그 둘레에는 지뢰를 두지 않는다 (첫 클릭은 항상 안전)
+  const safe = new Set([first, ...nb(first)]), pool = cells.map((_, i) => i).filter(i => !safe.has(i));
+  for (let k = pool.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [pool[k], pool[j]] = [pool[j], pool[k]]; }
+  pool.slice(0, L().m).forEach(i => { cells[i].mine = true; });
+  cells.forEach((cl, i) => { cl.n = nb(i).filter(j => cells[j].mine).length; });
+}
+function open(i) {
+  const cl = cells[i]; if (state !== "play" || cl.open || cl.flag) return;
+  if (!started) { started = true; place(i); t0 = Date.now(); timer = setInterval(tick, 250); }
+  if (cl.mine) { return lose(i); }
+  const st = [i];
+  while (st.length) { const k = st.pop(), c = cells[k]; if (c.open || c.flag) continue; c.open = true; if (c.n === 0) nb(k).forEach(j => { if (!cells[j].open && !cells[j].mine) st.push(j); }); }
+  if (cells.every(c => c.mine || c.open)) win();
+  render();
+}
+function chord(i) {                   // 숫자 칸: 둘레 깃발 수가 숫자와 같으면 나머지를 연다
+  const cl = cells[i]; if (!cl.open || !cl.n) return;
+  const ns = nb(i); if (ns.filter(j => cells[j].flag).length !== cl.n) return;
+  ns.forEach(j => { if (state === "play") open(j); });
+}
+function flag(i) { const c = cells[i]; if (state !== "play" || c.open) return; c.flag = !c.flag; render(); }
+const elapsed = () => started ? Math.floor((Date.now() - t0) / 1000) : 0;
+function tick() { $("time").textContent = elapsed(); }
+function lose(i) { state = "lose"; clearInterval(timer); cells.forEach(c => { if (c.mine) c.open = true; }); cells[i].hit = true; res("💥 지뢰를 밟았어요", "다시 도전해 보세요!"); render(); }
+function win() {
+  state = "win"; clearInterval(timer); const s = elapsed(); let t = s + "초 만에 모두 찾았어요.";
+  if (!best[level] || s < best[level]) { best[level] = s; sv(BEST, best); t += " 🏆 최고 기록이에요!"; }
+  cells.forEach(c => { if (c.mine) c.flag = true; }); res("🎉 성공!", t);
+}
+function res(h, t) { $("res").innerHTML = `<b>${h}</b><p class="muted">${t}</p>`; $("res").hidden = false; }
+
+function render() {
+  const { c } = L();
+  $("grid").style.gridTemplateColumns = `repeat(${c}, 1fr)`;
+  $("grid").innerHTML = cells.map((cl, i) => {
+    let cls = "c", txt = "";
+    if (cl.open) { cls += " o"; if (cl.mine) { cls += cl.hit ? " m" : " x"; txt = "💣"; } else if (cl.n) { cls += " n" + cl.n; txt = cl.n; } }
+    else if (cl.flag) txt = "🚩";
+    return `<button class="${cls}" data-i="${i}" type="button" aria-label="${cl.open ? (cl.mine ? "지뢰" : cl.n + "개") : cl.flag ? "깃발" : "닫힌 칸"}">${txt}</button>`;
+  }).join("");
+  $("left").textContent = L().m - cells.filter(c => c.flag).length;
+  $("time").textContent = elapsed();
+  $("levels").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === level ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === level}">${LV[k].label}<small>${LV[k].hint}${best[k] ? " · 🏆" + best[k] + "초" : ""}</small></button>`).join("");
+  $("flagMode").classList.toggle("on", flagMode); $("flagMode").setAttribute("aria-pressed", flagMode);
+}
+
+// 눌렀을 때: 깃발 모드면 깃발, 아니면 열기(숫자 칸이면 한꺼번에 열기). 길게 누르면 깃발.
+let pressT = 0, pressI = -1;
+const grid = $("grid");
+grid.addEventListener("pointerdown", e => { const b = e.target.closest("[data-i]"); if (!b) return; held = false; pressI = +b.dataset.i; pressT = setTimeout(() => { held = true; flag(pressI); try { navigator.vibrate && navigator.vibrate(20); } catch (x) {} }, 450); });
+["pointerup", "pointerleave", "pointercancel"].forEach(ev => grid.addEventListener(ev, () => clearTimeout(pressT)));
+grid.addEventListener("click", e => {
+  const b = e.target.closest("[data-i]"); if (!b) return; if (held) { held = false; return; }
+  const i = +b.dataset.i, c = cells[i];
+  if (flagMode) flag(i); else if (c.open) chord(i); else open(i);
+});
+grid.addEventListener("contextmenu", e => { const b = e.target.closest("[data-i]"); if (!b) return; e.preventDefault(); flag(+b.dataset.i); });
+$("flagMode").onclick = () => { flagMode = !flagMode; render(); };
+$("levels").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (!b || b.dataset.l === level) return; level = b.dataset.l; sv(LVKEY, level); newGame(); });
+$("newGame").onclick = newGame;
+newGame();
+</script>
+</body>
+</html>

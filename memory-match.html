@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>카드 짝 맞추기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 위에 시도 횟수·시간·최고 기록, 가운데 카드 판(4칸 너비), 아래 난이도와 새 게임 */
+:root{--bg:#f1eefa;--surface:#fff;--fg:#241f35;--muted:#6a6382;--line:#ddd8ee;--back:#6b57d6;--front:#fff;--ok:#c8f0d8;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14111f;--surface:#1f1a31;--fg:#ece8f8;--muted:#a199bd;--line:#352e4f;--back:#7d6af0;--front:#2b2542;--ok:#245a3d;--accent:#ff7f5a;--accent-fg:#14111f;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}
+.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.card{aspect-ratio:3/4;perspective:600px;border:0;background:none;padding:0;min-width:0}
+.in{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .3s}
+.card.up .in,.card.ok .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:12px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:grid;place-items:center}
+.back{background:var(--back);color:#fff;font-family:var(--font-display);font-size:1.6rem;opacity:.95}
+.front{background:var(--front);border:2px solid var(--line);transform:rotateY(180deg);font-size:clamp(1.8rem,10vw,2.6rem);line-height:1}
+.card.ok .front{background:var(--ok);border-color:transparent}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}
+.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+@media(prefers-reduced-motion:reduce){.in{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>카드 짝 맞추기 🃏</h1>
+  <div class="stats">
+    <div class="stat"><small>시도</small><b id="moves">0</b></div>
+    <div class="stat"><small>시간</small><b id="time">0:00</b></div>
+    <div class="stat"><small>최고 기록</small><b id="best">-</b></div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="res" id="res" hidden></div>
+  <p class="muted">카드를 두 장씩 뒤집어서 <b>같은 그림</b>끼리 짝을 맞추세요. 적은 시도로 모두 맞출수록 좋아요!</p>
+  <div class="seg" id="levels" role="radiogroup" aria-label="난이도"></div>
+  <button class="btn" id="newGame" type="button">새로 섞기</button>
+</main>
+<script>
+const FACES = ["🐶","🐱","🐰","🦊","🐻","🐼","🐸","🐵","🦁","🐯","🐨","🐷"];
+const LV = { easy: { pairs: 6, label: "쉬움", hint: "6쌍 · 12장" }, normal: { pairs: 8, label: "보통", hint: "8쌍 · 16장" }, hard: { pairs: 12, label: "어려움", hint: "12쌍 · 24장" } };
+const BEST = "memory-best-v1", LVKEY = "memory-level-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const fmt = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+let level = (ld(LVKEY) in LV) ? ld(LVKEY) : "normal", deck = [], up = [], matched = new Set(), moves = 0, busy = false, t0 = 0, timer = 0, done = false, best = ld(BEST) || {};
+
+function newGame() {
+  clearInterval(timer); timer = 0; t0 = 0; moves = 0; up = []; matched = new Set(); busy = false; done = false;
+  deck = FACES.slice(0, LV[level].pairs).flatMap(f => [f, f]);
+  for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+  $("res").hidden = true; render();
+}
+function render() {
+  $("grid").innerHTML = deck.map((f, i) => `<button type="button" class="card ${matched.has(i) ? "ok" : up.includes(i) ? "up" : ""}" data-i="${i}" data-f="${f}" aria-label="${matched.has(i) || up.includes(i) ? f : "뒤집힌 카드"}"><span class="in"><span class="face back">?</span><span class="face front">${f}</span></span></button>`).join("");
+  $("moves").textContent = moves;
+  $("time").textContent = fmt(t0 ? Math.floor((Date.now() - t0) / 1000) : 0);
+  const b = best[level]; $("best").textContent = b ? b.moves + "번" : "-";
+  $("levels").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === level ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === level}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+}
+function flip(i) {
+  if (busy || done || up.includes(i) || matched.has(i)) return;
+  if (!t0) { t0 = Date.now(); timer = setInterval(() => { $("time").textContent = fmt(Math.floor((Date.now() - t0) / 1000)); }, 500); }
+  up.push(i);
+  if (up.length < 2) return render();
+  moves++; render();
+  const [a, b] = up;
+  if (deck[a] === deck[b]) {                                      // 짝이 맞으면 그대로 둔다
+    matched.add(a); matched.add(b); up = []; render();
+    if (matched.size === deck.length) finish();
+  } else {                                                         // 틀리면 잠깐 보여 준 뒤 다시 덮는다
+    busy = true; setTimeout(() => { up = []; busy = false; render(); }, 750);
+  }
+}
+function finish() {
+  done = true; clearInterval(timer); const s = Math.floor((Date.now() - t0) / 1000); let t = moves + "번 만에, " + fmt(s) + " 걸렸어요.";
+  const p = best[level];
+  if (!p || moves < p.moves) { best[level] = { moves, time: s }; sv(BEST, best); t += " 🏆 최고 기록이에요!"; }
+  $("res").innerHTML = `<b>🎉 모두 맞혔어요!</b><p class="muted">${t}</p>`; $("res").hidden = false; render();
+}
+$("grid").addEventListener("click", e => { const c = e.target.closest("[data-i]"); if (c) flip(+c.dataset.i); });
+$("levels").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (!b || b.dataset.l === level) return; level = b.dataset.l; sv(LVKEY, level); newGame(); });
+$("newGame").onclick = newGame;
+newGame();
+</script>
+</body>
+</html>

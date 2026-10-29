@@ -47,6 +47,8 @@ h1 { font-family: var(--font-display); font-weight: 400; font-size: 2.2rem; line
   background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px;
   color: inherit; text-decoration: none; border-left: 6px solid var(--c);
 }
+.game.hh { --c: hsl(var(--h) 55% 42%); }
+@media (prefers-color-scheme: dark) { .game.hh { --c: hsl(var(--h) 70% 68%); } }
 .game:hover { border-color: var(--c); }
 .game:focus-visible { outline: 3px solid var(--c); outline-offset: 2px; }
 .game:active { transform: scale(.98); }
@@ -89,6 +91,18 @@ footer { color: var(--muted); font-size: .85rem; }
     <li><a class="game" style="--c: var(--c6)" href="number-baseball.html">
       <span class="icon" aria-hidden="true">⚾</span>
       <span class="text"><h2>숫자 야구</h2><p>스트라이크와 볼 힌트로 비밀 숫자를 추리해서 맞혀요.</p></span>
+      <span class="go" aria-hidden="true">›</span></a></li>
+    <li><a class="game hh" style="--h: 35" href="game-2048.html">
+      <span class="icon" aria-hidden="true">🔢</span>
+      <span class="text"><h2>2048</h2><p>같은 숫자를 밀어서 합쳐 2048을 만들어요.</p></span>
+      <span class="go" aria-hidden="true">›</span></a></li>
+    <li><a class="game hh" style="--h: 210" href="minesweeper.html">
+      <span class="icon" aria-hidden="true">💣</span>
+      <span class="text"><h2>지뢰찾기</h2><p>숫자 힌트로 지뢰를 피해 모든 칸을 열어요.</p></span>
+      <span class="go" aria-hidden="true">›</span></a></li>
+    <li><a class="game hh" style="--h: 265" href="memory-match.html">
+      <span class="icon" aria-hidden="true">🃏</span>
+      <span class="text"><h2>카드 짝 맞추기</h2><p>같은 그림 카드를 찾아 짝을 맞춰요.</p></span>
       <span class="go" aria-hidden="true">›</span></a></li>
   </ul>
 

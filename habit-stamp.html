@@ -15,6 +15,7 @@
   --line: #d9e0d3;
   --ink: #d6453a;           /* 도장 빨강 */
   --ink-fg: #ffffff;
+  --sat: #2f62d0;           /* 토요일 */
   --btn: #1f2a24;
   --btn-fg: #f1f4ee;
   --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
@@ -24,7 +25,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #141a16; --surface: #1d2620; --fg: #e9f0e5; --muted: #9bab96; --line: #2f3d33;
-    --ink: #ff6b5e; --ink-fg: #141a16; --btn: #e9f0e5; --btn-fg: #141a16; color-scheme: dark;
+    --ink: #ff6b5e; --ink-fg: #141a16; --sat: #7ba4ff; --btn: #e9f0e5; --btn-fg: #141a16; color-scheme: dark;
   }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -67,7 +68,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 .bar i { display: block; height: 100%; background: var(--ink); transition: width .25s; }
 .meta { display: flex; justify-content: space-between; gap: 8px; }
 
-.grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.wd { text-align: center; font-size: .75rem; font-weight: 700; color: var(--muted); padding-bottom: 2px; }
+.wd.sun { color: var(--ink); }
+.wd.sat { color: var(--sat); }
+.cell.md, .cell.on.md { font-size: .7rem; letter-spacing: -.02em; }
+@media (max-width: 360px) { .cell, .cell.on { font-size: .75rem; } .cell.md, .cell.on.md { font-size: .56rem; letter-spacing: -.04em; } }
 .cell {
   aspect-ratio: 1; border-radius: 50%; border: 1.5px dashed var(--line); background: transparent;
   display: grid; place-items: center; font-size: .85rem; color: var(--muted); padding: 0; position: relative;
@@ -153,10 +159,13 @@ function card(h) {
     const dt = parse(d), dd = dt.getDate();
     const label = (i === 0 || dd === 1) ? (dt.getMonth() + 1) + "/" + dd : dd;   // 첫 칸과 매달 1일에는 월/일로 표시
     const full = (dt.getMonth() + 1) + "월 " + dd + "일(" + WD[dt.getDay()] + ")";
-    const cls = ["cell", on ? "on" : "", future ? "future" : "", isToday ? "today" : "", popKey === h.id + d ? "pop" : ""].join(" ");
+    const cls = ["cell", on ? "on" : "", future ? "future" : "", isToday ? "today" : "", popKey === h.id + d ? "pop" : "", typeof label === "string" ? "md" : ""].join(" ");
     return `<button class="${cls}" style="--r:${rot}deg" data-act="cell" data-id="${h.id}" data-d="${d}" ${future ? "disabled" : ""}
       title="${full} · ${i + 1}일째" aria-label="${full} ${i + 1}일째 ${on ? "도장 찍음" : "도장 없음"}" aria-pressed="${on}">${label}</button>`;
   }).join("");
+  // 달력처럼 요일 줄을 맨 위에 두고, 시작일이 해당 요일 칸에서 시작하도록 앞을 비워 둔다
+  const head = [...WD].map((w, i) => `<span class="wd ${i === 0 ? "sun" : i === 6 ? "sat" : ""}">${w}</span>`).join("");
+  const blanks = "<span></span>".repeat(parse(h.start).getDay());
   let main = "";
   if (done) main = `<div class="win"><b>🎉 30일 도전 성공!</b><p class="muted">정말 대단해요. 새 도전을 시작해 볼까요?</p>
       <button class="stamp" data-act="restart" data-id="${h.id}">새 30일 시작</button></div>`;
@@ -174,7 +183,7 @@ function card(h) {
         <p class="muted">${inWindow ? (idx + 1) + "일째" : idx < 0 ? "아직 시작 전" : "도전 끝"} · ${md(h.start)} ~ ${md(addDays(h.start, N - 1))}${h.runs ? " · " + h.runs + "번 완주" : ""}</p></div>
       <div class="streak"><b>🔥 ${st}</b><span class="muted">연속</span></div></div>
     <div><div class="meta"><span class="muted">진행</span><b>${c} / ${N}</b></div><div class="bar"><i style="width:${c / N * 100}%"></i></div></div>
-    <div class="grid">${cells}</div>
+    <div class="grid">${head}${blanks}${cells}</div>
     <p class="muted">${lastStamp(h) ? "마지막 도장 " + md(lastStamp(h)) + " (" + WD[parse(lastStamp(h)).getDay()] + ")" : "아직 찍은 도장이 없어요"} · 칸의 숫자는 날짜예요</p>${main}
     <div class="foot"><span class="muted">${h.example ? "예시 습관이에요. 지워도 돼요." : ""}</span>${del}</div></article>`;
 }

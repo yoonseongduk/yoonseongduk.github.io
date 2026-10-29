@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>틱택토</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 위에 전적, 가운데 3×3 판, 아래에 상대와 난이도 선택. 내가 O, 상대가 X */
+:root{--bg:#eef4f1;--surface:#fff;--fg:#1b2a26;--muted:#5d726b;--line:#cfdcd6;--o:#e8643f;--x:#2f6fd0;--accent:#1f8a6b;--accent-fg:#fff;--win:#ffe9a8;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#101a17;--surface:#192622;--fg:#e8f2ee;--muted:#98b0a7;--line:#2a3d37;--o:#ff8a65;--x:#7aa8ff;--accent:#3fbf99;--accent-fg:#101a17;--win:#5a4a14;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.score{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;text-align:center}
+.sc small{display:block;color:var(--muted);font-size:.72rem}.sc b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+.turn{text-align:center;font-family:var(--font-display);font-size:1.4rem;min-height:1.8em}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--line);padding:8px;border-radius:16px}
+.c{aspect-ratio:1;border:0;border-radius:10px;background:var(--surface);font-family:var(--font-display);font-size:clamp(3rem,18vw,4.6rem);line-height:1;display:grid;place-items:center;padding:0}
+.c.o{color:var(--o)}.c.x{color:var(--x)}.c.w{background:var(--win)}
+.c:disabled{cursor:default}
+.seg{display:grid;gap:8px}.seg.two{grid-template-columns:repeat(2,1fr)}.seg.three{grid-template-columns:repeat(3,1fr)}
+.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}
+.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>틱택토 ⭕❌</h1>
+  <div class="score"><div class="sc"><small>내 승</small><b id="sw">0</b></div><div class="sc"><small>무승부</small><b id="sd">0</b></div><div class="sc"><small id="lname">컴퓨터 승</small><b id="sl">0</b></div></div>
+  <div class="turn" id="turn" aria-live="polite"></div>
+  <div class="board" id="board"></div>
+  <div class="seg three" id="opp" role="radiogroup" aria-label="상대"></div>
+  <div class="seg two" id="first" role="radiogroup" aria-label="선공"></div>
+  <button class="btn" id="newGame" type="button">새 판</button>
+  <p class="muted">가로, 세로, 대각선으로 내 표시 3개를 먼저 이으면 이겨요. 어려움 컴퓨터는 절대 지지 않아요. 비기는 것이 최선이에요!</p>
+</main>
+<script>
+const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const KEY = "tictactoe-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const OPP = { easy: ["쉬움", "컴퓨터 · 가끔 실수"], hard: ["어려움", "컴퓨터 · 지지 않음"], two: ["2명", "한 화면에서 번갈아"] };
+let cfg = ld(KEY) || { opp: "easy", first: "me", stats: {} }, b, turn, over, win = null, busy = false;
+if (!OPP[cfg.opp]) cfg.opp = "easy"; cfg.stats = cfg.stats || {};
+
+const winner = a => { for (const l of LINES) if (a[l[0]] && a[l[0]] === a[l[1]] && a[l[0]] === a[l[2]]) return { p: a[l[0]], l }; return null; };
+const empties = a => a.map((v, i) => v ? -1 : i).filter(i => i >= 0);
+// 끝까지 계산해서 최선의 수를 고른다 (컴퓨터가 X). 이기면 +, 지면 -, 빨리 이길수록 높은 점수
+function minimax(a, p, depth) {
+  const w = winner(a); if (w) return w.p === "X" ? 10 - depth : depth - 10;
+  const e = empties(a); if (!e.length) return 0;
+  let best = p === "X" ? -99 : 99;
+  for (const i of e) { a[i] = p; const s = minimax(a, p === "X" ? "O" : "X", depth + 1); a[i] = ""; best = p === "X" ? Math.max(best, s) : Math.min(best, s); }
+  return best;
+}
+function bestMove(a) {
+  let m = [], top = -99;
+  for (const i of empties(a)) { a[i] = "X"; const s = minimax(a, "O", 1); a[i] = ""; if (s > top) { top = s; m = [i]; } else if (s === top) m.push(i); }
+  return m[Math.floor(Math.random() * m.length)];
+}
+function easyMove(a) {                 // 쉬운 컴퓨터: 이길 수 있으면 이기고, 나머지는 거의 무작위 (막기는 절반만)
+  const e = empties(a);
+  for (const i of e) { a[i] = "X"; const w = winner(a); a[i] = ""; if (w) return i; }
+  if (Math.random() < 0.5) for (const i of e) { a[i] = "O"; const w = winner(a); a[i] = ""; if (w) return i; }
+  return e[Math.floor(Math.random() * e.length)];
+}
+const stat = () => (cfg.stats[cfg.opp] || (cfg.stats[cfg.opp] = { w: 0, d: 0, l: 0 }));
+
+function newGame() {
+  b = Array(9).fill(""); over = false; win = null; busy = false;
+  turn = cfg.opp !== "two" && cfg.first === "cpu" ? "X" : "O";     // O가 먼저 둔다
+  if (cfg.opp !== "two" && cfg.first === "cpu") { turn = "X"; cpuMove(); }
+  render();
+}
+function place(i, p) {
+  b[i] = p; const w = winner(b);
+  if (w) { over = true; win = w; const s = stat(); if (cfg.opp === "two") { p === "O" ? s.w++ : s.l++; } else { p === "O" ? s.w++ : s.l++; } sv(KEY, cfg); }
+  else if (!empties(b).length) { over = true; stat().d++; sv(KEY, cfg); }
+  else turn = p === "O" ? "X" : "O";
+}
+function cpuMove() {
+  busy = true; render();
+  setTimeout(() => { if (over) return; place(cfg.opp === "hard" ? bestMove(b) : easyMove(b), "X"); busy = false; render(); }, 380);
+}
+function tap(i) {
+  if (over || busy || b[i]) return;
+  if (cfg.opp === "two") { place(i, turn); render(); return; }
+  if (turn !== "O") return;
+  place(i, "O"); render();
+  if (!over) cpuMove();
+}
+function render() {
+  const two = cfg.opp === "two";
+  $("board").innerHTML = b.map((v, i) => `<button type="button" class="c ${v.toLowerCase()} ${win && win.l.includes(i) ? "w" : ""}" data-i="${i}" ${over || v || busy ? "disabled" : ""} aria-label="${v ? v : "빈 칸"}">${v === "O" ? "⭕" : v === "X" ? "❌" : ""}</button>`).join("");
+  const s = stat(); $("sw").textContent = s.w; $("sd").textContent = s.d; $("sl").textContent = s.l; $("lname").textContent = two ? "❌ 승" : "컴퓨터 승";
+  $("turn").textContent = over ? (win ? (two ? (win.p === "O" ? "⭕ 승리! 🎉" : "❌ 승리! 🎉") : (win.p === "O" ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요")) : "비겼어요 🤝")
+    : two ? (turn === "O" ? "⭕ 차례예요" : "❌ 차례예요") : busy ? "컴퓨터가 생각 중…" : "내 차례예요 (⭕)";
+  $("opp").innerHTML = Object.keys(OPP).map(k => `<button type="button" class="${k === cfg.opp ? "on" : ""}" data-o="${k}" role="radio" aria-checked="${k === cfg.opp}">${OPP[k][0]}<small>${OPP[k][1]}</small></button>`).join("");
+  $("first").hidden = two;
+  $("first").innerHTML = [["me", "내가 먼저"], ["cpu", "컴퓨터가 먼저"]].map(([k, t]) => `<button type="button" class="${k === cfg.first ? "on" : ""}" data-f="${k}" role="radio" aria-checked="${k === cfg.first}">${t}</button>`).join("");
+}
+$("board").addEventListener("click", e => { const c = e.target.closest("[data-i]"); if (c) tap(+c.dataset.i); });
+$("opp").addEventListener("click", e => { const o = e.target.closest("[data-o]"); if (!o || o.dataset.o === cfg.opp) return; cfg.opp = o.dataset.o; sv(KEY, cfg); newGame(); });
+$("first").addEventListener("click", e => { const f = e.target.closest("[data-f]"); if (!f || f.dataset.f === cfg.first) return; cfg.first = f.dataset.f; sv(KEY, cfg); newGame(); });
+$("newGame").onclick = newGame;
+newGame();
+</script>
+</body>
+</html>

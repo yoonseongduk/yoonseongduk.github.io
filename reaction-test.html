@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>반응속도 테스트</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 큰 터치 영역 하나가 빨강(기다림) → 초록(지금!)으로 바뀐다. 그 아래에 이번 기록과 최고 기록 */
+:root{--bg:#eef0f6;--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:#d6dbe8;--wait:#d6453a;--go:#25a35a;--idle:#2f5bea;--early:#e09a1a;--accent:#2f5bea;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10131c;--surface:#1a1f2d;--fg:#e8ecf6;--muted:#96a0b8;--line:#2b3347;--wait:#c94a3f;--go:#2fb866;--idle:#4a74ff;--early:#d4901c;--accent:#7b9bff;--accent-fg:#10131c;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.pad{width:100%;min-height:300px;border:0;border-radius:20px;background:var(--idle);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:20px;touch-action:manipulation}
+.pad.wait{background:var(--wait)}.pad.go{background:var(--go)}.pad.early{background:var(--early)}
+.pad b{font-family:var(--font-display);font-weight:400;font-size:2.2rem;line-height:1.2}.pad span{font-size:1rem;opacity:.9}
+.pad .ms{font-size:3.4rem;font-family:var(--font-display);font-variant-numeric:tabular-nums}
+.rounds{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.r{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 2px;text-align:center;font-variant-numeric:tabular-nums}
+.r small{display:block;color:var(--muted);font-size:.7rem}.r b{font-family:var(--font-display);font-weight:400;font-size:1rem}
+.r.now{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.res{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.grade{display:inline-block;margin-top:4px;padding:2px 12px;border-radius:999px;background:var(--accent);color:var(--accent-fg);font-weight:700}
+.best{display:flex;justify-content:space-between;gap:8px}
+</style>
+</head>
+<body>
+<main>
+  <h1>반응속도 테스트 ⚡</h1>
+  <button class="pad" id="pad" type="button"></button>
+  <div class="rounds" id="rounds" aria-label="라운드 기록"></div>
+  <div class="res" id="res" hidden></div>
+  <div class="best muted"><span>최고 평균 <b id="bestAvg">-</b></span><span>최고 한 번 <b id="bestOne">-</b></span></div>
+  <p class="muted">화면이 <b style="color:var(--wait)">빨강</b>일 때는 기다리세요. <b style="color:var(--go)">초록</b>으로 바뀌는 순간 최대한 빨리 누르세요. 5번의 평균으로 순위를 매겨요. 너무 일찍 누르면 그 판은 다시 해요.</p>
+</main>
+<script>
+const ROUNDS = 5, KEY = "reaction-best-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let waitMs = () => 1500 + Math.random() * 2800;          // 빨강 상태가 이어지는 시간 (매번 달라서 예측할 수 없다)
+let state = "idle", times = [], t0 = 0, timer = 0, best = ld(KEY) || {}, lastMsg = "";
+
+const grade = ms => ms < 200 ? "번개 ⚡" : ms < 250 ? "매우 빠름 🐆" : ms < 300 ? "빠름 🏃" : ms < 400 ? "보통 🙂" : "느긋함 🐢";
+function render() {
+  const pad = $("pad"); pad.className = "pad " + (state === "wait" ? "wait" : state === "go" ? "go" : state === "early" ? "early" : "");
+  const last = times[times.length - 1];
+  pad.innerHTML = state === "idle" ? (times.length >= ROUNDS ? `<b>다시 하려면 누르세요</b>` : times.length ? `<b>다음 라운드</b><span>눌러서 시작 (${times.length}/${ROUNDS} 완료)</span>` : `<b>눌러서 시작</b><span>${ROUNDS}번 측정해요</span>`)
+    : state === "wait" ? `<b>기다리세요…</b><span>초록이 되면 누르세요</span>`
+    : state === "go" ? `<b>지금!</b>`
+    : state === "early" ? `<b>너무 빨라요!</b><span>초록이 되기 전에 눌렀어요. 눌러서 다시</span>`
+    : `<span class="ms">${last} ms</span><span>${grade(last)} · 눌러서 ${times.length >= ROUNDS ? "결과 보기" : "계속"}</span>`;
+  $("rounds").innerHTML = Array.from({ length: ROUNDS }, (_, i) => `<div class="r ${i === times.length && state !== "result" ? "now" : ""}"><small>${i + 1}</small><b>${times[i] !== undefined ? times[i] : "-"}</b></div>`).join("");
+  $("bestAvg").textContent = best.avg ? best.avg + "ms" : "-"; $("bestOne").textContent = best.one ? best.one + "ms" : "-";
+}
+function press() {
+  if (state === "idle") {
+    if (times.length >= ROUNDS) { times = []; $("res").hidden = true; }
+    state = "wait"; render(); timer = setTimeout(() => { state = "go"; t0 = performance.now(); render(); }, waitMs());
+  } else if (state === "wait") {                          // 초록이 되기 전에 누르면 반칙
+    clearTimeout(timer); state = "early"; render();
+  } else if (state === "go") {
+    times.push(Math.round(performance.now() - t0)); state = "result"; render();
+  } else if (state === "early") { state = "idle"; press(); }
+  else if (state === "result") {
+    if (times.length >= ROUNDS) finish(); else { state = "idle"; press(); }
+  }
+}
+function finish() {
+  const avg = Math.round(times.reduce((a, b) => a + b, 0) / ROUNDS), one = Math.min(...times); let note = "";
+  if (!best.avg || avg < best.avg) { best.avg = avg; note = " 🏆 평균 최고 기록!"; }
+  if (!best.one || one < best.one) { best.one = one; note = note || " 🏆 한 번 최고 기록!"; }
+  sv(KEY, best); state = "idle";
+  $("res").innerHTML = `<b>평균 ${avg} ms</b><br><span class="grade">${grade(avg)}</span><p class="muted">가장 빠른 기록 ${one} ms${note}</p>`; $("res").hidden = false; render();
+}
+$("pad").addEventListener("pointerdown", e => { e.preventDefault(); press(); });
+$("pad").addEventListener("keydown", e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); press(); } });
+render();
+</script>
+</body>
+</html>

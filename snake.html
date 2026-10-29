@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스네이크</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 점수 줄, 정사각형 캔버스(밀어서 방향 전환), 아래에 방향 버튼과 속도 선택 */
+:root{--bg:#e9f1e4;--surface:#fff;--fg:#1d2a1c;--muted:#5d705a;--line:#cadbc4;--field:#d8e8cf;--field2:#cfe1c5;--snake:#2a7a3b;--head:#1a5a28;--food:#e0432f;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1a10;--surface:#182619;--fg:#e6f1e3;--muted:#98b093;--line:#2a3d2b;--field:#14231a;--field2:#112016;--snake:#5fcf74;--head:#9af0a8;--food:#ff6b57;--accent:#ff7f5a;--accent-fg:#0f1a10;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}
+p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px}
+.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.wrap{position:relative;width:100%;aspect-ratio:1;border-radius:14px;overflow:hidden;border:2px solid var(--line);touch-action:none}
+canvas{width:100%;height:100%;display:block}
+.ov{position:absolute;inset:0;background:rgba(10,20,10,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff;text-align:center;padding:16px}
+.ov b{font-family:var(--font-display);font-weight:400;font-size:2rem}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:10px 22px;font-family:var(--font-display);font-size:1.3rem}
+.dpad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,56px);gap:6px;justify-content:center}
+.dpad button{background:var(--surface);border:1px solid var(--line);border-radius:14px;font-size:1.4rem;box-shadow:0 2px 0 var(--line)}
+.dpad button:active{transform:translateY(1px);box-shadow:none}
+.dpad .u{grid-column:2}.dpad .l{grid-column:1;grid-row:2}.dpad .d{grid-column:2;grid-row:2}.dpad .r{grid-column:3;grid-row:2}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}
+.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}
+.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+</style>
+</head>
+<body>
+<main>
+  <h1>스네이크 🐍</h1>
+  <div class="stats"><div class="stat"><small>점수</small><b id="score">0</b></div><div class="stat"><small>최고 점수</small><b id="best">0</b></div></div>
+  <div class="wrap" id="wrap"><canvas id="cv" aria-label="스네이크 게임 판"></canvas><div class="ov" id="ov"></div></div>
+  <div class="dpad" aria-label="방향 버튼"><button class="u" data-d="U" type="button" aria-label="위">▲</button><button class="l" data-d="L" type="button" aria-label="왼쪽">◀</button><button class="d" data-d="D" type="button" aria-label="아래">▼</button><button class="r" data-d="R" type="button" aria-label="오른쪽">▶</button></div>
+  <div class="seg" id="levels" role="radiogroup" aria-label="속도"></div>
+  <p class="muted">판을 <b>밀어서(스와이프)</b> 방향을 바꾸거나 방향 버튼을 누르세요. 먹이를 먹으면 길어지고, 벽이나 자기 몸에 닿으면 끝나요. (컴퓨터: 화살표 키 또는 WASD, 스페이스로 일시정지)</p>
+</main>
+<script>
+const G = 16;                                           // 판은 16×16칸
+const LV = { slow: { ms: 170, label: "느림", hint: "여유롭게" }, normal: { ms: 120, label: "보통", hint: "기본" }, fast: { ms: 80, label: "빠름", hint: "아슬아슬" } };
+const BEST = "snake-best-v1", LVKEY = "snake-level-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const DIR = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] }, OPP = { U: "D", D: "U", L: "R", R: "L" };
+let level = (ld(LVKEY) in LV) ? ld(LVKEY) : "normal", best = ld(BEST) || {}, snake, dir, queue, food, score, state = "ready", timer = 0;
+
+function reset() {
+  snake = [{ x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }]; dir = "R"; queue = []; score = 0; spawnFood(); state = "ready"; draw(); ui();
+}
+function spawnFood() {
+  const free = []; for (let y = 0; y < G; y++) for (let x = 0; x < G; x++) if (!snake.some(s => s.x === x && s.y === y)) free.push({ x, y });
+  food = free.length ? free[Math.floor(Math.random() * free.length)] : null;
+}
+function turn(d) {                                      // 방향 입력은 줄에 쌓아 두었다가 한 칸씩 적용 (빠르게 두 번 눌러도 놓치지 않음)
+  const last = queue.length ? queue[queue.length - 1] : dir;
+  if (d === last || d === OPP[last] || queue.length >= 2) return;
+  queue.push(d);
+}
+function step() {
+  if (queue.length) dir = queue.shift();
+  const [dx, dy] = DIR[dir], h = { x: snake[0].x + dx, y: snake[0].y + dy };
+  const eat = food && h.x === food.x && h.y === food.y;
+  const body = eat ? snake : snake.slice(0, -1);        // 꼬리는 비켜 주므로 꼬리 칸으로는 갈 수 있다
+  if (h.x < 0 || h.y < 0 || h.x >= G || h.y >= G || body.some(s => s.x === h.x && s.y === h.y)) return end();
+  snake.unshift(h);
+  if (eat) { score++; spawnFood(); if (!food) return end(true); } else snake.pop();
+  draw(); $("score").textContent = score;           // 매 칸마다 점수 숫자만 갱신 (나머지 화면은 상태가 바뀔 때만)
+}
+function end(full) {
+  state = "over"; clearInterval(timer); timer = 0;
+  if (score > (best[level] || 0)) { best[level] = score; sv(BEST, best); }
+  draw(); ui(full);
+}
+function start() { if (state === "play") return; if (state !== "paused") reset(); state = "play"; clearInterval(timer); timer = setInterval(step, LV[level].ms); ui(); }
+function pause() { if (state !== "play") return; state = "paused"; clearInterval(timer); timer = 0; ui(); }
+
+function draw() {
+  const cv = $("cv"), s = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!s) return;
+  if (cv.width !== Math.round(s * dpr)) { cv.width = cv.height = Math.round(s * dpr); }
+  const c = cv.getContext("2d"), u = cv.width / G, css = getComputedStyle(document.documentElement);
+  const col = n => css.getPropertyValue(n).trim(), f1 = col("--field"), f2 = col("--field2");
+  for (let y = 0; y < G; y++) for (let x = 0; x < G; x++) { c.fillStyle = (x + y) % 2 ? f1 : f2; c.fillRect(x * u, y * u, u + 1, u + 1); }
+  if (food) { c.fillStyle = col("--food"); c.beginPath(); c.arc((food.x + .5) * u, (food.y + .5) * u, u * .36, 0, 7); c.fill(); }
+  snake.forEach((p, i) => { c.fillStyle = i ? col("--snake") : col("--head"); const m = u * .08; c.beginPath(); c.roundRect ? c.roundRect(p.x * u + m, p.y * u + m, u - 2 * m, u - 2 * m, u * .25) : c.rect(p.x * u + m, p.y * u + m, u - 2 * m, u - 2 * m); c.fill(); });
+}
+function ui(full) {
+  $("score").textContent = score; $("best").textContent = best[level] || 0;
+  const ov = $("ov"); ov.hidden = state === "play";
+  ov.innerHTML = state === "ready" ? `<b>준비됐나요?</b><button class="btn" data-a="go" type="button">시작</button>`
+    : state === "paused" ? `<b>일시정지</b><button class="btn" data-a="go" type="button">계속하기</button>`
+    : `<b>${full ? "🎉 판을 가득 채웠어요!" : "게임 오버"}</b><p>점수 ${score}${score && score >= (best[level] || 0) ? " 🏆 최고 기록!" : ""}</p><button class="btn" data-a="go" type="button">다시 하기</button>`;
+  $("levels").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === level ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === level}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+}
+$("ov").addEventListener("click", e => { if (e.target.closest("[data-a=go]")) start(); });
+document.querySelector(".dpad").addEventListener("click", e => { const b = e.target.closest("[data-d]"); if (b) { if (state === "ready") start(); turn(b.dataset.d); } });
+$("levels").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (!b || b.dataset.l === level) return; clearInterval(timer); level = b.dataset.l; sv(LVKEY, level); reset(); });
+document.addEventListener("keydown", e => {
+  const m = { ArrowUp: "U", ArrowDown: "D", ArrowLeft: "L", ArrowRight: "R", w: "U", s: "D", a: "L", d: "R" }[e.key];
+  if (m) { e.preventDefault(); if (state === "ready") start(); turn(m); }
+  else if (e.key === " ") { e.preventDefault(); state === "play" ? pause() : start(); }
+});
+let sx = 0, sy = 0; const wrap = $("wrap");
+wrap.addEventListener("touchstart", e => { sx = e.changedTouches[0].clientX; sy = e.changedTouches[0].clientY; }, { passive: true });
+wrap.addEventListener("touchend", e => {
+  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
+  if (state === "ready") start(); turn(Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "L" : "R") : (dy < 0 ? "U" : "D"));
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+window.addEventListener("resize", draw);
+reset();
+</script>
+</body>
+</html>

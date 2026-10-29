@@ -91,6 +91,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outli
 .ghost { background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: .9rem; }
 .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .danger { color: var(--ink); border-color: var(--ink); }
+.hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
+.hist .hr { display: flex; justify-content: space-between; gap: 8px; font-size: .9rem; }
+.hist .strip { display: flex; gap: 2px; margin-top: 4px; }
+.hist .strip i { flex: 1; min-width: 0; height: 10px; border-radius: 3px; background: var(--line); }
+.hist .strip i.on { background: var(--ink); }
+.win .stamp, .win .ghost { width: 100%; }
 .empty { text-align: center; padding: 28px 16px; border: 1.5px dashed var(--line); border-radius: 18px; }
 @media (prefers-reduced-motion: reduce) { .cell.pop { animation: none; } .bar i { transition: none; } }
 </style>
@@ -126,7 +132,7 @@ const diff = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);   // b - a (�
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 
-let today = ymd(new Date()), icon = ICONS[0], confirmDel = "", popKey = "";
+let today = ymd(new Date()), icon = ICONS[0], confirmDel = "", popKey = "", openHist = {};
 
 function seed() {          // 처음 열었을 때 보여 줄 예시 (지워도 돼요)
   const mk = (name, ic, ago, offs) => {
@@ -141,7 +147,7 @@ try { habits = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
 if (!Array.isArray(habits)) { habits = seed(); save(); }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(habits)); } catch (e) {} }
 
-const count = h => { let c = 0; for (let i = 0; i < N; i++) if (h.days[addDays(h.start, i)]) c++; return c; };
+const count = h => countOf(h, h.start);
 function streak(h) {
   let d = today; if (!h.days[d]) d = addDays(d, -1);
   let c = 0; while (h.days[d]) { c++; d = addDays(d, -1); } return c;
@@ -150,6 +156,16 @@ const dayIdx = h => diff(h.start, today);          // 오늘이 도전의 몇 �
 const WD = "일월화수목금토";
 const md = s => { const x = parse(s); return (x.getMonth() + 1) + "/" + x.getDate(); };
 const lastStamp = h => { const k = Object.keys(h.days).sort(); return k.length ? k[k.length - 1] : ""; };
+
+// 지난 도전(history)은 시작일만 저장하고, 도장 수는 days에서 그때그때 센다 (지난 칸을 나중에 채워도 반영된다)
+const countOf = (h, start) => { let c = 0; for (let i = 0; i < N; i++) if (h.days[addDays(start, i)]) c++; return c; };
+const fullRuns = h => (h.runs || 0) + (h.history || []).filter(e => countOf(h, e.start) >= N).length;
+// 다음 30일의 시작일. 이어서: 끝난 날 다음날부터 / 새로: 오늘부터 (두 경우 모두 이전 도전과 날짜가 겹치지 않는다)
+function nextStart(h, mode) {
+  const after = addDays(h.start, N);
+  if (mode === "cont") return diff(after, today) >= N ? today : after;
+  return today > after ? today : after;
+}
 
 function card(h) {
   const c = count(h), idx = dayIdx(h), st = streak(h), inWindow = idx >= 0 && idx < N, done = c >= N;
@@ -167,25 +183,37 @@ function card(h) {
   const head = [...WD].map((w, i) => `<span class="wd ${i === 0 ? "sun" : i === 6 ? "sat" : ""}">${w}</span>`).join("");
   const blanks = "<span></span>".repeat(parse(h.start).getDay());
   let main = "";
-  if (done) main = `<div class="win"><b>🎉 30일 도전 성공!</b><p class="muted">정말 대단해요. 새 도전을 시작해 볼까요?</p>
-      <button class="stamp" data-act="restart" data-id="${h.id}">새 30일 시작</button></div>`;
-  else if (idx >= N) main = `<div class="win"><b>30일이 지났어요</b><p class="muted">${c}일 달성했어요. 다시 도전해 보세요.</p>
-      <button class="stamp" data-act="restart" data-id="${h.id}">새 30일 시작</button></div>`;
+  const next = (why, sub) => `<div class="win"><b>${why}</b><p class="muted">${sub}</p>
+      <button class="stamp" data-act="next" data-mode="cont" data-id="${h.id}">이어서 다음 30일</button>
+      <button class="ghost" data-act="next" data-mode="fresh" data-id="${h.id}">오늘부터 새로 시작</button>
+      <p class="muted">지금 도장판은 "지난 도전"에 저장돼요. 이어서 하면 연속 일수(🔥)도 이어져요.</p></div>`;
+  if (done) main = next("🎉 30일 도전 성공!", "30일을 모두 채웠어요. 이어서 한 번 더 해볼까요?");
+  else if (idx >= N) main = next("30일이 지났어요", c + "일 달성했어요. 이어서 하거나 새로 시작할 수 있어요.");
+  else if (idx < 0) main = `<div class="win"><p class="muted">${md(h.start)}부터 새 30일이 시작돼요.</p></div>`;
   else if (inWindow) main = h.days[today]
       ? `<button class="stamp done" data-act="cell" data-id="${h.id}" data-d="${today}">✔ 오늘 완료 (눌러서 취소)</button>`
       : `<button class="stamp" data-act="cell" data-id="${h.id}" data-d="${today}">오늘 도장 찍기</button>`;
+  // 지난 도전: 최근 것이 위로. 30칸 띠에서 빨간 칸이 도장 찍은 날
+  const past = (h.history || []).slice().reverse(), isOpen = !!openHist[h.id];
+  const histBtn = past.length ? `<button class="ghost" data-act="hist" data-id="${h.id}" aria-expanded="${isOpen}">지난 도전 ${past.length}개 ${isOpen ? "▲" : "▼"}</button>` : "";
+  const histList = isOpen ? `<ul class="hist">${past.map(e => {
+    const n = countOf(h, e.start);
+    const strip = Array.from({ length: N }, (_, i) => `<i class="${h.days[addDays(e.start, i)] ? "on" : ""}"></i>`).join("");
+    return `<li><div class="hr"><span>${md(e.start)} ~ ${md(addDays(e.start, N - 1))}</span><b>${n} / ${N}${n >= N ? " 🎉" : ""}</b></div><div class="strip" aria-hidden="true">${strip}</div></li>`;
+  }).join("")}</ul>` : "";
   const del = confirmDel === h.id
     ? `<span class="row" style="display:flex;gap:6px"><button class="ghost danger" data-act="del-yes" data-id="${h.id}">정말 삭제</button><button class="ghost" data-act="del-no">취소</button></span>`
     : `<button class="ghost" data-act="del" data-id="${h.id}">삭제</button>`;
   return `<article class="card">
     <div class="top"><span class="ic" aria-hidden="true">${esc(h.icon)}</span>
       <div class="nm"><h2>${esc(h.name)}${h.example ? '<span class="badge">예시</span>' : ""}</h2>
-        <p class="muted">${inWindow ? (idx + 1) + "일째" : idx < 0 ? "아직 시작 전" : "도전 끝"} · ${md(h.start)} ~ ${md(addDays(h.start, N - 1))}${h.runs ? " · " + h.runs + "번 완주" : ""}</p></div>
+        <p class="muted">${inWindow ? (idx + 1) + "일째" : idx < 0 ? "시작 전" : "도전 끝"} · ${md(h.start)} ~ ${md(addDays(h.start, N - 1))}${fullRuns(h) ? " · " + fullRuns(h) + "번 완주" : ""}</p></div>
       <div class="streak"><b>🔥 ${st}</b><span class="muted">연속</span></div></div>
     <div><div class="meta"><span class="muted">진행</span><b>${c} / ${N}</b></div><div class="bar"><i style="width:${c / N * 100}%"></i></div></div>
     <div class="grid">${head}${blanks}${cells}</div>
     <p class="muted">${lastStamp(h) ? "마지막 도장 " + md(lastStamp(h)) + " (" + WD[parse(lastStamp(h)).getDay()] + ")" : "아직 찍은 도장이 없어요"} · 칸의 숫자는 날짜예요</p>${main}
-    <div class="foot"><span class="muted">${h.example ? "예시 습관이에요. 지워도 돼요." : ""}</span>${del}</div></article>`;
+    ${histList}
+    <div class="foot">${histBtn || `<span class="muted">${h.example ? "예시 습관이에요. 지워도 돼요." : ""}</span>`}${del}</div></article>`;
 }
 
 function render() {
@@ -216,7 +244,10 @@ document.addEventListener("click", e => {
       if (h) { if (h.days[d.d]) delete h.days[d.d]; else { h.days[d.d] = 1; popKey = h.id + d.d; try { navigator.vibrate && navigator.vibrate(30); } catch (x) {} }
         delete h.example; save(); render(); }
       break;
-    case "restart": if (h) { h.runs += count(h) >= N ? 1 : 0; h.start = today; h.days = {}; delete h.example; save(); render(); } break;
+    case "next": if (h) {         // 지금 도장판을 지난 도전에 저장하고 새 30일을 시작 (도장 기록은 지우지 않는다)
+        h.history = h.history || []; h.history.push({ start: h.start });
+        h.start = nextStart(h, d.mode); delete h.example; save(); render(); } break;
+    case "hist": openHist[d.id] = !openHist[d.id]; render(); break;
     case "del": confirmDel = d.id; render(); break;
     case "del-no": confirmDel = ""; render(); break;
     case "del-yes": habits = habits.filter(x => x.id !== d.id); confirmDel = ""; save(); render(); break;

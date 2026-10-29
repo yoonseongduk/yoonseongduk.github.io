@@ -1,0 +1,313 @@
+<title>가족 가위바위보 대회</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 한 화면에 한 가지 일만. 설정 → 대진표 → 경기(선택/교대/결과) → 우승 → 누적 기록 */
+:root {
+  --bg: #eef1f7;
+  --surface: #ffffff;
+  --fg: #1b2236;
+  --muted: #5f6a85;
+  --line: #d6dcea;
+  --accent: #2f5bea;
+  --accent-fg: #ffffff;
+  --win: #1f9d62;
+  --lose: #d6453a;
+  --gold: #e8a90f;
+  --pa: #e4572e;
+  --pb: #2b78d6;
+  --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
+  --font-body: "Noto Sans KR", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12172a; --surface: #1c2340; --fg: #eaeefb; --muted: #9aa5c7; --line: #2f3a62;
+    --accent: #7b9bff; --accent-fg: #12172a; --win: #4cc98a; --lose: #ff7a6e; --gold: #f5c542;
+    --pa: #ff8a5f; --pb: #6aa8ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12172a; --surface: #1c2340; --fg: #eaeefb; --muted: #9aa5c7; --line: #2f3a62;
+  --accent: #7b9bff; --accent-fg: #12172a; --win: #4cc98a; --lose: #ff7a6e; --gold: #f5c542;
+  --pa: #ff8a5f; --pb: #6aa8ff; color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.5;
+  padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 2rem; margin: 0; }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.4rem; margin: 0; }
+p { margin: 0; }
+.muted { color: var(--muted); font-size: 0.9rem; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 14px; padding: 14px; font-family: var(--font-display); font-size: 1.35rem; letter-spacing: .03em; }
+.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); font-family: var(--font-body); font-size: 1rem; padding: 11px; }
+.row { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.row > * { min-width: 0; }
+.badge { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+input[type=text] { flex: 1; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; }
+.tog { flex: none; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; font-size: .9rem; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seg button { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 4px; font-weight: 700; }
+.seg button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.err { color: var(--lose); font-weight: 700; font-size: .9rem; }
+
+.slot { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.slot.now { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.slot.wait { opacity: .6; }
+.slot h3 { margin: 0; font-size: .8rem; letter-spacing: .1em; color: var(--muted); }
+.vs { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.who { display: flex; align-items: center; gap: 6px; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.who.won { color: var(--win); }
+.who.lost { color: var(--muted); font-weight: 400; text-decoration: line-through; }
+
+.hdr { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.score { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; text-align: center; }
+.score b { font-family: var(--font-display); font-weight: 400; font-size: 1.1rem; display: block; overflow-wrap: anywhere; }
+.pips { letter-spacing: .15em; font-size: 1.1rem; }
+.picks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pick { background: var(--surface); border: 2px solid var(--line); border-radius: 18px; padding: 16px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-weight: 700; }
+.pick span { font-size: clamp(2.4rem, 14vw, 3.6rem); line-height: 1.1; }
+.pick:active { transform: scale(.96); border-color: var(--accent); }
+.clash { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; text-align: center; gap: 6px; }
+.clash .hand { font-size: clamp(3.4rem, 22vw, 5.4rem); line-height: 1.1; animation: pop .35s ease-out; }
+.clash small { display: block; color: var(--muted); }
+@keyframes pop { from { transform: scale(.3) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.verdict { text-align: center; font-family: var(--font-display); font-size: 1.8rem; }
+.verdict.win { color: var(--win); } .verdict.tie { color: var(--muted); }
+.cover { text-align: center; padding: 28px 16px; gap: 14px; }
+.cover .big { font-size: 3.2rem; }
+.trophy { text-align: center; font-size: 4rem; line-height: 1.1; }
+.champ { text-align: center; font-family: var(--font-display); font-size: 2.4rem; color: var(--gold); overflow-wrap: anywhere; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-size: .75rem; letter-spacing: .06em; font-weight: 700; }
+td.name { text-align: left; font-weight: 700; white-space: normal; overflow-wrap: anywhere; }
+tr.top td { color: var(--gold); }
+@media (prefers-reduced-motion: reduce) { .clash .hand { animation: none; } }
+</style>
+
+<main id="app"></main>
+
+<script>
+const HANDS = [{ e: "✊", n: "바위" }, { e: "✌️", n: "가위" }, { e: "✋", n: "보" }];
+const beats = (a, b) => (a - b + 3) % 3 === 2;          // a가 b를 이기면 true
+const STAGE = ["준결승 1", "준결승 2", "결승"];
+const SETUP_KEY = "rps-setup-v1", STATS_KEY = "rps-stats-v1";
+const app = document.getElementById("app");
+
+const load = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const rand = n => Math.floor(Math.random() * n);
+
+let setup = load(SETUP_KEY) || {
+  players: [{ name: "아빠", cpu: false }, { name: "엄마", cpu: true }, { name: "첫째", cpu: true }, { name: "둘째", cpu: true }],
+  target: 2
+};
+let stats = load(STATS_KEY) || {};      // 이름 -> { champ, mWin, mLoss, rWin }
+let view = "setup", t = null, m = null, rnd = null, err = "", confirmReset = false;
+
+const S = name => stats[name] || (stats[name] = { champ: 0, mWin: 0, mLoss: 0, rWin: 0 });
+const mk = (a, b) => ({ a, b, sa: 0, sb: 0, winner: null });
+const label = p => (p.cpu ? "🤖 " : "") + esc(p.name);
+const pips = (n, target) => "●".repeat(n) + "○".repeat(Math.max(0, target - n));
+
+/* ---------- 대회 진행 ---------- */
+function startTournament() {
+  const names = setup.players.map(p => p.name.trim());
+  if (names.some(n => !n)) { err = "이름을 모두 입력해 주세요."; return render(); }
+  if (new Set(names).size < 4) { err = "이름이 서로 달라야 기록을 따로 셀 수 있어요."; return render(); }
+  setup.players.forEach((p, i) => p.name = names[i]);
+  save(SETUP_KEY, setup); err = "";
+  const ps = setup.players.map(p => ({ ...p }));
+  for (let i = ps.length - 1; i > 0; i--) { const j = rand(i + 1); [ps[i], ps[j]] = [ps[j], ps[i]]; }  // 대진 추첨
+  t = { matches: [mk(ps[0], ps[1]), mk(ps[2], ps[3])], stage: 0, champion: null, runnerUp: null };
+  view = "bracket"; render();
+}
+
+function startMatch() { m = t.matches[t.stage]; newRound(); view = "match"; render(); }
+
+function newRound() {
+  rnd = { a: m.a.cpu ? rand(3) : null, b: m.b.cpu ? rand(3) : null, phase: "", res: 0 };
+  rnd.phase = rnd.a == null ? "pickA" : rnd.b == null ? "pickB" : "ready";
+}
+
+// 선택을 받는 곳은 이 함수 하나뿐이다. 나중에 네트워크로 상대 선택을 받을 때도 여기로 들어오게 하면 된다.
+function submitPick(side, choice) {
+  if (side === "a") { rnd.a = choice; rnd.phase = rnd.b == null ? "handoff" : "reveal"; }
+  else { rnd.b = choice; rnd.phase = "reveal"; }
+  if (rnd.phase === "reveal") resolveRound();
+  render();
+}
+
+function resolveRound() {
+  rnd.res = beats(rnd.a, rnd.b) ? 1 : beats(rnd.b, rnd.a) ? -1 : 0;
+  if (rnd.res === 1) { m.sa++; S(m.a.name).rWin++; }
+  if (rnd.res === -1) { m.sb++; S(m.b.name).rWin++; }
+  if (m.sa >= setup.target) m.winner = m.a;
+  if (m.sb >= setup.target) m.winner = m.b;
+  if (m.winner) {
+    const loser = m.winner === m.a ? m.b : m.a;
+    S(m.winner.name).mWin++; S(loser.name).mLoss++;
+  }
+  save(STATS_KEY, stats);
+}
+
+function afterMatch() {
+  if (t.stage === 2) {
+    t.champion = m.winner; t.runnerUp = m.winner === m.a ? m.b : m.a;
+    S(t.champion.name).champ++; save(STATS_KEY, stats);
+    view = "champion";
+  } else {
+    t.stage++;
+    if (t.stage === 2) t.matches.push(mk(t.matches[0].winner, t.matches[1].winner));
+    view = "bracket";
+  }
+  render();
+}
+
+/* ---------- 화면 ---------- */
+function vSetup() {
+  const rows = setup.players.map((p, i) => `
+    <div class="row">
+      <i class="badge" style="background:${i % 2 ? "var(--pb)" : "var(--pa)"}"></i>
+      <input type="text" id="n${i}" data-name="${i}" value="${esc(p.name)}" maxlength="6" aria-label="선수 ${i + 1} 이름">
+      <button class="tog" data-act="tog" data-i="${i}">${p.cpu ? "🤖 가상" : "👤 사람"}</button>
+    </div>`).join("");
+  return `
+    <h1>가족 가위바위보 대회 ✌️</h1>
+    <p class="muted">4명이 준결승 2경기를 하고, 이긴 2명이 결승에서 만납니다.</p>
+    <div class="card">
+      <h2>선수</h2>${rows}
+      <p class="muted">👤 사람은 직접 고르고, 🤖 가상은 컴퓨터가 알아서 냅니다. 사람끼리 붙으면 휴대폰을 서로 넘겨 가며 하세요.</p>
+    </div>
+    <div class="card">
+      <h2>경기 방식</h2>
+      <div class="seg">${[[1, "1판"], [2, "3판 2선승"], [3, "5판 3선승"]].map(([v, l]) =>
+        `<button data-act="target" data-v="${v}" class="${setup.target === v ? "on" : ""}">${l}</button>`).join("")}</div>
+      <p class="muted">비기면 점수 없이 다시 합니다.</p>
+    </div>
+    ${err ? `<p class="err">${err}</p>` : ""}
+    <button class="btn" data-act="start">대회 시작</button>
+    <button class="btn ghost" data-act="board">누적 기록 보기</button>`;
+}
+
+function slot(i) {
+  const mt = t.matches[i];
+  if (!mt) return `<div class="slot wait"><h3>${STAGE[i]}</h3><p class="muted">준결승 승자끼리 붙어요</p></div>`;
+  const cls = (p) => mt.winner ? (mt.winner === p ? "won" : "lost") : "";
+  const now = i === t.stage;
+  return `<div class="slot ${now ? "now" : ""}"><h3>${STAGE[i]}${mt.winner ? " · 끝" : now ? " · 다음 경기" : ""}</h3>
+    <div class="vs"><span class="who ${cls(mt.a)}">${label(mt.a)}</span><span class="muted">vs</span><span class="who ${cls(mt.b)}">${label(mt.b)}</span></div>
+    ${mt.winner || now ? `<p class="muted">${mt.sa} : ${mt.sb}</p>` : ""}</div>`;
+}
+function vBracket() {
+  const mt = t.matches[t.stage];
+  return `<h1>대진표</h1>${slot(0)}${slot(1)}${slot(2)}
+    <p class="muted">${setup.target === 1 ? "1판 승부" : (setup.target * 2 - 1) + "판 " + setup.target + "선승제"}</p>
+    <button class="btn" data-act="match">${STAGE[t.stage]} 시작 · ${esc(mt.a.name)} vs ${esc(mt.b.name)}</button>`;
+}
+
+function head() {
+  return `<div class="hdr"><h2>${STAGE[t.stage]}</h2><span class="muted">${setup.target === 1 ? "1판 승부" : setup.target + "선승"}</span></div>
+    <div class="card"><div class="score">
+      <div><b style="color:var(--pa)">${label(m.a)}</b><span class="pips">${pips(m.sa, setup.target)}</span></div>
+      <span class="muted">vs</span>
+      <div><b style="color:var(--pb)">${label(m.b)}</b><span class="pips">${pips(m.sb, setup.target)}</span></div>
+    </div></div>`;
+}
+function pickButtons(side) {
+  return `<div class="picks">${HANDS.map((h, i) =>
+    `<button class="pick" data-act="pick" data-side="${side}" data-v="${i}"><span>${h.e}</span>${h.n}</button>`).join("")}</div>`;
+}
+function vMatch() {
+  const p = rnd.phase;
+  if (p === "pickA" || p === "pickB") {
+    const who = p === "pickA" ? m.a : m.b;
+    return head() + `<p class="verdict">${esc(who.name)} 님 차례</p>${pickButtons(p === "pickA" ? "a" : "b")}
+      <p class="muted" style="text-align:center">상대가 보지 못하게 가리고 고르세요.</p>`;
+  }
+  if (p === "handoff") return head() + `<div class="card cover"><div class="big">🙈</div>
+      <h2>${esc(m.b.name)} 님에게 넘겨주세요</h2><p class="muted">${esc(m.a.name)} 님의 선택은 숨겨져 있어요.</p>
+      <button class="btn" data-act="handoff">${esc(m.b.name)}입니다</button></div>`;
+  if (p === "ready") return head() + `<div class="card cover"><div class="big">🤖 vs 🤖</div>
+      <p class="muted">가상 선수끼리의 경기예요.</p><button class="btn" data-act="reveal">대결!</button></div>`;
+  // reveal
+  const r = rnd.res, A = HANDS[rnd.a], B = HANDS[rnd.b];
+  const verdict = r === 0 ? `<p class="verdict tie">비겼어요! 다시 한 판</p>`
+    : `<p class="verdict win">${esc((r === 1 ? m.a : m.b).name)} 님 승!</p>`;
+  let next = `<button class="btn" data-act="again">다음 판</button>`;
+  if (r === 0) next = `<button class="btn" data-act="again">다시 하기</button>`;
+  if (m.winner) next = `<p class="verdict win">🎉 ${esc(m.winner.name)} 님이 경기에서 이겼어요!</p>
+    <button class="btn" data-act="after">${t.stage === 2 ? "우승자 발표" : "대진표로"}</button>`;
+  return head() + `<div class="card"><div class="clash">
+      <div><div class="hand">${A.e}</div><small>${A.n}</small></div><span class="muted">vs</span>
+      <div><div class="hand">${B.e}</div><small>${B.n}</small></div></div></div>${verdict}${next}`;
+}
+
+function vChampion() {
+  return `<div class="trophy">🏆</div><p class="muted" style="text-align:center">이번 대회 우승</p>
+    <p class="champ">${label(t.champion)}</p>
+    <p class="muted" style="text-align:center">준우승 ${label(t.runnerUp)}</p>
+    <button class="btn" data-act="board">누적 기록 보기</button>
+    <button class="btn ghost" data-act="again-tour">같은 멤버로 한 번 더</button>
+    <button class="btn ghost" data-act="home">처음으로</button>`;
+}
+
+function vBoard() {
+  const rows = Object.keys(stats).map(n => ({ n, ...stats[n] }))
+    .sort((a, b) => b.champ - a.champ || b.mWin - a.mWin || b.rWin - a.rWin);
+  const body = rows.length ? `<div class="tablewrap"><table>
+      <tr><th>순위</th><th style="text-align:left">이름</th><th>우승</th><th>경기 승-패</th><th>판 승</th></tr>
+      ${rows.map((r, i) => `<tr class="${i === 0 && r.champ ? "top" : ""}"><td>${i + 1}</td><td class="name">${i === 0 && r.champ ? "👑 " : ""}${esc(r.n)}</td>
+        <td>${r.champ}</td><td>${r.mWin}-${r.mLoss}</td><td>${r.rWin}</td></tr>`).join("")}</table></div>
+      <p class="muted">순위는 우승 횟수, 경기 승수, 판 승수 순서로 정해요.</p>`
+    : `<p class="muted">아직 기록이 없어요. 대회를 한 번 열어 보세요.</p>`;
+  const reset = rows.length ? (confirmReset
+    ? `<p class="err">정말 모든 기록을 지울까요?</p><button class="btn ghost" data-act="reset-yes" style="color:var(--lose)">네, 지웁니다</button><button class="btn ghost" data-act="reset-no">취소</button>`
+    : `<button class="btn ghost" data-act="reset">기록 지우기</button>`) : "";
+  return `<h1>누적 기록 🏅</h1><div class="card">${body}</div>${reset}
+    <button class="btn" data-act="home">처음으로</button>`;
+}
+
+function render() {
+  app.innerHTML = { setup: vSetup, bracket: vBracket, match: vMatch, champion: vChampion, board: vBoard }[view]();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- 입력 처리 ---------- */
+app.addEventListener("input", e => {
+  const i = e.target.dataset.name;
+  if (i != null) setup.players[i].name = e.target.value;
+});
+app.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  const d = el.dataset;
+  switch (d.act) {
+    case "tog": setup.players[d.i].cpu = !setup.players[d.i].cpu; render(); break;
+    case "target": setup.target = Number(d.v); render(); break;
+    case "start": startTournament(); break;
+    case "board": confirmReset = false; view = "board"; render(); break;
+    case "home": view = "setup"; t = null; confirmReset = false; render(); break;
+    case "match": startMatch(); break;
+    case "pick": submitPick(d.side, Number(d.v)); break;
+    case "handoff": rnd.phase = "pickB"; render(); break;
+    case "reveal": rnd.phase = "reveal"; resolveRound(); render(); break;
+    case "again": newRound(); render(); break;
+    case "after": afterMatch(); break;
+    case "again-tour": startTournament(); break;
+    case "reset": confirmReset = true; render(); break;
+    case "reset-no": confirmReset = false; render(); break;
+    case "reset-yes": stats = {}; save(STATS_KEY, stats); confirmReset = false; render(); break;
+  }
+});
+render();
+</script>

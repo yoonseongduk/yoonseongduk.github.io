@@ -1,0 +1,278 @@
+<title>결정 룰렛</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 한 줄 세로 스택. 위에서부터 제목 → 룰렛 → 결과 → 선택지 편집 */
+:root {
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --fg: #23201c;
+  --muted: #6d675e;
+  --line: #e2ddd2;
+  --accent: #e4572e;
+  --accent-fg: #ffffff;
+  --pointer: #23201c;
+  --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
+  --font-body: "Noto Sans KR", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1a1815; --surface: #26231f; --fg: #f1ede4; --muted: #a69f92;
+    --line: #3a362f; --accent: #ff7a50; --accent-fg: #1a1815; --pointer: #f1ede4;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1a1815; --surface: #26231f; --fg: #f1ede4; --muted: #a69f92;
+  --line: #3a362f; --accent: #ff7a50; --accent-fg: #1a1815; --pointer: #f1ede4;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-block: 24px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 2rem; margin: 0; letter-spacing: 0.01em; }
+.sub { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+.stage { position: relative; width: 100%; aspect-ratio: 1; max-width: 100%; }
+canvas { width: 100%; height: 100%; display: block; }
+.pointer {
+  position: absolute; left: 50%; top: -4px; transform: translateX(-50%);
+  width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent;
+  border-top: 24px solid var(--pointer); filter: drop-shadow(0 2px 2px rgba(0,0,0,.25));
+}
+.result {
+  min-height: 92px; display: grid; place-items: center; text-align: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px;
+}
+.result small { color: var(--muted); display: block; font-size: 0.8rem; letter-spacing: 0.08em; }
+.result strong { font-family: var(--font-display); font-weight: 400; font-size: 2rem; overflow-wrap: anywhere; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.spin {
+  background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 14px;
+  font-family: var(--font-display); font-size: 1.5rem; padding: 14px; letter-spacing: 0.04em;
+}
+.spin:disabled { opacity: .55; cursor: default; }
+
+section h2 { font-size: 0.8rem; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; max-height: 232px; overflow-y: auto; padding: 2px; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding: 8px 2px; }
+.tabs .chip { flex: none; }
+.search {
+  width: 100%; background: var(--surface); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit;
+}
+.chip.active { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 700; }
+.chip {
+  background: transparent; color: var(--fg); border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 14px; font-size: 0.9rem;
+}
+.chip:hover { border-color: var(--accent); }
+.add { display: flex; gap: 8px; }
+.add input {
+  flex: 1; min-width: 0; background: var(--surface); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit;
+}
+.add button {
+  background: var(--fg); color: var(--bg); border: 0; border-radius: 10px; padding: 0 18px; font-weight: 700;
+}
+ul { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+li {
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 8px 8px 12px;
+}
+.dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+li span.name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+li button { background: transparent; border: 0; color: var(--muted); font-size: 1.1rem; padding: 4px 10px; border-radius: 8px; }
+li button:hover { color: var(--accent); }
+.hint { color: var(--muted); font-size: 0.85rem; margin: 6px 0 0; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<main>
+  <header>
+    <h1>결정 룰렛</h1>
+    <p class="sub">고민은 룰렛에게 맡기세요.</p>
+  </header>
+
+  <div class="stage">
+    <canvas id="wheel" aria-label="룰렛"></canvas>
+    <div class="pointer"></div>
+  </div>
+
+  <div class="result" aria-live="polite">
+    <div id="result"><small>결과</small><strong>돌려보세요!</strong></div>
+  </div>
+
+  <button class="spin" id="spin">돌리기</button>
+
+  <section>
+    <h2>빠른 선택 <span id="count"></span></h2>
+    <input id="search" class="search" type="search" placeholder="검색 (예: 점심, 운동, 벌칙)" autocomplete="off">
+    <div class="tabs" id="tabs"></div>
+    <div class="presets" id="presets"></div>
+    <p class="hint">항목을 누르면 룰렛이 바뀌어요. 바꾼 뒤에 선택지를 더 넣거나 지울 수도 있어요.</p>
+  </section>
+
+  <section>
+    <h2>선택지</h2>
+    <form class="add" id="form">
+      <input id="newItem" placeholder="선택지 입력 (예: 김치찌개)" maxlength="20" autocomplete="off">
+      <button type="submit">추가</button>
+    </form>
+    <ul id="list"></ul>
+    <p class="hint" id="hint"></p>
+  </section>
+</main>
+
+<script>
+const COLORS = ["#e4572e", "#2f9e8f", "#e9a820", "#4a6fd1", "#b8478f", "#5e9c3a", "#d9683a", "#7a5cc7"];
+// 분류별 100가지. 형식: "이름=항목1,항목2,...;이름=..."
+const DATA = {
+  "음식": "점심 메뉴=김치찌개,비빔밥,돈까스,짜장면,샐러드,제육볶음;저녁 메뉴=삼겹살,된장찌개,파스타,치킨,초밥,쌈밥;아침 메뉴=토스트,시리얼,죽,샌드위치,과일,김밥;야식=라면,치킨,떡볶이,족발,피자,만두;간식=과자,아이스크림,빵,과일,떡,초콜릿;한식 메뉴=불고기,갈비탕,순두부찌개,비빔냉면,김치볶음밥,잡채;중식 메뉴=짜장면,짬뽕,탕수육,마파두부,볶음밥,깐풍기;일식 메뉴=초밥,라멘,우동,돈부리,회,오코노미야키;양식 메뉴=스테이크,파스타,리조또,햄버거,피자,샐러드;분식 메뉴=떡볶이,순대,튀김,김밥,어묵,라볶이;치킨 맛=후라이드,양념,간장,파닭,마늘,반반;피자 토핑=페퍼로니,불고기,콤비네이션,치즈,고구마,포테이토;라면 종류=신라면,진라면,짜파게티,너구리,불닭볶음면,팔도비빔면;커피 메뉴=아메리카노,라떼,카푸치노,바닐라라떼,콜드브루,에스프레소;음료 메뉴=아이스티,에이드,스무디,탄산,우유,녹차;디저트=케이크,마카롱,와플,빙수,푸딩,쿠키",
+  "내기·벌칙": "커피 내기=나,철수,영희,민수;점심 계산=팀장,선배,막내,내가 쏜다;벌칙=노래 부르기,춤추기,팔굽혀펴기 10개,성대모사,애교,비밀 말하기;술자리 벌칙=원샷,건배사,노래,애교,벌주,폭탄주;청소 담당=거실,주방,화장실,방,베란다;설거지 당번=나,가족1,가족2,가족3;먼저 시작할 사람=1번,2번,3번,4번,5번;발표 순서=첫 번째,두 번째,세 번째,네 번째,마지막;심부름 당번=편의점,마트,약국,택배 찾기,쓰레기 버리기;운전 담당=나,친구1,친구2,친구3;팀 나누기=A팀,B팀;가위바위보=가위,바위,보;1~4 순서=1등,2등,3등,4등;간식 쏘기=아이스크림,커피,과자,빵,음료수",
+  "결정": "예 / 아니오=예,아니오;할까 말까=한다,안 한다;살까 말까=산다,안 산다,더 고민;갈까 말까=간다,안 간다;동전 던지기=앞면,뒷면;주사위=1,2,3,4,5,6;오늘의 운세=대박,좋음,보통,조심,쉬어가기;A or B or C=A,B,C;지금 할까 나중에 할까=지금,나중에;오늘 외출=나간다,집에 있는다;연락할까=연락한다,기다린다;오늘 컨디션=최고,좋음,보통,피곤,방전",
+  "주말·놀이": "주말 계획=영화 보기,산책,집에서 쉬기,친구 만나기,맛집 탐방,드라이브;영화 장르=액션,코미디,로맨스,스릴러,SF,애니메이션;보드게임=할리갈리,젠가,우노,루미큐브,카탄,도미노;넷플릭스 장르=드라마,다큐,예능,스릴러,로맨스,애니;노래 장르=발라드,힙합,댄스,록,트로트,팝송;노래방 선곡 스타일=신나는 노래,발라드,옛날 노래,최신곡,듀엣,애니송;게임 종류=모바일,PC,콘솔,보드게임,퍼즐,레이싱;집콕 활동=영화,독서,요리,청소,낮잠,게임;야외 활동=산책,자전거,피크닉,캠핑,등산,배드민턴;친구 모임=카페,맛집,볼링,방탈출,노래방,영화관;취미 시작=그림,악기,요리,사진,운동,뜨개질;책 장르=소설,에세이,자기계발,역사,과학,만화;사진 주제=하늘,음식,길고양이,그림자,꽃,건물;오늘 할 일=청소,빨래,운동,공부,휴식,약속",
+  "운동·건강": "오늘 운동=러닝,걷기,수영,요가,헬스,자전거;홈트 동작=스쿼트,플랭크,푸시업,런지,버피,윗몸일으키기;달리기 거리=1km,2km,3km,5km,10km;스트레칭 부위=목,어깨,허리,다리,손목;헬스 부위=가슴,등,하체,어깨,팔,복근;구기 종목=축구,농구,배구,야구,탁구,배드민턴;건강 습관=물 마시기,일찍 자기,걷기,스트레칭,명상,금주;취침 시간=10시,11시,12시,1시;산책 코스=동네 한 바퀴,공원,강변,뒷산,시장길;건강 간식=견과류,바나나,요거트,고구마,삶은 계란,사과",
+  "여행·데이트": "국내 여행지=제주도,부산,강릉,경주,여수,전주;해외 여행지=일본,태국,베트남,대만,싱가포르,하와이;당일치기 코스=서울 근교,양평,가평,인천,수원,파주;데이트 코스=영화,카페,맛집,산책,전시회,놀이공원;데이트 활동=보드게임,방탈출,공방,볼링,산책,사진 찍기;숙소 유형=호텔,펜션,캠핑,게스트하우스,한옥,리조트;이동수단=자동차,기차,버스,비행기,자전거,도보;여행 테마=맛집,힐링,액티비티,문화,쇼핑,사진;캠핑 메뉴=삼겹살,바비큐,라면,어묵탕,꼬치,고구마;소풍 장소=한강,동네 공원,숲,바닷가,호수;드라이브 코스=바다,산길,야경,강변,교외 카페;계절 여행=봄 꽃,여름 바다,가을 단풍,겨울 눈꽃",
+  "공부·일": "오늘 공부 과목=국어,영어,수학,과학,역사,코딩;공부 시간=30분,1시간,2시간,3시간;할 일 우선순위=메일,보고서,회의 준비,정리,운동;업무 시작=가장 쉬운 일,가장 급한 일,가장 어려운 일;휴식 방법=낮잠,산책,커피,스트레칭,음악,멍 때리기;회의 간식=과자,커피,빵,과일,아이스크림;점심 시간 활동=산책,낮잠,독서,수다,유튜브,운동;자기계발=독서,운동,어학,자격증,코딩,글쓰기;외국어 선택=영어,일본어,중국어,스페인어,프랑스어;독서 시간=10분,20분,30분,1시간;집중 방법=뽀모도로,조용한 카페,도서관,음악 듣기,핸드폰 끄기",
+  "쇼핑·생활": "쇼핑 카테고리=옷,신발,가방,화장품,책,전자기기;선물 고르기=꽃,케이크,편지,상품권,인형,향수;옷 색깔=검정,흰색,파랑,베이지,빨강,초록;오늘 코디=캐주얼,깔끔하게,편하게,포인트 컬러,모자 쓰기;헤어 스타일=단발,장발,짧게,파마,염색,묶기;청소 구역=거실,주방,화장실,침실,현관,베란다;인테리어 색상=화이트,우드,그레이,파스텔,블랙;기념일 선물=편지,꽃다발,케이크,외식,여행,깜짝 이벤트;용돈 사용처=저금,간식,책,취미,옷,기부;반려동물 이름=콩이,보리,두부,초코,몽실이,구름;닉네임 스타일=귀여운,멋진,웃긴,영어,한글 순우리말"
+};
+const GROUPS = Object.keys(DATA);
+const PRESETS = {};      // 이름 -> 항목 배열
+const PRESET_GROUP = {}; // 이름 -> 분류
+GROUPS.forEach(g => DATA[g].split(";").forEach(entry => {
+  const [name, list] = entry.split("=");
+  PRESETS[name] = list.split(",");
+  PRESET_GROUP[name] = g;
+}));
+const KEY = "roulette-items-v1";
+let items = PRESETS["점심 메뉴"].slice();
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY));
+  if (Array.isArray(saved) && saved.length >= 2) items = saved;
+} catch (e) {}
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const $ = id => document.getElementById(id);
+let rot = 0, spinning = false;
+const TAU = Math.PI * 2;
+
+function save() { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {} }
+
+function draw() {
+  const size = canvas.clientWidth, dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.height = Math.round(size * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size, size);
+  const c = size / 2, r = c - 8, n = items.length, seg = TAU / n;
+  items.forEach((label, i) => {
+    const a0 = rot + i * seg, a1 = a0 + seg;
+    ctx.beginPath(); ctx.moveTo(c, c); ctx.arc(c, c, r, a0, a1); ctx.closePath();
+    ctx.fillStyle = COLORS[i % COLORS.length]; ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.save();
+    ctx.translate(c, c); ctx.rotate(a0 + seg / 2);
+    ctx.fillStyle = "#fff"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.font = "700 " + Math.max(13, Math.min(20, size / 18)) + "px 'Noto Sans KR', sans-serif";
+    const text = label.length > 9 ? label.slice(0, 8) + "…" : label;
+    ctx.fillText(text, r - 16, 0);
+    ctx.restore();
+  });
+  ctx.beginPath(); ctx.arc(c, c, 16, 0, TAU);
+  ctx.fillStyle = getComputedStyle(document.body).backgroundColor; ctx.fill();
+}
+
+function spin() {
+  if (spinning || items.length < 2) return;
+  spinning = true; $("spin").disabled = true;
+  const n = items.length, seg = TAU / n;
+  const winner = Math.floor(Math.random() * n);
+  const jitter = (Math.random() - 0.5) * 0.7;           // 칸 안에서 약간 흔들리게
+  const desired = -Math.PI / 2 - (winner + 0.5 + jitter) * seg;
+  const start = rot;
+  const delta = ((desired - start) % TAU + TAU) % TAU + TAU * (5 + Math.floor(Math.random() * 3));
+  const dur = 4200, t0 = performance.now();
+  $("result").innerHTML = "<small>결과</small><strong>…</strong>";
+  (function frame(now) {
+    const t = Math.min(1, (now - t0) / dur);
+    const ease = 1 - Math.pow(1 - t, 4);
+    rot = start + delta * ease;
+    draw();
+    if (t < 1) return requestAnimationFrame(frame);
+    spinning = false; $("spin").disabled = false;
+    const el = $("result"); el.innerHTML = "<small>오늘의 결정</small><strong></strong>";
+    el.querySelector("strong").textContent = items[winner];
+  })(t0);
+}
+
+function render() {
+  const ul = $("list"); ul.innerHTML = "";
+  items.forEach((label, i) => {
+    const li = document.createElement("li");
+    const dot = document.createElement("i"); dot.className = "dot"; dot.style.background = COLORS[i % COLORS.length];
+    const name = document.createElement("span"); name.className = "name"; name.textContent = label;
+    const del = document.createElement("button"); del.type = "button"; del.textContent = "✕";
+    del.setAttribute("aria-label", label + " 삭제");
+    del.onclick = () => {
+      if (spinning) return;
+      if (items.length <= 2) { $("hint").textContent = "선택지는 최소 2개가 필요해요."; return; }
+      items.splice(i, 1); update();
+    };
+    li.append(dot, name, del); ul.append(li);
+  });
+  $("hint").textContent = items.length >= 8 ? "선택지가 많으면 글자가 작아져요." : "";
+  $("spin").disabled = spinning || items.length < 2;
+}
+function update() { save(); render(); draw(); }
+
+$("form").onsubmit = e => {
+  e.preventDefault();
+  const v = $("newItem").value.trim();
+  if (!v || spinning) return;
+  if (items.length >= 12) { $("hint").textContent = "선택지는 최대 12개까지예요."; return; }
+  items.push(v); $("newItem").value = ""; update();
+};
+let tab = "전체", current = "점심 메뉴";
+function renderPresets() {
+  const q = $("search").value.trim();
+  const tabs = $("tabs"); tabs.innerHTML = "";
+  ["전체", ...GROUPS].forEach(g => {
+    const b = document.createElement("button"); b.type = "button";
+    b.className = "chip" + (g === tab ? " active" : ""); b.textContent = g;
+    b.onclick = () => { tab = g; renderPresets(); };
+    tabs.append(b);
+  });
+  const box = $("presets"); box.innerHTML = "";
+  const names = Object.keys(PRESETS).filter(n =>
+    (tab === "전체" || PRESET_GROUP[n] === tab) &&
+    (!q || n.includes(q) || PRESETS[n].some(x => x.includes(q))));
+  names.forEach(name => {
+    const b = document.createElement("button"); b.type = "button";
+    b.className = "chip" + (name === current ? " active" : ""); b.textContent = name;
+    b.onclick = () => {
+      if (spinning) return;
+      items = PRESETS[name].slice(); current = name;
+      $("result").innerHTML = "<small>결과</small><strong>돌려보세요!</strong>";
+      update(); renderPresets();
+    };
+    box.append(b);
+  });
+  if (!names.length) box.textContent = "검색 결과가 없어요.";
+  $("count").textContent = "(" + names.length + "/" + Object.keys(PRESETS).length + ")";
+}
+$("search").oninput = renderPresets;
+renderPresets();
+$("spin").onclick = spin;
+canvas.onclick = spin;
+window.addEventListener("resize", draw);
+render(); draw();
+document.fonts && document.fonts.ready.then(draw);
+</script>

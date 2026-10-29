@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>숫자 퍼즐 4×4</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 위에 기록 3칸, 가운데 정사각형 판(타일은 절대 위치로 미끄러짐), 아래에 난이도와 새로 섞기 */
+:root {
+  --bg: #eaeff4;
+  --surface: #ffffff;
+  --fg: #1c2635;
+  --muted: #5d6b7e;
+  --line: #d3dce6;
+  --board: #2c3b50;
+  --tile: #f6f8fb;
+  --tile-fg: #1c2635;
+  --ok: #86d9b6;           /* 제자리에 있는 타일 */
+  --ok-fg: #0f3b2b;
+  --accent: #e8643f;
+  --accent-fg: #ffffff;
+  --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
+  --font-body: "Noto Sans KR", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111821; --surface: #1a2430; --fg: #e8eef5; --muted: #98a6b8; --line: #2c3a4b;
+    --board: #0b1118; --tile: #3b4c62; --tile-fg: #f1f5fa; --ok: #2f9e7a; --ok-fg: #ffffff;
+    --accent: #ff7f5a; --accent-fg: #111821; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  user-select: none; -webkit-user-select: none;
+}
+main { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 2rem; margin: 0; }
+p { margin: 0; }
+.muted { color: var(--muted); font-size: .9rem; }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; min-width: 0; }
+.stat small { display: block; color: var(--muted); font-size: .75rem; letter-spacing: .06em; }
+.stat b { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; font-variant-numeric: tabular-nums; line-height: 1.3; display: block; }
+.stat span { color: var(--muted); font-size: .75rem; font-variant-numeric: tabular-nums; }
+
+.board { position: relative; width: 100%; aspect-ratio: 1; background: var(--board); border-radius: 18px; padding: 6px; touch-action: manipulation; }
+.tiles { position: relative; width: 100%; height: 100%; }
+.slot { position: absolute; width: 25%; height: 25%; padding: 4px; transition: left .12s ease-out, top .12s ease-out; left: calc(var(--x) * 25%); top: calc(var(--y) * 25%); }
+.tile {
+  width: 100%; height: 100%; border: 0; border-radius: 12px; padding: 0;
+  background: var(--tile); color: var(--tile-fg); box-shadow: 0 2px 0 rgba(0,0,0,.25);
+  font-family: var(--font-display); font-size: clamp(1.6rem, 9vw, 2.4rem); line-height: 1;
+}
+.tile.ok { background: var(--ok); color: var(--ok-fg); }
+.tile:active { transform: scale(.95); }
+.board.won .tile { animation: wave .5s ease-out both; animation-delay: calc(var(--n) * 25ms); }
+@keyframes wave { 50% { transform: translateY(-8px) scale(1.05); } }
+
+.win { text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.win b { font-family: var(--font-display); font-weight: 400; font-size: 1.6rem; }
+.msg { text-align: center; min-height: 2.6em; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.seg button { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 9px 4px; font-weight: 700; line-height: 1.3; }
+.seg button small { display: block; font-weight: 400; color: var(--muted); font-size: .72rem; }
+.seg button.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.seg button.on small { color: var(--bg); opacity: .8; }
+.go { background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 14px; padding: 13px; font-family: var(--font-display); font-size: 1.4rem; letter-spacing: .04em; }
+@media (prefers-reduced-motion: reduce) { .slot { transition: none; } .board.won .tile { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>숫자 퍼즐 4×4</h1>
+  <div class="stats">
+    <div class="stat"><small>이동</small><b id="moves">0</b></div>
+    <div class="stat"><small>시간</small><b id="time">0:00</b></div>
+    <div class="stat"><small>최고 기록</small><b id="bestMoves">-</b><span id="bestTime"></span></div>
+  </div>
+
+  <div class="board" id="board" role="group" aria-label="숫자 퍼즐 판"><div class="tiles" id="tiles"></div></div>
+
+  <div class="win" id="win" hidden><b>🎉 완성했어요!</b><p id="winText"></p></div>
+  <p class="muted msg" id="msg">빈칸 옆의 숫자를 눌러 밀어 보세요. 1부터 15까지 순서대로 맞추면 끝!<br>초록색 타일은 제자리에 있다는 뜻이에요.</p>
+
+  <div class="seg" id="levels" role="radiogroup" aria-label="난이도"></div>
+  <button class="go" id="newGame" type="button">새로 섞기</button>
+</main>
+
+<script>
+const SIZE = 4, CELLS = SIZE * SIZE;
+// 난이도: 완성된 판에서 시작해 빈칸을 몇 번 움직여 섞을지 (많을수록 어렵다)
+const LEVELS = { easy: { label: "쉬움", hint: "조금만 섞기", shuffle: 24 }, normal: { label: "보통", hint: "적당히 섞기", shuffle: 90 }, hard: { label: "어려움", hint: "많이 섞기", shuffle: 300 } };
+const SAVE_KEY = "slide-puzzle-v1", BEST_KEY = "slide-puzzle-best-v1";
+const $ = id => document.getElementById(id);
+const fmt = ms => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+
+let arr = [], moves = 0, elapsed = 0, startedAt = 0, timer = 0, solved = false, level = "normal", best = {};
+const tileEls = {};       // 숫자 -> 타일 요소
+
+const load = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+const isSolved = a => a.every((v, i) => v === (i === CELLS - 1 ? 0 : i + 1));
+
+// 풀 수 있는 판인지 검사 (4x4 규칙: 뒤집힌 쌍의 수와 빈칸의 아래쪽부터의 줄 번호로 판단)
+function solvable(a) {
+  let inv = 0; const f = a.filter(v => v);
+  for (let i = 0; i < f.length; i++) for (let j = i + 1; j < f.length; j++) if (f[i] > f[j]) inv++;
+  const rowFromBottom = SIZE - Math.floor(a.indexOf(0) / SIZE);
+  return (inv % 2 === 0) === (rowFromBottom % 2 === 1);
+}
+
+// 빈칸 주변에서 움직일 수 있는 칸 번호들
+function neighbors(b) {
+  const r = Math.floor(b / SIZE), c = b % SIZE, out = [];
+  if (r > 0) out.push(b - SIZE); if (r < SIZE - 1) out.push(b + SIZE);
+  if (c > 0) out.push(b - 1); if (c < SIZE - 1) out.push(b + 1);
+  return out;
+}
+
+// 완성된 판에서 시작해 '가능한 이동'만 무작위로 반복한다. 그래서 항상 풀 수 있다.
+function shuffled(n) {
+  let a, tries = 0;
+  do {
+    a = Array.from({ length: CELLS }, (_, i) => (i + 1) % CELLS);   // 1..15, 0(빈칸)
+    let b = CELLS - 1, last = -1;
+    for (let k = 0; k < n; k++) {
+      const opts = neighbors(b).filter(x => x !== last);        // 방금 온 길로 되돌아가지 않기
+      const t = opts[Math.floor(Math.random() * opts.length)];
+      a[b] = a[t]; a[t] = 0; last = b; b = t;
+    }
+  } while (isSolved(a) && ++tries < 10);
+  return a;
+}
+
+/* ---------- 화면 ---------- */
+function buildTiles() {
+  const box = $("tiles"); box.innerHTML = "";
+  for (let n = 1; n < CELLS; n++) {
+    const slot = document.createElement("div"); slot.className = "slot";
+    const b = document.createElement("button"); b.type = "button"; b.className = "tile"; b.textContent = n;
+    b.style.setProperty("--n", n);
+    b.addEventListener("click", () => tap(arr.indexOf(n)));
+    slot.append(b); box.append(slot); tileEls[n] = { slot, b };
+  }
+}
+function paint() {
+  const blank = arr.indexOf(0), canMove = new Set();
+  const br = Math.floor(blank / SIZE), bc = blank % SIZE;
+  arr.forEach((n, i) => {
+    if (!n) return;
+    const r = Math.floor(i / SIZE), c = i % SIZE, t = tileEls[n];
+    t.slot.style.setProperty("--x", c); t.slot.style.setProperty("--y", r);
+    t.b.classList.toggle("ok", n === i + 1);
+    const movable = !solved && (r === br || c === bc);
+    t.b.setAttribute("aria-label", "숫자 " + n + (n === i + 1 ? ", 제자리" : "") + (movable ? ", 움직일 수 있음" : ""));
+  });
+  $("board").classList.toggle("won", solved);
+  $("moves").textContent = moves;
+  $("time").textContent = fmt(currentMs());
+}
+function showBest() {
+  const b = best[level];
+  $("bestMoves").textContent = b ? b.moves + "번" : "-";
+  $("bestTime").textContent = b ? fmt(b.time) : "";
+}
+function showLevels() {
+  $("levels").innerHTML = Object.keys(LEVELS).map(l =>
+    `<button type="button" class="${l === level ? "on" : ""}" data-l="${l}" role="radio" aria-checked="${l === level}">${LEVELS[l].label}<small>${LEVELS[l].hint}</small></button>`).join("");
+}
+
+/* ---------- 시간 ---------- */
+const currentMs = () => elapsed + (startedAt ? performance.now() - startedAt : 0);
+function startTimer() {
+  if (startedAt || solved) return;
+  startedAt = performance.now();
+  timer = setInterval(() => { $("time").textContent = fmt(currentMs()); }, 250);
+}
+function stopTimer() {
+  if (startedAt) { elapsed += performance.now() - startedAt; startedAt = 0; }
+  clearInterval(timer); timer = 0;
+}
+
+/* ---------- 움직이기 ---------- */
+function persist() { store(SAVE_KEY, { arr, moves, elapsed: currentMs(), level, solved }); }
+
+// i번 칸을 눌렀을 때: 빈칸과 같은 줄이면 그 사이의 타일을 한꺼번에 밀어서 빈칸 쪽으로 옮긴다
+function tap(i) {
+  if (solved || i < 0) return false;
+  const b = arr.indexOf(0), ri = Math.floor(i / SIZE), rb = Math.floor(b / SIZE), ci = i % SIZE, cb = b % SIZE;
+  if (ri !== rb && ci !== cb) return false;
+  const step = ri === rb ? (i > b ? 1 : -1) : (i > b ? SIZE : -SIZE);
+  let j = b, shifted = 0;
+  while (j !== i) { arr[j] = arr[j + step]; j += step; shifted++; }
+  arr[i] = 0; moves += shifted;
+  startTimer();
+  if (isSolved(arr)) finish();
+  paint(); persist();
+  try { navigator.vibrate && navigator.vibrate(12); } catch (e) {}
+  return true;
+}
+
+function finish() {
+  solved = true; stopTimer();
+  const ms = elapsed, prev = best[level];
+  let text = moves + "번 만에, " + fmt(ms) + " 걸렸어요.";
+  const newMoves = !prev || moves < prev.moves, newTime = !prev || ms < prev.time;
+  if (newMoves || newTime) {
+    best[level] = { moves: prev ? Math.min(prev.moves, moves) : moves, time: prev ? Math.min(prev.time, ms) : ms };
+    store(BEST_KEY, best); showBest();
+    text += " 🏆 " + LEVELS[level].label + " 최고 기록이에요!";
+  }
+  $("winText").textContent = text; $("win").hidden = false;
+  $("msg").hidden = true;
+}
+
+function newGame() {
+  stopTimer(); elapsed = 0; moves = 0; solved = false;
+  arr = shuffled(LEVELS[level].shuffle);
+  $("win").hidden = true; $("msg").hidden = false;
+  paint(); persist(); showBest();
+}
+
+/* ---------- 입력 ---------- */
+$("newGame").onclick = newGame;
+$("levels").addEventListener("click", e => {
+  const l = e.target.closest("[data-l]"); if (!l || l.dataset.l === level) return;
+  level = l.dataset.l; showLevels(); newGame();
+});
+// 키보드: 화살표 방향으로 타일이 움직인다 (←: 빈칸 오른쪽 타일이 왼쪽으로)
+document.addEventListener("keydown", e => {
+  const b = arr.indexOf(0), c = b % SIZE, r = Math.floor(b / SIZE);
+  const target = { ArrowLeft: c < SIZE - 1 ? b + 1 : -1, ArrowRight: c > 0 ? b - 1 : -1, ArrowUp: r < SIZE - 1 ? b + SIZE : -1, ArrowDown: r > 0 ? b - SIZE : -1 }[e.key];
+  if (target === undefined) return;
+  e.preventDefault(); if (target >= 0) tap(target);
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden && startedAt) { stopTimer(); persist(); } else if (!document.hidden && !solved && moves > 0) startTimer(); });
+
+/* ---------- 시작 ---------- */
+best = load(BEST_KEY) || {};
+buildTiles();
+const saved = load(SAVE_KEY);
+if (saved && Array.isArray(saved.arr) && saved.arr.length === CELLS && [...saved.arr].sort((a, b) => a - b).join() === Array.from({ length: CELLS }, (_, i) => i).join() && solvable(saved.arr)) {
+  arr = saved.arr; moves = saved.moves || 0; elapsed = saved.elapsed || 0; level = LEVELS[saved.level] ? saved.level : "normal"; solved = false;
+  if (isSolved(arr)) newGame(); else { showLevels(); showBest(); paint(); if (moves > 0) startTimer(); }
+} else { showLevels(); newGame(); }
+showLevels();
+</script>
+</body>
+</html>

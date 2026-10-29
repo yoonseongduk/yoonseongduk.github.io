@@ -17,6 +17,7 @@
   --c1: #e4572e;
   --c2: #4f8f2f;
   --c3: #2f5bea;
+  --c4: #c0392b;
   --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
   --font-body: "Noto Sans KR", system-ui, sans-serif;
   color-scheme: light;
@@ -24,7 +25,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #1a1815; --surface: #26231f; --fg: #f1ede4; --muted: #a69f92; --line: #3a362f;
-    --accent: #ff7a50; --c1: #ff7a50; --c2: #86c964; --c3: #7b9bff; color-scheme: dark;
+    --accent: #ff7a50; --c1: #ff7a50; --c2: #86c964; --c3: #7b9bff; --c4: #ff6b5e; color-scheme: dark;
   }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -74,6 +75,10 @@ footer { color: var(--muted); font-size: .85rem; }
     <li><a class="game" style="--c: var(--c3)" href="rps-tournament.html">
       <span class="icon" aria-hidden="true">✌️</span>
       <span class="text"><h2>가위바위보 대회</h2><p>4명이 준결승과 결승을 치르고 누적 우승을 기록해요.</p></span>
+      <span class="go" aria-hidden="true">›</span></a></li>
+    <li><a class="game" style="--c: var(--c4)" href="habit-stamp.html">
+      <span class="icon" aria-hidden="true">✅</span>
+      <span class="text"><h2>30일 도장판</h2><p>매일 한 번 도장을 찍으면 30칸이 채워져요. 연속 일수도 세 줘요.</p></span>
       <span class="go" aria-hidden="true">›</span></a></li>
   </ul>
 

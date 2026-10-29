@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>30일 도장판</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 위에 오늘 요약, 습관 추가 칸, 그 아래 습관마다 30칸 도장판 카드를 세로로 쌓는다 */
+:root {
+  --bg: #f1f4ee;
+  --surface: #ffffff;
+  --fg: #1f2a24;
+  --muted: #62705f;
+  --line: #d9e0d3;
+  --ink: #d6453a;           /* 도장 빨강 */
+  --ink-fg: #ffffff;
+  --btn: #1f2a24;
+  --btn-fg: #f1f4ee;
+  --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
+  --font-body: "Noto Sans KR", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141a16; --surface: #1d2620; --fg: #e9f0e5; --muted: #9bab96; --line: #2f3d33;
+    --ink: #ff6b5e; --ink-fg: #141a16; --btn: #e9f0e5; --btn-fg: #141a16; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-block: 24px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 460px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: 2rem; margin: 0; }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; margin: 0; }
+p { margin: 0; }
+.muted { color: var(--muted); font-size: .9rem; }
+button { font: inherit; cursor: pointer; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.hdr { display: flex; flex-direction: column; gap: 2px; }
+.today { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.today b { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; color: var(--ink); }
+
+.add { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.add .row { display: flex; gap: 8px; }
+.add input[type=text] { flex: 1; min-width: 0; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; }
+.add .go { background: var(--btn); color: var(--btn-fg); border: 0; border-radius: 10px; padding: 0 16px; font-weight: 700; flex: none; }
+.icons { display: flex; flex-wrap: wrap; gap: 6px; }
+.icons button { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 1.3rem; line-height: 1; }
+.icons button.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ink); }
+
+.habits { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.top { display: flex; align-items: center; gap: 10px; }
+.top .ic { font-size: 1.9rem; line-height: 1; flex: none; }
+.top .nm { min-width: 0; flex: 1; }
+.top .nm h2 { overflow-wrap: anywhere; }
+.badge { display: inline-block; font-size: .72rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; margin-left: 6px; vertical-align: middle; font-family: var(--font-body); }
+.streak { text-align: right; flex: none; }
+.streak b { font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; display: block; line-height: 1.2; }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ink); transition: width .25s; }
+.meta { display: flex; justify-content: space-between; gap: 8px; }
+
+.grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.cell {
+  aspect-ratio: 1; border-radius: 50%; border: 1.5px dashed var(--line); background: transparent;
+  display: grid; place-items: center; font-size: .8rem; color: var(--muted); padding: 0; position: relative;
+}
+.cell.today { border: 2px solid var(--fg); color: var(--fg); font-weight: 700; }
+.cell.future { opacity: .4; cursor: default; }
+.cell.on { border: 0; background: var(--ink); color: var(--ink-fg); font-size: 1.1rem; font-weight: 700; transform: rotate(var(--r, 0deg)); box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--ink-fg) 25%, transparent); }
+.cell.pop { animation: pop .3s ease-out; }
+@keyframes pop { 0% { transform: scale(1.7) rotate(-25deg); opacity: .3; } 100% { transform: scale(1) rotate(var(--r, 0deg)); opacity: 1; } }
+
+.stamp { background: var(--ink); color: var(--ink-fg); border: 0; border-radius: 14px; padding: 13px; font-family: var(--font-display); font-size: 1.3rem; letter-spacing: .03em; }
+.stamp.done { background: transparent; color: var(--fg); border: 1.5px solid var(--line); font-family: var(--font-body); font-size: 1rem; }
+.win { text-align: center; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--ink) 12%, transparent); display: flex; flex-direction: column; gap: 8px; }
+.win b { font-family: var(--font-display); font-weight: 400; font-size: 1.4rem; }
+.ghost { background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: .9rem; }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.danger { color: var(--ink); border-color: var(--ink); }
+.empty { text-align: center; padding: 28px 16px; border: 1.5px dashed var(--line); border-radius: 18px; }
+@media (prefers-reduced-motion: reduce) { .cell.pop { animation: none; } .bar i { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header class="hdr">
+    <h1>30일 도장판 ✅</h1>
+    <div class="today"><span class="muted" id="date"></span><b id="summary"></b></div>
+  </header>
+
+  <form class="add" id="form">
+    <div class="row">
+      <input type="text" id="name" maxlength="14" placeholder="새 습관 (예: 물 2L 마시기)" autocomplete="off" aria-label="새 습관 이름">
+      <button class="go" type="submit">추가</button>
+    </div>
+    <div class="icons" id="icons" role="radiogroup" aria-label="아이콘 고르기"></div>
+  </form>
+
+  <div class="habits" id="list"></div>
+  <p class="muted" style="text-align:center">도장은 이 휴대폰(브라우저)에만 저장돼요. 빠뜨린 날은 칸을 눌러 나중에 찍을 수 있어요.</p>
+</main>
+
+<script>
+const KEY = "habit-stamp-v1", N = 30;
+const ICONS = ["💧", "🏃", "📖", "🧘", "🥗", "😴", "✍️", "🦷"];
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+const diff = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);   // b - a (일)
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+
+let today = ymd(new Date()), icon = ICONS[0], confirmDel = "", popKey = "";
+
+function seed() {          // 처음 열었을 때 보여 줄 예시 (지워도 돼요)
+  const mk = (name, ic, ago, offs) => {
+    const start = addDays(today, -ago), days = {};
+    offs.forEach(o => { days[addDays(start, o)] = 1; });
+    return { id: uid(), name, icon: ic, start, days, runs: 0, example: true };
+  };
+  return [mk("물 2L 마시기", "💧", 5, [0, 1, 2, 4, 5]), mk("30분 걷기", "🏃", 2, [0, 1])];
+}
+let habits;
+try { habits = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+if (!Array.isArray(habits)) { habits = seed(); save(); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(habits)); } catch (e) {} }
+
+const count = h => { let c = 0; for (let i = 0; i < N; i++) if (h.days[addDays(h.start, i)]) c++; return c; };
+function streak(h) {
+  let d = today; if (!h.days[d]) d = addDays(d, -1);
+  let c = 0; while (h.days[d]) { c++; d = addDays(d, -1); } return c;
+}
+const dayIdx = h => diff(h.start, today);          // 오늘이 도전의 몇 번째 날인지 (0부터)
+
+function card(h) {
+  const c = count(h), idx = dayIdx(h), st = streak(h), inWindow = idx >= 0 && idx < N, done = c >= N;
+  const cells = Array.from({ length: N }, (_, i) => {
+    const d = addDays(h.start, i), on = !!h.days[d], future = d > today, isToday = d === today;
+    const rot = ((i * 37) % 17) - 8;        // 도장이 살짝씩 기울어지게
+    const cls = ["cell", on ? "on" : "", future ? "future" : "", isToday ? "today" : "", popKey === h.id + d ? "pop" : ""].join(" ");
+    return `<button class="${cls}" style="--r:${rot}deg" data-act="cell" data-id="${h.id}" data-d="${d}" ${future ? "disabled" : ""}
+      aria-label="${i + 1}일째 ${on ? "도장 찍음" : "도장 없음"}" aria-pressed="${on}">${on ? "✔" : i + 1}</button>`;
+  }).join("");
+  let main = "";
+  if (done) main = `<div class="win"><b>🎉 30일 도전 성공!</b><p class="muted">정말 대단해요. 새 도전을 시작해 볼까요?</p>
+      <button class="stamp" data-act="restart" data-id="${h.id}">새 30일 시작</button></div>`;
+  else if (idx >= N) main = `<div class="win"><b>30일이 지났어요</b><p class="muted">${c}일 달성했어요. 다시 도전해 보세요.</p>
+      <button class="stamp" data-act="restart" data-id="${h.id}">새 30일 시작</button></div>`;
+  else if (inWindow) main = h.days[today]
+      ? `<button class="stamp done" data-act="cell" data-id="${h.id}" data-d="${today}">✔ 오늘 완료 (눌러서 취소)</button>`
+      : `<button class="stamp" data-act="cell" data-id="${h.id}" data-d="${today}">오늘 도장 찍기</button>`;
+  const del = confirmDel === h.id
+    ? `<span class="row" style="display:flex;gap:6px"><button class="ghost danger" data-act="del-yes" data-id="${h.id}">정말 삭제</button><button class="ghost" data-act="del-no">취소</button></span>`
+    : `<button class="ghost" data-act="del" data-id="${h.id}">삭제</button>`;
+  return `<article class="card">
+    <div class="top"><span class="ic" aria-hidden="true">${esc(h.icon)}</span>
+      <div class="nm"><h2>${esc(h.name)}${h.example ? '<span class="badge">예시</span>' : ""}</h2>
+        <p class="muted">${inWindow ? (idx + 1) + "일째" : idx < 0 ? "아직 시작 전" : "도전 끝"} · 시작 ${h.start.slice(5).replace("-", "/")}${h.runs ? " · " + h.runs + "번 완주" : ""}</p></div>
+      <div class="streak"><b>🔥 ${st}</b><span class="muted">연속</span></div></div>
+    <div><div class="meta"><span class="muted">진행</span><b>${c} / ${N}</b></div><div class="bar"><i style="width:${c / N * 100}%"></i></div></div>
+    <div class="grid">${cells}</div>${main}
+    <div class="foot"><span class="muted">${h.example ? "예시 습관이에요. 지워도 돼요." : ""}</span>${del}</div></article>`;
+}
+
+function render() {
+  today = ymd(new Date());
+  const dt = new Date();
+  $("date").textContent = (dt.getMonth() + 1) + "월 " + dt.getDate() + "일 " + "일월화수목금토"[dt.getDay()] + "요일";
+  const active = habits.filter(h => { const i = dayIdx(h); return i >= 0 && i < N && count(h) < N; });
+  const doneToday = active.filter(h => h.days[today]).length;
+  $("summary").textContent = active.length ? "오늘 " + doneToday + " / " + active.length + " 완료" + (doneToday === active.length ? " 🎉" : "") : "";
+  $("icons").innerHTML = ICONS.map(i => `<button type="button" class="${i === icon ? "on" : ""}" data-act="icon" data-v="${i}" role="radio" aria-checked="${i === icon}" aria-label="아이콘 ${i}">${i}</button>`).join("");
+  $("list").innerHTML = habits.length ? habits.map(card).join("")
+    : `<div class="empty"><h2>아직 습관이 없어요</h2><p class="muted">위 칸에 하고 싶은 습관을 적고 추가해 보세요.</p></div>`;
+  popKey = "";
+}
+
+$("form").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = $("name").value.trim(); if (!name) { $("name").focus(); return; }
+  habits.unshift({ id: uid(), name, icon, start: today, days: {}, runs: 0 });
+  $("name").value = ""; save(); render();
+});
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]"); if (!el || el.disabled) return;
+  const d = el.dataset, h = habits.find(x => x.id === d.id);
+  switch (d.act) {
+    case "icon": icon = d.v; render(); break;
+    case "cell":
+      if (h) { if (h.days[d.d]) delete h.days[d.d]; else { h.days[d.d] = 1; popKey = h.id + d.d; try { navigator.vibrate && navigator.vibrate(30); } catch (x) {} }
+        delete h.example; save(); render(); }
+      break;
+    case "restart": if (h) { h.runs += count(h) >= N ? 1 : 0; h.start = today; h.days = {}; delete h.example; save(); render(); } break;
+    case "del": confirmDel = d.id; render(); break;
+    case "del-no": confirmDel = ""; render(); break;
+    case "del-yes": habits = habits.filter(x => x.id !== d.id); confirmDel = ""; save(); render(); break;
+  }
+});
+document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });   // 자정이 지나면 날짜 갱신
+render();
+</script>
+</body>
+</html>

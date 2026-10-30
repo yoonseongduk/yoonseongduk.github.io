@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>퀴즈 버저</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(45 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(45 22% 86%);--accent:hsl(45 65% 46%);--accent-fg:#fff;--soft:hsl(45 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(45 22% 10%);--surface:hsl(45 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(45 16% 25%);--accent:hsl(45 75% 68%);--accent-fg:#10131c;--soft:hsl(45 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.bz{display:grid;gap:10px}.bz .b{border:0;border-radius:18px;min-height:130px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:var(--font-display);font-size:1.4rem;touch-action:manipulation}.bz .b b{font-weight:400;font-size:2.2rem}.bz .b.lock{opacity:.35}.bz .b.win{outline:6px solid var(--fg);outline-offset:-6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>퀴즈 버저 🔔</h1>
+  <div class="seg" id="np" style="--n:3"><button type="button" data-n="2">2명</button><button type="button" data-n="3" class="on">3명</button><button type="button" data-n="4">4명</button></div>
+  <div class="card center"><p class="big" id="state" style="min-height:1.4em">문제를 읽은 뒤 시작을 누르세요</p></div>
+  <div class="bz" id="bz"></div>
+  <div class="row" id="judge" hidden><button class="btn ghost" id="no" type="button">❌ 오답</button><button class="btn" id="yes" type="button">⭕ 정답 (+1점)</button></div>
+  <button class="btn" id="start" type="button">문제 시작</button>
+  <button class="btn ghost" id="reset" type="button">점수 초기화</button>
+  <p class="muted">가족 퀴즈 대회용 <b>버저</b>예요! 진행자가 문제를 읽고 <b>'문제 시작'</b>을 누르면, 참가자들이 <b>자기 버튼을 가장 먼저</b> 눌러요. 제일 먼저 누른 사람에게 답할 권리가 생기고, 진행자가 ⭕/❌를 눌러 점수를 줘요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "quiz-buzzer-v1";
+const COLS = ["#e4572e", "#2f6fdf", "#1f9d62", "#d9a400"], NAMES = ["빨강", "파랑", "초록", "노랑"];
+let np = 3, pts = [0, 0, 0, 0], live = false, winner = -1, locked = [false, false, false, false];
+function render() { $("bz").style.gridTemplateColumns = `repeat(${np > 2 ? 2 : np}, 1fr)`; $("bz").innerHTML = Array.from({ length: np }, (_, k) => `<button type="button" class="b${winner === k ? " win" : ""}${locked[k] ? " lock" : ""}" data-k="${k}" style="background:${COLS[k]}"><span>${NAMES[k]}</span><b>${pts[k]}점</b></button>`).join(""); }
+function startQ() { live = true; winner = -1; locked = [false, false, false, false]; $("state").textContent = "🔔 눌러요!"; $("judge").hidden = true; $("start").hidden = true; render(); }
+function buzz(k) { if (!live || locked[k]) return; live = false; winner = k; $("state").textContent = `${NAMES[k]} 팀이 가장 먼저 눌렀어요!`; if (navigator.vibrate) navigator.vibrate(120); $("judge").hidden = false; render(); }
+$("yes").onclick = () => { pts[winner]++; $("state").textContent = `⭕ ${NAMES[winner]} 정답! +1점`; $("judge").hidden = true; $("start").hidden = false; $("start").textContent = "다음 문제"; winner = -1; render(); };
+$("no").onclick = () => { locked[winner] = true; if (locked.slice(0, np).every(Boolean)) { $("state").textContent = "모두 틀렸어요! 정답을 알려 주세요"; $("judge").hidden = true; $("start").hidden = false; $("start").textContent = "다음 문제"; winner = -1; render(); return; } live = true; winner = -1; $("state").textContent = `❌ 오답! 다른 팀은 누르세요 🔔`; $("judge").hidden = true; render(); };
+$("bz").addEventListener("pointerdown", e => { const b = e.target.closest("[data-k]"); if (b) { e.preventDefault(); buzz(+b.dataset.k); } });
+$("np").addEventListener("click", e => { const b = e.target.closest("[data-n]"); if (!b) return; document.querySelectorAll("#np button").forEach(x => x.classList.toggle("on", x === b)); np = +b.dataset.n; pts = [0, 0, 0, 0]; live = false; winner = -1; $("start").hidden = false; $("start").textContent = "문제 시작"; $("judge").hidden = true; render(); });
+$("start").onclick = startQ; $("reset").onclick = () => { pts = [0, 0, 0, 0]; render(); }; render();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

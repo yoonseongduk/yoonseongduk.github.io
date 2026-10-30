@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>몸으로 말해요</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(18 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(18 22% 86%);--accent:hsl(18 65% 46%);--accent-fg:#fff;--soft:hsl(18 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(18 22% 10%);--surface:hsl(18 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(18 16% 25%);--accent:hsl(18 75% 68%);--accent-fg:#10131c;--soft:hsl(18 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.9rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
+</style>
+</head>
+<body>
+<main>
+  <h1>몸으로 말해요 🙈</h1>
+  <div class="chips" id="cats"></div>
+  <div class="stats"><div class="stat"><small>남은 시간</small><b id="time">60</b></div><div class="stat"><small>정답</small><b id="ok">0</b></div><div class="stat"><small>패스</small><b id="pass">0</b></div></div>
+  <div class="card center" id="word" style="min-height:160px;justify-content:center"><p class="big" id="w" style="font-size:clamp(2.4rem,14vw,4rem)">준비</p></div>
+  <div class="row" id="btns" hidden><button class="btn ghost" id="passb" type="button">➡ 패스</button><button class="btn" id="okb" type="button">✔ 정답</button></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="start" type="button">시작</button>
+  <p class="muted">한 사람이 <b>화면을 보고 몸짓으로만</b> 설명하고, 나머지 사람들은 정답을 맞혀요. 말이나 소리를 내면 안 돼요! 맞히면 <b>✔ 정답</b>, 어려우면 <b>➡ 패스</b>. 60초 동안 몇 개나 맞힐 수 있을까요? 폰을 이마에 대고 하면 더 재미있어요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "charades-best-v1";
+const W = {"동물": ["사자", "코끼리", "원숭이", "토끼", "펭귄", "기린", "개구리", "뱀", "독수리", "고양이", "강아지", "악어", "곰", "오리", "나비", "달팽이", "말", "닭", "돼지", "고래"], "직업": ["의사", "소방관", "요리사", "가수", "경찰관", "농부", "선생님", "우주비행사", "마술사", "운전사", "화가", "미용사", "군인", "낚시꾼", "기자"], "행동": ["양치질", "샤워", "낚시", "수영", "줄넘기", "피아노치기", "운전", "청소", "요리", "사진찍기", "달리기", "자전거타기", "빨래", "춤추기", "낮잠"], "물건": ["우산", "냉장고", "선풍기", "시계", "안경", "가위", "전화기", "청소기", "자전거", "로봇", "기타", "텔레비전", "비행기", "칫솔", "바나나"], "운동": ["축구", "야구", "농구", "탁구", "수영", "태권도", "볼링", "양궁", "스키", "골프", "줄다리기", "씨름", "배드민턴", "복싱", "피겨스케이팅"]};
+let cat = "전체", sec = 60, ok = 0, pass = 0, queue = [], timer = 0, run = false, best = ld(KEY) || 0, tempo = 1, passed = [], okList = [];
+function chips() { $("cats").innerHTML = ["전체", ...Object.keys(W)].map(c => `<button type="button" class="chip${c === cat ? " on" : ""}" data-c="${c}">${c}</button>`).join(""); }
+function nextWord() { if (!queue.length) queue = shuf(cat === "전체" ? Object.values(W).flat() : W[cat]); $("w").textContent = queue.pop(); }
+function upd() { $("time").textContent = sec; $("ok").textContent = ok; $("pass").textContent = pass; }
+function start() { ok = 0; pass = 0; sec = 60; queue = []; passed = []; okList = []; run = true; $("res").hidden = true; $("start").hidden = true; $("btns").hidden = false; nextWord(); upd(); clearInterval(timer); timer = setInterval(() => { sec--; upd(); if (sec <= 0) end(); }, 1000 * tempo); }
+function act(isOk) { if (!run) return; const w = $("w").textContent; if (isOk) { ok++; okList.push(w); } else { pass++; passed.push(w); } upd(); nextWord(); }
+function end() { run = false; clearInterval(timer); let note = ""; if (ok > best) { best = ok; sv(KEY, best); note = " 🏆 최고 기록!"; } $("w").textContent = "끝!"; $("btns").hidden = true; $("res").innerHTML = `<b>${ok}개 맞혔어요!${note}</b><p class="muted">맞힌 말: ${okList.join(", ") || "-"}<br>패스: ${passed.join(", ") || "-"}</p>`; $("res").hidden = false; $("start").hidden = false; $("start").textContent = "다시 하기"; }
+$("okb").onclick = () => act(true); $("passb").onclick = () => act(false); $("start").onclick = start;
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b && !run) { cat = b.dataset.c; chips(); } }); chips(); upd();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

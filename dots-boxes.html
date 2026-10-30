@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>점 잇기 상자</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(205 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(205 22% 86%);--accent:hsl(205 65% 46%);--accent-fg:#fff;--soft:hsl(205 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(205 22% 10%);--surface:hsl(205 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(205 16% 25%);--accent:hsl(205 75% 68%);--accent-fg:#10131c;--soft:hsl(205 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.db{width:100%;max-width:380px;margin:0 auto;display:block;background:var(--surface);border:1px solid var(--line);border-radius:16px;touch-action:manipulation}.db .e{stroke:var(--line);stroke-width:9;stroke-linecap:round;pointer-events:none}.db .hit{stroke:transparent;stroke-width:30;stroke-linecap:round;cursor:pointer}.db .hit:hover{stroke:rgba(120,120,120,.25)}.db .e.on0{stroke:#2f6fdf}.db .e.on1{stroke:#e4572e}.db .d{fill:var(--fg);pointer-events:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>점 잇기 상자 🔲</h1>
+  <div class="seg" id="mode" style="--n:2"><button type="button" data-m="cpu" class="on">컴퓨터와<small>1인</small></button><button type="button" data-m="two">둘이서<small>2인</small></button></div>
+  <div class="stats"><div class="stat"><small id="n1">나(🔵)</small><b id="s1">0</b></div><div class="stat"><small>차례</small><b id="turn" style="font-size:1.1rem">🔵</b></div><div class="stat"><small id="n2">컴퓨터(🔴)</small><b id="s2">0</b></div></div>
+  <svg class="db" id="svg" viewBox="0 0 300 300" aria-label="점 잇기 판"></svg>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="again" type="button">새 게임</button>
+  <p class="muted">번갈아 가며 <b>점과 점 사이의 선</b>을 하나씩 그어요. 네모 한 칸의 <b>네 번째 선</b>을 그으면 그 칸이 내 것이 되고 한 번 더 할 수 있어요. 칸을 더 많이 차지한 사람이 이겨요! 컴퓨터와 하거나 둘이 할 수 있어요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "dotsboxes-v1";
+const N = 4, P = 60, O = 30;     // 네모 4×4, 점 5×5
+let hl, vl, own, cur, mode = "cpu", scores = [0, 0], over = false, busy = false, tempo = 1;
+function newGame() { hl = Array.from({ length: N + 1 }, () => Array(N).fill(0)); vl = Array.from({ length: N }, () => Array(N + 1).fill(0)); own = Array.from({ length: N }, () => Array(N).fill(-1)); cur = 0; scores = [0, 0]; over = false; busy = false; $("res").hidden = true; $("n2").textContent = mode === "cpu" ? "컴퓨터(🔴)" : "친구(🔴)"; $("n1").textContent = mode === "cpu" ? "나(🔵)" : "나(🔵)"; render(); }
+const sides = (r, c) => (hl[r][c] > 0) + (hl[r + 1][c] > 0) + (vl[r][c] > 0) + (vl[r][c + 1] > 0);
+function render() {
+  let h = ""; for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (own[r][c] >= 0) h += `<rect x="${O + c * P + 3}" y="${O + r * P + 3}" width="${P - 6}" height="${P - 6}" rx="8" fill="${own[r][c] ? "#e4572e" : "#2f6fdf"}" opacity=".35"/>`;
+  const L1 = [], L2 = [];
+  for (let r = 0; r <= N; r++) for (let c = 0; c < N; c++) { const a = `x1="${O + c * P}" y1="${O + r * P}" x2="${O + (c + 1) * P}" y2="${O + r * P}"`; L1.push(`<line class="e${hl[r][c] ? " on" + (hl[r][c] - 1) : ""}" ${a}/>`); if (!hl[r][c]) L2.push(`<line class="hit" data-t="h" data-r="${r}" data-c="${c}" ${a}/>`); }
+  for (let r = 0; r < N; r++) for (let c = 0; c <= N; c++) { const a = `x1="${O + c * P}" y1="${O + r * P}" x2="${O + c * P}" y2="${O + (r + 1) * P}"`; L1.push(`<line class="e${vl[r][c] ? " on" + (vl[r][c] - 1) : ""}" ${a}/>`); if (!vl[r][c]) L2.push(`<line class="hit" data-t="v" data-r="${r}" data-c="${c}" ${a}/>`); }
+  h += L1.join("");
+  for (let r = 0; r <= N; r++) for (let c = 0; c <= N; c++) h += `<circle cx="${O + c * P}" cy="${O + r * P}" r="5" class="d"/>`;
+  h += L2.join(""); $("svg").innerHTML = h; $("s1").textContent = scores[0]; $("s2").textContent = scores[1]; $("turn").textContent = over ? "-" : cur ? "🔴" : "🔵";
+}
+function play(t, r, c) {
+  if (over) return false; const a = t === "h" ? hl : vl; if (a[r][c]) return false; a[r][c] = cur + 1; let got = 0;
+  const check = (y, x) => { if (y >= 0 && y < N && x >= 0 && x < N && own[y][x] < 0 && sides(y, x) === 4) { own[y][x] = cur; scores[cur]++; got++; } };
+  if (t === "h") { check(r - 1, c); check(r, c); } else { check(r, c - 1); check(r, c); }
+  if (scores[0] + scores[1] === N * N) { over = true; render(); const w = scores[0] === scores[1] ? "비겼어요 🤝" : scores[0] > scores[1] ? "🔵 승리! 🎉" : (mode === "cpu" ? "컴퓨터 승리 😢" : "🔴 승리! 🎉"); $("res").innerHTML = `<b>${w}</b><p class="muted">${scores[0]} : ${scores[1]}</p>`; $("res").hidden = false; return true; }
+  if (!got) cur = 1 - cur; render(); return true;
+}
+function allMoves() { const m = []; for (let r = 0; r <= N; r++) for (let c = 0; c < N; c++) if (!hl[r][c]) m.push(["h", r, c]); for (let r = 0; r < N; r++) for (let c = 0; c <= N; c++) if (!vl[r][c]) m.push(["v", r, c]); return m; }
+function cpuPick() {
+  const ms = allMoves(), score = ([t, r, c]) => { const adj = t === "h" ? [[r - 1, c], [r, c]] : [[r, c - 1], [r, c]]; let s = 0; for (const [y, x] of adj) if (y >= 0 && y < N && x >= 0 && x < N) { const k = sides(y, x); if (k === 3) s += 100; else if (k === 2) s -= 30; } return s + Math.random(); };
+  return ms.sort((a, b) => score(b) - score(a))[0];
+}
+async function cpuTurn() { busy = true; while (!over && cur === 1) { await new Promise(r => setTimeout(r, 450 * tempo)); const [t, r, c] = cpuPick(); play(t, r, c); } busy = false; }
+$("svg").addEventListener("click", e => { const l = e.target.closest("[data-t]"); if (!l || busy || over) return; if (mode === "cpu" && cur === 1) return; const was = cur; if (play(l.dataset.t, +l.dataset.r, +l.dataset.c) && mode === "cpu" && cur === 1 && !over) cpuTurn(); });
+$("mode").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b) return; document.querySelectorAll("#mode button").forEach(x => x.classList.toggle("on", x === b)); mode = b.dataset.m; newGame(); });
+$("again").onclick = newGame; newGame();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

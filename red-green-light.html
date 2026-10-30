@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>빨간불 초록불</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(128 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(128 22% 86%);--accent:hsl(128 65% 46%);--accent-fg:#fff;--soft:hsl(128 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(128 22% 10%);--surface:hsl(128 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(128 16% 25%);--accent:hsl(128 75% 68%);--accent-fg:#10131c;--soft:hsl(128 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.light{padding:14px;border-radius:14px;font-family:var(--font-display);font-size:1.4rem;background:var(--soft);transition:background .15s}.light.g{background:color-mix(in srgb,var(--ok) 30%,var(--surface))}.light.r{background:color-mix(in srgb,var(--bad) 30%,var(--surface))}.light.bad{animation:sh .25s}@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}.track{position:relative;height:50px;margin-top:12px;border-bottom:4px dashed var(--line)}.track i{position:absolute;left:0;bottom:2px;font-size:2rem;font-style:normal;transition:left .08s}.track b{position:absolute;right:0;bottom:2px;font-size:2rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>빨간불 초록불 🚦</h1>
+  <div class="stats"><div class="stat"><small>걸린 시간</small><b id="time">0.0</b></div><div class="stat"><small>최고 기록</small><b id="best">-</b></div><div class="stat"><small>실패</small><b id="fails">0</b></div></div>
+  <div class="card center"><div class="light" id="light"></div><div class="track"><i id="runner">🏃</i><b>🏁</b></div></div>
+  <button class="btn" id="tap" type="button" style="padding:30px 0;font-size:2rem">누르기!</button>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="start" type="button">시작</button>
+  <p class="muted"><b>초록불일 때</b> 버튼을 빠르게 눌러서 앞으로 가세요! <b>빨간불이 켜지면 손을 떼야</b> 해요. 빨간불에 누르면 처음 위치로 돌아가요. 결승선까지 먼저 도착해 보세요!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "redgreen-best-v1";
+let pos = 0, green = true, run = false, t0 = 0, fails = 0, best = ld(KEY), switchAt = 0, raf = 0, last = 0, tempo = 1, tm = 0, gen = 0, holdWait = 0;
+const GOAL = 30;
+function setLight() { $("light").className = "light " + (green ? "g" : "r"); $("light").textContent = green ? "🟢 초록불! 달려요" : "🔴 빨간불! 손 떼세요"; }
+function sched() { const my = gen; const wait = green ? ri(1200, 2600) : ri(900, 1800); setTimeout(() => { if (!run || my !== gen) return; green = !green; setLight(); if (!green) holdWait = 0.25; sched(); }, wait * tempo); }
+function draw() { $("runner").style.left = (pos / GOAL * 86) + "%"; }
+function press() {
+  if (!run) return;
+  if (!green) { if (holdWait > 0) return; pos = 0; fails++; $("fails").textContent = fails; draw(); $("light").classList.add("bad"); setTimeout(() => $("light").classList.remove("bad"), 250); return; }
+  pos++; draw(); if (pos >= GOAL) win();
+}
+function win() { run = false; gen++; const s = (Date.now() - t0) / 1000, nb = best === null || s < best; if (nb) { best = s; sv(KEY, best); } $("res").innerHTML = `<b>🎉 도착! ${s.toFixed(1)}초</b><p class="muted">${nb ? "신기록이에요!" : "최고 기록 " + best.toFixed(1) + "초"} · 실패 ${fails}번</p>`; $("res").hidden = false; $("start").hidden = false; $("start").textContent = "다시 하기"; $("best").textContent = best.toFixed(1) + "초"; }
+function start() { pos = 0; fails = 0; green = true; run = true; gen++; holdWait = 0; $("fails").textContent = 0; $("res").hidden = true; $("start").hidden = true; setLight(); draw(); t0 = Date.now(); sched(); clearInterval(tm); tm = setInterval(() => { if (run) { $("time").textContent = ((Date.now() - t0) / 1000).toFixed(1); if (holdWait > 0) holdWait -= 0.1 / tempo; } }, 100 * tempo); }
+$("tap").addEventListener("pointerdown", e => { e.preventDefault(); press(); });
+$("start").onclick = start; $("best").textContent = best === null ? "-" : best.toFixed(1) + "초"; setLight(); draw();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>정확히 멈춰라</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(195 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(195 22% 86%);--accent:hsl(195 65% 46%);--accent-fg:#fff;--soft:hsl(195 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(195 22% 10%);--surface:hsl(195 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(195 16% 25%);--accent:hsl(195 75% 68%);--accent-fg:#10131c;--soft:hsl(195 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}.log li{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.95rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>정확히 멈춰라 ⏱️</h1>
+  <div class="stats"><div class="stat"><small>목표</small><b id="target">5.00</b></div><div class="stat"><small>도전</small><b id="round">1/5</b></div><div class="stat"><small>평균 오차</small><b id="avg">-</b></div></div>
+  <div class="card center"><p class="big" id="clock" style="font-size:clamp(3rem,18vw,5rem)">0.00</p><p class="muted" id="msg">시작을 누르세요</p></div>
+  <button class="btn" id="go" type="button">시작</button>
+  <ul class="log" id="log"></ul>
+  <div class="res" id="res" hidden></div>
+  <p class="muted">화면의 숫자가 빠르게 올라가요. <b>목표 시간(예: 5.00초)에 정확히 맞춰</b> 멈춤 버튼을 눌러 보세요! 도중에 숫자가 <b>가려지면</b> 감으로 맞춰야 해요. 5번 도전해서 오차가 가장 작은 기록을 노려요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "timestop-best-v1";
+let target = 5, round = 0, errs = [], t0 = 0, running = false, raf = 0, hideAt = 0, best = ld(KEY), tempo = 1;
+const fmt = v => v.toFixed(2);
+function newSet() { round = 0; errs = []; $("log").innerHTML = ""; $("res").hidden = true; target = [3, 4, 5, 6, 7][ri(0, 4)] + (Math.random() < .5 ? 0 : .5); $("target").textContent = fmt(target); $("avg").textContent = "-"; $("round").textContent = "1/5"; $("clock").textContent = "0.00"; $("msg").textContent = `${fmt(target)}초에 멈춰 보세요`; $("go").textContent = "시작"; $("go").dataset.m = "start"; }
+function tick() { if (!running) return; const t = (performance.now() - t0) / 1000 * tempo; $("clock").textContent = t > hideAt ? "?.??" : fmt(t); raf = requestAnimationFrame(tick); }
+function go() {
+  if ($("go").dataset.m === "again") return newSet();
+  if (!running) { running = true; t0 = performance.now(); hideAt = round >= 2 ? target * 0.3 : 99; $("go").textContent = "멈춰!"; $("msg").textContent = round >= 2 ? "도중에 숫자가 가려져요 👀" : "타이밍을 잘 맞춰요"; raf = requestAnimationFrame(tick); return; }
+  running = false; cancelAnimationFrame(raf); const t = (performance.now() - t0) / 1000 * tempo, e = Math.abs(t - target); errs.push(e); round++; $("clock").textContent = fmt(t);
+  const li = document.createElement("li"); li.textContent = `${round}번째: ${fmt(t)}초 (오차 ${fmt(e)}초) ${e < 0.05 ? "🎯" : e < 0.15 ? "👍" : ""}`; $("log").appendChild(li);
+  const avg = errs.reduce((a, b) => a + b, 0) / errs.length; $("avg").textContent = fmt(avg) + "초";
+  if (round >= 5) { const nb = best === null || avg < best; if (nb) { best = avg; sv(KEY, best); } $("res").innerHTML = `<b>평균 오차 ${fmt(avg)}초</b><p class="muted">${nb ? "🏆 신기록이에요!" : "최고 기록 " + fmt(best) + "초"}</p>`; $("res").hidden = false; $("go").textContent = "다시 하기"; $("go").dataset.m = "again"; $("msg").textContent = ""; }
+  else { $("round").textContent = (round + 1) + "/5"; $("go").textContent = "시작"; $("go").dataset.m = "start"; $("msg").textContent = `${fmt(target)}초에 멈춰 보세요`; }
+}
+$("go").addEventListener("pointerdown", e => { e.preventDefault(); go(); }); newSet();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

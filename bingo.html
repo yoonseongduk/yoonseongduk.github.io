@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>빙고</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(100 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(100 22% 86%);--accent:hsl(100 65% 46%);--accent-fg:#fff;--soft:hsl(100 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(100 22% 10%);--surface:hsl(100 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(100 16% 25%);--accent:hsl(100 75% 68%);--accent-fg:#10131c;--soft:hsl(100 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.turn{text-align:center;font-family:var(--font-display);font-size:1.3rem;min-height:1.8em}.board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;background:var(--line);padding:6px;border-radius:16px}.bc{aspect-ratio:1;border:0;border-radius:10px;background:var(--surface);font-family:var(--font-display);font-size:1.5rem;padding:0}.bc.on{background:var(--accent);color:var(--accent-fg)}.bc.last{box-shadow:0 0 0 3px #ffd23f inset}.bc:disabled{cursor:default}
+</style>
+</head>
+<body>
+<main>
+  <h1>빙고 🔢</h1>
+  <div class="stats"><div class="stat"><small>내 빙고</small><b id="my">0줄</b></div><div class="stat"><small>방금 부른 수</small><b id="last">-</b></div><div class="stat"><small>컴퓨터 빙고</small><b id="cp">0줄</b></div></div>
+  <div class="turn" id="turn" aria-live="polite"></div>
+  <div class="board" id="board" role="grid" aria-label="빙고 판"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="new" type="button">새 판</button>
+  <p class="muted">1~25가 적힌 내 판에서 <b>부르고 싶은 숫자를 눌러요.</b> 불린 숫자는 두 판(내 판, 컴퓨터 판)에 모두 표시돼요. 가로, 세로, 대각선으로 한 줄이 다 차면 빙고 1줄! <b>먼저 5줄</b>을 만들면 이겨요. 컴퓨터가 5줄을 먼저 만들면 져요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "bingo-v1";
+const LINES = []; for (let r = 0; r < 5; r++) { LINES.push([0, 1, 2, 3, 4].map(c => r * 5 + c)); LINES.push([0, 1, 2, 3, 4].map(c => c * 5 + r)); } LINES.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
+let mine, comp, called, over, busy, lastNo, best = ld(KEY) || { w: 0, l: 0, d: 0 };
+// 불린 숫자(called)만 보고 완성된 줄의 수를 센다. 판은 칸 번호 → 숫자 배열이다
+const lines = (board, called) => LINES.filter(l => l.every(i => called.has(board[i]))).length;
+function newGame() { mine = shuf(Array.from({ length: 25 }, (_, i) => i + 1)); comp = shuf(Array.from({ length: 25 }, (_, i) => i + 1)); called = new Set(); over = false; busy = false; lastNo = null; $("res").hidden = true; render(); }
+function check() {
+  const a = lines(mine, called), b = lines(comp, called);
+  if (a >= 5 || b >= 5) { over = true; if (a >= 5 && b >= 5) { best.d++; res("🤝 동시에 5줄! 비겼어요"); } else if (a >= 5) { best.w++; res("🎉 내가 이겼어요!"); } else { best.l++; res("😢 컴퓨터가 먼저 5줄을 만들었어요"); } sv(KEY, best); return true; } return false;
+}
+function res(t) { $("res").innerHTML = `<b>${t}</b><p class="muted">전적 ${best.w}승 ${best.d}무 ${best.l}패</p>`; $("res").hidden = false; }
+function call(n) { called.add(n); lastNo = n; }
+// 컴퓨터는 자기 판에서 가장 많이 채워진 줄을 완성시키는 숫자를 고른다
+function compPick() {
+  const left = [...Array(25).keys()].map(i => i + 1).filter(n => !called.has(n)); let best = -1, pick = [];
+  for (const n of left) { let s = 0; for (const l of LINES) if (l.some(i => comp[i] === n)) s += l.filter(i => called.has(comp[i])).length ** 2; if (s > best) { best = s; pick = [n]; } else if (s === best) pick.push(n); }
+  if (Math.random() < .3) return left[Math.floor(Math.random() * left.length)];      // 가끔은 아무 숫자나 불러서 사람에게도 기회를 준다
+  return pick[Math.floor(Math.random() * pick.length)];
+}
+function tap(i) {
+  if (over || busy || called.has(mine[i])) return; call(mine[i]); render(); if (check()) return render();
+  busy = true; render(); setTimeout(() => { call(compPick()); busy = false; check(); render(); }, 700);
+}
+function render() {
+  $("board").innerHTML = mine.map((n, i) => `<button type="button" class="bc ${called.has(n) ? "on" : ""} ${n === lastNo ? "last" : ""}" data-i="${i}" ${called.has(n) || over || busy ? "disabled" : ""}>${n}</button>`).join("");
+  $("my").textContent = lines(mine, called) + "줄"; $("cp").textContent = lines(comp, called) + "줄"; $("last").textContent = lastNo ?? "-";
+  $("turn").textContent = over ? "게임 끝" : busy ? "컴퓨터가 숫자를 고르는 중…" : "부르고 싶은 숫자를 누르세요";
+}
+$("board").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b && !b.disabled) tap(+b.dataset.i); });
+$("new").onclick = newGame; newGame();
+</script>
+</body>
+</html>

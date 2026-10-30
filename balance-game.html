@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>밸런스 게임</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(330 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(330 22% 86%);--accent:hsl(330 65% 46%);--accent-fg:#fff;--soft:hsl(330 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(330 22% 10%);--surface:hsl(330 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(330 16% 25%);--accent:hsl(330 75% 68%);--accent-fg:#10131c;--soft:hsl(330 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.opt{border:3px solid var(--line);background:var(--surface);border-radius:20px;padding:22px 16px;font-family:var(--font-display);font-size:1.35rem;line-height:1.35;min-height:96px;overflow-wrap:anywhere}.opt.a{border-color:#e8453c}.opt.b{border-color:#2f7fe0}.opt.picked{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}.opt.dim{opacity:.4}
+</style>
+</head>
+<body>
+<main>
+  <h1>밸런스 게임 ⚖️</h1>
+  <div class="stats" style="grid-template-columns:repeat(2,1fr)"><div class="stat"><small>답한 질문</small><b id="cnt">0</b></div><div class="stat"><small>A를 고른 비율</small><b id="pa">-</b></div></div>
+  <div class="card center"><small class="muted" id="no"></small><h2>둘 중 하나만 고른다면?</h2></div>
+  <button class="opt a" id="a" type="button"></button><div class="center big" style="font-size:1.4rem;color:var(--muted)">VS</div><button class="opt b" id="b" type="button"></button>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button">다음 질문</button>
+  <p class="muted">두 가지 중 하나를 골라야 하는 질문이에요. 고른 뒤에는 가족과 '왜 그걸 골랐는지' 서로 이야기해 보세요. 정답은 없어요!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "balance-v1";
+const Q = [["평생 여름만 계속되기", "평생 겨울만 계속되기"], ["평생 라면만 먹기", "평생 치킨만 먹기"], ["하늘을 마음껏 날 수 있기", "투명인간이 될 수 있기"], ["과거로 시간 여행하기", "미래로 시간 여행하기"], ["매일 늦잠 자고 지각하기", "매일 일찍 일어나서 시간이 남기"], ["동물과 대화할 수 있기", "세상의 모든 언어를 할 수 있기"], ["한 달 동안 집 안에서만 지내기", "한 달 동안 집 밖에서만 지내기"], ["지금 100만 원 받기", "1년 뒤에 150만 원 받기"], ["잠을 안 자도 괜찮은 몸", "밥을 안 먹어도 괜찮은 몸"], ["아침형 인간", "저녁형 인간"], ["바다로 여행 가기", "산으로 여행 가기"], ["강아지와 함께 살기", "고양이와 함께 살기"], ["평생 단 음식만 먹기", "평생 짠 음식만 먹기"], ["키가 10cm 더 커지기", "달리기가 엄청 빨라지기"], ["노래를 아주 잘하기", "춤을 아주 잘하기"], ["만화 속 세상에서 하루 살기", "영화 속 세상에서 하루 살기"], ["친구 100명과 얕게 지내기", "진짜 친한 친구 1명과 깊게 지내기"], ["매일 아이스크림 먹기", "매일 피자 먹기"], ["눈 내리는 크리스마스", "햇살 가득한 크리스마스"], ["좋아하는 연예인 만나기", "좋아하는 만화 주인공 만나기"], ["비 오는 날 우산 없이 걷기", "맑은 날 우산 쓰고 걷기"], ["평생 휴대폰 없이 살기", "평생 TV와 컴퓨터 없이 살기"], ["용돈 두 배, 대신 방학 없음", "용돈 그대로, 방학 두 배"], ["하루 종일 말 한마디도 못 하기", "하루 종일 쉬지 않고 말해야 하기"], ["여행 가서 비만 오기", "집에 있는데 날씨는 최고"], ["항상 5분 일찍 도착하기", "항상 5분 늦게 도착하지만 맛집 가기"], ["수영장 하나를 통째로 쓰기", "놀이공원 하나를 통째로 쓰기"], ["내 방에 큰 침대", "내 방에 큰 책장"]];
+let st = ld(KEY) || { a: 0, b: 0 }, order = shuf(Q.map((_, i) => i)), pos = 0, chosen = false;
+function show() { const q = Q[order[pos]]; chosen = false; $("a").textContent = "🅰️ " + q[0]; $("b").textContent = "🅱️ " + q[1]; $("a").className = "opt a"; $("b").className = "opt b"; $("res").hidden = true; $("no").textContent = `질문 ${pos + 1} / ${Q.length}`; stats(); }
+function stats() { $("cnt").textContent = st.a + st.b; $("pa").textContent = st.a + st.b ? Math.round(st.a / (st.a + st.b) * 100) + "%" : "-"; }
+function pick(side) {
+  if (chosen) return; chosen = true; st[side]++; sv(KEY, st); $(side).classList.add("picked"); $(side === "a" ? "b" : "a").classList.add("dim");
+  $("res").innerHTML = `<b>${side === "a" ? "🅰️" : "🅱️"}를 골랐어요!</b><p class="muted">왜 그걸 골랐는지 서로 이야기해 보세요 💬</p>`; $("res").hidden = false; stats();
+}
+$("a").onclick = () => pick("a"); $("b").onclick = () => pick("b");
+$("next").onclick = () => { pos++; if (pos >= order.length) { order = shuf(order); pos = 0; } show(); }; show();
+</script>
+</body>
+</html>

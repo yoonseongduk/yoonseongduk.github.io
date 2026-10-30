@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>음식 월드컵</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(12 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(12 22% 86%);--accent:hsl(12 65% 46%);--accent-fg:#fff;--soft:hsl(12 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(12 22% 10%);--surface:hsl(12 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(12 16% 25%);--accent:hsl(12 75% 68%);--accent-fg:#10131c;--soft:hsl(12 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}.versus{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}.vsmark{font-family:var(--font-display);color:var(--muted);font-size:1.2rem}.food{background:var(--surface);border:3px solid var(--line);border-radius:22px;min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px}.food span{font-size:4.2rem;line-height:1}.food b{font-family:var(--font-display);font-weight:400;font-size:1.35rem}.food:active{transform:scale(.96);border-color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <h1>음식 월드컵 🏆</h1>
+  <div class="stats" style="grid-template-columns:repeat(2,1fr)"><div class="stat"><small>라운드</small><b id="round">16강</b></div><div class="stat"><small>진행</small><b id="prog">1/8</b></div></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="versus" id="vs"></div>
+  <div class="res" id="win" hidden></div>
+  <button class="btn" id="again" type="button" hidden>다시 하기</button>
+  <p class="muted">두 음식 중 더 먹고 싶은 쪽을 눌러서 16강부터 결승까지 올라가요. 마지막에 남은 음식이 오늘의 메뉴 후보예요! 가족과 같이 하면 의견이 갈려서 더 재미있어요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "foodcup-v1";
+const FOODS = [["🍕", "피자"], ["🍔", "햄버거"], ["🍣", "초밥"], ["🍜", "라면"], ["🍗", "치킨"], ["🥟", "만두"], ["🍝", "파스타"], ["🌮", "타코"], ["🍙", "주먹밥"], ["🍛", "카레"], ["🥩", "스테이크"], ["🍤", "튀김"], ["🍞", "빵"], ["🥗", "샐러드"], ["🍦", "아이스크림"], ["🍩", "도넛"], ["🍰", "케이크"], ["🍟", "감자튀김"], ["🌭", "핫도그"], ["🍲", "전골"], ["🍢", "오뎅꼬치"], ["🥞", "팬케이크"], ["🧇", "와플"], ["🍫", "초콜릿"], ["🍪", "쿠키"], ["🍉", "수박"], ["🍓", "딸기"], ["🍖", "갈비"], ["🌯", "부리또"], ["🥪", "샌드위치"], ["🍱", "도시락"], ["🍡", "떡꼬치"]];
+let list, winners, i, rnd, champion, hist = ld(KEY) || {};
+const ROUND = n => (n === 2 ? "결승" : n + "강");
+function start() { list = shuf(FOODS).slice(0, 16); winners = []; i = 0; champion = null; $("win").hidden = true; $("again").hidden = true; show(); }
+function show() {
+  const n = list.length, a = list[i * 2], b = list[i * 2 + 1];
+  $("round").textContent = ROUND(n); $("prog").textContent = `${i + 1}/${n / 2}`; $("bar").style.width = ((16 - n + i * 2) / 15 * 100) + "%";
+  $("vs").innerHTML = [a, b].map((f, k) => `<button type="button" class="food" data-k="${k}"><span>${f[0]}</span><b>${esc(f[1])}</b></button>`).join(`<div class="vsmark">VS</div>`).replace('</button><div', '</button><div');
+}
+function pick(k) {
+  winners.push(list[i * 2 + k]); i++;
+  if (i * 2 >= list.length) { if (winners.length === 1) return finish(winners[0]); list = winners; winners = []; i = 0; }
+  show();
+}
+function finish(f) { champion = f; hist[f[1]] = (hist[f[1]] || 0) + 1; sv(KEY, hist); $("vs").innerHTML = ""; $("round").textContent = "우승!"; $("prog").textContent = "🎉"; $("bar").style.width = "100%"; const top = Object.entries(hist).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => `${n} ${c}회`).join(" · ");
+  $("win").innerHTML = `<div class="big">${f[0]}</div><b>${esc(f[1])}</b><p class="muted">오늘의 메뉴 우승!${top ? "<br>지금까지 우승: " + esc(top) : ""}</p>`; $("win").hidden = false; $("again").hidden = false; }
+$("vs").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); });
+$("again").onclick = start; start();
+</script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>제비뽑기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(150 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(150 22% 86%);--accent:hsl(150 65% 46%);--accent-fg:#fff;--soft:hsl(150 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(150 22% 10%);--surface:hsl(150 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(150 16% 25%);--accent:hsl(150 75% 68%);--accent-fg:#10131c;--soft:hsl(150 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.grid{display:grid;gap:10px}.tk{aspect-ratio:1.1;border:2px dashed var(--line);border-radius:16px;background:var(--surface);font-family:var(--font-display);font-size:1.6rem;padding:4px;overflow-wrap:anywhere;line-height:1.2}.tk.win{background:var(--accent);color:var(--accent-fg);border:2px solid var(--accent);font-size:1.3rem}.tk.lose{background:var(--soft);color:var(--muted);border:2px solid var(--line);font-size:1.2rem}.tk:active{transform:scale(.96)}
+</style>
+</head>
+<body>
+<main>
+  <h1>제비뽑기 🎟️</h1>
+  <section class="card" id="setup">
+    <div class="step"><h2>인원(카드 수)</h2><div><button id="nMinus" type="button" aria-label="줄이기">−</button><b id="n">6</b><button id="nPlus" type="button" aria-label="늘리기">＋</button></div></div>
+    <div class="step"><h2>당첨 수</h2><div><button id="wMinus" type="button" aria-label="줄이기">−</button><b id="w">1</b><button id="wPlus" type="button" aria-label="늘리기">＋</button></div></div>
+    <input type="text" id="winText" maxlength="12" aria-label="당첨 문구" placeholder="당첨 문구">
+    <input type="text" id="loseText" maxlength="12" aria-label="꽝 문구" placeholder="꽝 문구">
+    <button class="btn" id="make" type="button">제비 만들기</button>
+  </section>
+  <section id="play" hidden>
+    <div class="grid" id="grid"></div>
+    <div class="res" id="res" style="margin-top:12px"></div>
+    <div class="row" style="margin-top:12px"><button class="btn ghost" id="openAll" type="button">모두 공개</button><button class="btn" id="again" type="button">다시 뽑기</button></div>
+    <button class="btn ghost" id="back" type="button" style="margin-top:8px;width:100%">설정 바꾸기</button>
+  </section>
+  <p class="muted">인원수만큼 제비(카드)를 만들고 한 사람씩 하나를 골라 뒤집어요. 당첨은 몇 개로 할지 정할 수 있어요. 뒤집은 카드는 다시 바꿀 수 없어요. 한 판이 끝나면 '다시 뽑기'를 누르세요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "lots-v1";
+let cfg = ld(KEY) || { n: 6, w: 1, win: "당첨 🎉", lose: "꽝" }, deck = [], opened = new Set();
+cfg.n = clamp(cfg.n, 2, 20); cfg.w = clamp(cfg.w, 1, cfg.n - 1);
+// 카드 n장 중 w장이 당첨(1)이 되도록 섞는다
+const deal = (n, w) => shuf(Array.from({ length: n }, (_, i) => (i < w ? 1 : 0)));
+function drawSetup() { $("n").textContent = cfg.n; $("w").textContent = cfg.w; $("winText").value = cfg.win; $("loseText").value = cfg.lose; }
+function begin() { cfg.win = $("winText").value.trim() || "당첨 🎉"; cfg.lose = $("loseText").value.trim() || "꽝"; sv(KEY, cfg); deck = deal(cfg.n, cfg.w); opened = new Set(); $("setup").hidden = true; $("play").hidden = false; render(); }
+function render() {
+  $("grid").style.gridTemplateColumns = `repeat(${cfg.n > 9 ? 4 : 3}, 1fr)`;
+  $("grid").innerHTML = deck.map((v, i) => `<button type="button" class="tk ${opened.has(i) ? (v ? "win" : "lose") : ""}" data-i="${i}" ${opened.has(i) ? "disabled" : ""} aria-label="${i + 1}번 카드">${opened.has(i) ? esc(v ? cfg.win : cfg.lose) : (i + 1)}</button>`).join("");
+  const left = deck.filter((v, i) => v && !opened.has(i)).length;
+  $("res").innerHTML = opened.size === deck.length ? `<b>모두 열었어요!</b><p class="muted">${deck.length}장 중 당첨 ${cfg.w}장</p>` : `<b>${opened.size} / ${deck.length}장 열었어요</b><p class="muted">남은 당첨 카드 ${left}장</p>`;
+}
+$("grid").addEventListener("click", e => { const t = e.target.closest("[data-i]"); if (t && !t.disabled) { opened.add(+t.dataset.i); render(); try { navigator.vibrate && navigator.vibrate(deck[+t.dataset.i] ? [60, 40, 60] : 30); } catch (x) {} } });
+$("nMinus").onclick = () => { if (cfg.n > 2) { cfg.n--; cfg.w = Math.min(cfg.w, cfg.n - 1); drawSetup(); } }; $("nPlus").onclick = () => { if (cfg.n < 20) { cfg.n++; drawSetup(); } };
+$("wMinus").onclick = () => { if (cfg.w > 1) { cfg.w--; drawSetup(); } }; $("wPlus").onclick = () => { if (cfg.w < cfg.n - 1) { cfg.w++; drawSetup(); } };
+$("make").onclick = begin; $("again").onclick = begin; $("openAll").onclick = () => { deck.forEach((_, i) => opened.add(i)); render(); }; $("back").onclick = () => { $("play").hidden = true; $("setup").hidden = false; drawSetup(); };
+drawSetup();
+</script>
+</body>
+</html>

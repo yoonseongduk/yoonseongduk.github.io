@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오늘 할 일</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(150 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(150 22% 86%);--accent:hsl(150 65% 46%);--accent-fg:#fff;--soft:hsl(150 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(150 22% 10%);--surface:hsl(150 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(150 16% 25%);--accent:hsl(150 75% 68%);--accent-fg:#10131c;--soft:hsl(150 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.row2{display:flex;gap:8px}.row2 input{flex:1}.bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}.chips{display:flex;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.9rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}.ti{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.ti span{flex:1;overflow-wrap:anywhere}.ti.done span{text-decoration:line-through;color:var(--muted)}.ck{width:30px;height:30px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);padding:0;color:#fff;font-size:1rem}.ti.done .ck{background:var(--ok);border-color:var(--ok)}.del{width:30px;height:30px;border-radius:50%;border:0;background:transparent;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>오늘 할 일 ✅</h1>
+  <div class="card"><div class="row2"><input type="text" id="t" placeholder="할 일을 적어요 (예: 숙제하기)" maxlength="40"><button class="btn" id="add" type="button" style="padding:0 18px">＋</button></div><div class="bar"><i id="bar"></i></div><p class="muted center" id="prog"></p></div>
+  <div class="chips" id="flt"></div>
+  <div class="card"><div id="list"></div></div>
+  <button class="btn ghost" id="clear" type="button">✔ 끝낸 일 지우기</button>
+  <p class="muted">할 일을 적고 <b>+</b>를 누르세요. 끝낸 일은 <b>동그라미를 눌러 체크</b>해요. 얼마나 했는지 진행 막대로 보여 줘요. 폰을 꺼도 목록이 저장돼요. 끝낸 일은 한꺼번에 지울 수도 있어요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "todo-v1";
+let items = ld(KEY) || [{ t: "책 읽기 20분", d: false }, { t: "방 정리하기", d: false }], flt = "all";
+const save = () => sv(KEY, items);
+function render() {
+  const done = items.filter(x => x.d).length; $("bar").style.width = (items.length ? done / items.length * 100 : 0) + "%"; $("prog").textContent = items.length ? `${items.length}개 중 ${done}개 완료${done === items.length ? " 🎉 모두 끝!" : ""}` : "할 일이 없어요";
+  $("flt").innerHTML = [["all", "전체"], ["todo", "할 일"], ["done", "끝낸 일"]].map(([k, n]) => `<button type="button" class="chip${flt === k ? " on" : ""}" data-f="${k}">${n}</button>`).join("");
+  $("list").innerHTML = items.map((x, k) => ({ x, k })).filter(({ x }) => flt === "all" || (flt === "done") === x.d).map(({ x, k }) => `<div class="ti${x.d ? " done" : ""}"><button type="button" class="ck" data-c="${k}" aria-label="완료 체크">${x.d ? "✔" : ""}</button><span>${esc(x.t)}</span><button type="button" class="del" data-d="${k}" aria-label="삭제">✕</button></div>`).join("") || '<p class="muted center">비어 있어요</p>';
+}
+function add() { const t = $("t").value.trim(); if (!t) return; items.push({ t, d: false }); $("t").value = ""; save(); render(); }
+$("add").onclick = add; $("t").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) add(); });
+$("list").addEventListener("click", e => { const c = e.target.closest("[data-c]"), d = e.target.closest("[data-d]"); if (c) items[+c.dataset.c].d = !items[+c.dataset.c].d; else if (d) items.splice(+d.dataset.d, 1); else return; save(); render(); });
+$("flt").addEventListener("click", e => { const b = e.target.closest("[data-f]"); if (b) { flt = b.dataset.f; render(); } }); $("clear").onclick = () => { items = items.filter(x => !x.d); save(); render(); }; render();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

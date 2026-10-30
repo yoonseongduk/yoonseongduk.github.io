@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>단위 변환기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(195 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(195 22% 86%);--accent:hsl(195 65% 46%);--accent-fg:#fff;--soft:hsl(195 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(195 22% 10%);--surface:hsl(195 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(195 16% 25%);--accent:hsl(195 75% 68%);--accent-fg:#10131c;--soft:hsl(195 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.95rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}.row{grid-template-columns:1fr 1fr}select{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit}.ur{display:flex;justify-content:space-between;padding:7px 4px;border-bottom:1px solid var(--line)}.ur.me{background:var(--soft);border-radius:8px}.ur b{font-weight:700;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<main>
+  <h1>단위 변환기 📐</h1>
+  <div class="chips" id="cats"></div>
+  <div class="card"><label class="muted" for="v">바꿀 값</label><div class="row"><input type="number" id="v" inputmode="decimal" value="1"><select id="u"></select></div></div>
+  <div class="card"><div id="out"></div></div>
+  <p class="muted">길이, 무게, 넓이, 부피, 온도를 서로 바꿔 줘요. <b>숫자를 입력하면 모든 단위로 한꺼번에</b> 계산돼요. 집 넓이를 말할 때 쓰는 <b>평</b>과 ㎡도 바꿀 수 있어요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "unitconvert-v1";
+const CAT = { "길이": { "mm": .001, "cm": .01, "m": 1, "km": 1000, "인치(in)": .0254, "피트(ft)": .3048, "야드(yd)": .9144, "마일(mi)": 1609.344, "자": .30303 },
+  "무게": { "mg": 1e-6, "g": .001, "kg": 1, "톤(t)": 1000, "온스(oz)": .0283495, "파운드(lb)": .45359237, "근(600g)": .6, "돈(3.75g)": .00375 },
+  "넓이": { "㎠": 1e-4, "㎡": 1, "평": 3.305785, "ha(헥타르)": 1e4, "㎢": 1e6, "에이커": 4046.856 },
+  "부피": { "mL": .001, "L": 1, "㎥": 1000, "컵(200mL)": .2, "큰술(15mL)": .015, "작은술(5mL)": .005, "갤런(US)": 3.785412, "되(1.8L)": 1.8, "말(18L)": 18 },
+  "온도": null };
+let cat = "길이", base = ld(KEY) || {};
+function chips() { $("cats").innerHTML = Object.keys(CAT).map(c => `<button type="button" class="chip${c === cat ? " on" : ""}" data-c="${c}">${c}</button>`).join(""); const us = cat === "온도" ? ["섭씨(℃)", "화씨(℉)", "켈빈(K)"] : Object.keys(CAT[cat]); $("u").innerHTML = us.map(u => `<option>${u}</option>`).join(""); }
+const fmt = n => { if (!isFinite(n)) return "-"; const a = Math.abs(n); return (a !== 0 && (a < 1e-4 || a >= 1e9) ? n.toExponential(4) : +n.toPrecision(7)).toLocaleString("ko-KR", { maximumFractionDigits: 8 }); };
+function calc() {
+  const v = parseFloat($("v").value), u = $("u").value; if (isNaN(v)) { $("out").innerHTML = '<p class="muted">숫자를 입력해 주세요</p>'; return; }
+  let rows; if (cat === "온도") { const c = u.startsWith("섭씨") ? v : u.startsWith("화씨") ? (v - 32) * 5 / 9 : v - 273.15; rows = [["섭씨(℃)", c], ["화씨(℉)", c * 9 / 5 + 32], ["켈빈(K)", c + 273.15]]; } else { const m = v * CAT[cat][u]; rows = Object.entries(CAT[cat]).map(([k, f]) => [k, m / f]); }
+  $("out").innerHTML = rows.map(([k, x]) => `<div class="ur${k === u ? " me" : ""}"><span>${k}</span><b>${fmt(x)}</b></div>`).join("");
+}
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; chips(); calc(); } }); $("v").oninput = $("u").onchange = calc; chips(); calc();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

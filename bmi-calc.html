@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BMI 계산기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(140 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(140 22% 86%);--accent:hsl(140 65% 46%);--accent-fg:#fff;--soft:hsl(140 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(140 22% 10%);--surface:hsl(140 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(140 16% 25%);--accent:hsl(140 75% 68%);--accent-fg:#10131c;--soft:hsl(140 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.card input{margin:4px 0 10px}.gauge{position:relative;height:14px;border-radius:7px;margin:14px 0 4px;background:linear-gradient(90deg,#2f6fdf 0 22.5%,#1f9d62 22.5% 44.5%,#d9a400 44.5% 55%,#d6453a 55%)}.gauge i{position:absolute;top:-5px;width:6px;height:24px;margin-left:-3px;background:var(--fg);border-radius:3px}.gl{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>BMI 계산기 ⚖️</h1>
+  <div class="card"><label class="muted">키 (cm)</label><input type="number" id="h" inputmode="decimal" placeholder="예: 170"><label class="muted">몸무게 (kg)</label><input type="number" id="w" inputmode="decimal" placeholder="예: 65"><button class="btn" id="go" type="button">계산하기</button></div>
+  <div class="res" id="out" hidden></div>
+  <p class="muted"><b>키와 몸무게</b>를 넣으면 체질량지수(BMI)와 비만도를 알려 줘요. 한국 기준(저체중 18.5 미만, 정상 18.5~22.9, 과체중 23~24.9, 비만 25 이상)을 써요. 성장기 어린이는 나이에 따라 기준이 달라서, 참고만 해 주세요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "bmi-v1";
+const last = ld(KEY); if (last) { $("h").value = last[0]; $("w").value = last[1]; }
+function calc() { const h = parseFloat($("h").value), w = parseFloat($("w").value); if (!(h > 50 && h < 250 && w > 5 && w < 300)) { $("out").hidden = false; $("out").innerHTML = "<b>키와 몸무게를 올바르게 넣어 주세요</b>"; return; } sv(KEY, [h, w]);
+  const m = h / 100, bmi = w / (m * m), lo = 18.5 * m * m, hi = 22.9 * m * m; const cat = bmi < 18.5 ? ["저체중", "#2f6fdf"] : bmi < 23 ? ["정상", "#1f9d62"] : bmi < 25 ? ["과체중", "#d9a400"] : ["비만", "#d6453a"];
+  const pos = Math.max(0, Math.min(100, (bmi - 14) / (34 - 14) * 100)); $("out").hidden = false;
+  $("out").innerHTML = `<b style="color:${cat[1]}">BMI ${bmi.toFixed(1)} · ${cat[0]}</b><div class="gauge"><i style="left:${pos}%"></i></div><div class="gl"><span>저체중</span><span>정상</span><span>과체중</span><span>비만</span></div><p class="muted">정상 체중 범위: ${lo.toFixed(1)}kg ~ ${hi.toFixed(1)}kg</p>`; }
+$("go").onclick = calc; if (last) calc();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

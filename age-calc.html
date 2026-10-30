@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>나이 계산기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(330 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(330 22% 86%);--accent:hsl(330 65% 46%);--accent-fg:#fff;--soft:hsl(330 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(330 22% 10%);--surface:hsl(330 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(330 16% 25%);--accent:hsl(330 75% 68%);--accent-fg:#10131c;--soft:hsl(330 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.fr{display:flex;align-items:center;gap:8px;margin-top:8px}.fr input{width:84px}.fr span{flex:1;font-size:.9rem;color:var(--muted)}.fr button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--soft);padding:0}
+</style>
+</head>
+<body>
+<main>
+  <h1>나이 계산기 🎂</h1>
+  <div class="card"><label class="muted" for="bd">생년월일</label><input type="date" id="bd"><div class="row"><button class="btn" id="calc" type="button">계산하기</button><button class="btn ghost" id="save" type="button">가족에 추가</button></div></div>
+  <div class="res" id="out" hidden></div>
+  <div class="card"><b>👨‍👩‍👧 가족 목록</b><div id="fam"></div></div>
+  <p class="muted">생년월일을 고르면 <b>만 나이</b>, 태어난 지 며칠인지, <b>다음 생일까지 남은 날</b>, 띠와 별자리를 알려 줘요. 가족 생일을 모두 넣어서 비교해 볼 수도 있어요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "agecalc-v1";
+const ANIMALS = "쥐 소 호랑이 토끼 용 뱀 말 양 원숭이 닭 개 돼지".split(" "), DAYS = "일월화수목금토".split("");
+const SIGNS = [[1, 20, "물병자리"], [2, 19, "물고기자리"], [3, 21, "양자리"], [4, 20, "황소자리"], [5, 21, "쌍둥이자리"], [6, 22, "게자리"], [7, 23, "사자자리"], [8, 23, "처녀자리"], [9, 24, "천칭자리"], [10, 24, "전갈자리"], [11, 23, "사수자리"], [12, 22, "염소자리"]];
+let fam = ld(KEY) || [];
+const sign = (m, d) => { let s = "염소자리"; for (const [mm, dd, n] of SIGNS) if (m > mm || (m === mm && d >= dd)) s = n; return s; };
+function info(str) {
+  const b = new Date(str + "T00:00:00"), t = new Date(); t.setHours(0, 0, 0, 0); if (isNaN(b) || b > t) return null;
+  let age = t.getFullYear() - b.getFullYear(); if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) age--;
+  let nx = new Date(t.getFullYear(), b.getMonth(), b.getDate()); if (nx < t) nx = new Date(t.getFullYear() + 1, b.getMonth(), b.getDate()); const days = Math.round((t - b) / 864e5), left = Math.round((nx - t) / 864e5);
+  return { age, days, left, animal: ANIMALS[(b.getFullYear() - 4) % 12], sign: sign(b.getMonth() + 1, b.getDate()), dow: DAYS[b.getDay()], yearAge: t.getFullYear() - b.getFullYear() };
+}
+function show() { const v = $("bd").value, i = v && info(v); if (!i) { $("out").hidden = false; $("out").innerHTML = "<b>생년월일을 올바르게 골라 주세요</b>"; return; } $("out").hidden = false; $("out").innerHTML = `<b>만 ${i.age}세</b><p class="muted">연 나이 ${i.yearAge}세 · 태어난 지 ${i.days.toLocaleString()}일째<br>다음 생일까지 ${i.left === 0 ? "오늘이 생일! 🎉" : i.left + "일"} · ${i.animal}띠 · ${i.sign} · ${i.dow}요일 출생</p>`; }
+function render() { $("fam").innerHTML = fam.length ? fam.map((f, k) => { const i = info(f.d); return i ? `<div class="fr"><input type="text" value="${esc(f.n)}" data-n="${k}" maxlength="8"><span>만 ${i.age}세 · 생일 ${i.left === 0 ? "오늘!" : "D-" + i.left}</span><button type="button" data-d="${k}" aria-label="삭제">✕</button></div>` : ""; }).join("") : '<p class="muted">저장된 가족이 없어요</p>'; }
+$("calc").onclick = show; $("save").onclick = () => { const v = $("bd").value; if (!v || !info(v)) return show(); fam.push({ n: "가족" + (fam.length + 1), d: v }); sv(KEY, fam); render(); };
+$("fam").addEventListener("input", e => { const k = e.target.dataset.n; if (k !== undefined) { fam[+k].n = e.target.value; sv(KEY, fam); } });
+$("fam").addEventListener("click", e => { const d = e.target.closest("[data-d]"); if (d) { fam.splice(+d.dataset.d, 1); sv(KEY, fam); render(); } }); render();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

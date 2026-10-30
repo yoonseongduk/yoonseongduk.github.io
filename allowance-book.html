@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>용돈 기입장</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(95 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(95 22% 86%);--accent:hsl(95 65% 46%);--accent-fg:#fff;--soft:hsl(95 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(95 22% 10%);--surface:hsl(95 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(95 16% 25%);--accent:hsl(95 75% 68%);--accent-fg:#10131c;--soft:hsl(95 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.card input{margin:4px 0}.stat b{font-size:1.05rem!important}.ar{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.ar>div{flex:1;min-width:0}.ar .plus{color:var(--ok);font-weight:700}.ar .minus{color:var(--bad);font-weight:700}.ar button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--soft);padding:0}
+</style>
+</head>
+<body>
+<main>
+  <h1>용돈 기입장 💰</h1>
+  <div class="stats"><div class="stat"><small>남은 돈</small><b id="bal">0</b></div><div class="stat"><small>이번 달 쓴 돈</small><b id="spent">0</b></div><div class="stat"><small>이번 달 받은 돈</small><b id="got">0</b></div></div>
+  <div class="card"><input type="date" id="d"><input type="text" id="m" placeholder="내용 (예: 문구점, 용돈)" maxlength="20"><input type="number" id="a" inputmode="numeric" placeholder="금액 (원)"><div class="row"><button class="btn" id="in" type="button" style="background:var(--ok)">＋ 들어온 돈</button><button class="btn" id="out" type="button" style="background:var(--bad)">− 나간 돈</button></div></div>
+  <div class="card"><b>📒 기록</b><div id="list"></div></div>
+  <p class="muted">받은 돈과 쓴 돈을 적어 두면 <b>지금 얼마가 남았는지</b> 계산해 줘요. 날짜와 내용, 금액을 적고 <b>들어온 돈 / 나간 돈</b> 중에 골라 추가하세요. 이번 달에 얼마를 썼는지도 보여 줘요. 폰에 저장돼요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "allowance-v1";
+let rows = ld(KEY) || [];
+const won = n => Math.abs(n).toLocaleString("ko-KR") + "원", ymd = () => { const t = new Date(); return new Date(t.getTime() - t.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+$("d").value = ymd();
+function render() {
+  const bal = rows.reduce((s, r) => s + r.v, 0), mon = ymd().slice(0, 7), thisM = rows.filter(r => r.d.startsWith(mon));
+  $("bal").textContent = (bal < 0 ? "-" : "") + won(bal); $("spent").textContent = won(thisM.filter(r => r.v < 0).reduce((s, r) => s + r.v, 0)); $("got").textContent = won(thisM.filter(r => r.v > 0).reduce((s, r) => s + r.v, 0));
+  $("list").innerHTML = rows.length ? [...rows].map((r, k) => ({ r, k })).sort((x, y) => y.r.d.localeCompare(x.r.d) || y.k - x.k).map(({ r, k }) => `<div class="ar"><div><b>${esc(r.m || "(내용 없음)")}</b><br><small class="muted">${r.d}</small></div><span class="${r.v > 0 ? "plus" : "minus"}">${r.v > 0 ? "+" : "−"}${won(r.v)}</span><button type="button" data-d="${k}" aria-label="삭제">✕</button></div>`).join("") : '<p class="muted center">아직 기록이 없어요</p>';
+}
+function add(sign) { const a = parseInt($("a").value); if (!(a > 0)) return; rows.push({ d: $("d").value || ymd(), m: $("m").value.trim(), v: sign * a }); sv(KEY, rows); $("m").value = ""; $("a").value = ""; render(); }
+$("in").onclick = () => add(1); $("out").onclick = () => add(-1); $("list").addEventListener("click", e => { const d = e.target.closest("[data-d]"); if (d) { rows.splice(+d.dataset.d, 1); sv(KEY, rows); render(); } }); render();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

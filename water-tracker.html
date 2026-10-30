@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>물 마시기 기록</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(200 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(200 22% 86%);--accent:hsl(200 65% 46%);--accent-fg:#fff;--soft:hsl(200 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(200 22% 10%);--surface:hsl(200 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(200 16% 25%);--accent:hsl(200 75% 68%);--accent-fg:#10131c;--soft:hsl(200 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.cupwrap{display:flex;justify-content:center}.cup{position:relative;width:130px;height:170px;border:4px solid var(--fg);border-top:0;border-radius:0 0 28px 28px;overflow:hidden;background:var(--surface)}.cup i{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(#5db7f0,#2f8fe0);transition:height .4s}.cup b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:400;font-size:3rem;color:var(--fg);text-shadow:0 0 6px var(--surface)}.hist{display:flex;gap:8px;align-items:flex-end;height:130px;margin-top:10px}.hb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%}.hb .b{flex:1;width:70%;background:var(--soft);border-radius:6px;display:flex;align-items:flex-end;overflow:hidden}.hb .b i{display:block;width:100%;background:#8cc8f2}.hb .b i.ok{background:var(--ok)}.hb small{color:var(--muted)}.step button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.3rem;padding:0}
+</style>
+</head>
+<body>
+<main>
+  <h1>물 마시기 기록 💧</h1>
+  <div class="card center"><div class="cupwrap"><div class="cup"><i id="fill"></i><b id="cnt">0</b></div></div><p class="muted" id="ml"></p></div>
+  <div class="row"><button class="btn ghost" id="minus" type="button">− 취소</button><button class="btn" id="plus" type="button">💧 컵 추가</button></div>
+  <div class="card"><div class="step"><span>하루 목표</span><div><button type="button" id="gm">−</button><b id="goal">8</b><span>컵</span><button type="button" id="gp">＋</button></div></div></div>
+  <div class="card"><b>📅 최근 7일</b><div class="hist" id="hist"></div></div>
+  <p class="muted">물을 한 컵 마실 때마다 <b>💧 컵 추가</b>를 눌러요. 하루 목표 컵 수를 채우면 파란 물이 가득 차요! 최근 7일 기록도 막대로 볼 수 있어요. (1컵 = 200mL)</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "water-v1";
+const key = d => d.toISOString().slice(0, 10), todayKey = () => key(new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000));
+let st = ld(KEY) || { goal: 8, log: {} };
+const save = () => sv(KEY, st), n = () => st.log[todayKey()] || 0;
+function render() {
+  const c = n(); $("cnt").textContent = c; $("fill").style.height = Math.min(100, c / st.goal * 100) + "%"; $("ml").textContent = `${c * 200}mL · 목표 ${st.goal * 200}mL ${c >= st.goal ? "🎉 달성!" : "(" + (st.goal - c) + "컵 남음)"}`; $("goal").textContent = st.goal;
+  const days = Array.from({ length: 7 }, (_, k) => { const d = new Date(); d.setDate(d.getDate() - (6 - k)); const kk = key(new Date(d.getTime() - d.getTimezoneOffset() * 60000)); return { l: "일월화수목금토"[d.getDay()], v: st.log[kk] || 0 }; });
+  $("hist").innerHTML = days.map(d => `<div class="hb"><div class="b"><i class="${d.v >= st.goal ? "ok" : ""}" style="height:${Math.min(100, d.v / Math.max(st.goal, 1) * 100)}%"></i></div><small>${d.l}</small><b>${d.v}</b></div>`).join("");
+}
+$("plus").onclick = () => { st.log[todayKey()] = n() + 1; save(); render(); if (navigator.vibrate) navigator.vibrate(30); }; $("minus").onclick = () => { if (n() > 0) { st.log[todayKey()] = n() - 1; save(); render(); } };
+$("gm").onclick = () => { st.goal = Math.max(1, st.goal - 1); save(); render(); }; $("gp").onclick = () => { st.goal = Math.min(20, st.goal + 1); save(); render(); }; render();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

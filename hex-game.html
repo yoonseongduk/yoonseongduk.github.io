@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>헥스</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(205 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(205 22% 86%);--accent:hsl(205 65% 46%);--accent-fg:#fff;--soft:hsl(205 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(205 22% 10%);--surface:hsl(205 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(205 16% 25%);--accent:hsl(205 75% 68%);--accent-fg:#10131c;--soft:hsl(205 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.hx{width:100%;max-width:400px;margin:0 auto;display:block;touch-action:manipulation}.hc{stroke:var(--fg);stroke-width:1.5;cursor:pointer}.hc.c0{fill:var(--surface)}.hc.c1{fill:#2f6fdf}.hc.c2{fill:#e4572e}.hc.c0:hover{fill:var(--soft)}
+</style>
+</head>
+<body>
+<main>
+  <h1>헥스 ⬢</h1>
+  <div class="seg" id="lv" style="--n:2"><button type="button" data-l="easy" class="on">쉬움<small>5×5</small></button><button type="button" data-l="hard">보통<small>7×7</small></button></div>
+  <div class="stats"><div class="stat"><small>차례</small><b id="turn" style="font-size:1.1rem">🔵 나</b></div><div class="stat"><small>누적 승리</small><b id="wins">0</b></div><div class="stat"><small>놓은 돌</small><b id="cnt">0</b></div></div>
+  <svg class="hx" id="svg"></svg>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="again" type="button">새 게임</button>
+  <p class="muted">육각형 판에서 번갈아 칸을 차지해요. <b>🔵 나는 왼쪽 변과 오른쪽 변</b>을, <b>🔴 컴퓨터는 위쪽 변과 아래쪽 변</b>을 끊기지 않는 길로 먼저 이으면 이겨요. 비기는 일은 없어요. 상대 길을 막으면서 내 길을 만들어 보세요!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "hex-best-v1";
+let N = 5, g = [], over = false, busy = false, wins = ld(KEY) || 0, tempo = 1;     // 0 비었음, 1 나(왼↔오른), 2 컴퓨터(위↔아래)
+const NB = [[-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0]];
+function newGame() { g = Array.from({ length: N }, () => Array(N).fill(0)); over = false; busy = false; $("res").hidden = true; render(); }
+function dist(pl) {        // 0-1 BFS: pl가 이어야 하는 두 변 사이의 최소 빈칸 수
+  const INF = 99, d = Array.from({ length: N }, () => Array(N).fill(INF)), q = []; const w = (r, c) => g[r][c] === pl ? 0 : g[r][c] === 0 ? 1 : INF;
+  for (let i = 0; i < N; i++) { const [r, c] = pl === 1 ? [i, 0] : [0, i]; if (w(r, c) < INF) { d[r][c] = w(r, c); q.push([r, c]); } }
+  q.sort((a, b) => d[a[0]][a[1]] - d[b[0]][b[1]]); while (q.length) { q.sort((a, b) => d[a[0]][a[1]] - d[b[0]][b[1]]); const [r, c] = q.shift(); for (const [dr, dc] of NB) { const y = r + dr, x = c + dc; if (y < 0 || y >= N || x < 0 || x >= N) continue; const ww = w(y, x); if (ww < INF && d[r][c] + ww < d[y][x]) { d[y][x] = d[r][c] + ww; q.push([y, x]); } } }
+  let m = INF; for (let i = 0; i < N; i++) m = Math.min(m, pl === 1 ? d[i][N - 1] : d[N - 1][i]); return m;
+}
+const won = pl => dist(pl) === 0;
+function render() {
+  const S = 34, ox = 40, oy = 36; let h = "";
+  const pos = (r, c) => [ox + c * S * 1.0 + r * S * .5, oy + r * S * .87];
+  const hexp = (x, y, s) => Array.from({ length: 6 }, (_, k) => [x + s * Math.cos(Math.PI / 6 + k * Math.PI / 3), y + s * Math.sin(Math.PI / 6 + k * Math.PI / 3)].join(",")).join(" ");
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) { const [x, y] = pos(r, c); h += `<polygon class="hc c${g[r][c]}" data-r="${r}" data-c="${c}" points="${hexp(x, y, S * .56)}"/>`; }
+  const W = ox * 2 + (N - 1) * S + (N - 1) * S * .5 + 10, Hh = oy * 2 + (N - 1) * S * .87; $("svg").setAttribute("viewBox", `0 0 ${W} ${Hh}`);
+  const [tx0, ty0] = pos(0, 0), [tx1, ty1] = pos(0, N - 1), [bx0, by0] = pos(N - 1, 0), [bx1, by1] = pos(N - 1, N - 1), o = S * .62;
+  const ln = (x1, y1, x2, y2, col) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="9" stroke-linecap="round" opacity=".8"/>`;
+  h = h + ln(tx0 - 24, ty0 - 4, bx0 - 24, by0 - 4, "#2f6fdf") + ln(tx1 + 24, ty1 + 4, bx1 + 24, by1 + 4, "#2f6fdf") + ln(tx0 - 8, ty0 - 24, tx1 + 8, ty1 - 24, "#e4572e") + ln(bx0 - 8, by0 + 24, bx1 + 8, by1 + 24, "#e4572e");
+  $("svg").innerHTML = h; $("wins").textContent = wins; $("cnt").textContent = g.flat().filter(Boolean).length; $("turn").textContent = over ? "-" : busy ? "🔴 컴퓨터" : "🔵 나";
+}
+async function play(r, c) {
+  if (over || busy || g[r][c]) return; g[r][c] = 1; render(); if (won(1)) { over = true; wins++; sv(KEY, wins); $("res").innerHTML = `<b>🎉 내가 이겼어요!</b>`; $("res").hidden = false; return render(); }
+  busy = true; render(); await new Promise(x => setTimeout(x, 450 * tempo));
+  let best = null, bs = 1e9; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!g[y][x]) { g[y][x] = 2; const s = dist(2) * 3 - dist(1) + Math.random() * (N === 5 ? 1.4 : .5); g[y][x] = 0; if (s < bs) { bs = s; best = [y, x]; } }
+  g[best[0]][best[1]] = 2; if (won(2)) { over = true; $("res").innerHTML = `<b>😢 컴퓨터가 이겼어요</b>`; $("res").hidden = false; } busy = false; render();
+}
+$("svg").addEventListener("click", e => { const h = e.target.closest("[data-r]"); if (h) play(+h.dataset.r, +h.dataset.c); });
+$("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (!b) return; document.querySelectorAll("#lv button").forEach(x => x.classList.toggle("on", x === b)); N = b.dataset.l === "easy" ? 5 : 7; newGame(); });
+$("again").onclick = newGame; newGame();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

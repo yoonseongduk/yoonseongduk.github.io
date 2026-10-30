@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>윷놀이</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(38 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(38 22% 86%);--accent:hsl(38 65% 46%);--accent-fg:#fff;--soft:hsl(38 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(38 22% 10%);--surface:hsl(38 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(38 16% 25%);--accent:hsl(38 75% 68%);--accent-fg:#10131c;--soft:hsl(38 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.yb{width:100%;max-width:340px;margin:0 auto;display:block}.yb .cell{fill:var(--surface);stroke:var(--fg);stroke-width:2}.yb .goal{fill:var(--accent)}.yb .lab{font-size:11px;fill:var(--muted)}.yb .tok{font-size:18px}.sticks{font-size:1.8rem;letter-spacing:.2em;margin-bottom:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>윷놀이 🥢</h1>
+  <div class="stats"><div class="stat"><small>나 도착</small><b id="d1">0/2</b></div><div class="stat"><small>차례</small><b id="turn" style="font-size:1.1rem">나</b></div><div class="stat"><small>컴퓨터 도착</small><b id="d2">0/2</b></div></div>
+  <svg class="yb" id="svg" viewBox="0 0 300 300"></svg>
+  <div class="card center"><div class="sticks" id="sticks">🥢🥢🥢🥢</div><p class="big" id="res" style="font-size:2rem;min-height:1.3em"></p><p class="muted" id="msg">윷을 던져 보세요!</p></div>
+  <div class="row"><button class="btn" id="throw" type="button">🥢 윷 던지기</button></div>
+  <div class="row" id="pick" hidden><button class="btn ghost" data-p="0" type="button">내 말 1 이동</button><button class="btn ghost" data-p="1" type="button">내 말 2 이동</button></div>
+  <div class="res" id="fin" hidden></div>
+  <button class="btn ghost" id="again" type="button">새 게임</button>
+  <p class="muted">컴퓨터와 <b>간단한 윷놀이</b>를 해요. 윷가락 4개를 던져서 나온 칸만큼 말을 움직여요. <b>도=1칸 개=2 걸=3 윷=4 모=5</b>. 윷이나 모가 나오거나 <b>상대 말을 잡으면 한 번 더</b> 던져요! 말 2개를 먼저 한 바퀴(20칸) 돌려 도착시키면 이겨요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "yutnori-best-v1";
+const NAMES = ["", "도", "개", "걸", "윷", "모"], TR = 20;
+let pos = [[0, 0], [0, 0]], turn = 0, steps = 0, over = false, busy = false, wins = ld(KEY) || 0, tempo = 1, stage = "throw";   // pos[who][i]: 0 대기, 1..19 판 위, 20 도착
+const fin = w => pos[w].filter(v => v >= TR).length;
+function newGame() { pos = [[0, 0], [0, 0]]; turn = 0; steps = 0; over = false; busy = false; stage = "throw"; $("fin").hidden = true; $("pick").hidden = true; $("res").textContent = ""; $("msg").textContent = "윷을 던져 보세요!"; render(); }
+const xy = k => { const a = (k / TR) * Math.PI * 2 + Math.PI / 2; return [150 + 115 * Math.cos(a), 150 + 115 * Math.sin(a)]; };
+function render() {
+  let h = `<circle cx="150" cy="150" r="115" fill="none" stroke="var(--line)" stroke-width="30"/>`; for (let k = 1; k <= TR; k++) { const [x, y] = xy(k % TR); h += `<circle cx="${x}" cy="${y}" r="9" class="cell${k === TR ? " goal" : ""}"/>`; } const [sx, sy] = xy(0); h += `<text x="${sx}" y="${sy + 28}" text-anchor="middle" class="lab">출발·도착</text>`;
+  [0, 1].forEach(w => pos[w].forEach((v, i) => { if (v >= TR) return; const [x, y] = xy(v % TR), off = w === 0 ? -7 : 7; h += `<text x="${x + off}" y="${y + 5}" text-anchor="middle" class="tok">${w === 0 ? (i ? "🔵" : "🟦") : (i ? "🔴" : "🟥")}</text>`; }));
+  $("svg").innerHTML = h; $("d1").textContent = fin(0) + "/2"; $("d2").textContent = fin(1) + "/2"; $("turn").textContent = over ? "-" : turn ? "컴퓨터" : "나"; $("throw").disabled = over || busy || turn !== 0 || stage !== "throw";
+}
+function toss() { const flat = Array.from({ length: 4 }, () => Math.random() < .5), n = flat.filter(Boolean).length; return { n: n === 0 ? 5 : n, flat }; }
+function showToss(t) { $("sticks").textContent = t.flat.map(f => (f ? "▬" : "◖")).join(" "); $("res").textContent = NAMES[t.n] + (t.n >= 4 ? "!" : ""); }
+function move(w, i, n) { let captured = false; pos[w][i] = Math.min(TR, pos[w][i] + n); const v = pos[w][i]; if (v > 0 && v < TR) pos[1 - w].forEach((q, j) => { if (q === v) { pos[1 - w][j] = 0; captured = true; } }); return captured; }
+function checkWin() { for (const w of [0, 1]) if (fin(w) === 2) { over = true; if (w === 0) { wins++; sv(KEY, wins); } $("fin").innerHTML = `<b>${w === 0 ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요"}</b><p class="muted">누적 승리 ${wins}번</p>`; $("fin").hidden = false; render(); return true; } return false; }
+$("throw").onclick = () => { if (turn !== 0 || over || busy) return; const t = toss(); showToss(t); steps = t.n; const movable = [0, 1].filter(i => pos[0][i] < TR); if (movable.length === 1) return finishMove(0, movable[0]); stage = "pick"; $("pick").hidden = false; $("msg").textContent = `${NAMES[steps]}! 어떤 말을 움직일까요?`; render(); };
+$("pick").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (!b || stage !== "pick") return; const i = +b.dataset.p; if (pos[0][i] >= TR) return; finishMove(0, i); });
+function finishMove(w, i) { const cap = move(w, i, steps), extra = steps >= 4 || cap; $("pick").hidden = true; stage = "throw"; $("msg").textContent = (w ? "컴퓨터" : "나") + (cap ? "가 상대 말을 잡았어요! 한 번 더" : extra ? "(이)가 한 번 더 던져요" : "의 이동 끝"); render(); if (checkWin()) return; if (!extra) turn = 1 - w; render(); if (turn === 1) { busy = true; render(); setTimeout(cpuThrow, 1000 * tempo); } else busy = false; if (turn === 0) render(); }
+function cpuThrow() { if (over) return; const t = toss(); showToss(t); steps = t.n; setTimeout(() => { const mv = [0, 1].filter(i => pos[1][i] < TR); let pick = mv[0]; if (mv.length > 1) { const cap = mv.find(i => pos[0].includes(pos[1][i] + steps) && pos[1][i] + steps < TR); pick = cap !== undefined ? cap : pos[1][mv[0]] >= pos[1][mv[1]] ? mv[0] : mv[1]; } finishMove(1, pick); }, 800 * tempo); }
+$("again").onclick = newGame; newGame();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

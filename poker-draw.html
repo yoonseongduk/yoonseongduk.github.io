@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>5장 포커</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(345 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(345 22% 86%);--accent:hsl(345 65% 46%);--accent-fg:#fff;--soft:hsl(345 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(345 22% 10%);--surface:hsl(345 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(345 16% 25%);--accent:hsl(345 75% 68%);--accent-fg:#10131c;--soft:hsl(345 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.hand{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.cd{aspect-ratio:3/4.2;border-radius:10px;border:2px solid var(--line);background:#fff;color:#111;font-size:1.1rem;padding:0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}.cd.red{color:#d6453a}.cd.back{background:repeating-linear-gradient(45deg,#2f6fdf,#2f6fdf 6px,#1f4fa0 6px,#1f4fa0 12px);border-color:#1f4fa0}.cd.hold{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent);transform:translateY(-6px)}.cd small{position:absolute;bottom:3px;font-size:.62rem;color:var(--accent)}.cd:disabled{opacity:1;cursor:default}
+</style>
+</head>
+<body>
+<main>
+  <h1>5장 포커 🎴</h1>
+  <div class="stats"><div class="stat"><small>나</small><b id="s1">0</b></div><div class="stat"><small>판</small><b id="rd">1/5</b></div><div class="stat"><small>컴퓨터</small><b id="s2">0</b></div></div>
+  <p class="muted center">컴퓨터의 카드</p><div class="hand" id="ch"></div><p class="center" id="cn" style="min-height:1.4em"></p>
+  <p class="muted center">내 카드 — 남길 카드를 눌러 고정하세요</p><div class="hand" id="mh"></div><p class="center" id="mn" style="min-height:1.4em;font-weight:700"></p>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="act" type="button">카드 교체하기</button>
+  <p class="muted">카드 5장을 받아요. <b>남기고 싶은 카드를 눌러 '고정'</b>하고 나머지를 <b>교체</b>한 뒤, 컴퓨터와 <b>족보</b>를 겨뤄요! 높은 족보가 이겨요. (원 페어 < 투 페어 < 트리플 < 스트레이트 < 플러시 < 풀하우스 < 포카드 < 스트레이트 플러시) 5판 중 많이 이기면 승리!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "pokerdraw-best-v1";
+const SU = ["♠", "♥", "♦", "♣"], RK = "23456789TJQKA";
+let deck, mine, cpu, hold, phase, rd, s1, s2, wins = ld(KEY) || 0, tempo = 1;
+const mkDeck = () => shuf(Array.from({ length: 52 }, (_, k) => ({ r: k % 13, s: Math.floor(k / 13) })));
+const cardName = c => (c.r === 8 ? "10" : RK[c.r]) + SU[c.s];
+function evalHand(h) {
+  const r = h.map(c => c.r).sort((a, b) => b - a), cnt = {}; r.forEach(x => { cnt[x] = (cnt[x] || 0) + 1; }); const groups = Object.entries(cnt).map(([v, n]) => [n, +v]).sort((a, b) => b[0] - a[0] || b[1] - a[1]), flush = h.every(c => c.s === h[0].s);
+  let straight = new Set(r).size === 5 && r[0] - r[4] === 4, hi = r[0]; if (!straight && JSON.stringify(r) === JSON.stringify([12, 3, 2, 1, 0])) { straight = true; hi = 3; }
+  const g0 = groups[0][0], g1 = groups[1] ? groups[1][0] : 0; let cat, nm;
+  if (straight && flush) { cat = 8; nm = "스트레이트 플러시"; } else if (g0 === 4) { cat = 7; nm = "포카드"; } else if (g0 === 3 && g1 === 2) { cat = 6; nm = "풀하우스"; } else if (flush) { cat = 5; nm = "플러시"; } else if (straight) { cat = 4; nm = "스트레이트"; } else if (g0 === 3) { cat = 3; nm = "트리플"; } else if (g0 === 2 && g1 === 2) { cat = 2; nm = "투 페어"; } else if (g0 === 2) { cat = 1; nm = "원 페어"; } else { cat = 0; nm = "하이 카드"; }
+  return { v: [cat, ...(straight ? [hi] : groups.map(g => g[1]))], nm };
+}
+const cmp = (a, b) => { for (let k = 0; k < Math.max(a.length, b.length); k++) { if ((a[k] || 0) !== (b[k] || 0)) return (a[k] || 0) - (b[k] || 0); } return 0; };
+function cardHtml(c, back, k, held) { return `<button type="button" class="cd${back ? " back" : ""}${c && c.s % 3 === 1 || c && c.s === 2 ? " red" : ""}${held ? " hold" : ""}" data-k="${k}" ${phase !== "pick" || back ? "disabled" : ""}>${back ? "" : `<b>${cardName(c)}</b>`}${held ? "<small>고정</small>" : ""}</button>`; }
+function render(showCpu) { $("mh").innerHTML = mine.map((c, k) => cardHtml(c, false, k, hold[k])).join(""); $("ch").innerHTML = cpu.map((c, k) => cardHtml(c, !showCpu, k, false)).join(""); $("s1").textContent = s1; $("s2").textContent = s2; $("rd").textContent = Math.min(rd + 1, 5) + "/5"; }
+function deal() { deck = mkDeck(); mine = deck.splice(0, 5).sort((a, b) => a.r - b.r); cpu = deck.splice(0, 5); hold = Array(5).fill(false); phase = "pick"; $("cn").textContent = ""; $("mn").textContent = evalHand(mine).nm; $("res").hidden = true; $("act").textContent = "카드 교체하기"; $("act").disabled = false; render(false); }
+function newGame() { rd = 0; s1 = s2 = 0; deal(); }
+function cpuDraw() { const e = evalHand(cpu), r = cpu.map(c => c.r), keep = cpu.map(() => false), cnt = {}; r.forEach(x => { cnt[x] = (cnt[x] || 0) + 1; }); if (e.v[0] >= 4) keep.fill(true); else cpu.forEach((c, k) => { if (cnt[c.r] >= 2) keep[k] = true; }); if (!keep.some(Boolean)) { const mx = Math.max(...r); cpu.forEach((c, k) => { if (c.r === mx) keep[k] = true; }); } cpu = cpu.map((c, k) => keep[k] ? c : deck.shift()); }
+$("act").onclick = async () => {
+  if (phase === "pick") { phase = "show"; mine = mine.map((c, k) => hold[k] ? c : deck.shift()); cpuDraw(); render(true); const a = evalHand(mine), b = evalHand(cpu), d = cmp(a.v, b.v); $("mn").textContent = a.nm; $("cn").textContent = b.nm; if (d > 0) s1++; else if (d < 0) s2++; rd++; render(true);
+    $("res").innerHTML = `<b>${d > 0 ? "🎉 내가 이겼어요!" : d < 0 ? "😢 컴퓨터가 이겼어요" : "🤝 비겼어요"}</b><p class="muted">${a.nm} vs ${b.nm}</p>`; $("res").hidden = false;
+    if (rd >= 5) { const w = s1 > s2; if (w) { wins++; sv(KEY, wins); } $("res").innerHTML += `<p><b>${s1 === s2 ? "최종 무승부" : w ? "🏆 최종 승리!" : "최종 패배"} (${s1} : ${s2})</b> · 누적 승리 ${wins}번</p>`; $("act").textContent = "새 게임"; phase = "end"; } else { $("act").textContent = "다음 판"; phase = "next"; } }
+  else if (phase === "next") deal(); else if (phase === "end") newGame();
+};
+document.addEventListener("click", e => { const c = e.target.closest("#mh [data-k]"); if (c && phase === "pick") { hold[+c.dataset.k] = !hold[+c.dataset.k]; render(false); } });
+newGame();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

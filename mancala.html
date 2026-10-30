@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>칼라하 (콩 옮기기)</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(28 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(28 22% 86%);--accent:hsl(28 65% 46%);--accent-fg:#fff;--soft:hsl(28 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(28 22% 10%);--surface:hsl(28 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(28 16% 25%);--accent:hsl(28 75% 68%);--accent-fg:#10131c;--soft:hsl(28 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.man{display:flex;gap:8px;align-items:stretch}.store{width:56px;border-radius:28px;border:2px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.6rem}.pits{flex:1;display:flex;flex-direction:column;gap:8px}.row6{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.pit{aspect-ratio:1;border-radius:50%;border:2px solid var(--line);background:color-mix(in srgb,#a0713a 18%,var(--surface));font-family:var(--font-display);font-size:1.3rem;padding:0;min-width:0;display:flex;align-items:center;justify-content:center}button.pit:not(:disabled){border-color:var(--accent)}.pit.cp{opacity:.9}
+</style>
+</head>
+<body>
+<main>
+  <h1>칼라하 (콩 옮기기) 🫘</h1>
+  <div class="stats"><div class="stat"><small>내 창고</small><b id="m">0</b></div><div class="stat"><small>차례</small><b id="t" style="font-size:1.1rem">나</b></div><div class="stat"><small>컴퓨터 창고</small><b id="c">0</b></div></div>
+  <div class="man"><div class="store" id="st1">0</div><div class="pits"><div class="row6" id="top"></div><div class="row6" id="bot"></div></div><div class="store" id="st0">0</div></div>
+  <p class="center" id="msg" style="min-height:1.5em;font-weight:700"></p>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="again" type="button">새 게임</button>
+  <p class="muted">내 구멍(아래쪽)을 눌러 <b>콩을 모두 꺼내</b> 시계 반대 방향으로 한 알씩 뿌려요. <b>마지막 콩이 내 창고(오른쪽)</b>에 들어가면 한 번 더! 마지막 콩이 <b>내 빈 구멍</b>에 떨어지면 맞은편 구멍의 콩을 모두 가져와요. 한쪽 구멍이 모두 비면 끝나고 창고가 더 큰 쪽이 이겨요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "mancala-best-v1";
+// 칸 번호: 0~5 내 구멍(왼→오), 6 내 창고, 7~12 컴퓨터 구멍(오→왼), 13 컴퓨터 창고
+let p = [], turn = 0, over = false, busy = false, wins = ld(KEY) || 0, tempo = 1;
+function newGame() { p = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0]; turn = 0; over = false; busy = false; $("res").hidden = true; $("msg").textContent = "내 차례! 아래 구멍을 눌러요"; render(); }
+function render() {
+  $("bot").innerHTML = [0, 1, 2, 3, 4, 5].map(i => `<button type="button" class="pit" data-i="${i}" ${turn !== 0 || over || busy || !p[i] ? "disabled" : ""}>${p[i]}</button>`).join(""); $("top").innerHTML = [12, 11, 10, 9, 8, 7].map(i => `<div class="pit cp">${p[i]}</div>`).join("");
+  $("st0").textContent = p[6]; $("st1").textContent = p[13]; $("m").textContent = p[6]; $("c").textContent = p[13]; $("t").textContent = over ? "-" : turn ? "컴퓨터" : "나";
+}
+function sow(i, who) {
+  const mine = who === 0 ? [0, 5, 6] : [7, 12, 13], skip = who === 0 ? 13 : 6; let n = p[i], k = i; p[i] = 0; while (n > 0) { k = (k + 1) % 14; if (k === skip) continue; p[k]++; n--; }
+  const store = who === 0 ? 6 : 13; let extra = k === store;
+  if (!extra && p[k] === 1 && ((who === 0 && k <= 5) || (who === 1 && k >= 7 && k <= 12)) && p[12 - k]) { p[store] += p[12 - k] + 1; p[12 - k] = 0; p[k] = 0; }
+  return extra;
+}
+function checkEnd() { const a = p.slice(0, 6).every(v => !v), b = p.slice(7, 13).every(v => !v); if (!a && !b) return false; for (let k = 0; k < 6; k++) { p[6] += p[k]; p[k] = 0; p[13] += p[k + 7]; p[k + 7] = 0; } over = true; const w = p[6] > p[13]; if (w) { wins++; sv(KEY, wins); } $("res").innerHTML = `<b>${p[6] === p[13] ? "비겼어요 🤝" : w ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요"} (${p[6]} : ${p[13]})</b><p class="muted">누적 승리 ${wins}번</p>`; $("res").hidden = false; render(); return true; }
+async function cpuTurn() {
+  busy = true; while (!over && turn === 1) { await new Promise(r => setTimeout(r, 800 * tempo)); const ms = [7, 8, 9, 10, 11, 12].filter(i => p[i]); let best = -1, bi = ms[0];
+    for (const i of ms) { const save = [...p]; const ex = sow(i, 1); const sc = p[13] - save[13] + (ex ? 3 : 0) + Math.random(); p = save; if (sc > best) { best = sc; bi = i; } }
+    const ex = sow(bi, 1); if (checkEnd()) break; if (!ex) turn = 0; $("msg").textContent = ex ? "컴퓨터가 한 번 더!" : "내 차례!"; render(); } busy = false; render();
+}
+async function play(i) { if (turn !== 0 || over || busy || !p[i]) return; const ex = sow(i, 0); if (checkEnd()) return; if (!ex) { turn = 1; $("msg").textContent = "컴퓨터 차례..."; render(); cpuTurn(); } else { $("msg").textContent = "한 번 더!"; render(); } }
+$("bot").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b) play(+b.dataset.i); });
+$("again").onclick = newGame; newGame();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

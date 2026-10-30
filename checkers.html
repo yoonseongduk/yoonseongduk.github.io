@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>체커 (서양 장기)</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(12 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(12 22% 86%);--accent:hsl(12 65% 46%);--accent-fg:#fff;--soft:hsl(12 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(12 22% 10%);--surface:hsl(12 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(12 16% 25%);--accent:hsl(12 75% 68%);--accent-fg:#10131c;--soft:hsl(12 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.ck{display:grid;grid-template-columns:repeat(8,1fr);gap:0;border:3px solid var(--fg);border-radius:8px;overflow:hidden;max-width:380px;margin:0 auto;width:100%}.sq{aspect-ratio:1;border:0;padding:0;background:#f0d9b5;display:flex;align-items:center;justify-content:center;min-width:0}.sq.dk{background:#8b5a2b}.sq.dest{background:#c9a227}.sq.sel{background:#d9b13a}.sq.can .pc{box-shadow:0 0 0 3px var(--accent)}.sq:disabled{opacity:1;cursor:default}.pc{display:flex;align-items:center;justify-content:center;width:78%;height:78%;border-radius:50%;font-style:normal;font-size:1.1rem;color:#ffe08a;border:3px solid rgba(255,255,255,.55)}.pc.me{background:#2f6fdf}.pc.cp{background:#d6453a}
+</style>
+</head>
+<body>
+<main>
+  <h1>체커 (서양 장기) 🔴</h1>
+  <div class="stats"><div class="stat"><small>내 말</small><b id="a">12</b></div><div class="stat"><small>차례</small><b id="turn" style="font-size:1.1rem">🔵 나</b></div><div class="stat"><small>컴퓨터 말</small><b id="c">12</b></div></div>
+  <div class="ck" id="board"></div>
+  <p class="center" id="msg" style="min-height:1.5em;font-weight:700"></p>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="again" type="button">새 게임</button>
+  <p class="muted">🔵 내 말은 아래에서 위로, 🔴 컴퓨터 말은 위에서 아래로 <b>대각선 앞으로 한 칸</b> 움직여요. 상대 말을 <b>뛰어넘으면 잡을 수 있고</b>, 잡을 수 있을 땐 <b>반드시 잡아야</b> 해요! 끝줄에 닿으면 <b>왕(♛)</b>이 되어 뒤로도 움직여요. 상대 말을 모두 잡거나 움직일 수 없게 하면 승리!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "checkers-best-v1";
+// 0 빈칸, 1 내 말, 3 내 왕, 2 컴퓨터 말, 4 컴퓨터 왕
+let b = [], sel = null, moves = [], turn = 0, over = false, busy = false, wins = ld(KEY) || 0, tempo = 1, quiet = 0;
+const mine = v => v === 1 || v === 3, theirs = v => v === 2 || v === 4;
+function newGame() { b = Array.from({ length: 8 }, (_, r) => Array.from({ length: 8 }, (_, c) => (r + c) % 2 === 1 ? (r < 3 ? 2 : r > 4 ? 1 : 0) : 0)); sel = null; turn = 0; over = false; busy = false; quiet = 0; $("res").hidden = true; $("msg").textContent = ""; moves = legal(0); render(); }
+function dirs(v) { return v === 1 ? [[-1, -1], [-1, 1]] : v === 2 ? [[1, -1], [1, 1]] : [[-1, -1], [-1, 1], [1, -1], [1, 1]]; }
+const inb = (r, c) => r >= 0 && r < 8 && c >= 0 && c < 8;
+function jumpsFrom(bd, r, c, v, who, caps, out, start) {
+  let any = false; for (const [dr, dc] of dirs(v)) { const mr = r + dr, mc = c + dc, lr = r + 2 * dr, lc = c + 2 * dc; if (!inb(lr, lc)) continue; const e = bd[mr][mc]; if (!(who === 0 ? theirs(e) : mine(e)) || caps.some(([y, x]) => y === mr && x === mc)) continue; const landEmpty = bd[lr][lc] === 0 || (lr === start[0] && lc === start[1]); if (!landEmpty) continue; any = true; const nc = [...caps, [mr, mc]], crown = (who === 0 && lr === 0 && v === 1) || (who === 1 && lr === 7 && v === 2); if (crown) out.push({ from: start, to: [lr, lc], caps: nc, crown: true }); else { const before = out.length; jumpsFrom(bd, lr, lc, v, who, nc, out, start); if (out.length === before) out.push({ from: start, to: [lr, lc], caps: nc }); } }
+  return any;
+}
+function legal(who, bd = b) {
+  const jumps = [], steps = [];
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) { const v = bd[r][c]; if (!(who === 0 ? mine(v) : theirs(v))) continue; jumpsFrom(bd, r, c, v, who, [], jumps, [r, c]); for (const [dr, dc] of dirs(v)) { const y = r + dr, x = c + dc; if (inb(y, x) && bd[y][x] === 0) steps.push({ from: [r, c], to: [y, x], caps: [], crown: (who === 0 && y === 0 && v === 1) || (who === 1 && y === 7 && v === 2) }); } }
+  return jumps.length ? jumps : steps;
+}
+function apply(m) { const [r, c] = m.from, v = b[r][c]; b[r][c] = 0; m.caps.forEach(([y, x]) => { b[y][x] = 0; }); b[m.to[0]][m.to[1]] = m.crown ? (v === 1 ? 3 : 4) : v; quiet = m.caps.length || v === 1 || v === 2 ? 0 : quiet + 1; }
+function count() { const a = b.flat().filter(mine).length, c = b.flat().filter(theirs).length; return [a, c]; }
+function render() {
+  const dest = sel ? moves.filter(m => m.from[0] === sel[0] && m.from[1] === sel[1]).map(m => m.to) : [], froms = moves.map(m => m.from);
+  $("board").innerHTML = b.map((row, r) => row.map((v, c) => { const dark = (r + c) % 2 === 1, d = dest.some(([y, x]) => y === r && x === c), s = sel && sel[0] === r && sel[1] === c, can = turn === 0 && !over && !busy && froms.some(([y, x]) => y === r && x === c); return `<button type="button" class="sq${dark ? " dk" : ""}${d ? " dest" : ""}${s ? " sel" : ""}${can && !sel ? " can" : ""}" data-r="${r}" data-c="${c}" ${dark ? "" : "disabled"}>${v ? `<i class="pc ${mine(v) ? "me" : "cp"}">${v > 2 ? "♛" : ""}</i>` : ""}</button>`; }).join("")).join("");
+  const [a, c] = count(); $("a").textContent = a; $("c").textContent = c; $("turn").textContent = over ? "-" : turn ? "🔴 컴퓨터" : "🔵 나";
+}
+function endCheck() { const [a, c] = count(); const mv = legal(turn); if (!mv.length || !a || !c) { over = true; const iWin = turn === 1 || !c; if (iWin) { wins++; sv(KEY, wins); } $("res").innerHTML = `<b>${iWin ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요"}</b><p class="muted">누적 승리 ${wins}번</p>`; $("res").hidden = false; render(); return true; } if (quiet >= 40) { over = true; $("res").innerHTML = `<b>🤝 비겼어요</b>`; $("res").hidden = false; render(); return true; } moves = mv; return false; }
+function tap(r, c) {
+  if (over || busy || turn !== 0) return; const v = b[r][c];
+  if (mine(v) && moves.some(m => m.from[0] === r && m.from[1] === c)) { sel = [r, c]; return render(); }
+  if (sel && v === 0) { const cand = moves.filter(m => m.from[0] === sel[0] && m.from[1] === sel[1] && m.to[0] === r && m.to[1] === c).sort((x, y) => y.caps.length - x.caps.length)[0]; if (!cand) return; apply(cand); sel = null; turn = 1; if (endCheck()) return; render(); busy = true; $("msg").textContent = "컴퓨터 차례..."; setTimeout(cpuMove, 700 * tempo); }
+}
+function cpuMove() {
+  if (over) return; const mv = legal(1), best = Math.max(...mv.map(m => m.caps.length)); let pool = mv.filter(m => m.caps.length === best); const risk = m => { const sb = b.map(r => [...r]), sq = quiet; apply(m); const o = legal(0), rk = o.length ? Math.max(...o.map(x => x.caps.length)) : 0; b = sb; quiet = sq; return rk; }; const score = m => m.caps.length * 10 + (m.crown ? 6 : 0) + m.to[0] * .6 + Math.random() * 3 - risk(m) * 9; pool.sort((x, y) => score(y) - score(x)); apply(pool[0]); turn = 0; busy = false; $("msg").textContent = pool[0].caps.length ? "컴퓨터가 내 말을 잡았어요!" : "내 차례!"; if (endCheck()) return; render();
+}
+$("board").addEventListener("click", e => { const s = e.target.closest("[data-r]"); if (s) tap(+s.dataset.r, +s.dataset.c); });
+$("again").onclick = newGame; newGame();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>낱말 섞기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(160 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(160 22% 86%);--accent:hsl(160 65% 46%);--accent-fg:#fff;--soft:hsl(160 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(160 22% 10%);--surface:hsl(160 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(160 16% 25%);--accent:hsl(160 75% 68%);--accent-fg:#10131c;--soft:hsl(160 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.line{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap}.slot{width:46px;height:56px;border-radius:12px;border:2px dashed var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.8rem}.bank{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.lt{width:52px;height:56px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-family:var(--font-display);font-size:1.8rem;padding:0}.lt:disabled{opacity:.25}
+</style>
+</head>
+<body>
+<main>
+  <h1>낱말 섞기 🔀</h1>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">1/10</b></div><div class="stat"><small>점수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="card center"><p class="muted">내가 만든 낱말</p><div class="line" id="line"></div></div>
+  <div class="bank" id="bank"></div>
+  <div class="row"><button class="btn ghost" id="undo" type="button">⌫ 지우기</button><button class="btn ghost" id="hint" type="button">💡 힌트 (−1점)</button></div>
+  <p class="center" id="msg" style="min-height:1.5em;font-weight:700"></p>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <div class="res" id="res" hidden></div>
+  <p class="muted">글자가 <b>뒤죽박죽 섞여 있어요</b>. 아래 글자 조각을 순서대로 눌러서 <b>원래 낱말</b>을 만들어 보세요! 힌트로 첫 글자를 볼 수 있지만 점수가 줄어요. 10문제예요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "wordscramble-best-v1";
+const WORDS = ["사과", "바나나", "포도", "딸기", "수박", "참외", "토마토", "오렌지", "복숭아", "고구마", "강아지", "고양이", "토끼", "코끼리", "호랑이", "원숭이", "거북이", "다람쥐", "펭귄", "기린", "학교", "선생님", "도서관", "운동장", "교실", "칠판", "연필", "지우개", "공책", "가방", "비행기", "자전거", "기차", "버스", "자동차", "오토바이", "소방차", "무지개", "구름", "태양", "달빛", "별똥별", "바다", "파도", "모래", "조개", "불가사리", "김치", "비빔밥", "떡볶이", "불고기", "라면", "햄버거", "피자", "아이스크림", "초콜릿", "사탕", "컴퓨터", "키보드", "마우스", "전화기", "텔레비전", "냉장고", "세탁기", "청소기", "에어컨", "선풍기", "장난감", "인형", "풍선", "연날리기", "눈사람", "크리스마스", "생일", "선물", "케이크", "축구", "야구", "농구", "수영", "태권도", "피아노", "바이올린", "기타", "노래", "그림"];
+let qs = [], i = 0, score = 0, best = ld(KEY) || 0, picked = [], letters = [], locked = false, hinted = false, gain = 2;
+function newRound() { qs = shuf(WORDS).slice(0, 10); i = 0; score = 0; $("res").hidden = true; show(); }
+function show() { const w = qs[i]; locked = false; picked = []; hinted = false; letters = [...w]; let order; do { order = shuf(letters.map((_, k) => k)); } while (order.every((v, k) => v === k)); bank = order; $("msg").textContent = ""; $("next").hidden = true; $("hint").disabled = false; $("undo").disabled = false; render(); $("no").textContent = (i + 1) + "/10"; $("score").textContent = score; $("best").textContent = best; }
+let bank = [];
+function render() { const w = qs[i]; $("line").innerHTML = [...w].map((_, k) => `<span class="slot">${picked[k] !== undefined ? letters[picked[k]] : ""}</span>`).join(""); $("bank").innerHTML = bank.map(k => `<button type="button" class="lt" data-k="${k}" ${picked.includes(k) || locked ? "disabled" : ""}>${letters[k]}</button>`).join(""); }
+function check() { const w = qs[i], got = picked.map(k => letters[k]).join(""); locked = true; $("hint").disabled = $("undo").disabled = true; const ok = got === w; if (ok) { score += hinted ? 1 : 2; $("msg").textContent = hinted ? "⭕ 정답! (+1점)" : "⭕ 정답! (+2점)"; $("msg").style.color = "var(--ok)"; } else { $("msg").textContent = "❌ 정답은 '" + w + "'"; $("msg").style.color = "var(--bad)"; } $("score").textContent = score; $("next").textContent = i === 9 ? "결과 보기" : "다음 문제"; $("next").hidden = false; render(); }
+function finish() { let note = ""; if (score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록!"; } $("next").hidden = true; $("msg").textContent = ""; $("line").innerHTML = "끝!"; $("bank").innerHTML = ""; $("res").innerHTML = `<b>${score}점 / 20점</b><p class="muted">${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`; $("res").hidden = false; $("best").textContent = best; $("again").onclick = newRound; }
+$("bank").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (!b || locked) return; picked.push(+b.dataset.k); render(); if (picked.length === letters.length) check(); });
+$("undo").onclick = () => { if (!locked) { picked.pop(); render(); } };
+$("hint").onclick = () => { if (locked || hinted) return; hinted = true; const w = qs[i]; picked = []; const k = bank.find(q => letters[q] === w[0]); picked.push(k); $("msg").textContent = "첫 글자 '" + w[0] + "'(으)로 시작해요"; $("msg").style.color = ""; render(); };
+$("next").onclick = () => { if (i === 9) finish(); else { i++; show(); } }; newRound();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

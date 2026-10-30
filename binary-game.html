@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>이진수 맞추기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(215 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(215 22% 86%);--accent:hsl(215 65% 46%);--accent-fg:#fff;--soft:hsl(215 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(215 22% 10%);--surface:hsl(215 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(215 16% 25%);--accent:hsl(215 75% 68%);--accent-fg:#10131c;--soft:hsl(215 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.bits{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.bt{border-radius:12px;border:2px solid var(--line);background:var(--surface);padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}.bt small{color:var(--muted)}.bt b{font-family:var(--font-display);font-weight:400;font-size:1.8rem}.bt.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}.bt.on small{color:var(--accent-fg);opacity:.85}
+</style>
+</head>
+<body>
+<main>
+  <h1>이진수 맞추기 💾</h1>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">1/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="card center"><p class="muted">이 숫자를 만들어 보세요</p><p class="big" id="target" style="font-size:3.5rem">0</p><p class="muted">내가 만든 값: <b id="cur">0</b></p></div>
+  <div class="bits" id="bits"></div>
+  <p class="center" id="msg" style="min-height:1.5em;font-weight:700"></p>
+  <button class="btn" id="check" type="button">확인</button>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <div class="res" id="res" hidden></div>
+  <p class="muted">컴퓨터는 <b>0과 1</b>만 써요! 아래 스위치를 눌러 켜면(1) 그 자리의 값이 더해져요. 맨 오른쪽부터 <b>1, 2, 4, 8, 16, 32</b>예요. 목표 숫자와 똑같이 만들어 보세요. 예) 5 = 4 + 1 → 000101. 10문제를 풀어요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "binary-best-v1";
+const VAL = [32, 16, 8, 4, 2, 1];
+let qs = [], i = 0, score = 0, best = ld(KEY) || 0, bits = [0, 0, 0, 0, 0, 0], locked = false;
+const curVal = () => bits.reduce((s, b, k) => s + b * VAL[k], 0);
+function newRound() { qs = Array.from({ length: 10 }, (_, k) => ri(1, k < 4 ? 15 : k < 8 ? 31 : 63)); i = 0; score = 0; $("res").hidden = true; show(); }
+function show() { locked = false; bits = [0, 0, 0, 0, 0, 0]; $("target").textContent = qs[i]; $("msg").textContent = ""; $("check").hidden = false; $("next").hidden = true; render(); $("no").textContent = (i + 1) + "/10"; $("score").textContent = score; $("best").textContent = best; }
+function render() { $("bits").innerHTML = bits.map((b, k) => `<button type="button" class="bt${b ? " on" : ""}" data-k="${k}" ${locked ? "disabled" : ""}><small>${VAL[k]}</small><b>${b}</b></button>`).join(""); $("cur").textContent = curVal(); }
+$("bits").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b && !locked) { bits[+b.dataset.k] ^= 1; render(); } });
+$("check").onclick = () => { if (locked) return; locked = true; const ok = curVal() === qs[i]; if (ok) score++; $("msg").textContent = ok ? "⭕ 정답!" : `❌ 정답은 ${qs[i].toString(2).padStart(6, "0")} (${VAL.filter((v, k) => (qs[i] & v)).join(" + ")})`; $("msg").style.color = ok ? "var(--ok)" : "var(--bad)"; $("score").textContent = score; $("check").hidden = true; $("next").textContent = i === 9 ? "결과 보기" : "다음 문제"; $("next").hidden = false; render(); };
+$("next").onclick = () => { if (i === 9) { let note = ""; if (score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록!"; } $("next").hidden = true; $("bits").innerHTML = ""; $("res").innerHTML = `<b>10문제 중 ${score}개 정답</b><p class="muted">${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`; $("res").hidden = false; $("best").textContent = best; $("again").onclick = newRound; } else { i++; show(); } }; newRound();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>라이어 게임</title>
+<title>제시어 추리 게임</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#c4552b">
@@ -35,13 +35,13 @@ label.opt{display:flex;gap:10px;align-items:center}
 </head>
 <body>
 <main>
-  <h1>라이어 게임 🤥</h1>
+  <h1>제시어 추리 게임 🤥</h1>
   <section id="setup" class="card">
     <div class="step"><h2>참가 인원</h2><div><button id="minus" type="button" aria-label="한 명 줄이기">−</button><b id="n">4</b><button id="plus" type="button" aria-label="한 명 늘리기">＋</button></div></div>
     <h2>주제</h2><div class="chips" id="topics" role="radiogroup" aria-label="주제"></div>
-    <label class="opt"><input type="checkbox" id="showTopic" checked> 라이어에게도 <b>주제</b>(예: 동물)는 알려 주기</label>
+    <label class="opt"><input type="checkbox" id="showTopic" checked> 모르쇠에게도 <b>주제</b>(예: 동물)는 알려 주기</label>
     <button class="btn" id="start" type="button">게임 시작</button>
-    <p class="muted">모두가 같은 제시어를 받고, <b>한 명(라이어)만 제시어를 몰라요.</b> 돌아가며 제시어를 설명하면서 라이어를 찾아내는 게임이에요. 휴대폰 한 대를 돌려 가며 자기 카드를 확인하세요.</p>
+    <p class="muted">모두가 같은 제시어를 받고, <b>한 명(모르쇠)만 제시어를 몰라요.</b> 돌아가며 제시어를 설명하면서 모르쇠를 찾아내는 게임이에요. 휴대폰 한 대를 돌려 가며 자기 카드를 확인하세요.</p>
   </section>
   <section id="pass" class="card" hidden>
     <p class="muted" id="pc"></p>
@@ -50,12 +50,12 @@ label.opt{display:flex;gap:10px;align-items:center}
   </section>
   <section id="talk" class="card" hidden>
     <h2>토론 시간!</h2><div class="timer" id="tm">3:00</div>
-    <p class="muted">처음 사람부터 돌아가며 제시어를 설명하세요. 라이어는 아는 척 따라 말해야 해요. 시간이 끝나면 모두 동시에 라이어를 손가락으로 가리켜요.</p>
+    <p class="muted">처음 사람부터 돌아가며 제시어를 설명하세요. 모르쇠는 아는 척 따라 말해야 해요. 시간이 끝나면 모두 동시에 모르쇠를 손가락으로 가리켜요.</p>
     <button class="btn" id="reveal" type="button">정답 공개</button>
   </section>
   <section id="end" class="card" hidden>
     <h2>결과</h2><div class="secret" id="result"></div>
-    <p class="muted">라이어가 뽑혔다면 라이어에게 마지막 기회를 주세요. 제시어를 맞히면 라이어의 역전승! 모르면 다른 사람들의 승리예요.</p>
+    <p class="muted">모르쇠가 뽑혔다면 모르쇠에게 마지막 기회를 주세요. 제시어를 맞히면 모르쇠의 역전승! 모르면 다른 사람들의 승리예요.</p>
     <button class="btn" id="again" type="button">한 판 더</button><button class="btn ghost" id="home" type="button">설정으로</button>
   </section>
 </main>
@@ -79,7 +79,7 @@ function drawSetup() {
   $("n").textContent = cfg.n; $("showTopic").checked = cfg.showTopic;
   $("topics").innerHTML = Object.keys(TOPICS).map(t => `<button type="button" class="chip ${t === cfg.topic ? "on" : ""}" data-t="${t}" role="radio" aria-checked="${t === cfg.topic}">${t}</button>`).join("");
 }
-// 제시어와 라이어를 정한다. 라이어는 정확히 한 명이다
+// 제시어와 모르쇠를 정한다. 모르쇠는 정확히 한 명이다
 function deal(n, topic) {
   const words = TOPICS[topic].split(" "); return { topic, word: words[Math.floor(Math.random() * words.length)], liar: Math.floor(Math.random() * n), n, i: 0 };
 }
@@ -91,7 +91,7 @@ function drawPass() {
 function reveal() {
   if (!shown) {
     shown = true; const liar = game.i === game.liar;
-    $("secret").innerHTML = liar ? `<div class="who">${game.i + 1}번</div><div class="word liar">당신은 라이어!</div><p class="muted">${cfg.showTopic ? "주제는 <b>" + game.topic + "</b> 이에요" : "주제도 몰라요"}. 들키지 않게 아는 척하세요 🤫</p>`
+    $("secret").innerHTML = liar ? `<div class="who">${game.i + 1}번</div><div class="word liar">당신은 모르쇠!</div><p class="muted">${cfg.showTopic ? "주제는 <b>" + game.topic + "</b> 이에요" : "주제도 몰라요"}. 들키지 않게 아는 척하세요 🤫</p>`
       : `<div class="who">${game.i + 1}번</div><p class="muted">주제: ${game.topic}</p><div class="word">${game.word}</div>`;
     $("show").textContent = game.i + 1 < game.n ? "확인했어요 (카드 가리기)" : "확인했어요 (토론 시작)";
   } else {
@@ -104,7 +104,7 @@ function startTalk() {
 }
 function end() {
   clearInterval(tick); show("end");
-  $("result").innerHTML = `<p class="muted">제시어 (주제: ${game.topic})</p><div class="word">${game.word}</div><p class="who" style="margin-top:8px">🤥 라이어는 <b>${game.liar + 1}번</b></p>`;
+  $("result").innerHTML = `<p class="muted">제시어 (주제: ${game.topic})</p><div class="word">${game.word}</div><p class="who" style="margin-top:8px">🤥 모르쇠는 <b>${game.liar + 1}번</b></p>`;
 }
 $("minus").onclick = () => { if (cfg.n > 3) { cfg.n--; drawSetup(); } }; $("plus").onclick = () => { if (cfg.n < 10) { cfg.n++; drawSetup(); } };
 $("topics").addEventListener("click", e => { const t = e.target.closest("[data-t]"); if (t) { cfg.topic = t.dataset.t; drawSetup(); } });

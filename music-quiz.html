@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>음악 퀴즈</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: (분류 버튼), 점수 줄, 문제 카드, 네 개의 보기. 고르면 정답이 바로 표시되고 10문제를 풀면 결과가 나온다 */
+:root{--bg:hsl(268 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(268 22% 86%);--accent:hsl(268 60% 42%);--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(268 22% 10%);--surface:hsl(268 20% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(268 18% 24%);--accent:hsl(268 75% 68%);--accent-fg:#10131c;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.9rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 16px;text-align:center;font-family:var(--font-display);font-size:clamp(1.5rem,7vw,2.1rem);line-height:1.4;overflow-wrap:anywhere}
+.q small{display:block;color:var(--accent);font-family:var(--font-body);font-weight:700;font-size:.85rem;margin-bottom:4px}
+.q .note{display:block;color:var(--muted);font-family:var(--font-body);font-size:.9rem;margin-top:6px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.opts.one{grid-template-columns:1fr}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:58px;padding:8px 10px;font-weight:700;font-size:1.02rem;overflow-wrap:anywhere}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}.opt:disabled{cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>음악 퀴즈 🎵</h1>
+  <div class="chips" id="cats" role="group" aria-label="분류" hidden></div>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <p class="muted">악기와 음악 상식을 맞혀 보세요. 10문제를 풀면 결과가 나와요.</p>
+</main>
+<script>
+// [문제, 정답, 틀린 보기(없으면 같은 분류의 다른 정답에서 뽑음), 분류, 해설]
+const D = [["도레미파솔라시도에서 '도' 다음 음은?", "레", ["미", "솔", "시"]], ["피아노 건반은 모두 몇 개일까요?", "88개", ["76개", "66개", "100개"]], ["기타의 줄은 보통 몇 개일까요?", "6개", ["4개", "5개", "8개"]], ["바이올린의 줄은 몇 개일까요?", "4개", ["3개", "5개", "6개"]], ["오케스트라에서 지휘자가 쓰는 도구는?", "지휘봉", ["리코더", "마이크", "나팔"]], ["우리나라의 전통 악기는?", "가야금", ["피아노", "바이올린", "기타"]], ["우리나라 국가(나라 노래)의 이름은?", "애국가", ["아리랑", "도라지", "새천년"]], ["4분 쉼표가 쉬는 길이는?", "4분음표 하나만큼", ["2분음표", "온음표", "8분음표"]], ["빠르기말 '느리게'를 뜻하는 말은?", "라르고", ["알레그로", "프레스토", "모데라토"]], ["빠르기말 '빠르게'를 뜻하는 말은?", "알레그로", ["라르고", "아다지오", "안단테"]], ["소리가 점점 커지게 연주하라는 말은?", "크레센도", ["데크레센도", "피아노", "포르테"]], ["'아주 여리게'를 뜻하는 기호는?", "pp", ["ff", "mf", "f"]], ["리듬 악기가 아닌 것은?", "피아노(멜로디 악기)", ["북", "캐스터네츠", "탬버린"]], ["우리나라 민요로 '아리 아리 아라리요'가 나오는 노래는?", "아리랑", ["도라지", "강강술래", "닐리리야"]], ["북, 장구, 꽹과리, 징으로 연주하는 우리 음악은?", "사물놀이", ["판소리", "국악 합창", "궁중음악"]], ["소리꾼이 북 반주에 맞춰 이야기를 노래하는 우리 전통 음악은?", "판소리", ["사물놀이", "민요", "정악"]], ["악보에서 높은음자리표는 어느 음역을 나타낼까요?", "높은 소리", ["낮은 소리", "중간 소리", "없는 소리"]], ["'합창'은 무엇을 뜻할까요?", "여러 사람이 함께 노래하는 것", ["혼자 노래하는 것", "악기만 연주하는 것", "춤추는 것"]], ["리코더에서 구멍을 모두 막으면 나는 소리는?", "낮은 소리", ["높은 소리", "소리가 안 난다", "중간 소리"]], ["클라리넷, 플루트, 오보에는 어떤 악기일까요?", "관악기", ["현악기", "타악기", "건반 악기"]], ["바이올린, 첼로, 비올라는 어떤 악기일까요?", "현악기", ["관악기", "타악기", "건반 악기"]], ["드럼, 북, 심벌즈는 어떤 악기일까요?", "타악기", ["관악기", "현악기", "건반 악기"]], ["베토벤의 대표곡 '운명'은 무슨 곡일까요?", "교향곡 5번", ["피아노 소나타 1번", "현악 사중주", "합창곡 2번"]], ["'엘리제를 위하여'를 작곡한 사람은?", "베토벤", ["모차르트", "바흐", "슈베르트"]], ["'마술피리'를 작곡한 천재 작곡가는?", "모차르트", ["베토벤", "쇼팽", "차이콥스키"]], ["'백조의 호수'를 작곡한 사람은?", "차이콥스키", ["모차르트", "바흐", "슈베르트"]], ["'피아노의 시인'이라 불린 작곡가는?", "쇼팽", ["베토벤", "바흐", "리스트"]], ["'음악의 아버지'라 불리는 작곡가는?", "바흐", ["모차르트", "베토벤", "쇼팽"]], ["애국가를 작곡한 사람은?", "안익태", ["윤이상", "홍난파", "김동진"]], ["'고향의 봄' 같은 동요를 만든 작곡가는?", "홍난파", ["안익태", "윤이상", "김성태"]]];
+const LABEL = "음악 상식", KEY = "music-quiz-best-v1", ROUND = 10;
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const CATS = ["전체", ...new Set(D.map(d => d[3]).filter(Boolean))];
+let cat = "전체", qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+
+function options(d) {                                   // 보기를 만든다: 정답 + 틀린 보기 (같은 분류의 다른 정답 중에서 자동으로 뽑기도 함)
+  let wrong = d[2] && d[2].length ? d[2].slice(0, 3) : shuf(D.filter(x => x !== d && x[1] !== d[1] && (!d[3] || x[3] === d[3])).map(x => x[1])).filter((v, k, a) => a.indexOf(v) === k).slice(0, 3);
+  return shuf([d[1], ...wrong]);
+}
+function start() {
+  const pool = D.filter(d => cat === "전체" || d[3] === cat);
+  qs = shuf(pool).slice(0, ROUND).map(d => ({ d, opts: options(d) })); i = 0; score = 0; $("res").hidden = true;
+  $("cats").hidden = CATS.length < 3; $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
+}
+function show() {
+  const { d, opts } = qs[i]; locked = false; $("next").hidden = true;
+  $("q").innerHTML = (LABEL || d[3] ? `<small>${esc(LABEL || d[3])}</small>` : "") + esc(d[0]);
+  $("opts").className = "opts" + (opts.some(o => String(o).length > 9) ? " one" : "");
+  $("opts").innerHTML = opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join("");
+  $("no").textContent = (i + 1) + "/" + qs.length; $("score").textContent = score; $("best").textContent = best;
+}
+function pick(k) {
+  if (locked) return; locked = true; const { d, opts } = qs[i]; if (opts[k] === d[1]) score++;
+  document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === d[1]) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
+  if (d[4]) $("q").insertAdjacentHTML("beforeend", `<span class="note">${esc(d[4])}</span>`);
+  $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
+}
+function finish() {
+  const full = qs.length === ROUND; let note = ""; if (full && cat === "전체" && score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("next").hidden = true;
+  $("res").innerHTML = `<b>${qs.length}문제 중 ${score}개 정답</b><p class="muted">${score >= qs.length * .9 ? "박사님이시네요! 🎓" : score >= qs.length * .6 ? "잘했어요 👍" : "조금만 더 힘내요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
+  $("res").hidden = false; $("best").textContent = best; $("again").onclick = start;
+}
+$("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); });
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; start(); } });
+$("next").onclick = () => { if (i === qs.length - 1) finish(); else { i++; show(); } };
+start();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+
+const DAY0 = Date.UTC(1900, 0, 1) / 864e5;
+function lyInfo(Y) { const i = (Y - LUNAR.y0) * 3, start = LUNAR.d[i], bits = LUNAR.d[i + 1], leap = LUNAR.d[i + 2], lens = []; for (let k = 0; k < (leap ? 13 : 12); k++) lens.push(bits >> k & 1 ? 30 : 29); return { start, leap, lens }; }
+function monthsOf(Y) { const { lens, leap } = lyInfo(Y), out = []; let m = 1; for (let k = 0; k < lens.length; k++) { const isLeap = leap && k === leap; out.push({ m: isLeap ? leap : (leap && k > leap ? k : k + 1), leap: !!isLeap, n: lens[k] }); } return out; }
+function toLunar(y, m, d) { const t = Date.UTC(y, m - 1, d) / 864e5 - DAY0; let Y = y; if (Y < LUNAR.y0 || Y > 2049) return null; if (t < lyInfo(Y).start) Y--; if (Y < LUNAR.y0) return null; let off = t - lyInfo(Y).start; for (const mo of monthsOf(Y)) { if (off < mo.n) return { y: Y, m: mo.m, d: off + 1, leap: mo.leap }; off -= mo.n; } return null; }
+function toSolar(Y, M, D, leap) { if (Y < LUNAR.y0 || Y > 2049) return null; let off = lyInfo(Y).start; for (const mo of monthsOf(Y)) { if (mo.m === M && mo.leap === !!leap) { if (D < 1 || D > mo.n) return null; const t = new Date((off + D - 1 + DAY0) * 864e5); return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate() }; } off += mo.n; } return null; }

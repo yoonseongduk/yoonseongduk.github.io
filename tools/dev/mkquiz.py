@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""퀴즈 게임 생성기: 틀(HTML)에 제목, 색, 문제 목록을 끼워서 게임 파일을 만든다."""
+import json, sys
+
+CHOICE = r'''<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>@@TITLE@@</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: (분류 버튼), 점수 줄, 문제 카드, 네 개의 보기. 고르면 정답이 바로 표시되고 10문제를 풀면 결과가 나온다 */
+:root{--bg:hsl(@@H@@ 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(@@H@@ 22% 86%);--accent:hsl(@@H@@ 60% 42%);--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(@@H@@ 22% 10%);--surface:hsl(@@H@@ 20% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(@@H@@ 18% 24%);--accent:hsl(@@H@@ 75% 68%);--accent-fg:#10131c;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.9rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 16px;text-align:center;font-family:var(--font-display);font-size:@@QSIZE@@;line-height:1.4;overflow-wrap:anywhere}
+.q small{display:block;color:var(--accent);font-family:var(--font-body);font-weight:700;font-size:.85rem;margin-bottom:4px}
+.q .note{display:block;color:var(--muted);font-family:var(--font-body);font-size:.9rem;margin-top:6px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.opts.one{grid-template-columns:1fr}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:58px;padding:8px 10px;font-weight:700;font-size:1.02rem;overflow-wrap:anywhere}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}.opt:disabled{cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>@@TITLE@@ @@EMOJI@@</h1>
+  <div class="chips" id="cats" role="group" aria-label="분류" hidden></div>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <p class="muted">@@HELP@@ 10문제를 풀면 결과가 나와요.</p>
+</main>
+<script>
+// [문제, 정답, 틀린 보기(없으면 같은 분류의 다른 정답에서 뽑음), 분류, 해설]
+const D = @@DATA@@;
+const LABEL = @@LABEL@@, KEY = "@@KEY@@", ROUND = 10;
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const CATS = ["전체", ...new Set(D.map(d => d[3]).filter(Boolean))];
+let cat = "전체", qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+
+function options(d) {                                   // 보기를 만든다: 정답 + 틀린 보기 (같은 분류의 다른 정답 중에서 자동으로 뽑기도 함)
+  let wrong = d[2] && d[2].length ? d[2].slice(0, 3) : shuf(D.filter(x => x !== d && x[1] !== d[1] && (!d[3] || x[3] === d[3])).map(x => x[1])).filter((v, k, a) => a.indexOf(v) === k).slice(0, 3);
+  return shuf([d[1], ...wrong]);
+}
+function start() {
+  const pool = D.filter(d => cat === "전체" || d[3] === cat);
+  qs = shuf(pool).slice(0, ROUND).map(d => ({ d, opts: options(d) })); i = 0; score = 0; $("res").hidden = true;
+  $("cats").hidden = CATS.length < 3; $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
+}
+function show() {
+  const { d, opts } = qs[i]; locked = false; $("next").hidden = true;
+  $("q").innerHTML = (LABEL || d[3] ? `<small>${esc(LABEL || d[3])}</small>` : "") + esc(d[0]);
+  $("opts").className = "opts" + (opts.some(o => String(o).length > 9) ? " one" : "");
+  $("opts").innerHTML = opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join("");
+  $("no").textContent = (i + 1) + "/" + qs.length; $("score").textContent = score; $("best").textContent = best;
+}
+function pick(k) {
+  if (locked) return; locked = true; const { d, opts } = qs[i]; if (opts[k] === d[1]) score++;
+  document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === d[1]) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
+  if (d[4]) $("q").insertAdjacentHTML("beforeend", `<span class="note">${esc(d[4])}</span>`);
+  $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
+}
+function finish() {
+  const full = qs.length === ROUND; let note = ""; if (full && cat === "전체" && score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("next").hidden = true;
+  $("res").innerHTML = `<b>${qs.length}문제 중 ${score}개 정답</b><p class="muted">${score >= qs.length * .9 ? "박사님이시네요! 🎓" : score >= qs.length * .6 ? "잘했어요 👍" : "조금만 더 힘내요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
+  $("res").hidden = false; $("best").textContent = best; $("again").onclick = start;
+}
+$("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); });
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; start(); } });
+$("next").onclick = () => { if (i === qs.length - 1) finish(); else { i++; show(); } };
+start();
+</script>
+</body>
+</html>
+'''
+
+OX = CHOICE.replace('<div class="opts" id="opts"></div>', '<div class="opts" id="opts"></div>')  # OX는 같은 틀을 쓰되 보기를 O/X 두 개로 고정한다
+OX = OX.replace('''function options(d) {''', '''function options(d) { return ["O 맞아요", "X 아니에요"]; }
+function _unused(d) {''')
+# OX 데이터는 [문장, "O 맞아요" 또는 "X 아니에요", [], 분류, 해설] 형태로 넘긴다
+
+
+def make(path, title, emoji, hue, key, help_, data, label="", kind="choice", qsize="clamp(1.5rem,7vw,2.1rem)"):
+    tpl = OX if kind == "ox" else CHOICE
+    s = (tpl.replace("@@TITLE@@", title).replace("@@EMOJI@@", emoji).replace("@@H@@", str(hue)).replace("@@KEY@@", key)
+         .replace("@@QSIZE@@", qsize).replace("@@HELP@@", help_).replace("@@LABEL@@", json.dumps(label, ensure_ascii=False)).replace("@@DATA@@", json.dumps(data, ensure_ascii=False)))
+    open(path, "w", encoding="utf-8").write(s)
+    print("만듦:", path, len(data), "문제")

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>2048</title>
+<title>숫자 합치기</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#c4552b">
@@ -46,9 +46,9 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 </head>
 <body>
 <main>
-  <div class="top"><h1>2048</h1><div class="scores"><div class="sc"><small>점수</small><b id="score">0</b></div><div class="sc"><small>최고</small><b id="best">0</b></div></div></div>
-  <p class="muted">숫자 타일을 <b>밀어서(스와이프)</b> 같은 숫자끼리 합치세요. 2048을 만들면 성공! (컴퓨터는 화살표 키)</p>
-  <div class="board" id="board" aria-label="2048 판"></div>
+  <div class="top"><h1>숫자 합치기</h1><div class="scores"><div class="sc"><small>점수</small><b id="score">0</b></div><div class="sc"><small>최고</small><b id="best">0</b></div></div></div>
+  <p class="muted">숫자 타일을 <b>밀어서(스와이프)</b> 같은 숫자끼리 합치세요. 타일 2048을 만들면 성공! (컴퓨터는 화살표 키)</p>
+  <div class="board" id="board" aria-label="숫자 판"></div>
   <button class="btn" id="newGame" type="button">새 게임</button>
 </main>
 <script>

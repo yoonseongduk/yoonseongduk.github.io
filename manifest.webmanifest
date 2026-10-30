@@ -1,14 +1,17 @@
 {
  "name": "우리 가족 미니 게임",
  "short_name": "가족 게임",
- "description": "인터넷 없이도 즐기는 미니 게임 100개",
+ "description": "인터넷 없이도 즐기는 미니 게임 200개",
  "lang": "ko",
+ "id": "./index.html",
  "start_url": "./index.html",
  "scope": "./",
  "display": "standalone",
  "orientation": "portrait",
  "background_color": "#f4f1ec",
  "theme_color": "#c4552b",
+ "prefer_related_applications": false,
+ "related_applications": [{"platform": "webapp", "url": "https://yoonseongduk.github.io/manifest.webmanifest"}],
  "icons": [
   {
    "src": "icon-192.png",

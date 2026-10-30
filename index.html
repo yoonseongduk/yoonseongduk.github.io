@@ -351,7 +351,13 @@ render();
   how.hidden = standalone;
   if (inApp && !standalone) { const c = document.getElementById("pwaCopy"); c.hidden = false; c.onclick = async () => { try { await navigator.clipboard.writeText(location.origin + "/"); c.textContent = "복사됐어요! 크롬에 붙여 넣으세요"; } catch (e) { c.textContent = location.origin + "/"; } }; }
   let deferred = null;
-  addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; btn.hidden = false; });
+  addEventListener("beforeinstallprompt", async e => {
+    e.preventDefault(); deferred = e;
+    // 이미 설치돼 있으면 설치 버튼을 숨겨서 아이콘이 중복으로 생기지 않게 한다
+    let have = false; try { if (navigator.getInstalledRelatedApps) have = (await navigator.getInstalledRelatedApps()).length > 0; } catch (x) {}
+    if (have) { how.hidden = false; how.textContent = "✅ 이미 설치돼 있어요. 홈 화면의 '가족 게임' 아이콘으로 열어 주세요. (다시 설치하면 아이콘이 하나 더 생겨요)"; return; }
+    btn.hidden = false;
+  });
   addEventListener("appinstalled", () => { btn.hidden = true; how.textContent = "설치됐어요! 홈 화면의 '가족 게임' 아이콘으로 열어 보세요."; });
   btn.onclick = async () => { if (!deferred) return; deferred.prompt(); try { await deferred.userChoice; } catch (e) {} deferred = null; btn.hidden = true; };
   const ask = reg => new Promise(res => { const w = reg.active; if (!w) return res(null); const ch = new MessageChannel(); ch.port1.onmessage = e => res(e.data); w.postMessage({ type: "status" }, [ch.port2]); setTimeout(() => res(null), 3000); });

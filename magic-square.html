@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>마방진 퍼즐</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(285 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(285 22% 86%);--accent:hsl(285 65% 46%);--accent-fg:#fff;--soft:hsl(285 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(285 22% 10%);--surface:hsl(285 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(285 16% 25%);--accent:hsl(285 75% 68%);--accent-fg:#10131c;--soft:hsl(285 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;max-width:360px;margin:0 auto}.mc{aspect-ratio:1;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-family:var(--font-display);font-size:clamp(1.8rem,10vw,2.6rem);padding:0;min-width:0;color:var(--accent)}.mc.fx{background:var(--soft);color:var(--fg)}.mc.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}.sumc{display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;color:var(--muted);border-radius:12px;background:var(--bg)}.sumc.g{color:#fff;background:var(--ok)}.sumc.b{color:#fff;background:var(--bad)}.sumc.ghost{background:transparent}.pad{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}.pad button{padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-family:var(--font-display);font-size:1.3rem;min-width:0}.pad .usedn{opacity:.35}.pad .er{grid-column:1/-1;font-family:var(--font-body);font-size:1rem;font-weight:700}
+</style>
+</head>
+<body>
+<main>
+  <h1>마방진 퍼즐 🔮</h1>
+  <div class="seg" id="diff" style="--n:3"><button type="button" data-k="4" class="on">쉬움<small>힌트 4개</small></button><button type="button" data-k="3">보통<small>힌트 3개</small></button><button type="button" data-k="2">어려움<small>힌트 2개</small></button></div>
+  <div class="stats"><div class="stat"><small>시간</small><b id="time">0:00</b></div><div class="stat"><small>↘ 대각선</small><b id="d1">?</b></div><div class="stat"><small>↙ 대각선</small><b id="d2">?</b></div></div>
+  <div class="mgrid" id="grid"></div>
+  <div class="pad" id="pad"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="again" type="button">새 퍼즐</button>
+  <p class="muted">3×3 칸에 <b>1부터 9까지</b>를 한 번씩 넣어요. <b>가로 3줄, 세로 3줄, 대각선 2줄</b>의 합이 모두 <b>15</b>가 되면 성공! 칸을 누르고 아래 숫자를 눌러 채우세요. 처음부터 들어 있는 숫자(회색 칸)는 바꿀 수 없어요. 오른쪽과 아래의 숫자는 그 줄의 합이에요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "magicsquare-best-v1";
+const BASE = [[2, 7, 6], [9, 5, 1], [4, 3, 8]];
+let K = 4, sol = [], cur = [], fixed = [], sel = -1, done = false, t0 = 0, best = ld(KEY) || {};
+function makeSquare() {
+  let g = BASE.map(r => [...r]);
+  for (let k = ri(0, 3); k > 0; k--) g = [0, 1, 2].map(r => [0, 1, 2].map(c => g[2 - c][r]));
+  if (Math.random() < 0.5) g = g.map(r => [...r].reverse());
+  return g.flat();
+}
+const LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+const lineSum = l => (l.every(i => cur[i] > 0) ? l.reduce((a, i) => a + cur[i], 0) : null);
+function fmt(s) { return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function newGame() {
+  sol = makeSquare(); cur = Array(9).fill(0); fixed = Array(9).fill(false);
+  for (const i of shuf([0, 1, 2, 3, 4, 5, 6, 7, 8]).slice(0, K)) { cur[i] = sol[i]; fixed[i] = true; }
+  sel = -1; done = false; t0 = Date.now(); $("res").hidden = true; render();
+}
+function sumCell(l) { const s = lineSum(l); return `<div class="sumc ${s === null ? "" : s === 15 ? "g" : "b"}">${s === null ? "?" : s}</div>`; }
+function render() {
+  let h = "";
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) { const i = r * 3 + c, v = cur[i]; h += `<button type="button" class="mc${fixed[i] ? " fx" : ""}${i === sel ? " sel" : ""}" data-i="${i}" aria-label="${r + 1}행 ${c + 1}열 ${v || "빈칸"}">${v || ""}</button>`; }
+    h += sumCell(LINES[r]);
+  }
+  for (let c = 0; c < 3; c++) h += sumCell(LINES[3 + c]);
+  h += `<div class="sumc ghost"></div>`;
+  $("grid").innerHTML = h;
+  $("pad").innerHTML = Array.from({ length: 9 }, (_, k) => `<button type="button" data-v="${k + 1}" ${cur.includes(k + 1) && !(sel >= 0 && cur[sel] === k + 1) ? 'class="usedn"' : ""}>${k + 1}</button>`).join("") + `<button type="button" data-v="0" class="er">지우기</button>`;
+  const a = lineSum(LINES[6]), b = lineSum(LINES[7]);
+  $("d1").textContent = a === null ? "?" : a; $("d2").textContent = b === null ? "?" : b;
+  $("d1").style.color = a === 15 ? "var(--ok)" : a === null ? "" : "var(--bad)"; $("d2").style.color = b === 15 ? "var(--ok)" : b === null ? "" : "var(--bad)";
+}
+function check() {
+  if (cur.every(v => v > 0) && LINES.every(l => lineSum(l) === 15)) {
+    done = true; const s = Math.round((Date.now() - t0) / 1000), nb = !best[K] || s < best[K]; if (nb) { best[K] = s; sv(KEY, best); }
+    $("res").innerHTML = `<b>🎉 마방진 완성! ${fmt(s)}</b><p class="muted">${nb ? "이 난이도의 신기록이에요!" : "최고 기록 " + fmt(best[K])}</p>`; $("res").hidden = false;
+  }
+}
+$("grid").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b && !done) { sel = +b.dataset.i; render(); } });
+$("pad").addEventListener("click", e => {
+  const b = e.target.closest("[data-v]"); if (!b || done || sel < 0 || fixed[sel]) return; const v = +b.dataset.v;
+  if (v > 0) { const j = cur.findIndex((x, i) => x === v && !fixed[i]); if (j >= 0) cur[j] = 0; if (fixed.some((f, i) => f && cur[i] === v)) return; }
+  cur[sel] = v; render(); check();
+});
+$("diff").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (!b) return; document.querySelectorAll("#diff button").forEach(x => x.classList.toggle("on", x === b)); K = +b.dataset.k; newGame(); });
+$("again").onclick = newGame;
+setInterval(() => { if (!done) $("time").textContent = fmt(Math.floor((Date.now() - t0) / 1000)); }, 500);
+newGame();
+</script>
+</body>
+</html>

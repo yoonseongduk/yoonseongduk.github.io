@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>요트 다이스</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(38 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(38 22% 86%);--accent:hsl(38 65% 46%);--accent-fg:#fff;--soft:hsl(38 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(38 22% 10%);--surface:hsl(38 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(38 16% 25%);--accent:hsl(38 75% 68%);--accent-fg:#10131c;--soft:hsl(38 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.dice{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.die{aspect-ratio:1;border-radius:14px;border:2px solid var(--line);background:var(--surface);font-family:var(--font-display);font-size:clamp(1.6rem,9vw,2.4rem);min-width:0;padding:0}.die.held{border-color:var(--accent);background:var(--soft);box-shadow:0 4px 0 var(--accent);transform:translateY(-4px)}.die:disabled{opacity:1;cursor:default}.cats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cat{display:flex;align-items:center;justify-content:space-between;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;min-width:0;font-weight:700;font-size:.92rem;line-height:1.25}.cat small{display:block;font-weight:400;font-size:.7rem;color:var(--muted)}.cat b{font-family:var(--font-display);font-weight:400;font-size:1.3rem;color:var(--muted)}.cat:not(:disabled) b{color:var(--accent)}.cat:not(:disabled){border-color:var(--accent)}.cat.done{background:var(--soft)}.cat.done b{color:var(--fg)}.cat:disabled{cursor:default}
+</style>
+</head>
+<body>
+<main>
+  <h1>요트 다이스 🎲</h1>
+  <div class="stats"><div class="stat"><small>턴</small><b id="turn">1/12</b></div><div class="stat"><small>눈 합계</small><b id="upper">0/63</b></div><div class="stat"><small>총점</small><b id="total">0</b></div></div>
+  <div class="dice" id="dice"></div>
+  <button class="btn" id="roll" type="button">굴리기</button>
+  <div class="cats" id="cats"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="again" type="button" hidden>다시 하기</button>
+  <p class="muted">주사위 5개를 <b>한 턴에 최대 3번</b> 굴릴 수 있어요. 마음에 드는 주사위는 눌러서 <b>고정</b>하고 나머지만 다시 굴려요. 12개 족보를 한 번씩 채우면 끝! 1~6의 눈 합계가 63점 이상이면 <b>보너스 35점</b>. 스트레이트는 연속된 눈이 4개면 스몰(15점), 5개면 라지(30점), 같은 눈 5개는 요트(50점)예요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "yacht-best-v1";
+const NAMES = ["1의 눈", "2의 눈", "3의 눈", "4의 눈", "5의 눈", "6의 눈", "초이스(합계)", "포카드", "풀하우스", "스몰 스트레이트", "라지 스트레이트", "요트"];
+const HINT = ["1의 합", "2의 합", "3의 합", "4의 합", "5의 합", "6의 합", "다 더하기", "같은 눈 4개↑", "3개 + 2개", "연속 4개 15점", "연속 5개 30점", "5개 같음 50점"];
+let dice = [0, 0, 0, 0, 0], held = [false, false, false, false, false], left = 3, used = Array(12).fill(null), turn = 0, over = false, best = ld(KEY) || 0;
+function scoreOf(c, d) {
+  const cn = [0, 0, 0, 0, 0, 0, 0]; d.forEach(v => cn[v]++); const sum = d.reduce((a, b) => a + b, 0);
+  const has = a => a.every(v => cn[v] > 0);
+  if (c < 6) return cn[c + 1] * (c + 1);
+  if (c === 6) return sum;
+  if (c === 7) return cn.some(x => x >= 4) ? sum : 0;
+  if (c === 8) return cn.includes(3) && cn.includes(2) ? sum : 0;
+  if (c === 9) return has([1, 2, 3, 4]) || has([2, 3, 4, 5]) || has([3, 4, 5, 6]) ? 15 : 0;
+  if (c === 10) return has([1, 2, 3, 4, 5]) || has([2, 3, 4, 5, 6]) ? 30 : 0;
+  return cn.some(x => x === 5) ? 50 : 0;
+}
+function upperSum() { return used.slice(0, 6).reduce((a, b) => a + (b || 0), 0); }
+function totalSum() { return used.reduce((a, b) => a + (b || 0), 0) + (upperSum() >= 63 ? 35 : 0); }
+function render() {
+  $("turn").textContent = Math.min(turn + 1, 12) + "/12"; $("upper").textContent = upperSum() + "/63"; $("total").textContent = totalSum();
+  $("dice").innerHTML = dice.map((v, i) => `<button type="button" class="die${held[i] ? " held" : ""}" data-i="${i}" aria-label="주사위 ${i + 1}${held[i] ? " 고정됨" : ""}" ${left === 3 || over ? "disabled" : ""}>${v || "?"}</button>`).join("");
+  $("roll").textContent = over ? "게임 끝" : left === 3 ? "굴리기" : `다시 굴리기 (${left}번 남음)`; $("roll").disabled = over || left === 0;
+  $("cats").innerHTML = NAMES.map((n, c) => {
+    const u = used[c] !== null, can = !u && left < 3 && !over;
+    return `<button type="button" class="cat${u ? " done" : ""}" data-c="${c}" ${can ? "" : "disabled"}><span>${n}<small>${HINT[c]}</small></span><b>${u ? used[c] : can ? scoreOf(c, dice) : "–"}</b></button>`;
+  }).join("");
+}
+function roll() { if (over || left === 0) return; dice = dice.map((v, i) => (left === 3 || !held[i] ? ri(1, 6) : v)); left--; render(); }
+function pick(c) {
+  if (over || left === 3 || used[c] !== null) return;
+  used[c] = scoreOf(c, dice); turn++; dice = [0, 0, 0, 0, 0]; held = [false, false, false, false, false]; left = 3;
+  if (turn === 12) finish();
+  render();
+}
+function finish() {
+  over = true; const t = totalSum(), nb = t > best; if (nb) { best = t; sv(KEY, best); }
+  $("res").innerHTML = `<b>총점 ${t}점</b><p class="muted">${upperSum() >= 63 ? "보너스 35점 포함 · " : ""}최고 기록 ${best}점${nb ? " 🎉 신기록!" : ""}</p>`; $("res").hidden = false; $("again").hidden = false;
+}
+function reset() { dice = [0, 0, 0, 0, 0]; held = [false, false, false, false, false]; left = 3; used = Array(12).fill(null); turn = 0; over = false; $("res").hidden = true; $("again").hidden = true; render(); }
+$("dice").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b && left < 3 && !over) { held[+b.dataset.i] = !held[+b.dataset.i]; render(); } });
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) pick(+b.dataset.c); });
+$("roll").onclick = roll; $("again").onclick = reset; render();
+</script>
+</body>
+</html>

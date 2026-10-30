@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>영어 워들</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(150 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(150 22% 86%);--accent:hsl(150 65% 46%);--accent-fg:#fff;--soft:hsl(150 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(150 22% 10%);--surface:hsl(150 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(150 16% 25%);--accent:hsl(150 75% 68%);--accent-fg:#10131c;--soft:hsl(150 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:320px;margin:0 auto}.t{aspect-ratio:1;border:2px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:clamp(1.6rem,9vw,2.2rem);background:var(--surface)}.t.f{border-color:var(--muted)}.t.g{background:#1f7a4d;border-color:#1f7a4d;color:#fff}.t.y{background:#8a6a00;border-color:#8a6a00;color:#fff}.t.x{background:#5b6477;border-color:#5b6477;color:#fff}.kb{display:flex;flex-direction:column;gap:6px}.kr{display:flex;gap:4px;justify-content:center}.k{flex:1;min-width:0;height:46px;padding:0;border-radius:8px;border:0;background:var(--soft);font-weight:700;font-size:.95rem}.k.w{flex:1.7;font-size:.8rem}.k.g{background:#1f7a4d;color:#fff}.k.y{background:#8a6a00;color:#fff}.k.x{background:#5b6477;color:#fff;opacity:.7}
+</style>
+</head>
+<body>
+<main>
+  <h1>영어 워들 🔠</h1>
+  <div class="stats"><div class="stat"><small>시도</small><b id="tries">0/6</b></div><div class="stat"><small>맞힌 횟수</small><b id="wins">0</b></div><div class="stat"><small>플레이</small><b id="played">0</b></div></div>
+  <div class="board" id="board"></div>
+  <p class="center" id="msg" style="min-height:1.6em;font-weight:700"></p>
+  <div class="kb" id="kb"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 단어</button>
+  <p class="muted">숨은 <b>영어 단어(5글자)</b>를 6번 안에 맞혀 보세요. 5글자를 입력하고 엔터를 누르면 색깔로 힌트를 줘요. <b>초록</b>=글자와 자리가 모두 맞음, <b>노랑</b>=단어에 있지만 자리가 달라요, <b>회색</b>=단어에 없어요. 어떤 5글자든 입력할 수 있어요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "wordleen-stats-v1";
+const WORDS = [["apple","사과"],["bread","빵"],["chair","의자"],["table","탁자"],["water","물"],["light","빛"],["music","음악"],["house","집"],["mouse","쥐"],["horse","말"],["tiger","호랑이"],["zebra","얼룩말"],["whale","고래"],["snake","뱀"],["sheep","양"],["eagle","독수리"],["ocean","바다"],["river","강"],["beach","해변"],["cloud","구름"],["storm","폭풍"],["plant","식물"],["grass","풀"],["stone","돌"],["earth","지구"],["space","우주"],["heart","심장"],["smile","미소"],["happy","행복한"],["angry","화난"],["sleep","잠자다"],["dream","꿈"],["money","돈"],["phone","전화기"],["clock","시계"],["watch","손목시계"],["shirt","셔츠"],["shoes","신발"],["dress","원피스"],["pants","바지"],["glass","유리잔"],["plate","접시"],["spoon","숟가락"],["knife","칼"],["fruit","과일"],["lemon","레몬"],["grape","포도"],["peach","복숭아"],["mango","망고"],["candy","사탕"],["pizza","피자"],["sugar","설탕"],["juice","주스"],["cream","크림"],["honey","꿀"],["salad","샐러드"],["bench","벤치"],["floor","바닥"],["brick","벽돌"],["paper","종이"],["story","이야기"],["dance","춤추다"],["paint","칠하다"],["color","색깔"],["black","검정"],["white","하양"],["green","초록"],["brown","갈색"],["small","작은"],["large","큰"],["young","젊은"],["early","이른"],["tired","피곤한"],["fresh","신선한"],["sweet","달콤한"],["sharp","날카로운"],["quiet","조용한"],["round","둥근"],["magic","마법"],["robot","로봇"],["giant","거인"],["queen","여왕"],["angel","천사"],["ghost","유령"],["tooth","이빨"],["mouth","입"],["brain","뇌"],["train","기차"],["plane","비행기"],["truck","트럭"],["world","세계"],["night","밤"],["today","오늘"],["party","파티"],["class","학급"],["teach","가르치다"],["learn","배우다"],["write","쓰다"],["speak","말하다"],["think","생각하다"],["laugh","웃다"],["drink","마시다"],["shine","빛나다"],["climb","오르다"]];
+let ans = "", meaning = "", guesses = [], cur = "", over = false, keyst = {}, stats = ld(KEY) || { w: 0, p: 0 };
+function scoreGuess(g, a) {
+  const r = Array(5).fill("x"), lf = {};
+  for (let i = 0; i < 5; i++) { if (g[i] === a[i]) r[i] = "g"; else lf[a[i]] = (lf[a[i]] || 0) + 1; }
+  for (let i = 0; i < 5; i++) { if (r[i] === "g") continue; if (lf[g[i]] > 0) { r[i] = "y"; lf[g[i]]--; } }
+  return r.join("");
+}
+function newWord() {
+  let w; do { w = WORDS[ri(0, WORDS.length - 1)]; } while (w[0] === ans && WORDS.length > 1);
+  [ans, meaning] = w; guesses = []; cur = ""; over = false; keyst = {}; $("res").hidden = true; $("next").hidden = true; $("msg").textContent = ""; render();
+}
+function render() {
+  let h = "";
+  for (let r = 0; r < 6; r++) {
+    const g = r < guesses.length ? guesses[r] : null, sc = g ? scoreGuess(g, ans) : "", txt = g || (r === guesses.length ? cur : "");
+    for (let c = 0; c < 5; c++) h += `<div class="t ${g ? sc[c] : txt[c] ? "f" : ""}">${(txt[c] || "").toUpperCase()}</div>`;
+  }
+  $("board").innerHTML = h;
+  const rows = ["qwertyuiop", "asdfghjkl", "!zxcvbnm<"];
+  $("kb").innerHTML = rows.map(row => `<div class="kr">${[...row].map(k => k === "!" ? `<button type="button" class="k w" data-k="Enter">입력</button>` : k === "<" ? `<button type="button" class="k w" data-k="Backspace" aria-label="지우기">⌫</button>` : `<button type="button" class="k ${keyst[k] || ""}" data-k="${k}">${k.toUpperCase()}</button>`).join("")}</div>`).join("");
+  $("tries").textContent = guesses.length + "/6"; $("wins").textContent = stats.w; $("played").textContent = stats.p;
+}
+function press(k) {
+  if (over) return;
+  if (k === "Backspace") cur = cur.slice(0, -1);
+  else if (k === "Enter") {
+    if (cur.length < 5) { $("msg").textContent = "5글자를 입력하세요"; return; }
+    guesses.push(cur); const sc = scoreGuess(cur, ans), rank = { x: 1, y: 2, g: 3 };
+    [...cur].forEach((ch, i) => { if (!keyst[ch] || rank[sc[i]] > rank[keyst[ch]]) keyst[ch] = sc[i]; });
+    const win = cur === ans; cur = ""; $("msg").textContent = "";
+    if (win || guesses.length === 6) {
+      over = true; stats.p++; if (win) stats.w++; sv(KEY, stats);
+      $("res").innerHTML = win ? `<b>🎉 정답! ${ans.toUpperCase()}</b><p class="muted">${meaning} · ${guesses.length}번 만에 맞혔어요</p>` : `<b>아쉬워요 😢 정답은 ${ans.toUpperCase()}</b><p class="muted">뜻: ${meaning}</p>`;
+      $("res").hidden = false; $("next").hidden = false;
+    }
+  } else if (/^[a-z]$/.test(k) && cur.length < 5) { cur += k; $("msg").textContent = ""; }
+  render();
+}
+$("kb").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) press(b.dataset.k); });
+document.addEventListener("keydown", e => { if (e.ctrlKey || e.metaKey || e.altKey) return; const k = e.key.length === 1 ? e.key.toLowerCase() : e.key; if (k === "Enter" || k === "Backspace" || /^[a-z]$/.test(k)) { if (e.target.tagName === "BUTTON" && k === "Enter") return; press(k); } });
+$("next").onclick = newWord; newWord();
+</script>
+</body>
+</html>

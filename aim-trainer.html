@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>조준 연습</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 크기 선택, 시간·명중·정확도 줄, 과녁이 나타나는 정사각형 판. 과녁을 누르면 다른 곳에 새 과녁이 나타난다 */
+:root{--bg:#f1f2f7;--surface:#fff;--fg:#1c2033;--muted:#626b84;--line:#d8dcea;--arena:#e6e9f4;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10121c;--surface:#1a1e30;--fg:#e9ecf8;--muted:#97a0bc;--line:#2c3350;--arena:#141829;--accent:#ff7f5a;--accent-fg:#10121c;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}.seg button:disabled{opacity:.5;cursor:default}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 10px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.68rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;width:100%;background:var(--accent)}
+.arena{position:relative;aspect-ratio:1;background:var(--arena);border:2px solid var(--line);border-radius:18px;overflow:hidden;touch-action:manipulation}
+.tg{position:absolute;border-radius:50%;border:0;padding:0;transform:translate(-50%,-50%);background:radial-gradient(circle,#fff 0 14%,var(--accent) 15% 36%,#fff 37% 56%,var(--accent) 57% 100%);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,12,24,.5);color:#fff;text-align:center;padding:16px}.ov b{font-family:var(--font-display);font-weight:400;font-size:1.8rem}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:12px;padding:10px 22px;font-family:var(--font-display);font-size:1.25rem}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>조준 연습 🎯</h1>
+  <div class="seg" id="lv" role="radiogroup" aria-label="과녁 크기"></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="stats"><div class="stat"><small>시간</small><b id="left">30</b></div><div class="stat"><small>명중</small><b id="hits">0</b></div><div class="stat"><small>정확도</small><b id="acc">-</b></div><div class="stat"><small>최고 명중</small><b id="best">0</b></div></div>
+  <div class="arena" id="arena"><div class="ov" id="ov"></div></div>
+  <div class="res" id="res" hidden></div>
+  <p class="muted">나타나는 <b>과녁을 빠르게 눌러</b> 30초 동안 최대한 많이 맞히세요. 과녁이 아닌 곳을 누르면 빗나간 것으로 세요. 과녁이 작을수록 어려워요.</p>
+</main>
+<script>
+const DUR = 30, KEY = "aim-best-v1", LKEY = "aim-level-v1";
+const LV = { big: { px: 76, label: "큰 과녁", hint: "쉬움" }, mid: { px: 52, label: "보통", hint: "기본" }, small: { px: 34, label: "작은 과녁", hint: "어려움" } };
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let lv = (ld(LKEY) in LV) ? ld(LKEY) : "mid", state = "idle", hits = 0, miss = 0, endAt = 0, timer = 0, spawnAt = 0, sum = 0, best = ld(KEY) || {};
+
+function spawn() {                                       // 판 안쪽 아무 곳에나 과녁 하나를 놓는다 (가장자리에 걸치지 않게)
+  document.querySelectorAll(".tg").forEach(t => t.remove()); const a = $("arena"), W = a.clientWidth, r = LV[lv].px / 2 + 6;
+  const x = r + Math.random() * (W - 2 * r), y = r + Math.random() * (W - 2 * r), t = document.createElement("button");
+  t.type = "button"; t.className = "tg"; t.setAttribute("aria-label", "과녁"); t.style.cssText = `left:${x}px;top:${y}px;width:${LV[lv].px}px;height:${LV[lv].px}px`; a.append(t); spawnAt = performance.now();
+}
+function tick() { const left = Math.max(0, (endAt - Date.now()) / 1000); $("left").textContent = Math.ceil(left); $("bar").style.width = (left / DUR * 100) + "%"; if (!left) finish(); }
+function start() { hits = 0; miss = 0; sum = 0; state = "play"; $("res").hidden = true; $("ov").hidden = true; endAt = Date.now() + DUR * 1000; clearInterval(timer); timer = setInterval(tick, 100); stats(); spawn(); tick(); }
+function stats() { $("hits").textContent = hits; $("acc").textContent = hits + miss ? Math.round(hits / (hits + miss) * 100) + "%" : "-"; $("best").textContent = best[lv] || 0; }
+function finish() {
+  clearInterval(timer); state = "over"; document.querySelectorAll(".tg").forEach(t => t.remove()); $("bar").style.width = "0%"; $("left").textContent = 0; let note = "";
+  if (hits > (best[lv] || 0)) { best[lv] = hits; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  const avg = hits ? Math.round(sum / hits) : 0; stats();
+  $("res").innerHTML = `<b>${hits}번 명중!</b><p class="muted">정확도 ${hits + miss ? Math.round(hits / (hits + miss) * 100) : 0}% · 평균 ${avg}ms${note}</p>`; $("res").hidden = false;
+  $("ov").innerHTML = `<b>끝!</b><button class="btn" data-a="go" type="button">다시 하기</button>`; $("ov").hidden = false;
+}
+function ui() {
+  $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === lv}" ${state === "play" ? "disabled" : ""}>${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+  if (state === "idle") $("ov").innerHTML = `<b>조준 연습</b><p>${DUR}초 동안 과녁을 맞혀요</p><button class="btn" data-a="go" type="button">시작</button>`;
+  stats();
+}
+$("arena").addEventListener("pointerdown", e => {
+  if (state !== "play") return; const t = e.target.closest(".tg");
+  if (t) { e.preventDefault(); hits++; sum += performance.now() - spawnAt; stats(); spawn(); } else { miss++; stats(); }
+});
+$("ov").addEventListener("click", e => { if (e.target.closest("[data-a=go]")) { start(); ui(); } });
+$("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && !b.disabled) { lv = b.dataset.l; sv(LKEY, lv); state = "idle"; $("res").hidden = true; $("ov").hidden = false; ui(); } });
+ui();
+</script>
+</body>
+</html>

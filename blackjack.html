@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>블랙잭</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 칩·판돈 줄, 딜러 카드, 내 카드, 행동 버튼(히트·스탠드·더블). 21에 가까운 쪽이 이기고, 21을 넘으면 져요 */
+:root{--bg:#e6f0e8;--surface:#fff;--fg:#17261b;--muted:#5a7260;--line:#cddccf;--felt:#2d7a4a;--accent:#e8643f;--accent-fg:#fff;--red:#d6332b;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0d170f;--surface:#162419;--fg:#e6f2e8;--muted:#93ad98;--line:#274030;--felt:#1d5a35;--accent:#ff7f5a;--accent-fg:#0d170f;--red:#ff6b5e;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 12px}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.table{background:var(--felt);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:14px;color:#fff;min-height:290px}
+.hand h2{font-family:var(--font-display);font-weight:400;font-size:1.05rem;margin:0 0 6px;display:flex;justify-content:space-between}.cards{display:flex;gap:8px;flex-wrap:wrap;min-height:84px}
+.card{width:58px;height:84px;border-radius:8px;background:#fff;color:#1b1b1b;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.5rem;line-height:1.1;box-shadow:0 2px 4px rgba(0,0,0,.35)}.card.r{color:var(--red)}.card small{font-size:1.2rem}
+.card.back{background:repeating-linear-gradient(45deg,#2f5bd0 0 6px,#264ab0 6px 12px);color:transparent}
+.msg{text-align:center;font-family:var(--font-display);font-size:1.3rem;min-height:1.8em;padding:6px 0}
+.bets{display:flex;gap:8px;justify-content:center}.chip{background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:8px 16px;font-family:var(--font-display);font-size:1.15rem}.chip.on{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.25rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.4;cursor:default}
+</style>
+</head>
+<body>
+<main>
+  <h1>블랙잭 🃏</h1>
+  <div class="stats"><div class="stat"><small>내 칩</small><b id="chips">100</b></div><div class="stat"><small>판돈</small><b id="bet">10</b></div><div class="stat"><small>최고 칩</small><b id="best">100</b></div></div>
+  <div class="table">
+    <div class="hand"><h2><span>딜러</span><span id="dv"></span></h2><div class="cards" id="dealer"></div></div>
+    <div class="hand"><h2><span>나</span><span id="pv"></span></h2><div class="cards" id="player"></div></div>
+  </div>
+  <div class="msg" id="msg" aria-live="polite"></div>
+  <div class="bets" id="bets" role="radiogroup" aria-label="판돈"></div>
+  <div class="row" id="acts"></div>
+  <p class="muted">카드의 합이 <b>21에 가장 가까운 쪽</b>이 이겨요. 21을 넘으면(버스트) 져요. <b>히트</b>는 카드 한 장 더, <b>스탠드</b>는 멈추기, <b>더블</b>은 판돈을 두 배로 걸고 한 장만 더 받기예요. J, Q, K는 10, A는 1 또는 11이에요. 딜러는 17 이상이 될 때까지 카드를 받아요. 처음 두 장이 21이면 <b>블랙잭</b>(1.5배 지급)! 칩이 0이 되면 다시 시작해요.</p>
+</main>
+<script>
+const START = 100, KEY = "blackjack-best-v1", $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let deck = [], player = [], dealer = [], chips = START, bet = 10, state = "bet", best = ld(KEY) || START, msg = "판돈을 고르고 딜을 눌러요.", doubled = false;
+
+function newDeck() { const d = []; for (const s of ["♠", "♥", "♦", "♣"]) for (const r of ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]) d.push({ r, s }); for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; } return d; }
+const draw = () => { if (deck.length < 12) deck = newDeck(); return deck.pop(); };       // 카드가 모자라면 새로 섞는다
+// 카드 합계: A는 11로 세다가 21을 넘으면 1로 바꾼다
+function value(hand) { let t = 0, aces = 0; for (const c of hand) { if (c.r === "A") { aces++; t += 11; } else t += "JQK".includes(c.r) ? 10 : +c.r; } while (t > 21 && aces) { t -= 10; aces--; } return t; }
+const isBJ = h => h.length === 2 && value(h) === 21;
+
+function deal() {
+  if (state !== "bet" || bet > chips) return; deck = deck.length ? deck : newDeck(); player = [draw(), draw()]; dealer = [draw(), draw()]; doubled = false; state = "play"; msg = "히트, 스탠드, 더블 중에 고르세요.";
+  if (isBJ(player) || isBJ(dealer)) return settle(); render();
+}
+function hit() { if (state !== "play") return; player.push(draw()); if (value(player) > 21) return settle(); if (value(player) === 21) return stand(); render(); }
+function stand() { if (state !== "play") return; while (value(dealer) < 17) dealer.push(draw()); settle(); }
+function dbl() { if (state !== "play" || player.length !== 2 || chips < bet * 2) return; doubled = true; player.push(draw()); if (value(player) > 21) return settle(); stand(); }
+function settle() {
+  const stake = bet * (doubled ? 2 : 1), p = value(player), d = value(dealer); let delta = 0, text;
+  if (isBJ(player) && !isBJ(dealer)) { delta = Math.round(stake * 1.5); text = "🎉 블랙잭! 1.5배를 받아요"; }
+  else if (isBJ(dealer) && !isBJ(player)) { delta = -stake; text = "딜러가 블랙잭이에요 😢"; }
+  else if (p > 21) { delta = -stake; text = "버스트! 21을 넘었어요 😢"; }
+  else if (d > 21) { delta = stake; text = "🎉 딜러가 버스트! 내가 이겼어요"; }
+  else if (p > d) { delta = stake; text = "🎉 내가 이겼어요!"; }
+  else if (p < d) { delta = -stake; text = "딜러가 이겼어요 😢"; }
+  else text = "비겼어요 🤝 (판돈은 돌려받아요)";
+  chips += delta; state = "over"; msg = text + (delta ? ` (${delta > 0 ? "+" : ""}${delta}칩)` : ""); if (chips > best) { best = chips; sv(KEY, best); }
+  if (chips <= 0) { msg += " — 칩을 모두 잃었어요. 다시 시작할 수 있어요."; }
+  render();
+}
+function again() { if (chips <= 0) chips = START; if (bet > chips) bet = Math.min(chips, 10); state = "bet"; player = []; dealer = []; msg = "판돈을 고르고 딜을 눌러요."; render(); }
+const cardHtml = (c, hidden) => hidden ? `<div class="card back">?</div>` : `<div class="card ${c.s === "♥" || c.s === "♦" ? "r" : ""}" aria-label="${c.s}${c.r}">${c.r}<small>${c.s}</small></div>`;
+function render() {
+  const hideHole = state === "play";
+  $("dealer").innerHTML = dealer.map((c, i) => cardHtml(c, hideHole && i === 1)).join("") || `<span class="muted" style="color:#d8efe0">카드가 없어요</span>`; $("player").innerHTML = player.map(c => cardHtml(c)).join("") || `<span class="muted" style="color:#d8efe0">카드가 없어요</span>`;
+  $("dv").textContent = dealer.length ? (hideHole ? value([dealer[0]]) + " + ?" : value(dealer)) : ""; $("pv").textContent = player.length ? value(player) : "";
+  $("chips").textContent = chips; $("bet").textContent = bet * (doubled ? 2 : 1); $("best").textContent = best; $("msg").textContent = msg;
+  $("bets").innerHTML = state === "bet" ? [5, 10, 20, 50].map(b => `<button type="button" class="chip ${b === bet ? "on" : ""}" data-b="${b}" ${b > chips ? "disabled" : ""}>${b}</button>`).join("") : "";
+  $("acts").innerHTML = state === "bet" ? `<button class="btn" style="grid-column:1/-1" data-a="deal" type="button">딜 (카드 받기)</button>`
+    : state === "play" ? `<button class="btn" data-a="hit" type="button">히트</button><button class="btn ghost" data-a="stand" type="button">스탠드</button><button class="btn ghost" data-a="dbl" type="button" ${player.length !== 2 || chips < bet * 2 ? "disabled" : ""}>더블</button>`
+    : `<button class="btn" style="grid-column:1/-1" data-a="again" type="button">${chips <= 0 ? "칩 100개로 다시 시작" : "다음 판"}</button>`;
+}
+$("bets").addEventListener("click", e => { const b = e.target.closest("[data-b]"); if (b && !b.disabled) { bet = +b.dataset.b; render(); } });
+$("acts").addEventListener("click", e => { const a = e.target.closest("[data-a]"); if (!a || a.disabled) return; ({ deal, hit, stand, dbl, again })[a.dataset.a](); });
+render();
+</script>
+</body>
+</html>

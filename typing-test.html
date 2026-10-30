@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>타자 연습</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 문장 번호와 속도 줄, 따라 칠 문장(맞은 글자는 초록, 틀린 글자는 빨강), 입력칸. 5문장을 치면 타수와 정확도가 나온다 */
+:root{--bg:#f1f3f8;--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:#d8deea;--accent:#2f6fd0;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10131c;--surface:#1a1f2e;--fg:#e9edf7;--muted:#97a1b9;--line:#2c3448;--accent:#7aa8ff;--accent-fg:#10131c;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.sent{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 14px;text-align:center;font-size:1.35rem;line-height:1.8;font-weight:500;word-break:keep-all}
+.sent span.ok{color:var(--ok)}.sent span.bad{color:var(--bad);text-decoration:underline}.sent span.rest{color:var(--muted)}.sent span.cur{border-bottom:3px solid var(--accent)}
+input[type=text]{width:100%;background:var(--surface);color:var(--fg);border:2px solid var(--line);border-radius:14px;padding:13px;font:inherit;font-size:1.2rem;text-align:center}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.log{display:flex;flex-direction:column;gap:4px;font-size:.88rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>타자 연습 ⌨️</h1>
+  <div class="stats"><div class="stat"><small>문장</small><b id="no">1/5</b></div><div class="stat"><small>타수(분당)</small><b id="cpm">0</b></div><div class="stat"><small>최고 타수</small><b id="best">0</b></div></div>
+  <div class="sent" id="sent" aria-live="polite"></div>
+  <input type="text" id="inp" placeholder="여기에 위 문장을 따라 쓰세요" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="입력">
+  <div class="res" id="res" hidden></div>
+  <div class="log" id="log"></div>
+  <button class="btn" id="again" type="button" hidden>다시 하기</button>
+  <p class="muted">위 문장을 그대로 따라 쓰고 <b>Enter</b>(또는 키보드의 완료/이동)를 누르면 다음 문장으로 넘어가요. 첫 글자를 치는 순간부터 시간이 흘러요. 5문장의 <b>타수(1분에 친 글자 수)</b>와 정확도를 알려 줘요.</p>
+</main>
+<script>
+const S = `가는 말이 고와야 오는 말이 곱다|백지장도 맞들면 낫다|천 리 길도 한 걸음부터|세 살 버릇 여든까지 간다|소 잃고 외양간 고친다|낮말은 새가 듣고 밤말은 쥐가 듣는다|하늘이 무너져도 솟아날 구멍이 있다|티끌 모아 태산|원숭이도 나무에서 떨어진다|우물 안 개구리|오늘도 좋은 하루 보내세요|맛있는 점심 먹고 힘내서 일해요|주말에는 가족과 함께 공원에 가요|책을 읽으면 마음이 넓어져요|비 오는 날에는 따뜻한 차가 좋아요|내일은 일찍 일어나서 운동을 해야지|친구와 함께 영화를 보러 갔어요|바다에서 조개를 줍고 모래성을 쌓았어요|봄에는 꽃이 피고 가을에는 단풍이 들어요|사과와 배는 건강에 좋은 과일이에요|아침에 일어나 창문을 열고 인사를 했어요|우리 가족은 저녁마다 산책을 해요`.split("|");
+const $ = id => document.getElementById(id), KEY = "typing-best-v1", ROUND = 5;
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let list = [], i = 0, t0 = 0, typed = 0, correct = 0, total = 0, best = ld(KEY) || 0, ms = 0, done = false, results = [];
+
+function start() {
+  list = [...S].sort(() => Math.random() - .5).slice(0, ROUND); i = 0; t0 = 0; typed = 0; correct = 0; total = 0; ms = 0; done = false; results = [];
+  $("res").hidden = true; $("again").hidden = true; $("log").innerHTML = ""; $("inp").disabled = false; show();
+}
+function match(a, b) { let c = 0; for (let k = 0; k < Math.min(a.length, b.length); k++) if (a[k] === b[k]) c++; return c; }   // 같은 자리에서 맞은 글자 수
+function show() { $("inp").value = ""; paint(""); $("no").textContent = (i + 1) + "/" + ROUND; $("inp").focus(); }
+function paint(v) {
+  const t = list[i]; $("sent").innerHTML = [...t].map((ch, k) => { const c = k < v.length ? (v[k] === ch ? "ok" : "bad") : "rest"; return `<span class="${c} ${k === v.length ? "cur" : ""}">${esc(ch)}</span>`; }).join("");
+}
+function liveCpm() { if (!t0) return 0; const min = (Date.now() - t0 + ms) / 60000; return Math.round((typed + $("inp").value.length) / Math.max(min, 1 / 600)); }
+function submit() {
+  if (done) return; const v = $("inp").value.trim(), t = list[i]; if (!v) return;
+  const c = match(v, t), len = Math.max(v.length, t.length);
+  typed += v.length; correct += c; total += len; results.push({ t, v, acc: Math.round(c / len * 100) });
+  if (i === ROUND - 1) return finish(); i++; show();
+}
+function finish() {
+  done = true; $("inp").disabled = true; const min = (Date.now() - t0) / 60000, cpm = Math.round(typed / Math.max(min, 1 / 600)), acc = total ? Math.round(correct / total * 100) : 0; let note = "";
+  if (acc >= 90 && cpm > best) { best = cpm; sv(KEY, best); note = " 🏆 최고 타수예요!"; }
+  $("cpm").textContent = cpm; $("best").textContent = best;
+  $("res").innerHTML = `<b>${cpm}타 / 분</b><p class="muted">정확도 ${acc}% · ${(min * 60).toFixed(1)}초${acc < 90 ? " (정확도 90% 이상일 때 최고 기록으로 남아요)" : ""}${note}</p><p class="muted">${cpm >= 400 ? "타자 고수! ⚡" : cpm >= 250 ? "빨라요 👍" : cpm >= 150 ? "좋아요 🙂" : "천천히 정확하게 연습해요 🐢"}</p>`; $("res").hidden = false;
+  $("log").innerHTML = results.map((r, k) => `<div>${k + 1}. ${esc(r.t)} — 정확도 ${r.acc}%</div>`).join(""); $("again").hidden = false;
+}
+$("inp").addEventListener("input", e => { if (done) return; if (!t0 && $("inp").value) t0 = Date.now(); paint($("inp").value); $("cpm").textContent = liveCpm(); });
+$("inp").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); submit(); } });
+$("again").onclick = start; $("best").textContent = best; start();
+</script>
+</body>
+</html>

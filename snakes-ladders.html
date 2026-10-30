@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>뱀 사다리</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 참가자 설정 → 100칸 판(사다리는 초록, 뱀은 빨강 선) 위에서 말이 움직이고, 아래에 주사위 버튼. 먼저 100번 칸에 도착하면 이긴다 */
+:root{--bg:#eef3ea;--surface:#fff;--fg:#1c2a1e;--muted:#5d7260;--line:#d2dfd0;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f180f;--surface:#192619;--fg:#e8f2e8;--muted:#96b098;--line:#2a3f2b;--accent:#ff7f5a;--accent-fg:#0f180f;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.3rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.step{display:flex;align-items:center;justify-content:space-between}.step div{display:flex;align-items:center;gap:10px}.step button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-size:1.3rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;min-width:2ch;text-align:center}
+.pl{display:flex;align-items:center;gap:10px}.pl i{width:20px;height:20px;border-radius:50%;flex:none}.pl span{flex:1}.pl button{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.9rem}
+.players{display:flex;gap:6px;flex-wrap:wrap}.chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:3px 12px;font-size:.88rem}.chip i{width:14px;height:14px;border-radius:50%}.chip.cur{border-color:var(--accent);font-weight:700}
+.wrap{border-radius:12px;overflow:hidden;border:2px solid var(--line)}canvas{width:100%;display:block;aspect-ratio:1}
+.dice{display:flex;align-items:center;gap:12px}.dice .d{font-size:3rem;line-height:1;min-width:1.2em;text-align:center}.msg{flex:1;min-height:3em}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn:disabled{opacity:.5;cursor:default}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>뱀 사다리 🐍🪜</h1>
+  <section id="setup" class="card">
+    <div class="step"><h2>참가 인원</h2><div><button id="minus" type="button" aria-label="한 명 줄이기">−</button><b id="n">2</b><button id="plus" type="button" aria-label="한 명 늘리기">＋</button></div></div>
+    <div id="pl"></div>
+    <button class="btn" id="start" type="button">게임 시작</button>
+    <p class="muted">주사위를 굴려 100번 칸에 먼저 도착하면 이겨요. 🪜 사다리 아래칸에 서면 위로 올라가고, 🐍 뱀 머리 칸에 서면 아래로 미끄러져요. 100에는 <b>딱 맞게</b> 도착해야 해요. 사람 대신 컴퓨터가 굴리게 정할 수도 있어요.</p>
+  </section>
+  <section id="game" hidden>
+    <div class="players" id="chips"></div>
+    <div class="wrap" style="margin-top:10px"><canvas id="cv" aria-label="뱀 사다리 판"></canvas></div>
+    <div class="dice" style="margin-top:10px"><div class="d" id="die">🎲</div><p class="msg" id="msg" aria-live="polite"></p></div>
+    <button class="btn" id="roll" type="button" style="margin-top:10px;width:100%">주사위 굴리기</button>
+    <div class="res" id="res" hidden style="margin-top:10px"></div>
+    <button class="btn ghost" id="home" type="button" style="margin-top:10px;width:100%">처음으로</button>
+  </section>
+</main>
+<script>
+const COLORS = ["#e8453c", "#2f6fd0", "#e2a800", "#1f9d62"], NAMES = ["빨강", "파랑", "노랑", "초록"], FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+const LADDERS = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91 }, SNAKES = { 17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78 };
+const KEY = "snakes-v1", $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let cfg = ld(KEY) || { n: 2, cpu: [false, true, true, true] }, pos = [], turn = 0, over = false, busy = false, tempo = 1;
+cfg.n = Math.min(4, Math.max(2, cfg.n || 2));
+
+// 칸 번호 → 판 위의 좌표. 아래줄은 왼쪽→오른쪽, 그다음 줄은 오른쪽→왼쪽 (지그재그)
+const cell = n => { const r = Math.floor((n - 1) / 10), c = r % 2 === 0 ? (n - 1) % 10 : 9 - (n - 1) % 10; return { r, c }; };
+const dest = n => LADDERS[n] || SNAKES[n] || n;
+
+function drawSetup() {
+  $("n").textContent = cfg.n;
+  $("pl").innerHTML = Array.from({ length: cfg.n }, (_, i) => `<div class="pl" style="margin:6px 0"><i style="background:${COLORS[i]}"></i><span>${NAMES[i]}</span><button type="button" data-i="${i}" aria-label="${NAMES[i]} 사람 또는 컴퓨터 바꾸기">${cfg.cpu[i] ? "🤖 컴퓨터" : "👤 사람"}</button></div>`).join("");
+}
+function begin() { sv(KEY, cfg); pos = Array(cfg.n).fill(0); turn = 0; over = false; busy = false; $("setup").hidden = true; $("game").hidden = false; $("res").hidden = true; $("die").textContent = "🎲"; $("msg").textContent = ""; render(); next(); }
+function next() {
+  if (over) return; render();
+  if (cfg.cpu[turn]) { busy = true; $("roll").disabled = true; setTimeout(roll, 800 * tempo); } else { busy = false; $("roll").disabled = false; $("msg").textContent = `${NAMES[turn]} 차례예요. 주사위를 굴리세요!`; }
+}
+function roll() {
+  if (over) return; busy = true; $("roll").disabled = true;
+  const v = 1 + Math.floor(Math.random() * 6); $("die").textContent = FACES[v - 1]; const p = turn, from = pos[p]; let to = from + v;
+  if (to > 100) { $("msg").textContent = `${NAMES[p]}: ${v}이(가) 나왔지만 100을 넘어서 제자리에 있어요.`; return setTimeout(endTurn, 700 * tempo); }
+  $("msg").textContent = `${NAMES[p]}: ${v}칸 이동!`; let cur = from;
+  const step = () => { cur++; pos[p] = cur; render(); if (cur < to) return setTimeout(step, 130 * tempo); settle(p, to); };
+  setTimeout(step, 300 * tempo);
+}
+function settle(p, to) {
+  const d = dest(to);
+  if (d !== to) { $("msg").textContent = `${NAMES[p]}: ${LADDERS[to] ? "🪜 사다리를 타고 올라가요! " + to + " → " + d : "🐍 뱀에게 미끄러져요! " + to + " → " + d}`; setTimeout(() => { pos[p] = d; render(); finishOrNext(p); }, 600 * tempo); } else finishOrNext(p);
+}
+function finishOrNext(p) { if (pos[p] === 100) return win(p); setTimeout(endTurn, 500 * tempo); }
+function endTurn() { turn = (turn + 1) % cfg.n; next(); }
+function win(p) { over = true; $("roll").disabled = true; $("res").innerHTML = `<b>🎉 ${NAMES[p]} 승리!</b><p class="muted">${cfg.cpu[p] ? "컴퓨터" : "사람"}이 가장 먼저 100번 칸에 도착했어요.</p><button class="btn" id="again" type="button" style="margin-top:8px;width:100%">한 판 더</button>`; $("res").hidden = false; $("again").onclick = begin; render(); }
+
+function render() {
+  const cv = $("cv"), w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!w) return; cv.width = cv.height = Math.round(w * dpr);
+  const c = cv.getContext("2d"), u = w / 10, css = getComputedStyle(document.documentElement); c.scale(dpr, dpr);
+  const xy = n => { const { r, c: cc } = cell(n); return [(cc + .5) * u, w - (r + .5) * u]; };
+  for (let n = 1; n <= 100; n++) { const { r, c: cc } = cell(n); c.fillStyle = (r + cc) % 2 ? "#f3ecd6" : "#e5efd3"; if (LADDERS[n]) c.fillStyle = "#cfe9c4"; if (SNAKES[n]) c.fillStyle = "#f4cfc8"; if (n === 100) c.fillStyle = "#ffe08a"; c.fillRect(cc * u, w - (r + 1) * u, u, u);
+    c.fillStyle = "#5b6558"; c.font = `${Math.max(9, u * .26)}px sans-serif`; c.textAlign = "left"; c.textBaseline = "top"; c.fillText(n === 100 ? "🏁100" : n, cc * u + 3, w - (r + 1) * u + 2); }
+  c.lineCap = "round"; for (const [a, b] of Object.entries(LADDERS)) { const [x1, y1] = xy(+a), [x2, y2] = xy(b), dx = y2 - y1, dy = x1 - x2, L = Math.hypot(dx, dy) || 1, ox = dx / L * u * .12, oy = dy / L * u * .12;
+    c.strokeStyle = "#2f8f46"; c.lineWidth = Math.max(2, u * .07); for (const s of [-1, 1]) { c.beginPath(); c.moveTo(x1 + s * ox, y1 + s * oy); c.lineTo(x2 + s * ox, y2 + s * oy); c.stroke(); }
+    const steps = Math.max(2, Math.floor(Math.hypot(x2 - x1, y2 - y1) / (u * .4))); for (let k = 1; k < steps; k++) { const t = k / steps, px = x1 + (x2 - x1) * t, py = y1 + (y2 - y1) * t; c.beginPath(); c.moveTo(px - ox, py - oy); c.lineTo(px + ox, py + oy); c.stroke(); } }
+  for (const [a, b] of Object.entries(SNAKES)) { const [x1, y1] = xy(+a), [x2, y2] = xy(b); c.strokeStyle = "#c8412f"; c.lineWidth = Math.max(3, u * .12); c.beginPath(); c.moveTo(x1, y1);
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, nx = (y2 - y1) / 5, ny = -(x2 - x1) / 5; c.bezierCurveTo(mx + nx, my + ny, mx - nx, my - ny, x2, y2); c.stroke(); c.fillStyle = "#c8412f"; c.beginPath(); c.arc(x1, y1, u * .16, 0, 7); c.fill(); }
+  pos.forEach((p, i) => { const n = p || 0; const [x, y] = n ? xy(n) : [u * .3 + i * u * .4, w + 0]; if (!n) return; const off = [[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]][i];
+    c.fillStyle = COLORS[i]; c.strokeStyle = "#fff"; c.lineWidth = 2; c.beginPath(); c.arc(x + off[0] * u, y + off[1] * u, u * .17, 0, 7); c.fill(); c.stroke(); });
+  $("chips").innerHTML = pos.map((p, i) => `<span class="chip ${i === turn && !over ? "cur" : ""}"><i style="background:${COLORS[i]}"></i>${NAMES[i]}${cfg.cpu[i] ? "🤖" : ""} <b>${p || "출발"}</b></span>`).join("");
+}
+$("minus").onclick = () => { if (cfg.n > 2) { cfg.n--; drawSetup(); } }; $("plus").onclick = () => { if (cfg.n < 4) { cfg.n++; drawSetup(); } };
+$("pl").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b) { cfg.cpu[+b.dataset.i] = !cfg.cpu[+b.dataset.i]; drawSetup(); } });
+$("start").onclick = begin; $("roll").onclick = () => { if (!busy && !over && !cfg.cpu[turn]) roll(); };
+$("home").onclick = () => { over = true; $("game").hidden = true; $("setup").hidden = false; drawSetup(); };
+window.addEventListener("resize", () => { if (!$("game").hidden) render(); });
+drawSetup();
+</script>
+</body>
+</html>

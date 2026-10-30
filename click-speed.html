@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>클릭 속도 테스트</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 시간 선택(5·10·30초), 기록 줄, 크게 누르는 영역. 첫 번째 터치부터 시간이 시작되고 끝나면 초당 클릭 수(CPS)가 나온다 */
+:root{--bg:#f6f0ea;--surface:#fff;--fg:#2a2118;--muted:#7a6b5c;--line:#e6dacd;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#1a1410;--surface:#261e17;--fg:#f4ece4;--muted:#b0a092;--line:#3d3228;--accent:#ff7f5a;--accent-fg:#1a1410;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}.seg button:disabled{opacity:.5;cursor:default}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.pad{min-height:280px;border:0;border-radius:24px;background:var(--accent);color:var(--accent-fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;touch-action:manipulation;box-shadow:0 6px 0 rgba(0,0,0,.2);padding:16px}
+.pad:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.2)}.pad.off{background:var(--muted);box-shadow:none}
+.pad .n{font-family:var(--font-display);font-size:4.2rem;line-height:1;font-variant-numeric:tabular-nums}.pad .t{font-family:var(--font-display);font-size:1.6rem}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;width:100%;background:var(--accent)}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>클릭 속도 테스트 🖱️</h1>
+  <div class="seg" id="lv" role="radiogroup" aria-label="시간"></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="stats"><div class="stat"><small>남은 시간</small><b id="left">10.0</b></div><div class="stat"><small>클릭</small><b id="cnt">0</b></div><div class="stat"><small>최고 CPS</small><b id="best">-</b></div></div>
+  <button class="pad" id="pad" type="button"></button>
+  <div class="res" id="res" hidden></div>
+  <p class="muted">큰 버튼을 <b>정해진 시간 동안 최대한 빨리</b> 누르세요. 처음 누르는 순간부터 시간이 흘러요. 결과는 1초에 몇 번 눌렀는지(CPS)로 알려 줘요. (컴퓨터는 마우스 클릭이나 스페이스 키)</p>
+</main>
+<script>
+const LV = { 5: { label: "5초", hint: "짧게" }, 10: { label: "10초", hint: "기본" }, 30: { label: "30초", hint: "오래" } };
+const KEY = "clickspeed-best-v1", LKEY = "clickspeed-level-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let lv = [5, 10, 30].includes(ld(LKEY)) ? ld(LKEY) : 10, state = "idle", cnt = 0, t0 = 0, timer = 0, best = ld(KEY) || {}, tempo = 1;
+const grade = c => c >= 10 ? "마우스가 불타요! 🔥" : c >= 7 ? "엄청 빨라요 ⚡" : c >= 5 ? "빠른 손 👍" : c >= 3 ? "보통이에요 🙂" : "천천히 시작해 봐요 🐢";
+
+function tick() {
+  const total = lv * 1000 * tempo, el = performance.now() - t0, left = Math.max(0, total - el);
+  $("left").textContent = (left / 1000 / tempo).toFixed(1); $("bar").style.width = (left / total * 100) + "%"; if (!left) finish();
+}
+function press() {
+  if (state === "over") return;
+  if (state === "idle") { state = "run"; cnt = 0; t0 = performance.now(); $("res").hidden = true; timer = setInterval(tick, 50); }
+  cnt++; $("cnt").textContent = cnt; render();
+}
+function finish() {
+  clearInterval(timer); state = "over"; const cps = +(cnt / lv).toFixed(2); let note = ""; $("left").textContent = "0.0"; $("bar").style.width = "0%";
+  if (!best[lv] || cps > best[lv]) { best[lv] = cps; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("res").innerHTML = `<b>${cps} CPS</b><p class="muted">${lv}초 동안 ${cnt}번 눌렀어요. ${grade(cps)}${note}</p>`; $("res").hidden = false; render();
+  setTimeout(() => { if (state === "over") { state = "idle"; render(); } }, 900);
+}
+function render() {
+  $("pad").className = "pad" + (state === "over" ? " off" : "");
+  $("pad").innerHTML = state === "idle" ? `<span class="t">눌러서 시작!</span><span>${lv}초 동안 연타하세요</span>` : state === "run" ? `<span class="n">${cnt}</span><span class="t">계속 누르세요!</span>` : `<span class="t">끝!</span>`;
+  $("best").textContent = best[lv] ? best[lv] : "-";
+  $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${+k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${+k === lv}" ${state === "run" ? "disabled" : ""}>${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+}
+$("pad").addEventListener("pointerdown", e => { e.preventDefault(); press(); });
+$("pad").addEventListener("keydown", e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); press(); } });
+$("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && !b.disabled) { lv = +b.dataset.l; sv(LKEY, lv); state = "idle"; cnt = 0; $("cnt").textContent = 0; $("left").textContent = lv.toFixed(1); $("bar").style.width = "100%"; $("res").hidden = true; render(); } });
+$("left").textContent = lv.toFixed(1); render();
+</script>
+</body>
+</html>

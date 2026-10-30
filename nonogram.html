@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>노노그램</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 크기 선택, 시간 줄, 위쪽과 왼쪽에 숫자 힌트가 붙은 격자. 숫자는 그 줄에서 칠해야 하는 칸이 몇 개씩 이어지는지 알려 준다 */
+:root{--bg:#eef1f6;--surface:#fff;--fg:#1b2133;--muted:#626b84;--line:#cfd6e6;--fill:#2a3350;--mark:#c8456a;--accent:#e8643f;--accent-fg:#fff;--done:#9aa4bd;--ok:#1f9d62;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10131d;--surface:#1a1f30;--fg:#e9edf8;--muted:#98a2bc;--line:#2d354c;--fill:#d9e2ff;--mark:#ff7a95;--accent:#ff7f5a;--accent-fg:#10131d;--done:#5c6684;--ok:#4cc98a;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:20px 48px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 12px}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.3rem;font-variant-numeric:tabular-nums}
+.board{display:grid;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;touch-action:none}
+.cc{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:1px;font-size:.78rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;padding-bottom:3px}
+.rc{display:flex;justify-content:flex-end;align-items:center;gap:5px;font-size:.78rem;font-weight:700;padding-right:5px;font-variant-numeric:tabular-nums}
+.cc span.d,.rc span.d{color:var(--done);text-decoration:line-through}
+.c{aspect-ratio:1;border:1px solid var(--line);background:var(--bg);border-radius:3px;padding:0;position:relative;min-width:0}
+.c.f{background:var(--fill);border-color:var(--fill)}.c.m::after{content:"✕";position:absolute;inset:0;display:grid;place-items:center;color:var(--mark);font-size:.9em;font-weight:700}
+.c.b5{border-right:2px solid var(--muted)}.c.r5{border-bottom:2px solid var(--muted)}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:11px;font-family:var(--font-display);font-size:1.15rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:.95rem;font-weight:700}.btn.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>노노그램 🖼️</h1>
+  <div class="seg" id="lv" role="radiogroup" aria-label="크기"></div>
+  <div class="stats"><div class="stat"><small>시간</small><b id="time">0:00</b></div><div class="stat"><small>최고(이 크기)</small><b id="best">-</b></div></div>
+  <div class="board" id="board" role="grid" aria-label="노노그램 판"></div>
+  <div class="row"><button class="btn on" id="mFill" type="button">■ 칠하기</button><button class="btn ghost" id="mMark" type="button">✕ 표시</button><button class="btn ghost" id="clear" type="button">모두 지우기</button></div>
+  <div class="res" id="res" hidden></div>
+  <div class="row" style="grid-template-columns:1fr 1fr"><button class="btn ghost" id="reveal" type="button">정답 보기</button><button class="btn" id="newGame" type="button">새 퍼즐</button></div>
+  <p class="muted">위쪽과 왼쪽 숫자는 그 줄에서 <b>이어서 칠해야 하는 칸의 수</b>예요. (예: <b>3 1</b>은 3칸을 칠하고, 한 칸 이상 띄운 뒤 1칸을 칠해요.) 칸을 누르거나 끌어서 칠하고, 칠하면 안 된다고 확신하는 칸은 ✕로 표시하세요. 모든 줄의 숫자가 맞으면 완성! 다 맞춘 줄의 숫자는 흐려져요.</p>
+</main>
+<script>
+const LV = { 5: { n: 5, label: "5×5", hint: "쉬움" }, 8: { n: 8, label: "8×8", hint: "보통" }, 10: { n: 10, label: "10×10", hint: "어려움" } };
+const KEY = "nonogram-best-v1", LKEY = "nonogram-level-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const fmt = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+let lv = [5, 8, 10].includes(ld(LKEY)) ? ld(LKEY) : 5, n, sol, cur, mode = "fill", t0 = 0, timer = 0, done = false, revealed = false, best = ld(KEY) || {}, paint = null;
+
+const runs = line => { const r = []; let c = 0; for (const v of line) { if (v) c++; else if (c) { r.push(c); c = 0; } } if (c) r.push(c); return r.length ? r : [0]; };
+const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
+const rowOf = (g, y) => g[y].map(v => v === 1 ? 1 : 0), colOf = (g, x) => g.map(r => r[x] === 1 ? 1 : 0);
+function makePuzzle() {                                 // 무작위 그림을 만든다. 비어 있는 줄이 없도록 한다
+  for (;;) { const g = Array.from({ length: n }, () => Array.from({ length: n }, () => (Math.random() < .58 ? 1 : 0)));
+    if (g.every(r => r.some(Boolean)) && g[0].map((_, x) => g.some(r => r[x])).every(Boolean)) return g; }
+}
+function newGame() {
+  clearInterval(timer); n = LV[lv].n; sol = makePuzzle(); cur = Array.from({ length: n }, () => Array(n).fill(0)); t0 = 0; done = false; revealed = false; $("time").textContent = "0:00"; $("res").hidden = true; render();
+}
+function startTimer() { if (t0 || done) return; t0 = Date.now(); timer = setInterval(() => { $("time").textContent = fmt(Math.floor((Date.now() - t0) / 1000)); }, 500); }
+const rowClues = () => sol.map(r => runs(r)), colClues = () => sol[0].map((_, x) => runs(sol.map(r => r[x])));
+function solvedNow() { const rc = rowClues(), cc = colClues(); return cur.every((_, y) => same(runs(rowOf(cur, y)), rc[y])) && sol[0].every((_, x) => same(runs(colOf(cur, x)), cc[x])); }
+function set(y, x, v) { if (done || cur[y][x] === v) return; startTimer(); cur[y][x] = v; render(); if (solvedNow()) win(); }
+function win() {
+  done = true; clearInterval(timer); const s = Math.max(1, Math.floor((Date.now() - t0) / 1000)); let t = `${fmt(s)} 만에 완성했어요.`;
+  if (!revealed && (!best[lv] || s < best[lv])) { best[lv] = s; sv(KEY, best); t += " 🏆 최고 기록이에요!"; }
+  $("res").innerHTML = `<b>🎉 완성!</b><p class="muted">${t}</p>`; $("res").hidden = false; render();
+}
+function render() {
+  const rc = rowClues(), cc = colClues(), rows = cur.map((_, y) => runs(rowOf(cur, y))), cols = sol[0].map((_, x) => runs(colOf(cur, x)));
+  const side = Math.max(...rc.map(r => r.length)); $("board").style.gridTemplateColumns = `${Math.max(34, side * 17)}px repeat(${n}, 1fr)`;
+  let h = `<div></div>` + cc.map((c, x) => `<div class="cc">${c.map(v => `<span class="${same(cols[x], c) ? "d" : ""}">${v}</span>`).join("")}</div>`).join("");
+  for (let y = 0; y < n; y++) {
+    h += `<div class="rc">${rc[y].map(v => `<span class="${same(rows[y], rc[y]) ? "d" : ""}">${v}</span>`).join("")}</div>`;
+    for (let x = 0; x < n; x++) h += `<button type="button" class="c ${cur[y][x] === 1 ? "f" : cur[y][x] === 2 ? "m" : ""} ${(x + 1) % 5 === 0 && x < n - 1 ? "b5" : ""} ${(y + 1) % 5 === 0 && y < n - 1 ? "r5" : ""}" data-y="${y}" data-x="${x}" aria-label="${y + 1}행 ${x + 1}열 ${cur[y][x] === 1 ? "칠함" : cur[y][x] === 2 ? "표시" : "빈칸"}"></button>`;
+  }
+  $("board").innerHTML = h; $("best").textContent = best[lv] ? fmt(best[lv]) : "-";
+  $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${+k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${+k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+  $("mFill").className = "btn " + (mode === "fill" ? "on" : "ghost"); $("mMark").className = "btn " + (mode === "mark" ? "on" : "ghost");
+}
+const target = () => (mode === "fill" ? 1 : 2);
+const cellAt = e => { const el = document.elementFromPoint(e.clientX, e.clientY); return el && el.closest && el.closest("[data-y]"); };
+$("board").addEventListener("pointerdown", e => { const c = e.target.closest("[data-y]"); if (!c || done) return; e.preventDefault(); const y = +c.dataset.y, x = +c.dataset.x; paint = cur[y][x] === target() ? 0 : target(); set(y, x, paint); });
+$("board").addEventListener("pointermove", e => { if (paint === null) return; const c = cellAt(e); if (c) set(+c.dataset.y, +c.dataset.x, paint); });
+["pointerup", "pointercancel"].forEach(ev => document.addEventListener(ev, () => { paint = null; }));
+$("mFill").onclick = () => { mode = "fill"; render(); }; $("mMark").onclick = () => { mode = "mark"; render(); };
+$("clear").onclick = () => { if (done) return; cur = cur.map(r => r.map(() => 0)); render(); };
+$("reveal").onclick = () => { if (done) return; revealed = true; cur = sol.map(r => r.map(v => (v ? 1 : 0))); done = true; clearInterval(timer); $("res").innerHTML = `<b>정답이에요</b><p class="muted">정답을 봐서 기록은 남지 않아요.</p>`; $("res").hidden = false; render(); };
+$("newGame").onclick = newGame;
+$("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && +b.dataset.l !== lv) { lv = +b.dataset.l; sv(LKEY, lv); newGame(); } });
+newGame();
+</script>
+</body>
+</html>

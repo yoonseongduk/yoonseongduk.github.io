@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>블록 퍼즐</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(215 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(215 22% 86%);--accent:hsl(215 65% 46%);--accent-fg:#fff;--soft:hsl(215 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(215 22% 10%);--surface:hsl(215 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(215 16% 25%);--accent:hsl(215 75% 68%);--accent-fg:#10131c;--soft:hsl(215 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.bgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:var(--line);padding:3px;border-radius:12px}.bc{aspect-ratio:1;border:0;border-radius:6px;background:var(--surface);padding:0;min-width:0}.tray{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.tray .pc{height:92px;border:2px solid var(--line);border-radius:14px;background:var(--surface);display:flex;align-items:center;justify-content:center}.tray .pc.sel{border-color:var(--accent);background:var(--soft)}.mini{display:grid;gap:2px}.mini i{width:14px;height:14px;border-radius:3px;display:block}
+</style>
+</head>
+<body>
+<main>
+  <h1>블록 퍼즐 🧱</h1>
+  <div class="stats"><div class="stat"><small>점수</small><b id="score">0</b></div><div class="stat"><small>최고 점수</small><b id="best">0</b></div><div class="stat"><small>고른 블록</small><b id="pick">-</b></div></div>
+  <div class="bgrid" id="board"></div>
+  <div class="tray" id="tray"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="again" type="button">다시 하기</button>
+  <p class="muted">아래 <b>블록 3개 중 하나를 눌러 고른 뒤</b>, 판의 빈 곳을 눌러 놓으세요. 가로줄이나 세로줄이 가득 차면 사라지고 점수를 얻어요. 놓을 곳이 없으면 끝이에요!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "blockpuzzle-best-v1";
+const N = 8, SHAPES = [[[0, 0]], [[0, 0], [0, 1]], [[0, 0], [1, 0]], [[0, 0], [0, 1], [0, 2]], [[0, 0], [1, 0], [2, 0]], [[0, 0], [0, 1], [0, 2], [0, 3]], [[0, 0], [1, 0], [2, 0], [3, 0]], [[0, 0], [0, 1], [1, 0], [1, 1]], [[0, 0], [1, 0], [1, 1]], [[0, 0], [0, 1], [1, 0]], [[0, 1], [1, 0], [1, 1]], [[0, 0], [0, 1], [1, 1]], [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0]], [[0, 0], [0, 1], [0, 2], [1, 1]], [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]], [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]]];
+let b = [], pieces = [], sel = -1, score = 0, over = false, best = ld(KEY) || 0;
+const COLORS = ["#e4572e", "#29a3a3", "#e9a23b", "#6a4c93", "#3fa34d", "#d1495b"];
+function deal() { pieces = [0, 1, 2].map(() => ({ s: SHAPES[ri(0, SHAPES.length - 1)], c: ri(0, COLORS.length - 1), used: false })); sel = -1; }
+function newGame() { b = Array.from({ length: N }, () => Array(N).fill(-1)); score = 0; over = false; $("res").hidden = true; deal(); render(); }
+const center = s => [Math.floor(Math.max(...s.map(p => p[0])) / 2), Math.floor(Math.max(...s.map(p => p[1])) / 2)];
+const cellsAt = (s, r, c) => { const [cr, cc] = center(s); return s.map(([dr, dc]) => [r + dr - cr, c + dc - cc]); };
+const fits = (s, r, c) => cellsAt(s, r, c).every(([y, x]) => y >= 0 && y < N && x >= 0 && x < N && b[y][x] < 0);
+const anyFit = s => { for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (fits(s, r, c)) return true; return false; };
+function render() {
+  $("board").innerHTML = b.map((row, r) => row.map((v, c) => `<button type="button" class="bc" data-r="${r}" data-c="${c}" style="${v >= 0 ? "background:" + COLORS[v] : ""}" aria-label="${r + 1}행 ${c + 1}열"></button>`).join("")).join("");
+  $("tray").innerHTML = pieces.map((p, k) => { const h = Math.max(...p.s.map(x => x[0])) + 1, w = Math.max(...p.s.map(x => x[1])) + 1; return `<button type="button" class="pc${k === sel ? " sel" : ""}" data-k="${k}" ${p.used || over ? "disabled" : ""} style="${p.used ? "visibility:hidden" : ""}"><span class="mini" style="grid-template-columns:repeat(${w},14px)">${Array.from({ length: h * w }, (_, q) => `<i style="${p.s.some(([dr, dc]) => dr * w + dc === q) ? "background:" + COLORS[p.c] : "background:transparent"}"></i>`).join("")}</span></button>`; }).join("");
+  $("score").textContent = score; $("best").textContent = best; $("pick").textContent = sel >= 0 ? "블록 " + (sel + 1) : "-";
+}
+function place(r, c) {
+  if (over || sel < 0) return; const p = pieces[sel]; if (!fits(p.s, r, c)) return;
+  cellsAt(p.s, r, c).forEach(([y, x]) => { b[y][x] = p.c; }); score += p.s.length; p.used = true; sel = -1;
+  const rows = [], cols = []; for (let k = 0; k < N; k++) { if (b[k].every(v => v >= 0)) rows.push(k); if (b.every(row => row[k] >= 0)) cols.push(k); }
+  rows.forEach(y => { for (let x = 0; x < N; x++) b[y][x] = -1; }); cols.forEach(x => { for (let y = 0; y < N; y++) b[y][x] = -1; });
+  const lines = rows.length + cols.length; if (lines) score += lines * 10 + (lines - 1) * 10;
+  if (pieces.every(q => q.used)) deal();
+  if (!pieces.filter(q => !q.used).some(q => anyFit(q.s))) { over = true; if (score > best) { best = score; sv(KEY, best); } $("res").innerHTML = `<b>더 놓을 곳이 없어요! ${score}점</b><p class="muted">최고 점수 ${best}점</p>`; $("res").hidden = false; }
+  render();
+}
+$("tray").addEventListener("click", e => { const k = e.target.closest("[data-k]"); if (k) { sel = sel === +k.dataset.k ? -1 : +k.dataset.k; render(); } });
+$("board").addEventListener("click", e => { const c = e.target.closest("[data-r]"); if (c) place(+c.dataset.r, +c.dataset.c); });
+$("again").onclick = newGame; newGame();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

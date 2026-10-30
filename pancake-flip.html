@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>팬케이크 뒤집기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(32 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(32 22% 86%);--accent:hsl(32 65% 46%);--accent-fg:#fff;--soft:hsl(32 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(32 22% 10%);--surface:hsl(32 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(32 16% 25%);--accent:hsl(32 75% 68%);--accent-fg:#10131c;--soft:hsl(32 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.stack{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:16px}.pk{height:40px;border:0;border-radius:20px;background:linear-gradient(#e7b05b,#c98a30);color:#4a2c05;font-family:var(--font-display);font-size:1.1rem;padding:0;box-shadow:0 2px 0 rgba(0,0,0,.2)}.pk b{font-weight:400}
+</style>
+</head>
+<body>
+<main>
+  <h1>팬케이크 뒤집기 🥞</h1>
+  <div class="seg" id="lv" style="--n:3"><button type="button" data-n="4" class="on">4장<small>쉬움</small></button><button type="button" data-n="5">5장<small>보통</small></button><button type="button" data-n="6">6장<small>어려움</small></button></div>
+  <div class="stats"><div class="stat"><small>뒤집은 횟수</small><b id="moves">0</b></div><div class="stat"><small>기준(좋은 기록)</small><b id="par">0</b></div><div class="stat"><small>최소 기록</small><b id="best">-</b></div></div>
+  <div class="stack" id="stack"></div>
+  <p class="center muted">누른 팬케이크와 그 위의 팬케이크가 한꺼번에 뒤집혀요 (위 ↔ 아래)</p>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="again" type="button">새 판</button>
+  <p class="muted">팬케이크 접시에 크기가 다른 팬케이크가 쌓여 있어요. 숫자를 눌러서 <b>그 위치부터 위쪽 전부를 뒤집을 수</b> 있어요. 가장 작은 것이 위, 가장 큰 것이 맨 아래가 되도록 <b>적은 횟수</b>로 정렬해 보세요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "pancake-best-v1";
+let n = 4, st = [], moves = 0, par = 0, done = false, best = ld(KEY) || {};
+function solveMin(a) {                              // 너비 우선 탐색으로 최소 뒤집기 횟수
+  const key = x => x.join(""), goal = key([...a].sort((p, q) => p - q)), seen = new Set([key(a)]); let cur = [a], d = 0;
+  while (cur.length) { if (cur.some(x => key(x) === goal)) return d; const nx = []; for (const x of cur) for (let k = 2; k <= x.length; k++) { const y = [...x.slice(0, k).reverse(), ...x.slice(k)]; if (!seen.has(key(y))) { seen.add(key(y)); nx.push(y); } } cur = nx; d++; }
+  return d;
+}
+function newGame() { do { st = shuf(Array.from({ length: n }, (_, k) => k + 1)); } while (st.every((v, k) => v === k + 1)); par = solveMin(st); moves = 0; done = false; $("res").hidden = true; render(); }
+function render() {
+  $("stack").innerHTML = st.map((v, k) => `<button type="button" class="pk" data-k="${k}" style="width:${28 + v * (66 / n)}%"><b>${v}</b></button>`).join("");
+  $("moves").textContent = moves; $("par").textContent = par; $("best").textContent = best[n] || "-";
+}
+function flip(k) {
+  if (done || k < 1) return; st = [...st.slice(0, k + 1).reverse(), ...st.slice(k + 1)]; moves++; render();
+  if (st.every((v, q) => v === q + 1)) { done = true; const nb = !best[n] || moves < best[n]; if (nb) { best[n] = moves; sv(KEY, best); } $("res").innerHTML = `<b>🎉 정렬 완료! ${moves}번</b><p class="muted">${moves <= par ? "최소 횟수로 끝냈어요! 완벽해요 ⭐" : "최소 " + par + "번이면 가능해요"}</p>`; $("res").hidden = false; render(); }
+}
+$("stack").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) flip(+b.dataset.k); });
+$("lv").addEventListener("click", e => { const b = e.target.closest("[data-n]"); if (!b) return; document.querySelectorAll("#lv button").forEach(x => x.classList.toggle("on", x === b)); n = +b.dataset.n; newGame(); });
+$("again").onclick = newGame; newGame();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

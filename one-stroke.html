@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>한붓그리기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(258 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(258 22% 86%);--accent:hsl(258 65% 46%);--accent-fg:#fff;--soft:hsl(258 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(258 22% 10%);--surface:hsl(258 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(258 16% 25%);--accent:hsl(258 75% 68%);--accent-fg:#10131c;--soft:hsl(258 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.os{width:100%;max-width:380px;margin:0 auto;display:block;background:var(--surface);border:1px solid var(--line);border-radius:16px;touch-action:manipulation}.os line{stroke:var(--muted);stroke-width:6;stroke-linecap:round}.os line.u{stroke:var(--accent)}.os circle.n{fill:var(--surface);stroke:var(--fg);stroke-width:4;cursor:pointer}.os circle.cur{fill:var(--accent)}.os circle.can{stroke:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <h1>한붓그리기 ✏️</h1>
+  <div class="stats"><div class="stat"><small>단계</small><b id="lv">1/8</b></div><div class="stat"><small>남은 선</small><b id="left">0</b></div><div class="stat"><small>완료</small><b id="cleared">0</b></div></div>
+  <svg class="os" id="svg" viewBox="0 0 300 300" aria-label="한붓그리기 판"></svg>
+  <p class="center" id="msg" style="min-height:1.5em;font-weight:700"></p>
+  <div class="row"><button class="btn ghost" id="reset" type="button">처음부터</button><button class="btn" id="next" type="button" hidden>다음 단계</button></div>
+  <p class="muted">연필을 떼지 않고 <b>모든 선을 한 번씩만 지나가도록</b> 그려 보세요. 점을 눌러 시작하고, 이어진 다음 점을 눌러 선을 따라가요. 같은 선을 두 번 지나갈 수는 없어요. 어떤 점에서 시작해도 돼요!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "onestroke-best-v1";
+// 각 단계: 점 좌표와 선 목록 (모두 한붓그리기가 가능하도록 만들었어요: 홀수점이 0개 또는 2개)
+const LV = [
+ { p: [[150, 40], [60, 230], [240, 230]], e: [[0, 1], [1, 2], [2, 0]] },
+ { p: [[60, 60], [240, 60], [240, 240], [60, 240]], e: [[0, 1], [1, 2], [2, 3], [3, 0]] },
+ { p: [[60, 60], [240, 60], [240, 240], [60, 240]], e: [[0, 1], [1, 2], [2, 3], [3, 0], [0, 2]] },
+ { p: [[150, 40], [60, 130], [240, 130], [60, 240], [240, 240]], e: [[0, 1], [0, 2], [1, 2], [1, 3], [2, 4], [3, 4]] },
+ { p: [[150, 40], [40, 120], [260, 120], [80, 250], [220, 250]], e: [[0, 1], [1, 3], [3, 4], [4, 2], [2, 0], [0, 3], [0, 4]] },
+ { p: [[60, 60], [150, 60], [240, 60], [60, 150], [150, 150], [240, 150]], e: [[0, 1], [1, 2], [3, 4], [4, 5], [0, 3], [1, 4], [2, 5]] },
+ { p: [[150, 150], [150, 40], [260, 150], [150, 260], [40, 150]], e: [[0, 2], [0, 4], [1, 2], [2, 3], [3, 4], [4, 1]] },
+ { p: [[150, 40], [250, 110], [215, 230], [85, 230], [50, 110]], e: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [0, 2], [2, 4], [4, 1], [1, 3], [3, 0]] }];
+let lv = 0, used = [], cur = -1, cleared = ld(KEY) || 0, history = [];
+function load(l) { lv = l; used = LV[l].e.map(() => false); cur = -1; history = []; $("msg").textContent = ""; $("next").hidden = true; render(); }
+const edgeIdx = (a, b) => LV[lv].e.findIndex(([x, y], k) => !used[k] && ((x === a && y === b) || (x === b && y === a)));
+function render() {
+  const { p, e } = LV[lv]; let h = "";
+  e.forEach(([a, b], k) => { h += `<line x1="${p[a][0]}" y1="${p[a][1]}" x2="${p[b][0]}" y2="${p[b][1]}" class="${used[k] ? "u" : ""}"/>`; });
+  p.forEach(([x, y], k) => { const can = cur < 0 || edgeIdx(cur, k) >= 0; h += `<circle cx="${x}" cy="${y}" r="16" class="n${k === cur ? " cur" : ""}${cur >= 0 && k !== cur && can ? " can" : ""}" data-k="${k}"/>`; });
+  $("svg").innerHTML = h; $("lv").textContent = (lv + 1) + "/" + LV.length; $("left").textContent = used.filter(x => !x).length; $("cleared").textContent = cleared;
+}
+function tap(k) {
+  if (used.every(x => x)) return; if (cur < 0) { cur = k; history = [k]; return render(); }
+  const ei = edgeIdx(cur, k); if (ei < 0) { if (k === cur) { cur = history.length > 1 ? cur : -1; } return render(); }
+  used[ei] = true; cur = k; history.push(k); render();
+  if (used.every(x => x)) { cleared = Math.max(cleared, lv + 1); sv(KEY, cleared); $("cleared").textContent = cleared; $("msg").textContent = "🎉 성공! 모든 선을 한 번씩 지났어요"; $("msg").style.color = "var(--ok)"; if (lv < LV.length - 1) $("next").hidden = false; else $("msg").textContent += " 마지막 단계까지 끝!"; }
+  else if (!LV[lv].e.some(([a, b], q) => !used[q] && (a === cur || b === cur))) { $("msg").textContent = "더 갈 선이 없어요. 처음부터 다시 해 보세요"; $("msg").style.color = "var(--bad)"; }
+}
+$("svg").addEventListener("click", e => { const c = e.target.closest("[data-k]"); if (c) tap(+c.dataset.k); });
+$("reset").onclick = () => load(lv); $("next").onclick = () => load(lv + 1); load(0);
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

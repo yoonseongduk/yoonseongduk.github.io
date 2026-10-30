@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>대칭 맞추기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(300 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(300 22% 86%);--accent:hsl(300 65% 46%);--accent-fg:#fff;--soft:hsl(300 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(300 22% 10%);--surface:hsl(300 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(300 16% 25%);--accent:hsl(300 75% 68%);--accent-fg:#10131c;--soft:hsl(300 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.mirror{display:grid;gap:4px;max-width:380px;margin:0 auto;width:100%}.mc{aspect-ratio:1;border-radius:8px;background:var(--surface);border:2px solid var(--line);padding:0;min-width:0}.mc.on{background:var(--accent);border-color:var(--accent)}.mc.m{border-style:dashed}.axis{background:var(--fg);border-radius:3px}
+</style>
+</head>
+<body>
+<main>
+  <h1>대칭 맞추기 🪞</h1>
+  <div class="stats"><div class="stat"><small>단계</small><b id="lv">1</b></div><div class="stat"><small>남은 시간</small><b id="time">-</b></div><div class="stat"><small>최고 단계</small><b id="best">0</b></div></div>
+  <div class="mirror" id="board"></div>
+  <p class="center" id="msg" style="min-height:1.5em;font-weight:700"></p>
+  <div class="row"><button class="btn ghost" id="clear" type="button">모두 지우기</button><button class="btn" id="check" type="button">확인</button></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="again" type="button" hidden>다시 하기</button>
+  <p class="muted">가운데 선을 거울이라고 생각하고, <b>왼쪽 무늬와 똑같이 오른쪽을 칠해</b> 보세요. 오른쪽 칸을 눌러 색을 켜고 끌 수 있어요. 모두 맞으면 다음 문제로 넘어가요!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "mirror-best-v1";
+let lv = 1, W = 3, Hh = 4, left = [], mine = [], timer = 0, sec = 0, best = ld(KEY) || 0, over = false, tempo = 1;
+function newPuzzle() {
+  W = lv < 4 ? 3 : lv < 8 ? 4 : 5; Hh = lv < 3 ? 4 : lv < 7 ? 5 : 6; const n = W * Hh, fill = Math.max(3, Math.round(n * 0.45));
+  left = Array(n).fill(false); shuf([...Array(n).keys()]).slice(0, fill).forEach(k => { left[k] = true; }); mine = Array(n).fill(false);
+  sec = Math.max(12, 30 - lv * 2); clearInterval(timer); timer = setInterval(() => { sec--; $("time").textContent = sec + "초"; if (sec <= 0) lose("시간이 다 됐어요 ⏰"); }, 1000 * tempo); $("msg").textContent = ""; render();
+}
+function render() {
+  let h = ""; for (let r = 0; r < Hh; r++) { for (let c = 0; c < W; c++) h += `<div class="mc${left[r * W + c] ? " on" : ""}"></div>`; h += `<div class="axis"></div>`; for (let c = 0; c < W; c++) { const k = r * W + c; h += `<button type="button" class="mc m${mine[k] ? " on" : ""}" data-k="${k}" aria-label="${r + 1}행 ${c + 1}열"></button>`; } }
+  $("board").style.gridTemplateColumns = `repeat(${W}, 1fr) 6px repeat(${W}, 1fr)`; $("board").innerHTML = h; $("lv").textContent = lv; $("best").textContent = best; $("time").textContent = sec + "초";
+}
+// 오른쪽은 왼쪽의 거울 모습: 왼쪽 맨 오른쪽 칸 ↔ 오른쪽 맨 왼쪽 칸
+const mirror = k => { const r = Math.floor(k / W), c = k % W; return r * W + (W - 1 - c); };
+function check() { if (over) return; const ok = left.every((v, k) => v === mine[mirror(k)]); if (ok) { lv++; if (lv - 1 > best) { best = lv - 1; sv(KEY, best); } $("msg").textContent = "⭕ 정답! 다음 문제"; $("msg").style.color = "var(--ok)"; newPuzzle(); } else { $("msg").textContent = "❌ 아직 달라요. 다시 살펴봐요"; $("msg").style.color = "var(--bad)"; } }
+function lose(t) { over = true; clearInterval(timer); if (lv - 1 > best) { best = lv - 1; sv(KEY, best); } $("res").innerHTML = `<b>${t}</b><p class="muted">${lv - 1}단계까지 성공했어요 · 최고 ${best}단계</p>`; $("res").hidden = false; $("again").hidden = false; render(); }
+$("board").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b && !over) { mine[+b.dataset.k] = !mine[+b.dataset.k]; render(); } });
+$("clear").onclick = () => { mine = mine.map(() => false); render(); }; $("check").onclick = check; $("again").onclick = () => { lv = 1; over = false; $("res").hidden = true; $("again").hidden = true; newPuzzle(); }; newPuzzle();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

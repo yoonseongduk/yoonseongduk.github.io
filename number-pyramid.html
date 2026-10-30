@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>숫자 피라미드</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(42 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(42 22% 86%);--accent:hsl(42 65% 46%);--accent-fg:#fff;--soft:hsl(42 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(42 22% 10%);--surface:hsl(42 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(42 16% 25%);--accent:hsl(42 75% 68%);--accent-fg:#10131c;--soft:hsl(42 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.pyr{display:flex;flex-direction:column;gap:6px;align-items:center}.pr{display:flex;gap:6px}.pc{width:clamp(46px,16vw,62px);height:clamp(42px,12vw,52px);border-radius:10px;border:2px solid var(--line);background:var(--surface);font-family:var(--font-display);font-size:1.3rem;padding:0;color:var(--accent)}.pc.fx{background:var(--soft);color:var(--fg)}.pc.sel{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pad button{padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-family:var(--font-display);font-size:1.3rem;min-width:0}.pad .er{grid-column:1/-1;font-family:var(--font-body);font-size:1rem;font-weight:700}
+</style>
+</head>
+<body>
+<main>
+  <h1>숫자 피라미드 🔺</h1>
+  <div class="seg" id="lv" style="--n:2"><button type="button" data-n="4" class="on">4층<small>쉬움</small></button><button type="button" data-n="5">5층<small>보통</small></button></div>
+  <div class="stats"><div class="stat"><small>시간</small><b id="time">0:00</b></div><div class="stat"><small>빈칸</small><b id="left">0</b></div><div class="stat"><small>최고 기록</small><b id="best">-</b></div></div>
+  <div class="pyr" id="pyr"></div>
+  <div class="pad" id="pad"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="again" type="button">새 문제</button>
+  <p class="muted">아래 두 칸을 더하면 바로 위 칸의 숫자가 돼요. <b>빈칸을 눌러서 숫자를 채워</b> 피라미드를 완성하세요. 칸을 누르고 아래 숫자 키패드를 눌러 입력해요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "pyramid-best-v1";
+let L = 4, full = [], cur = [], given = [], sel = -1, done = false, t0 = 0, best = ld(KEY) || {};
+const idx = (r, c) => r * (r + 1) / 2 + c;                       // r층(위=0) c번째 칸 번호
+const fmt = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+function newGame() {
+  full = []; for (let r = L - 1; r >= 0; r--) for (let c = 0; c <= r; c++) full[idx(r, c)] = r === L - 1 ? ri(1, 9) : full[idx(r + 1, c)] + full[idx(r + 1, c + 1)];
+  const total = L * (L + 1) / 2, hide = L === 4 ? 5 : 8; given = Array(total).fill(true);
+  for (const k of shuf([...Array(total).keys()]).slice(0, hide)) given[k] = false;
+  cur = full.map((v, k) => given[k] ? v : 0); sel = -1; done = false; t0 = Date.now(); $("res").hidden = true; render();
+}
+const valid = () => { for (let r = 0; r < L - 1; r++) for (let c = 0; c <= r; c++) if (cur[idx(r, c)] !== cur[idx(r + 1, c)] + cur[idx(r + 1, c + 1)]) return false; return cur.every(v => v > 0); };
+function render() {
+  let h = ""; for (let r = 0; r < L; r++) { h += `<div class="pr">`; for (let c = 0; c <= r; c++) { const k = idx(r, c); h += `<button type="button" class="pc${given[k] ? " fx" : ""}${k === sel ? " sel" : ""}" data-k="${k}">${cur[k] || ""}</button>`; } h += `</div>`; }
+  $("pyr").innerHTML = h; $("left").textContent = cur.filter(v => !v).length; $("best").textContent = best[L] ? fmt(best[L]) : "-";
+  $("pad").innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(n => `<button type="button" data-v="${n}">${n}</button>`).join("") + `<button type="button" data-v="x" class="er">지우기</button>`;
+}
+function key(v) {
+  if (done || sel < 0 || given[sel]) return;
+  cur[sel] = v === "x" ? 0 : (cur[sel] && cur[sel] < 10 ? cur[sel] * 10 + +v : +v); if (cur[sel] > 99) cur[sel] = +v; render();
+  if (valid()) { done = true; const s = Math.round((Date.now() - t0) / 1000), nb = !best[L] || s < best[L]; if (nb) { best[L] = s; sv(KEY, best); } $("res").innerHTML = `<b>🎉 완성! ${fmt(s)}</b><p class="muted">${nb ? "신기록이에요!" : "최고 기록 " + fmt(best[L])}</p>`; $("res").hidden = false; render(); }
+}
+$("pyr").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b && !done) { sel = +b.dataset.k; render(); } });
+$("pad").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (b) key(b.dataset.v); });
+$("lv").addEventListener("click", e => { const b = e.target.closest("[data-n]"); if (!b) return; document.querySelectorAll("#lv button").forEach(x => x.classList.toggle("on", x === b)); L = +b.dataset.n; newGame(); });
+$("again").onclick = newGame; setInterval(() => { if (!done) $("time").textContent = fmt(Math.floor((Date.now() - t0) / 1000)); }, 500); newGame();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

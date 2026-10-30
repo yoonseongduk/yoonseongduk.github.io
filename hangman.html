@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>행맨 (영어 단어)</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(330 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(330 22% 86%);--accent:hsl(330 65% 46%);--accent-fg:#fff;--soft:hsl(330 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(330 22% 10%);--surface:hsl(330 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(330 16% 25%);--accent:hsl(330 75% 68%);--accent-fg:#10131c;--soft:hsl(330 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.wd{letter-spacing:.08em;word-break:break-all}.kb{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.k{padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700;min-width:0}.k.ok{background:var(--ok);color:#fff;border-color:var(--ok)}.k.no{opacity:.4;text-decoration:line-through}.k:disabled{cursor:default}
+</style>
+</head>
+<body>
+<main>
+  <h1>행맨 (영어 단어) 🔤</h1>
+  <div class="stats"><div class="stat"><small>남은 하트</small><b id="hp">❤️×6</b></div><div class="stat"><small>연속 성공</small><b id="streak">0</b></div><div class="stat"><small>최고 연속</small><b id="best">0</b></div></div>
+  <div class="card center"><small class="muted">뜻</small><p class="big" id="mean"></p><p class="big wd" id="word"></p></div>
+  <div class="kb" id="kb"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 단어</button>
+  <p class="muted">뜻을 보고 <b>영어 단어의 알파벳</b>을 하나씩 눌러 맞혀 보세요. 틀리면 하트가 줄어요. 하트 6개를 모두 잃기 전에 단어를 완성하세요!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "hangman-v1";
+const WORDS = [["elephant", "코끼리"], ["giraffe", "기린"], ["penguin", "펭귄"], ["dolphin", "돌고래"], ["monkey", "원숭이"], ["rabbit", "토끼"], ["tiger", "호랑이"], ["turtle", "거북이"], ["butterfly", "나비"], ["spider", "거미"], ["banana", "바나나"], ["orange", "오렌지"], ["strawberry", "딸기"], ["watermelon", "수박"], ["cherry", "체리"], ["tomato", "토마토"], ["potato", "감자"], ["carrot", "당근"], ["cheese", "치즈"], ["chicken", "닭고기"], ["sandwich", "샌드위치"], ["hamburger", "햄버거"], ["chocolate", "초콜릿"], ["cookie", "쿠키"], ["school", "학교"], ["teacher", "선생님"], ["student", "학생"], ["pencil", "연필"], ["notebook", "공책"], ["library", "도서관"], ["hospital", "병원"], ["airport", "공항"], ["station", "역"], ["bridge", "다리"], ["mountain", "산"], ["river", "강"], ["forest", "숲"], ["island", "섬"], ["desert", "사막"], ["rainbow", "무지개"], ["thunder", "천둥"], ["summer", "여름"], ["winter", "겨울"], ["autumn", "가을"], ["spring", "봄"], ["morning", "아침"], ["evening", "저녁"], ["friend", "친구"], ["family", "가족"], ["brother", "형제"], ["sister", "자매"], ["doctor", "의사"], ["farmer", "농부"], ["pilot", "조종사"], ["singer", "가수"], ["painter", "화가"], ["computer", "컴퓨터"], ["keyboard", "키보드"], ["camera", "카메라"], ["guitar", "기타"], ["piano", "피아노"], ["bicycle", "자전거"], ["airplane", "비행기"], ["rocket", "로켓"], ["window", "창문"], ["kitchen", "부엌"], ["garden", "정원"], ["flower", "꽃"], ["balloon", "풍선"], ["present", "선물"], ["holiday", "휴일"], ["birthday", "생일"], ["happy", "행복한"], ["hungry", "배고픈"], ["sleepy", "졸린"], ["clever", "영리한"], ["brave", "용감한"], ["quiet", "조용한"], ["strong", "강한"], ["yellow", "노란색"], ["purple", "보라색"], ["silver", "은색"]];
+let word = "", meaning = "", got = new Set(), wrong = 0, over = false, streak = 0, best = ld(KEY) || 0, last = "";
+function newWord() { let w; do { w = WORDS[ri(0, WORDS.length - 1)]; } while (w[0] === last); [word, meaning] = w; last = word; got = new Set(); wrong = 0; over = false; $("res").hidden = true; $("next").hidden = true; render(); }
+function render() {
+  $("mean").textContent = meaning; $("word").textContent = [...word].map(c => (got.has(c) || over) ? c.toUpperCase() : "_").join(" ");
+  $("hp").textContent = "❤️".repeat(6 - wrong) + "🖤".repeat(wrong); $("streak").textContent = streak; $("best").textContent = best;
+  $("kb").innerHTML = "abcdefghijklmnopqrstuvwxyz".split("").map(c => `<button type="button" class="k${got.has(c) ? (word.includes(c) ? " ok" : " no") : ""}" data-k="${c}" ${got.has(c) || over ? "disabled" : ""}>${c.toUpperCase()}</button>`).join("");
+}
+function press(c) {
+  if (over || got.has(c)) return; got.add(c); if (!word.includes(c)) wrong++;
+  const done = [...word].every(x => got.has(x));
+  if (done || wrong >= 6) {
+    over = true; if (done) { streak++; if (streak > best) { best = streak; sv(KEY, best); } } else streak = 0;
+    $("res").innerHTML = done ? `<b>🎉 정답! ${word.toUpperCase()}</b><p class="muted">${meaning}</p>` : `<b>아쉬워요 😢 정답은 ${word.toUpperCase()}</b><p class="muted">${meaning}</p>`; $("res").hidden = false; $("next").hidden = false;
+  }
+  render();
+}
+$("kb").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) press(b.dataset.k); });
+document.addEventListener("keydown", e => { if (!e.ctrlKey && !e.metaKey && /^[a-z]$/i.test(e.key)) press(e.key.toLowerCase()); });
+$("next").onclick = newWord; newWord();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

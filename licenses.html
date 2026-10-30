@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>출처와 저작권</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(8 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(8 22% 86%);--accent:hsl(8 65% 46%);--accent-fg:#fff;--soft:hsl(8 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(8 22% 10%);--surface:hsl(8 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(8 16% 25%);--accent:hsl(8 75% 68%);--accent-fg:#10131c;--soft:hsl(8 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.92rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}.padwrap{display:flex;justify-content:center}#pad{width:min(100%,340px,calc(100dvh - 470px));min-width:200px;aspect-ratio:1;border:2px solid var(--fg);border-radius:12px;touch-action:none;background:var(--surface)}.row3{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:8px}.row3 .btn{padding:12px 4px;font-size:1.05rem}
+.dock{position:sticky;bottom:0;z-index:5;display:grid;gap:8px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));background:var(--bg);box-shadow:0 -10px 10px -8px var(--bg)}.dock .res{padding:8px 12px}.dock .res b{font-size:1.3rem}.dock[data-done] #undo,.dock[data-done] #clear,.dock[data-done] #check{display:none}.dock[data-done] .row3{display:none}
+@media(max-height:820px){h1{font-size:1.5rem}main{gap:8px}.seg button small{display:none}.seg button{padding:6px 4px}.stats{gap:6px}.stat{padding:2px 10px;display:flex;align-items:baseline;justify-content:space-between}.stat small{margin-right:6px}.stat b{font-size:1.1rem}.card{padding:8px 12px}.card .big{font-size:1.4rem!important}.dock .res p.muted{font-size:.8rem;line-height:1.35}#help{display:none}}
+.dock[data-done]{grid-template-columns:1fr 1fr}.dock[data-done] .res{grid-column:1/-1}.dock[data-done] #next{grid-column:span 2}.dock[data-done] #self:not([hidden])+#next{grid-column:auto}.dock .btn{padding:10px 6px;font-size:1.1rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>출처와 저작권 📜</h1>
+  <p class="muted">이 앱은 가족끼리 즐기려고 만든 비영리 게임 모음이에요. 사용한 자료의 출처를 아래에 밝혀요.</p>
+
+  <section class="card"><h2>🈶 한자 자료</h2>
+    <p>한자 급수(6급~1급), 훈·음, 부수, 획수 자료는 <b>rycont/hanja-grade-dataset</b>(GitHub)에서 가져왔고, 원 자료는 <b>사단법인 한국어문회</b>의 한자능력검정 급수 기준을 바탕으로 해요.</p>
+    <p class="muted">해당 자료의 저작권은 한국어문회 또는 원 제작자에게 있어요. 한자 급수 퀴즈와 한자 쓰기에 쓰여요. 이 앱은 한국어문회와 관련이 없고 공식 시험 자료도 아니에요.</p></section>
+
+  <section class="card"><h2>🔤 끝말잇기 낱말 목록</h2>
+    <p>끝말잇기의 낱말 약 33만 개는 <b>acidsound/korean_wordlist</b>(GitHub)의 한국어 낱말 목록에서 한글 2~7글자 낱말만 골라 썼어요. 이 목록은 국립국어원 <b>표준국어대사전</b>의 표제어를 바탕으로 한 것으로 알려져 있어요.</p>
+    <p class="muted">표준국어대사전의 권리는 국립국어원에 있어요. 목록의 정확한 사용 조건은 확인 중이에요.</p></section>
+
+  <section class="card"><h2>🔡 글꼴</h2>
+    <p><b>도현체(Do Hyeon)</b>와 <b>노토 산스 KR(Noto Sans KR)</b>을 앱 안에 담아 써요. 두 글꼴 모두 <b>SIL Open Font License 1.1</b>로 배포돼서 자유롭게 쓸 수 있어요.</p>
+    <p class="muted">도현체: Woowahan Brothers / 노토 산스 KR: Google, Adobe. 한자 쓰기 화면의 정답 글자 모양은 폰에 들어 있는 글꼴로 그려요.</p></section>
+
+  <section class="card"><h2>😀 그림과 소리</h2>
+    <p>그림은 폰에 들어 있는 이모지 글꼴을 쓰고, 별도의 이미지·음원 파일은 쓰지 않아요. 효과음은 폰이 코드로 직접 만들어 내요.</p></section>
+
+  <section class="card"><h2>🎮 게임과 퀴즈</h2>
+    <p>게임 규칙은 오래전부터 전해 오는 일반적인 놀이를 바탕으로 직접 만들었어요. 퀴즈 문제와 해설은 직접 쓴 글이에요. 상표와 겹칠 수 있는 이름은 일반 이름으로 바꿨어요.</p></section>
+
+  <section class="card"><h2>✉️ 문의</h2>
+    <p>권리자께서 삭제나 수정을 요청하시면 확인 후 바로 반영할게요.</p></section>
+  <p class="center"><a href="index.html" style="color:var(--accent);font-weight:700">← 게임 목록으로</a></p>
+</main>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

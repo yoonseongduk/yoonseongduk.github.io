@@ -34,12 +34,13 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .card input{margin:6px 0 12px}.lk{font-weight:700;color:var(--fg)}.fr{display:flex;justify-content:space-between;padding:6px 4px;border-bottom:1px solid var(--line)}.fr b{color:#e0a100;letter-spacing:.1em;font-weight:400}
 #det{display:flex;flex-direction:column;gap:12px}#det h2{margin:0}.dc{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}.dc p{margin:6px 0 0}.dc ul{margin:6px 0 0;padding-left:20px}.dc .tm{margin:0 0 6px}#more{margin-top:10px;width:100%}
+.cr{display:flex;gap:10px;align-items:center;margin:6px 0}.cr select,.cr input,#tm{background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}#tm{width:100%;margin:6px 0 12px}.lp{display:flex;align-items:center;gap:6px}.lp input{width:auto;margin:0}
 </style>
 </head>
 <body>
 <main>
   <h1 class="top">오늘의 운세 🔮</h1>
-  <div class="card top"><label class="muted" for="bd">내 생일</label><input type="date" id="bd"><button class="btn" id="go" type="button">🔮 오늘의 운세 보기</button></div>
+  <div class="card top"><label class="muted" for="bd">내 생일</label><div class="cr"><select id="cal" aria-label="양력 음력"><option value="solar">양력</option><option value="lunar">음력</option></select><label class="muted lp" id="lpw" hidden><input type="checkbox" id="leap"> 윤달</label></div><input type="date" id="bd"><div class="cr" id="lw" hidden><input type="number" id="ly" min="1901" max="2049" placeholder="년" aria-label="음력 년" style="width:96px"><select id="lm" aria-label="음력 월"></select><select id="ld" aria-label="음력 일"></select></div><label class="muted" for="tm">태어난 시간 (모르면 그대로 두세요)</label><select id="tm"><option value="">모름</option><option value="0">자시 (23:30~01:30)</option><option value="1">축시 (01:30~03:30)</option><option value="2">인시 (03:30~05:30)</option><option value="3">묘시 (05:30~07:30)</option><option value="4">진시 (07:30~09:30)</option><option value="5">사시 (09:30~11:30)</option><option value="6">오시 (11:30~13:30)</option><option value="7">미시 (13:30~15:30)</option><option value="8">신시 (15:30~17:30)</option><option value="9">유시 (17:30~19:30)</option><option value="10">술시 (19:30~21:30)</option><option value="11">해시 (21:30~23:30)</option></select><button class="btn" id="go" type="button">🔮 오늘의 운세 보기</button></div>
   <div class="res top" id="out" hidden></div>
   <div id="det" hidden></div>
   <p class="muted top"><b>생일</b>을 넣으면 오늘의 운세를 알려 줘요! 같은 날 같은 생일이면 <b>하루 동안은 같은 결과</b>가 나와요. 행운의 색과 숫자, 오늘의 한마디도 있어요. 재미로만 봐 주세요 😊</p>
@@ -56,8 +57,33 @@ const COLORS = ["빨강", "주황", "노랑", "초록", "파랑", "보라", "분
 function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function rng(seed) { let a = seed; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const stars = n => "★".repeat(n) + "☆".repeat(5 - n), ymd = () => { const t = new Date(); return new Date(t.getTime() - t.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
-function show() { const b = $("bd").value; if (!b) { $("out").hidden = false; $("out").innerHTML = "<b>생일을 골라 주세요</b>"; return; } sv(KEY, b); const r = rng(hash(b + ymd())), pick = a => a[Math.floor(r() * a.length)], n = () => 1 + Math.floor(r() * 5);
-  const total = Math.max(2, n()), money = n(), health = n(), study = n(); last = { b, total, money, health, study }; $("out").hidden = false;
+const LUNAR = {y0: 1901, d: [414,1874,0,768,3749,0,1123,5706,5,1506,1611,0,1860,2715,0,2215,5462,4,2599,1386,0,2953,2905,0,3308,5970,2,3692,1874,0,4046,6949,6,4430,2853,0,4784,2635,0,5138,4763,5,5522,2733,0,5877,1386,0,6231,2921,2,6615,2985,0,6970,6994,7,7354,3474,0,7708,3365,0,8062,6733,5,8446,2390,0,8800,693,0,9154,5549,4,9539,1748,0,9893,3497,0,10248,7570,2,10632,3730,0,10986,3366,6,11369,1319,0,11723,2647,0,12078,4790,5,12462,2778,0,12817,1748,0,13171,3753,3,13555,1865,0,13909,5779,7,14293,2707,0,14647,1323,0,15001,2651,6,15385,2413,0,15740,2922,0,16095,6996,4,16479,2980,0,16833,2889,0,17187,6803,2,17571,2709,0,17925,5419,7,18309,1325,0,18663,2733,0,19018,5482,5,19402,3506,0,19757,3492,0,20111,7497,3,20495,3402,0,20849,6805,8,21233,2710,0,21587,1366,0,21941,2741,6,22325,2773,0,22680,1746,0,23034,3749,4,23418,3749,0,23773,3658,0,24127,3222,3,24510,2715,0,24865,5462,7,25249,1386,0,25603,2905,0,25958,5970,5,26342,1874,0,26696,1829,0,27050,5707,4,27434,2635,0,27788,4779,8,28172,685,0,28526,1387,0,28881,2921,6,29265,3497,0,29620,3474,0,29974,6949,4,30358,3365,0,30712,6733,10,31096,2646,0,31450,694,0,31804,5549,6,32189,1748,0,32543,3497,0,32898,7570,5,33282,3730,0,33636,3366,0,33990,2646,3,34373,2647,0,34728,4790,8,35112,2906,0,35467,1748,0,35821,3785,5,36205,1865,0,36559,1683,0,36913,5415,4,37297,1323,0,37651,2651,0,38006,5466,2,38390,874,0,38744,6997,7,39129,2980,0,39483,2889,0,39837,6803,5,40221,2709,0,40575,1325,0,40929,2653,3,41313,2733,0,41668,5546,9,42052,1490,0,42406,3493,0,42761,7498,5,43145,3402,0,43499,2709,0,43853,5421,4,44237,1366,0,44591,2741,0,44946,5546,2,45330,1746,0,45684,3749,6,46068,3749,0,46423,3658,0,46777,3222,5,47160,3227,0,47515,1370,0,47869,2773,3,48253,2921,0,48608,5970,11,48992,1874,0,49346,2853,0,49700,5707,6,50084,2635,0,50438,1195,0,50792,1371,5,51176,1389,0,51531,2921,0,51886,6994,2,52270,3474,0,52624,7461,7,53008,3365,0,53362,2637,0,53716,5293,5,54100,694,0,54454,1461,0]};
+
+const DAY0 = Date.UTC(1900, 0, 1) / 864e5;
+function lyInfo(Y) { const i = (Y - LUNAR.y0) * 3, start = LUNAR.d[i], bits = LUNAR.d[i + 1], leap = LUNAR.d[i + 2], lens = []; for (let k = 0; k < (leap ? 13 : 12); k++) lens.push(bits >> k & 1 ? 30 : 29); return { start, leap, lens }; }
+function monthsOf(Y) { const { lens, leap } = lyInfo(Y), out = []; let m = 1; for (let k = 0; k < lens.length; k++) { const isLeap = leap && k === leap; out.push({ m: isLeap ? leap : (leap && k > leap ? k : k + 1), leap: !!isLeap, n: lens[k] }); } return out; }
+function toLunar(y, m, d) { const t = Date.UTC(y, m - 1, d) / 864e5 - DAY0; let Y = y; if (Y < LUNAR.y0 || Y > 2049) return null; if (t < lyInfo(Y).start) Y--; if (Y < LUNAR.y0) return null; let off = t - lyInfo(Y).start; for (const mo of monthsOf(Y)) { if (off < mo.n) return { y: Y, m: mo.m, d: off + 1, leap: mo.leap }; off -= mo.n; } return null; }
+function toSolar(Y, M, D, leap) { if (Y < LUNAR.y0 || Y > 2049) return null; let off = lyInfo(Y).start; for (const mo of monthsOf(Y)) { if (mo.m === M && mo.leap === !!leap) { if (D < 1 || D > mo.n) return null; const t = new Date((off + D - 1 + DAY0) * 864e5); return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate() }; } off += mo.n; } return null; }
+
+const STEM = "갑을병정무기경신임계", BRANCH = "자축인묘진사오미신유술해", SH = "甲乙丙丁戊己庚辛壬癸", BH = "子丑寅卯辰巳午未申酉戌亥", ELEM = ["목", "목", "화", "화", "토", "토", "금", "금", "수", "수"];
+const dayIdx = (y, m, d) => ((Math.round(Date.UTC(y, m - 1, d) / 864e5 - DAY0) + 10) % 60 + 60) % 60;
+const gz = i => ({ s: i % 10, b: i % 12, txt: STEM[i % 10] + BRANCH[i % 12], han: SH[i % 10] + BH[i % 12] });
+const REL = [["같은 기운", 0, "같은 기운이 만나 마음이 편안해요. 공부와 집중에 힘이 실려요.", "study"], ["도움을 받는 날", 1, "오늘의 기운이 나를 도와줘요. 하는 일에 힘이 붙어요.", "total"], ["기운이 빠지는 날", -1, "내 기운이 오늘로 흘러나가는 날이에요. 몸의 피로를 살피세요.", "health"], ["내가 이끄는 날", 1, "내가 오늘의 기운을 다스리는 날이에요. 재물과 성과를 기대해 볼 만해요.", "money"], ["부담이 따르는 날", -1, "오늘의 기운이 나를 누르는 날이에요. 서두르지 말고 조심하세요.", "total"]];
+function relOf(a, b) { const ea = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4][a], eb = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4][b]; if (ea === eb) return 0; if ((eb + 1) % 5 === ea) return 1; if ((ea + 1) % 5 === eb) return 2; if ((ea + 2) % 5 === eb) return 3; return 4; }
+function readBirth() {
+  const cal = $("cal").value, leap = $("leap").checked, tm = $("tm").value; let v, y, m, d; if (cal === "lunar") { y = +$("ly").value; m = +$("lm").value; d = +$("ld").value; if (!y) return { err: "음력 태어난 해(년)를 입력해 주세요" }; v = `${y}-${m}-${d}`; } else { v = $("bd").value; if (!v) return { err: "생일을 골라 주세요" }; [y, m, d] = v.split("-").map(Number); }
+  let solar, lunar;
+  if (cal === "lunar") { solar = toSolar(y, m, d, leap); if (!solar) return { err: "음력 " + y + "년 " + m + "월 " + d + "일" + (leap ? "(윤달)" : "") + "은 없는 날짜예요. 날짜나 윤달 체크를 확인해 주세요. (1901~2049년만 가능해요)" }; lunar = { y, m, d, leap }; }
+  else { solar = { y, m, d }; lunar = toLunar(y, m, d); }
+  const iso = `${solar.y}-${String(solar.m).padStart(2, "0")}-${String(solar.d).padStart(2, "0")}`;
+  return { iso, solar, lunar, tm: tm === "" ? null : +tm, cal, leap, raw: v };
+}
+function show() { const bi = readBirth(); if (bi.err) { $("out").hidden = false; $("out").innerHTML = "<b>" + esc(bi.err) + "</b>"; return; } const b = bi.iso; sv(KEY, { v: bi.cal === "lunar" ? ($("bd").value || "") : bi.raw, lun: [+$("ly").value || 0, +$("lm").value, +$("ld").value], cal: bi.cal, leap: bi.leap, tm: bi.tm });
+  const r = rng(hash(b + (bi.tm === null ? "" : "-t" + bi.tm) + ymd())), pick = a => a[Math.floor(r() * a.length)], n = () => 1 + Math.floor(r() * 5);
+  let total = Math.max(2, n()), money = n(), health = n(), study = n();
+  const td = new Date(), mine = gz(dayIdx(bi.solar.y, bi.solar.m, bi.solar.d)), today = gz(dayIdx(td.getFullYear(), td.getMonth() + 1, td.getDate())), rel = relOf(mine.s, today.s), adj = REL[rel][1], tgt = REL[rel][3];
+  const bump = (v, a) => Math.max(1, Math.min(5, v + a)); if (tgt === "total") total = bump(total, adj); else if (tgt === "money") money = bump(money, adj); else if (tgt === "health") health = bump(health, adj); else study = bump(study, adj);
+  last = { b, bi, mine, today, rel, total, money, health, study }; $("out").hidden = false;
   $("out").innerHTML = `<b>✨ 오늘의 운세 (${ymd()})</b><div class="fr"><span>종합</span><b>${stars(total)}</b></div><div class="fr"><span>금전</span><b>${stars(money)}</b></div><div class="fr"><span>건강</span><b>${stars(health)}</b></div><div class="fr"><span>공부</span><b>${stars(study)}</b></div><p class="muted" style="margin-top:8px">행운의 색 <span class="lk">${pick(COLORS)}</span> · 행운의 숫자 <span class="lk">${1 + Math.floor(r() * 45)}</span> · 행운의 물건 <span class="lk">${pick(ITEMS)}</span></p><p>💬 ${pick(WORDS)}</p><p class="muted">${pick(ADV)}</p><button class="btn" id="more" type="button">📖 자세히 보기</button>`; $("more").onclick = detail; }
 // ---- 자세히 보기 ----
 const TXT = {
@@ -105,12 +131,13 @@ const ANIMAL = [["쥐띠", "영리하고 재치가 있어요. 적응력이 뛰�
 function zodiacOf(b) { const [, m, d] = b.split("-").map(Number), v = m * 100 + d; if (v >= 1222 || v <= 119) return ZODIAC[0]; if (v <= 218) return ZODIAC[1]; if (v <= 320) return ZODIAC[2]; if (v <= 419) return ZODIAC[3]; if (v <= 520) return ZODIAC[4]; if (v <= 621) return ZODIAC[5]; if (v <= 722) return ZODIAC[6]; if (v <= 822) return ZODIAC[7]; if (v <= 922) return ZODIAC[8]; if (v <= 1022) return ZODIAC[9]; if (v <= 1122) return ZODIAC[10]; return ZODIAC[11]; }
 let last = null;
 function detail() {
-  if (!last) return; const { b, total, money, health, study } = last, r = rng(hash(b + ymd() + "detail")), pick = a => a[Math.floor(r() * a.length)], n = () => 1 + Math.floor(r() * 5);
-  const love = n(), z = zodiacOf(b), an = ANIMAL[(+b.slice(0, 4) - 4 + 1200) % 12], row = (t, s, k) => `<div class="dc"><div class="fr"><span>${t}</span><b>${stars(s)}</b></div><p>${TXT[k][s - 1][Math.floor(r() * 3)]}</p></div>`;
+  if (!last) return; const { b, bi, mine, today, rel, total, money, health, study } = last, r = rng(hash(b + ymd() + "detail")), pick = a => a[Math.floor(r() * a.length)], n = () => 1 + Math.floor(r() * 5);
+  const love = n(), z = zodiacOf(b), an = ANIMAL[((bi.lunar ? bi.lunar.y : +b.slice(0, 4)) - 4 + 1200) % 12], row = (t, s, k) => `<div class="dc"><div class="fr"><span>${t}</span><b>${stars(s)}</b></div><p>${TXT[k][s - 1][Math.floor(r() * 3)]}</p></div>`;
   const times = TIME.map(([t, a]) => { const s = n(); return `<div class="fr"><span>${t}</span><b>${stars(s)}</b></div><p class="muted tm">${a[s - 1]}</p>`; }).join("");
   const tips = shuf(TIPS).slice(0, 3).map(t => `<li>${esc(t)}</li>`).join("");
   $("det").innerHTML = `<button class="btn ghost" id="back" type="button">← 처음 화면으로</button><h2>📖 오늘의 운세 자세히 (${ymd()})</h2>`
-    + `<div class="dc"><b>👤 나는 어떤 사람일까요?</b><p><span class="lk">${z[0]}</span> (${z[1]}) — ${z[2]}</p><p><span class="lk">${an[0]}</span> — ${an[1]}</p></div>`
+    + `<div class="dc"><b>🗓 내 생일 정보</b><p>양력 <span class="lk">${bi.solar.y}년 ${bi.solar.m}월 ${bi.solar.d}일</span>${bi.lunar ? ` · 음력 <span class="lk">${bi.lunar.y}년 ${bi.lunar.leap ? "윤" : ""}${bi.lunar.m}월 ${bi.lunar.d}일</span>` : ""}</p><p>태어난 날의 일주 <span class="lk">${mine.txt}(${mine.han})</span> · ${ELEM[mine.s]} 기운${bi.tm !== null ? ` · 태어난 시 <span class="lk">${BRANCH[bi.tm]}시</span> (시주 ${STEM[((mine.s % 5) * 2 + bi.tm) % 10] + BRANCH[bi.tm]})` : ""}</p><p class="muted">오늘의 일진은 <span class="lk">${today.txt}일</span>(${ELEM[today.s]} 기운)이에요. 나와 비교하면 <b>${REL[rel][0]}</b> — ${REL[rel][2]}</p></div>`
+    + `<div class="dc"><b>👤 나는 어떤 사람일까요?</b><p><span class="lk">${z[0]}</span> (${z[1]}) — ${z[2]}</p><p><span class="lk">${an[0]}</span> (음력 설 기준) — ${an[1]}</p></div>`
     + row("✨ 종합 운세", total, "total") + row("💰 금전운", money, "money") + row("💪 건강운", health, "health") + row("📚 학습·일 운", study, "study") + row("💞 인간관계·사랑 운", love, "love")
     + `<div class="dc"><b>⏰ 시간대별 운세</b>${times}</div>`
     + `<div class="dc"><b>🍀 행운 정보</b><p>행운의 시간 <span class="lk">${pick(LUCKTIME)}</span></p><p>행운의 방향 <span class="lk">${pick(DIR)}</span></p><p>행운의 음식 <span class="lk">${pick(FOOD)}</span></p><p>조심할 것 <span class="lk">${pick(BEWARE)}</span></p></div>`
@@ -119,7 +146,11 @@ function detail() {
   $("back").onclick = () => { $("det").hidden = true; document.querySelectorAll(".top").forEach(e => e.hidden = false); scrollTo(0, 0); };
 }
 
-const saved = ld(KEY); if (saved) $("bd").value = saved; $("go").onclick = show; if (saved) show();
+$("lm").innerHTML = Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join(""); $("ld").innerHTML = Array.from({ length: 30 }, (_, i) => `<option value="${i + 1}">${i + 1}일</option>`).join("");
+const syncCal = () => { const L = $("cal").value === "lunar"; $("lpw").hidden = !L; $("lw").hidden = !L; $("bd").hidden = L; if (!L) $("leap").checked = false; }; $("cal").onchange = syncCal;
+let saved = ld(KEY); if (typeof saved === "string") saved = { v: saved, cal: "solar", leap: false, tm: null };
+if (saved) { $("bd").value = saved.v || ""; $("cal").value = saved.cal || "solar"; $("leap").checked = !!saved.leap; $("tm").value = saved.tm === null || saved.tm === undefined ? "" : String(saved.tm); if (saved.lun && saved.lun[0]) { $("ly").value = saved.lun[0]; $("lm").value = saved.lun[1]; $("ld").value = saved.lun[2]; } syncCal(); }
+$("go").onclick = show; if (saved && (saved.cal === "lunar" ? saved.lun && saved.lun[0] : saved.v)) show();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>

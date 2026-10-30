@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>틱택토</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 위에 전적, 가운데 3×3 판, 아래에 상대와 난이도 선택. 내가 O, 상대가 X */
 :root{--bg:#eef4f1;--surface:#fff;--fg:#1b2a26;--muted:#5d726b;--line:#cfdcd6;--o:#e8643f;--x:#2f6fd0;--accent:#1f8a6b;--accent-fg:#fff;--win:#ffe9a8;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -114,5 +122,6 @@ $("first").addEventListener("click", e => { const f = e.target.closest("[data-f]
 $("newGame").onclick = newGame;
 newGame();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

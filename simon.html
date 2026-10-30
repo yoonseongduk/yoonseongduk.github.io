@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>사이먼 순서 기억</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 점수 줄 아래에 네 가지 색 패드(2×2), 가운데에 상태 문구. 패드가 켜지는 순서를 기억해서 따라 누른다 */
 :root{--bg:#eceef5;--surface:#fff;--fg:#1c2033;--muted:#626b84;--line:#d6dbe8;--accent:#e8643f;--accent-fg:#fff;--r:#d6453a;--b:#2f6fe0;--y:#e5b21b;--g:#2aa55a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -84,5 +92,6 @@ $("start").onclick = start;
 $("sound").onclick = () => { sound = !sound; sv(SKEY, sound); ui(); };
 ui("시작 버튼을 눌러 주세요");
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

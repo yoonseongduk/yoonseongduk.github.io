@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>조준 연습</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 크기 선택, 시간·명중·정확도 줄, 과녁이 나타나는 정사각형 판. 과녁을 누르면 다른 곳에 새 과녁이 나타난다 */
 :root{--bg:#f1f2f7;--surface:#fff;--fg:#1c2033;--muted:#626b84;--line:#d8dcea;--arena:#e6e9f4;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -70,5 +78,6 @@ $("ov").addEventListener("click", e => { if (e.target.closest("[data-a=go]")) { 
 $("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && !b.disabled) { lv = b.dataset.l; sv(LKEY, lv); state = "idle"; $("res").hidden = true; $("ov").hidden = false; ui(); } });
 ui();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

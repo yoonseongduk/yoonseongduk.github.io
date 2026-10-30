@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>숫자 야구</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 제목과 모드, 입력 칸, 기록(최근 추리가 위), 숫자 키패드 순서로 한 줄로 쌓는다 */
 :root {
@@ -218,5 +226,6 @@ const okSaved = saved && MODES[saved.mode] && typeof saved.answer === "string" &
   && new Set(saved.answer).size === saved.answer.length && Array.isArray(saved.guesses) && ["play", "win", "lose"].includes(saved.state);
 if (okSaved) { game = saved; msgText = game.state === "play" && game.guesses.length ? "이어서 추리해 보세요." : ""; render(); } else newGame(3);
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

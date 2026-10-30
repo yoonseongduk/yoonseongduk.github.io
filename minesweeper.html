@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>지뢰찾기</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 위에 지뢰 수·시간·깃발 모드, 아래에 8칸 너비의 판. 누르면 열고, 길게 누르거나 깃발 모드면 깃발을 꽂는다 */
 :root{--bg:#e9eef2;--surface:#fff;--fg:#1c2530;--muted:#5f6d7c;--line:#cfd8e0;--closed:#9fb3c4;--open:#f4f7f9;--accent:#e8643f;--accent-fg:#fff;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -131,5 +139,6 @@ $("levels").addEventListener("click", e => { const b = e.target.closest("[data-l
 $("newGame").onclick = newGame;
 newGame();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

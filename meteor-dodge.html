@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>운석 피하기</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 점수·최고·상태 줄, 가운데 게임 판(캔버스, 손가락으로 조작), 아래 설명. 시작과 끝은 판 위의 안내 화면에서 */
 :root{--bg:hsl(18 30% 94%);--surface:#fff;--fg:#1b2133;--muted:#5f6881;--line:hsl(18 22% 84%);--field:hsl(18 40% 16%);--accent:hsl(18 75% 50%);--accent-fg:#fff;--ok:#2fb36a;--bad:#e8453c;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -88,5 +96,6 @@ function draw(c) {
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

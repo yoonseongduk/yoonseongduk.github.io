@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>뱀 사다리</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 참가자 설정 → 100칸 판(사다리는 초록, 뱀은 빨강 선) 위에서 말이 움직이고, 아래에 주사위 버튼. 먼저 100번 칸에 도착하면 이긴다 */
 :root{--bg:#eef3ea;--surface:#fff;--fg:#1c2a1e;--muted:#5d7260;--line:#d2dfd0;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -102,5 +110,6 @@ $("home").onclick = () => { over = true; $("game").hidden = true; $("setup").hid
 window.addEventListener("resize", () => { if (!$("game").hidden) render(); });
 drawSetup();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

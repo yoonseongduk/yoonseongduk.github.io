@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>2048</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 점수 칸 위, 정사각형 판 가운데, 새 게임 버튼 아래. 판 위에서 밀면(스와이프) 타일이 움직인다 */
 :root{--bg:#f3efe6;--surface:#fffdf8;--fg:#2b2620;--muted:#7a7164;--line:#ddd5c6;--board:#b9ad9a;--cell:#cdc3b1;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -109,5 +117,6 @@ $("newGame").onclick = newGame;
 const s = ld(KEY);
 if (s && Array.isArray(s.b) && s.b.length === N && s.b.every(r => Array.isArray(r) && r.length === N)) { b = s.b; score = s.score || 0; won = !!s.won; keep = !!s.keep; dead = !!s.dead; render(); } else newGame();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

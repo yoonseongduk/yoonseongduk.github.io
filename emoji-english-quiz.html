@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>이모지 영어 퀴즈</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: (분류 버튼), 점수 줄, 문제 카드, 네 개의 보기. 고르면 정답이 바로 표시되고 10문제를 풀면 결과가 나온다 */
 :root{--bg:hsl(200 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(200 22% 86%);--accent:hsl(200 60% 42%);--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -82,5 +90,6 @@ $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"
 $("next").onclick = () => { if (i === qs.length - 1) finish(); else { i++; show(); } };
 start();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

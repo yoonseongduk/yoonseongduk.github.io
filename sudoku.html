@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>스도쿠</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 난이도, 시간·실수 줄, 9×9 판(3×3 굵은 선), 숫자 키패드와 힌트. 고른 칸의 가로·세로·상자가 옅게 강조된다 */
 :root{--bg:#eef1f7;--surface:#fff;--fg:#1b2133;--muted:#626b84;--line:#d3d9e8;--thick:#1b2133;--sel:#cfe0ff;--peer:#eaf0fd;--same:#ffe7a8;--given:#1b2133;--mine:#2a5fd0;--bad:#d6453a;--accent:#2a5fd0;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -113,5 +121,6 @@ $("lv").addEventListener("click", e => { const l = e.target.closest("[data-l]");
 document.addEventListener("keydown", e => { if (/^[1-9]$/.test(e.key)) put(+e.key); else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0") put(0); else if (sel >= 0 && e.key.startsWith("Arrow")) { e.preventDefault(); const d = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -9, ArrowDown: 9 }[e.key], n = sel + d; if (n >= 0 && n < 81 && !(d === -1 && col(sel) === 0) && !(d === 1 && col(sel) === 8)) { sel = n; render(); } } });
 newGame();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

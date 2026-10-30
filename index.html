@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>우리 가족 미니 게임</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 제목, 검색칸, 분류 버튼, 그 아래에 분류별로 묶인 게임 카드(두 칸 격자). 게임은 아래 스크립트의 GAMES 목록에 한 줄씩 적는다 */
 :root {
@@ -62,6 +70,10 @@ h2 span { font-family: var(--font-body); font-size: .85rem; color: var(--muted);
 .game h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; margin: 0; line-height: 1.25; overflow-wrap: anywhere; }
 .game p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.4; overflow-wrap: anywhere; }
 .empty { text-align: center; color: var(--muted); padding: 30px 10px; border: 1.5px dashed var(--line); border-radius: 14px; }
+.pwa { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: .92rem; }
+.pwa b { font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; }
+.pwa p { margin: 0; color: var(--muted); }
+.pwa button { align-self: flex-start; background: var(--fg); color: var(--bg); border: 0; border-radius: 10px; padding: 8px 14px; font: inherit; font-weight: 700; cursor: pointer; }
 footer { color: var(--muted); font-size: .85rem; }
 </style>
 </head>
@@ -71,6 +83,12 @@ footer { color: var(--muted); font-size: .85rem; }
     <h1>우리 가족 미니 게임</h1>
     <p class="sub" id="count"></p>
   </header>
+  <section class="pwa" id="pwa" hidden>
+    <b>📲 폰에 설치하면 인터넷 없이도 해요</b>
+    <p id="pwaSave"></p>
+    <p id="pwaHow"></p>
+    <button type="button" id="pwaBtn" hidden>앱으로 설치하기</button>
+  </section>
   <input type="search" id="q" placeholder="게임 이름이나 설명으로 찾기" autocomplete="off" aria-label="게임 검색">
   <div class="chips" id="chips" role="group" aria-label="분류"></div>
   <div id="list"></div>
@@ -214,5 +232,31 @@ $("chips").addEventListener("click", e => { const b = e.target.closest("[data-g]
 $("q").addEventListener("input", e => { query = e.target.value; render(); });
 render();
 </script>
+<script>
+// 앱처럼 설치하기 + 오프라인 저장 상태 표시
+(() => {
+  if (!("serviceWorker" in navigator)) return;
+  const box = document.getElementById("pwa"), save = document.getElementById("pwaSave"), how = document.getElementById("pwaHow"), btn = document.getElementById("pwaBtn");
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  box.hidden = false;
+  how.textContent = standalone ? "" : ios ? "설치 방법: Safari 아래쪽 공유 버튼(□↑) → '홈 화면에 추가'를 누르세요." : "설치 방법: 브라우저 메뉴(⋮) → '앱 설치' 또는 '홈 화면에 추가'를 누르세요.";
+  how.hidden = standalone;
+  let deferred = null;
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; btn.hidden = false; });
+  addEventListener("appinstalled", () => { btn.hidden = true; how.textContent = "설치됐어요! 홈 화면의 '가족 게임' 아이콘으로 열어 보세요."; });
+  btn.onclick = async () => { if (!deferred) return; deferred.prompt(); try { await deferred.userChoice; } catch (e) {} deferred = null; btn.hidden = true; };
+  const ask = reg => new Promise(res => { const w = reg.active; if (!w) return res(null); const ch = new MessageChannel(); ch.port1.onmessage = e => res(e.data); w.postMessage({ type: "status" }, [ch.port2]); setTimeout(() => res(null), 3000); });
+  navigator.serviceWorker.ready.then(async reg => {
+    for (let k = 0; k < 120; k++) {
+      const st = await ask(reg);
+      if (st && st.count >= st.total - 3) { save.textContent = "✅ 게임이 이 폰에 모두 저장됐어요. 인터넷이 없어도 할 수 있어요."; return; }
+      save.textContent = st ? `⏳ 게임을 폰에 저장하는 중이에요 (${st.count}/${st.total}). 인터넷이 연결된 채로 잠시 기다려 주세요.` : "⏳ 준비하는 중이에요…";
+      await new Promise(r => setTimeout(r, 1500));
+    }
+  }).catch(() => { box.hidden = true; });
+})();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>컬러 코드 맞추기</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 난이도, 지난 추리 목록(색 칸과 힌트 점), 지금 고르는 줄, 색 고르는 버튼. 색 순서를 추리해서 맞히는 게임 */
 :root{--bg:#f0f2f6;--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:#d8deea;--accent:#e8643f;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -85,5 +93,6 @@ $("del").onclick = () => { cur.pop(); render(); }; $("ok").onclick = submit; $("
 $("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && b.dataset.l !== lv) { lv = b.dataset.l; sv(LKEY, lv); newGame(); } });
 newGame();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

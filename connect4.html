@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>사목 (커넥트 4)</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 상대 선택, 차례 표시, 7열×6행 판(열을 누르면 돌이 떨어진다), 새 판 버튼 */
 :root{--bg:#eaf0f8;--surface:#fff;--fg:#1a2233;--muted:#5e6a82;--line:#d1dbea;--board:#2a5bd0;--hole:#dfe8f8;--red:#e8453c;--yel:#f2c200;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -104,5 +112,6 @@ $("board").addEventListener("click", e => { const c = e.target.closest("[data-c]
 $("opp").addEventListener("click", e => { const o = e.target.closest("[data-o]"); if (o && o.dataset.o !== cfg.opp) { cfg.opp = o.dataset.o; sv(KEY, cfg); newGame(); } });
 $("newGame").onclick = newGame; newGame();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

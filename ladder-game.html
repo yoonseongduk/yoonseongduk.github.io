@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>사다리타기</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 먼저 참가자와 결과를 적는 설정 화면, 그다음 사다리 화면(위에 이름 버튼, 아래에 가려진 결과). 이름을 누르면 길을 따라 내려간다 */
 :root{--bg:#eef2f0;--surface:#fff;--fg:#1b2924;--muted:#5c726a;--line:#d0ddd7;--rail:#9db3aa;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -144,5 +152,6 @@ $("edit").onclick = () => { clearInterval(anim); anim = 0; $("play").hidden = tr
 window.addEventListener("resize", () => { if (!$("play").hidden) draw(); });
 drawSetup();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

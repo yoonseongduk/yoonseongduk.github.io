@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>암산 퀴즈</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 시간 막대와 점수, 큰 문제 글씨, 답 입력 칸, 숫자 키패드. 60초 동안 몇 문제를 맞히는지 겨룬다 */
 :root{--bg:#f4f1ee;--surface:#fff;--fg:#2a2320;--muted:#7a6e66;--line:#e0d8d1;--accent:#e8643f;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--key:#fbf9f7;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -112,5 +120,6 @@ $("modes").addEventListener("click", e => { const b = e.target.closest("[data-m]
 $("start").onclick = start;
 draw();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

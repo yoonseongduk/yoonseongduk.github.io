@@ -4,7 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>클릭 속도 테스트</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
 <style>
 /* 레이아웃: 시간 선택(5·10·30초), 기록 줄, 크게 누르는 영역. 첫 번째 터치부터 시간이 시작되고 끝나면 초당 클릭 수(CPS)가 나온다 */
 :root{--bg:#f6f0ea;--surface:#fff;--fg:#2a2118;--muted:#7a6b5c;--line:#e6dacd;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
@@ -68,5 +76,6 @@ $("pad").addEventListener("keydown", e => { if (e.key === " " || e.key === "Ente
 $("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && !b.disabled) { lv = +b.dataset.l; sv(LKEY, lv); state = "idle"; cnt = 0; $("cnt").textContent = 0; $("left").textContent = lv.toFixed(1); $("bar").style.width = "100%"; $("res").hidden = true; render(); } });
 $("left").textContent = lv.toFixed(1); render();
 </script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 </body>
 </html>

@@ -5,7 +5,7 @@
     python tools/make-sw.py
 파일 내용이 바뀌면 버전 이름이 바뀌어서 폰이 새 버전을 내려받아요.
 """
-import glob, os, json, hashlib
+import glob, os, json, hashlib, re, datetime
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..") + os.sep
 files = ["./"] + sorted(os.path.basename(f) for f in glob.glob(R + "*.html"))
 files += ["manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon-48.png", "fonts/fonts.css"]
@@ -20,8 +20,15 @@ for f in files:
             data = data.replace(b"\r\n", b"\n")
         h.update(data)
 ver = "family-games-" + h.hexdigest()[:10]
+old = open(R + "sw.js", encoding="utf-8").read() if os.path.exists(R + "sw.js") else ""
+mv, mb = re.search(r'VERSION = "([^"]+)"', old), re.search(r'BUILD = "([^"]+)"', old)
+kst = datetime.timezone(datetime.timedelta(hours=9))
+build = mb.group(1) if (mv and mv.group(1) == ver and mb) else datetime.datetime.now(kst).strftime("%Y-%m-%d %H:%M")   # 내용이 바뀐 때만 새 날짜
+games = len([f for f in files if f.endswith(".html") and f not in ("index.html",)])
 js = '''// 오프라인에서도 게임이 실행되도록 모든 파일을 폰에 저장해 두는 서비스 워커예요. (자동 생성 파일)
 const VERSION = "%s";
+const BUILD = "%s";      // 이 버전을 만든 날짜(한국 시간)
+const GAMES = %d;         // 들어 있는 게임 수
 const PRECACHE = %s;
 
 self.addEventListener("install", e => {
@@ -42,7 +49,8 @@ self.addEventListener("activate", e => {
 // 저장된 파일을 먼저 보여 주고, 인터넷이 되면 뒤에서 새 버전으로 바꿔 둔다
 self.addEventListener("fetch", e => {
   const req = e.request;
-  if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  const u = new URL(req.url);
+  if (req.method !== "GET" || u.origin !== self.location.origin || u.pathname.endsWith("/sw.js")) return;      // sw.js는 항상 인터넷에서 확인해요
   e.respondWith((async () => {
     const c = await caches.open(VERSION);
     const hit = await c.match(req, { ignoreSearch: true });
@@ -59,10 +67,10 @@ self.addEventListener("message", e => {
   if (e.data && e.data.type === "status" && e.ports[0]) {
     e.waitUntil((async () => {
       const c = await caches.open(VERSION);
-      e.ports[0].postMessage({ count: (await c.keys()).length, total: PRECACHE.length, version: VERSION });
+      e.ports[0].postMessage({ count: (await c.keys()).length, total: PRECACHE.length, version: VERSION, build: BUILD, games: GAMES });
     })());
   }
 });
-''' % (ver, json.dumps(files, ensure_ascii=False))
+''' % (ver, build, games, json.dumps(files, ensure_ascii=False))
 open(R + "sw.js", "w", encoding="utf-8", newline="\n").write(js)
 print("sw.js 갱신:", ver, "| 저장 대상 파일", len(files), "개")

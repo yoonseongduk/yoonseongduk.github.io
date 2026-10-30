@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>참참참</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(335 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(335 22% 86%);--accent:hsl(335 65% 46%);--accent-fg:#fff;--soft:hsl(335 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(335 22% 10%);--surface:hsl(335 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(335 16% 25%);--accent:hsl(335 75% 68%);--accent-fg:#10131c;--soft:hsl(335 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.stage2{background:var(--surface);border:2px solid var(--line);border-radius:22px;min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:14px}.role{font-family:var(--font-display);font-size:1.2rem;color:var(--muted)}.stage2 .big{font-size:clamp(2.2rem,12vw,3.4rem)}.sub{color:var(--muted);font-size:.92rem;padding:0 6px}.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--accent)}.dir{background:var(--surface);border:3px solid var(--line);border-radius:18px;min-height:72px;font-family:var(--font-display);font-size:1.5rem}.dir:not(:disabled):active{border-color:var(--accent);transform:scale(.97)}.dir:disabled{opacity:.45;cursor:default}
+</style>
+</head>
+<body>
+<main>
+  <h1>참참참 👉</h1>
+  <div class="stats" style="grid-template-columns:repeat(3,1fr)"><div class="stat"><small>나</small><b id="me">0</b></div><div class="stat"><small>라운드</small><b id="rd">0</b></div><div class="stat"><small>컴퓨터</small><b id="cp">0</b></div></div>
+  <div class="stage2" id="stage" aria-live="polite"><div class="role" id="role">준비</div><div class="big" id="big">참참참!</div><div class="sub" id="sub">시작을 눌러 주세요</div></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="row"><button class="dir" id="L" type="button" disabled>◀ 왼쪽</button><button class="dir" id="R" type="button" disabled>오른쪽 ▶</button></div>
+  <button class="btn" id="start" type="button">시작</button>
+  <p class="muted">'참참참!' 소리에 맞춰 방향을 고르는 게임이에요. <b>공격</b>일 때는 손가락 방향(👈👉)을 골라 컴퓨터의 얼굴 방향과 <b>같으면</b> 내가 1점! <b>수비</b>일 때는 얼굴 방향을 골라 컴퓨터 손가락과 <b>달라야</b> 안 걸려요. 3점을 먼저 따면 이겨요. 방향은 1.5초 안에 골라야 해요!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "chamcham-best-v1";
+let me = 0, cp = 0, rd = 0, state = "idle", attack = true, tempo = 1, pickTimer = 0, myPick = null, token = 0;
+const ARROW = { L: "👈", R: "👉" }, HEAD = { L: "◀️", R: "▶️" }, NAME = { L: "왼쪽", R: "오른쪽" }, sleep = ms => new Promise(r => setTimeout(r, ms * tempo));
+// 한 라운드의 결과: 공격하는 쪽의 손가락 방향과 수비하는 쪽의 얼굴 방향이 같으면 공격 성공
+const hit = (finger, head) => finger === head;
+function ui(role, big, sub) { $("role").textContent = role; $("big").innerHTML = big; $("sub").textContent = sub; $("me").textContent = me; $("cp").textContent = cp; $("rd").textContent = rd; }
+async function round() {
+  const my = ++token; rd++; attack = rd % 2 === 1; myPick = null; $("L").disabled = $("R").disabled = true; $("bar").style.width = "0%";
+  ui(attack ? "⚔️ 공격 차례" : "🛡️ 수비 차례", "참", attack ? "컴퓨터의 얼굴 방향을 맞혀 손가락을 돌려요" : "컴퓨터의 손가락과 다른 쪽으로 얼굴을 돌려요");
+  await sleep(550); if (my !== token) return; $("big").textContent = "참 참"; await sleep(550); if (my !== token) return; $("big").textContent = "참 참 참!"; await sleep(450); if (my !== token) return;
+  state = "pick"; $("big").textContent = attack ? "👆 손가락!" : "🙂 얼굴!"; $("L").disabled = $("R").disabled = false; const t0 = performance.now(), total = 1500 * tempo;
+  const iv = setInterval(() => { $("bar").style.width = Math.min(100, (performance.now() - t0) / total * 100) + "%"; }, 50);
+  await new Promise(res => { pickTimer = setTimeout(res, total); window.__early = res; }); clearInterval(iv); if (my !== token) return; state = "reveal"; $("L").disabled = $("R").disabled = true;
+  const cpu = Math.random() < .5 ? "L" : "R", mine = myPick, finger = attack ? mine : cpu, head = attack ? cpu : mine; let text, won = null;
+  if (!mine) { won = attack ? false : false; text = "시간이 지났어요! 고르지 못했어요 ⏰"; if (!attack) { cp++; text += " (수비 실패)"; } }
+  else if (hit(finger, head)) { if (attack) { me++; won = true; text = "🎯 같은 방향! 내가 1점!"; } else { cp++; won = false; text = "😱 걸렸어요! 컴퓨터가 1점"; } }
+  else text = attack ? "😅 다른 방향! 컴퓨터가 피했어요" : "😎 잘 피했어요!";
+  ui(attack ? "⚔️ 공격 결과" : "🛡️ 수비 결과", `${ARROW[finger] || "❔"} ${HEAD[head] || "❔"}`, `손가락 ${finger ? NAME[finger] : "-"} · 얼굴 ${head ? NAME[head] : "-"}  →  ${text}`);
+  await sleep(1400); if (my !== token) return;
+  if (me >= 3 || cp >= 3) return end(); round();
+}
+function end() { state = "idle"; const win = me >= 3, best = ld(KEY) || { w: 0, l: 0 }; best[win ? "w" : "l"]++; sv(KEY, best); ui(win ? "🎉 승리" : "😢 패배", win ? "이겼어요!" : "졌어요", `전적 ${best.w}승 ${best.l}패 · 다시 도전해 보세요`); $("start").hidden = false; $("start").textContent = "다시 하기"; }
+function choose(d) { if (state !== "pick" || myPick) return; myPick = d; clearTimeout(pickTimer); if (window.__early) window.__early(); }
+function start() { me = 0; cp = 0; rd = 0; $("start").hidden = true; round(); }
+$("L").onclick = () => choose("L"); $("R").onclick = () => choose("R"); $("start").onclick = start;
+document.addEventListener("keydown", e => { if (e.key === "ArrowLeft") choose("L"); else if (e.key === "ArrowRight") choose("R"); });
+</script>
+</body>
+</html>

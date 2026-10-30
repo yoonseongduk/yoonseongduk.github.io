@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>단어 찾기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(160 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(160 22% 86%);--accent:hsl(160 65% 46%);--accent-fg:#fff;--soft:hsl(160 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(160 22% 10%);--surface:hsl(160 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(160 16% 25%);--accent:hsl(160 75% 68%);--accent-fg:#10131c;--soft:hsl(160 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.wgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;touch-action:none}.wc{aspect-ratio:1;display:grid;place-items:center;border-radius:8px;background:var(--soft);font-family:var(--font-display);font-size:clamp(1.1rem,6vw,1.6rem);user-select:none}.wc.s{background:var(--accent);color:var(--accent-fg)}.wc.f{background:color-mix(in srgb,var(--ok) 35%,var(--surface));color:var(--fg)}.words{display:flex;flex-wrap:wrap;gap:8px}.wd{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 14px;font-weight:700}.wd.d{text-decoration:line-through;color:var(--muted);background:var(--soft)}
+</style>
+</head>
+<body>
+<main>
+  <h1>단어 찾기 🔤</h1>
+  <div class="seg" id="th" role="radiogroup" aria-label="주제" style="--n:5"></div>
+  <div class="stats" style="grid-template-columns:repeat(2,1fr)"><div class="stat"><small>시간</small><b id="time">0:00</b></div><div class="stat"><small>최고(이 주제)</small><b id="best">-</b></div></div>
+  <div class="wgrid" id="grid" aria-label="글자판"></div>
+  <div class="words" id="words"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="new" type="button">새 판</button>
+  <p class="muted">글자판 속에 숨은 단어를 찾아서 <b>손가락으로 쭉 그어</b> 선택하세요. 단어는 가로, 세로, 대각선(↘)으로 숨어 있고, 거꾸로 그어도 돼요. 아래 목록의 단어를 모두 찾으면 끝! 주제를 고를 수 있어요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "wordsearch-best-v1";
+const THEMES = {"동물": "토끼 호랑이 사자 코끼리 기린 고래 강아지 고양이 거북이 원숭이 다람쥐 펭귄", "과일": "사과 바나나 딸기 수박 포도 복숭아 참외 오렌지 레몬 자두 감 귤", "음식": "김치 비빔밥 라면 만두 떡볶이 김밥 짜장면 피자 치킨 불고기 냉면 순대", "나라": "한국 일본 중국 미국 영국 프랑스 독일 호주 캐나다 인도 태국 브라질", "탈것": "자동차 버스 기차 비행기 자전거 지하철 택시 트럭 오토바이 배 로켓 헬리콥터"};
+const FILL = "가나다라마바사아자차카타파하고노도로모보소오조초코토포호구누두루무부수우주추쿠투푸후기니디리미비시이지치키티피히거너더러머버서어저처커터퍼허".split("");
+const N = 8, DIRS = [[0, 1], [1, 0], [1, 1]];                // 가로, 세로, 대각선(↘)에만 단어를 숨긴다
+const fmt = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+let theme = (ld(KEY + "-th") in THEMES) ? ld(KEY + "-th") : "동물", grid, words, found, placed, t0, timer, done, sel = null, best = ld(KEY) || {};
+// 단어를 판에 숨긴다. 겹치는 칸은 같은 글자일 때만 허용한다
+function build(list) {
+  for (let tries = 0; tries < 50; tries++) {
+    const g = Array.from({ length: N }, () => Array(N).fill("")), pl = []; let ok = true;
+    for (const w of list) {
+      const ch = [...w]; let put = false;
+      for (let a = 0; a < 300 && !put; a++) { const [dr, dc] = DIRS[ri(0, 2)], r = ri(0, N - 1), c = ri(0, N - 1), er = r + dr * (ch.length - 1), ec = c + dc * (ch.length - 1);
+        if (er >= N || ec >= N) continue; if (!ch.every((x, k) => !g[r + dr * k][c + dc * k] || g[r + dr * k][c + dc * k] === x)) continue;
+        ch.forEach((x, k) => { g[r + dr * k][c + dc * k] = x; }); pl.push({ w, r, c, dr, dc }); put = true; }
+      if (!put) { ok = false; break; }
+    }
+    if (ok) { for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (!g[r][c]) g[r][c] = FILL[ri(0, FILL.length - 1)]; return { g, pl }; }
+  }
+  return null;
+}
+function newGame() {
+  clearInterval(timer); let b = null; while (!b) { words = shuf(THEMES[theme].split(" ").filter(w => [...w].length >= 2 && [...w].length <= 5)).slice(0, 6); b = build(words); } grid = b.g; placed = b.pl; found = new Set(); done = false; t0 = 0; sel = null; $("time").textContent = "0:00"; $("res").hidden = true; render();
+}
+function startTimer() { if (t0 || done) return; t0 = Date.now(); timer = setInterval(() => { $("time").textContent = fmt(Math.floor((Date.now() - t0) / 1000)); }, 500); }
+const lineCells = (r1, c1, r2, c2) => {                       // 시작 칸에서 끝 칸까지, 가장 가까운 8방향의 직선에 놓인 칸들
+  const dr = r2 - r1, dc = c2 - c1, len = Math.max(Math.abs(dr), Math.abs(dc)); if (!len) return [[r1, c1]];
+  const ang = Math.round(Math.atan2(dr, dc) / (Math.PI / 4)), D = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]][((ang % 8) + 8) % 8], out = [];
+  for (let k = 0; k <= len; k++) { const r = r1 + D[0] * k, c = c1 + D[1] * k; if (r < 0 || c < 0 || r >= N || c >= N) break; out.push([r, c]); } return out;
+};
+function commit(cells) {
+  const s = cells.map(([r, c]) => grid[r][c]).join(""), rev = [...s].reverse().join(""); const w = words.find(x => !found.has(x) && (x === s || x === rev));
+  if (w) { found.add(w); cells.forEach(([r, c]) => { grid[r][c] = grid[r][c]; foundCells.add(r + "," + c); }); if (found.size === words.length) win(); }
+  render(); return !!w;
+}
+let foundCells = new Set();
+function win() { done = true; clearInterval(timer); const s = Math.max(1, Math.floor((Date.now() - t0) / 1000)); let t = `${fmt(s)} 만에 모두 찾았어요.`; if (!best[theme] || s < best[theme]) { best[theme] = s; sv(KEY, best); t += " 🏆 최고 기록이에요!"; } $("res").innerHTML = `<b>🎉 모두 찾았어요!</b><p class="muted">${t}</p>`; $("res").hidden = false; }
+function render() {
+  const selSet = new Set((sel || []).map(([r, c]) => r + "," + c));
+  $("grid").innerHTML = grid.map((row, r) => row.map((ch, c) => `<span class="wc ${foundCells.has(r + "," + c) ? "f" : ""} ${selSet.has(r + "," + c) ? "s" : ""}" data-r="${r}" data-c="${c}">${ch}</span>`).join("")).join("");
+  $("words").innerHTML = words.map(w => `<span class="wd ${found.has(w) ? "d" : ""}">${w}</span>`).join(""); $("best").textContent = best[theme] ? fmt(best[theme]) : "-";
+  $("th").innerHTML = Object.keys(THEMES).map(k => `<button type="button" class="${k === theme ? "on" : ""}" data-t="${k}" role="radio" aria-checked="${k === theme}">${k}</button>`).join("");
+}
+const cellAt = e => { const el = document.elementFromPoint(e.clientX, e.clientY); return el && el.dataset && el.dataset.r !== undefined ? [+el.dataset.r, +el.dataset.c] : null; };
+let start0 = null;
+$("grid").addEventListener("pointerdown", e => { if (done) return; const c = cellAt(e); if (c) { e.preventDefault(); startTimer(); start0 = c; sel = [c]; render(); } });
+$("grid").addEventListener("pointermove", e => { if (!start0) return; const c = cellAt(e); if (c) { sel = lineCells(start0[0], start0[1], c[0], c[1]); render(); } });
+["pointerup", "pointercancel"].forEach(ev => document.addEventListener(ev, () => { if (!start0) return; const s = sel; start0 = null; sel = null; if (s && s.length > 1) commit(s); else render(); }));
+$("th").addEventListener("click", e => { const b = e.target.closest("[data-t]"); if (b && b.dataset.t !== theme) { theme = b.dataset.t; sv(KEY + "-th", theme); foundCells = new Set(); newGame(); } });
+$("new").onclick = () => { foundCells = new Set(); newGame(); }; newGame();
+</script>
+</body>
+</html>

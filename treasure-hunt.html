@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>보물찾기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(40 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(40 22% 86%);--accent:hsl(40 65% 46%);--accent-fg:#fff;--soft:hsl(40 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(40 22% 10%);--surface:hsl(40 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(40 16% 25%);--accent:hsl(40 75% 68%);--accent-fg:#10131c;--soft:hsl(40 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.isle{display:grid;gap:4px;background:#5aa0d8;padding:8px;border-radius:16px}.ic{aspect-ratio:1;border:0;border-radius:8px;background:#e6c98a;font-size:1.3rem;padding:0;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}.ic:disabled{box-shadow:none;cursor:default}
+</style>
+</head>
+<body>
+<main>
+  <h1>보물찾기 🗺️</h1>
+  <div class="seg" id="lv" role="radiogroup" aria-label="섬 크기"></div>
+  <div class="stats"><div class="stat"><small>판 횟수</small><b id="tries">0</b></div><div class="stat"><small>최근 힌트</small><b id="hint" style="font-size:1.05rem">-</b></div><div class="stat"><small>최고(적게)</small><b id="best">-</b></div></div>
+  <div class="isle" id="isle" role="grid" aria-label="보물 섬"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="new" type="button">새 섬</button>
+  <p class="muted">섬 어딘가에 보물이 묻혀 있어요. 칸을 눌러 땅을 파면 <b>보물과 얼마나 가까운지</b> 색과 말로 알려 줘요. 🔥 뜨거울수록 가까워요! 적게 파고 찾을수록 좋아요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "treasure-best-v1";
+const LV = { 5: { label: "작은 섬", hint: "5×5" }, 7: { label: "보통 섬", hint: "7×7" }, 9: { label: "큰 섬", hint: "9×9" } };
+let lv = [5, 7, 9].includes(ld(KEY + "-lv")) ? ld(KEY + "-lv") : 7, T, dug, tries, done, best = ld(KEY) || {}, lastHint = "-";
+const dist = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);                      // 가로+세로로 몇 칸 떨어져 있는지
+const heat = d => (d === 0 ? ["보물!", 5] : d === 1 ? ["🔥 아주 뜨거워요", 4] : d === 2 ? ["♨️ 뜨거워요", 3] : d <= 4 ? ["🙂 따뜻해요", 2] : d <= 6 ? ["😐 미지근해요", 1] : ["🥶 차가워요", 0]);
+const COLS = ["#8fb8e8", "#a9d0d8", "#f4e3a0", "#f6b86a", "#ee6a4a", "#ffd23f"];
+function newGame() { T = [ri(0, lv - 1), ri(0, lv - 1)]; dug = new Map(); tries = 0; done = false; lastHint = "-"; $("res").hidden = true; render(); }
+function dig(y, x) {
+  const k = y + "," + x; if (done || dug.has(k)) return; tries++; const d = dist([y, x], T), h = heat(d); dug.set(k, h[1]); lastHint = h[0];
+  if (d === 0) { done = true; let t = `${tries}번 만에 보물을 찾았어요!`; if (!best[lv] || tries < best[lv]) { best[lv] = tries; sv(KEY, best); t += " 🏆 최고 기록이에요!"; } $("res").innerHTML = `<b>💎 보물 발견!</b><p class="muted">${t}</p>`; $("res").hidden = false; }
+  render();
+}
+function render() {
+  $("isle").style.gridTemplateColumns = `repeat(${lv}, 1fr)`;
+  $("isle").innerHTML = Array.from({ length: lv * lv }, (_, i) => { const y = Math.floor(i / lv), x = i % lv, k = y + "," + x, h = dug.get(k); return `<button type="button" class="ic" data-y="${y}" data-x="${x}" style="${h !== undefined ? "background:" + COLS[h] : ""}" ${h !== undefined ? "disabled" : ""} aria-label="${y + 1}행 ${x + 1}열">${h === 5 ? "💎" : h !== undefined ? "" : ""}</button>`; }).join("");
+  $("tries").textContent = tries; $("hint").textContent = lastHint; $("best").textContent = best[lv] ? best[lv] + "번" : "-";
+  $("lv").style.setProperty("--n", 3); $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${+k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${+k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+}
+$("isle").addEventListener("click", e => { const c = e.target.closest("[data-y]"); if (c) dig(+c.dataset.y, +c.dataset.x); });
+$("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && +b.dataset.l !== lv) { lv = +b.dataset.l; sv(KEY + "-lv", lv); newGame(); } }); $("new").onclick = newGame; newGame();
+</script>
+</body>
+</html>

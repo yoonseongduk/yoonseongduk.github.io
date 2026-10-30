@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>안전 상식 퀴즈</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: (분류 버튼), 점수 줄, 문제 카드, 네 개의 보기. 고르면 정답이 바로 표시되고 10문제를 풀면 결과가 나온다 */
+:root{--bg:hsl(10 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(10 22% 86%);--accent:hsl(10 60% 42%);--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(10 22% 10%);--surface:hsl(10 20% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(10 18% 24%);--accent:hsl(10 75% 68%);--accent-fg:#10131c;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.9rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 16px;text-align:center;font-family:var(--font-display);font-size:clamp(1.5rem,7vw,2.1rem);line-height:1.4;overflow-wrap:anywhere}
+.q small{display:block;color:var(--accent);font-family:var(--font-body);font-weight:700;font-size:.85rem;margin-bottom:4px}
+.q .note{display:block;color:var(--muted);font-family:var(--font-body);font-size:.9rem;margin-top:6px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.opts.one{grid-template-columns:1fr}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:58px;padding:8px 10px;font-weight:700;font-size:1.02rem;overflow-wrap:anywhere}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}.opt:disabled{cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>안전 상식 퀴즈 🦺</h1>
+  <div class="chips" id="cats" role="group" aria-label="분류" hidden></div>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <p class="muted">생활 속 안전 규칙과 신고 방법을 알아봐요. 10문제를 풀면 결과가 나와요.</p>
+</main>
+<script>
+// [문제, 정답, 틀린 보기(없으면 같은 분류의 다른 정답에서 뽑음), 분류, 해설]
+const D = [["불이 났을 때 전화할 번호는?", "119", ["112", "114", "120"]], ["도움이 필요한 범죄 신고 번호는?", "112", ["119", "114", "120"]], ["불이 났을 때 연기를 피하려면?", "낮은 자세로 젖은 수건으로 입을 막고 대피", ["엘리베이터를 탄다", "높은 곳으로 간다", "숨는다"]], ["불이 났을 때 이용하면 안 되는 것은?", "엘리베이터", ["계단", "비상구", "소화기"]], ["지진이 났을 때 건물 안에서 해야 할 행동은?", "머리를 보호하고 튼튼한 책상 아래로", ["엘리베이터를 탄다", "창문으로 뛰어내린다", "물건을 챙긴다"]], ["횡단보도에서 건너도 되는 신호등 색은?", "초록색", ["빨간색", "노란색", "주황색"]], ["자전거를 탈 때 꼭 써야 하는 것은?", "안전모(헬멧)", ["모자", "안경", "장갑"]], ["자동차를 탈 때 꼭 매야 하는 것은?", "안전벨트", ["넥타이", "허리띠", "머리띠"]], ["낯선 사람이 따라오라고 하면?", "따라가지 않고 어른께 알린다", ["따라간다", "과자를 받는다", "전화번호를 알려 준다"]], ["길을 잃었을 때는?", "그 자리에서 어른이나 경찰관에게 도움을 청한다", ["아무 데나 걷는다", "멀리 달려간다", "혼자 집을 찾는다"]], ["젖은 손으로 전기 제품을 만지면?", "감전될 수 있어 위험해요", ["괜찮아요", "더 잘 켜져요", "고장 나요"]], ["가스 냄새가 날 때 해야 할 일은?", "창문을 열고 불을 켜지 않는다", ["스위치를 켠다", "성냥을 켠다", "가만히 있는다"]], ["물놀이를 하기 전에 꼭 해야 할 것은?", "준비 운동", ["밥을 많이 먹기", "바로 뛰어들기", "혼자 들어가기"]], ["수영장에서 뛰어다니면?", "미끄러져 다칠 수 있어요", ["더 빨리 가요", "괜찮아요", "시원해요"]], ["약은 누구와 함께 먹어야 할까요?", "어른과 함께", ["혼자 마음대로", "친구와", "없이 아무거나"]], ["친구가 위험한 장난을 하자고 하면?", "하지 않고 어른께 말한다", ["같이 한다", "구경만 한다", "사진을 찍는다"]], ["눈이 아플 때 눈을 비비면?", "더 나빠질 수 있어요", ["빨리 낫는다", "괜찮아요", "눈이 커져요"]], ["학교에서 복도를 뛰면?", "다른 친구와 부딪혀 다칠 수 있어요", ["건강해져요", "빨리 가요", "괜찮아요"]], ["놀이터에서 지켜야 할 안전 규칙은?", "순서를 지키고 밀지 않는다", ["밀어도 된다", "높은 곳에서 뛴다", "신발을 던진다"]], ["119에 전화할 때 가장 먼저 말해야 할 것은?", "어디서 무슨 일이 생겼는지", ["내 이름만", "친구 이름", "좋아하는 음식"]], ["소화기를 쓸 때 겨냥할 곳은?", "불이 붙은 아래쪽", ["불꽃 위쪽", "천장", "벽"]], ["어두운 밤에 길을 걸을 땐?", "밝은 옷을 입고 밝은 길로 다녀요", ["어두운 옷만", "골목길로", "뛰어서"]], ["스마트폰을 보며 걸으면?", "부딪히거나 넘어질 수 있어 위험해요", ["안전해요", "빨라요", "시원해요"]], ["비 오는 날 우산을 쓸 때 조심할 점은?", "주변 사람이 다치지 않게 우산을 올려 든다", ["우산을 휘두른다", "우산을 던진다", "우산을 아래로 향한다"]]];
+const LABEL = "안전 상식", KEY = "safety-quiz-best-v1", ROUND = 10;
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const CATS = ["전체", ...new Set(D.map(d => d[3]).filter(Boolean))];
+let cat = "전체", qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+
+function options(d) {                                   // 보기를 만든다: 정답 + 틀린 보기 (같은 분류의 다른 정답 중에서 자동으로 뽑기도 함)
+  let wrong = d[2] && d[2].length ? d[2].slice(0, 3) : shuf(D.filter(x => x !== d && x[1] !== d[1] && (!d[3] || x[3] === d[3])).map(x => x[1])).filter((v, k, a) => a.indexOf(v) === k).slice(0, 3);
+  return shuf([d[1], ...wrong]);
+}
+function start() {
+  const pool = D.filter(d => cat === "전체" || d[3] === cat);
+  qs = shuf(pool).slice(0, ROUND).map(d => ({ d, opts: options(d) })); i = 0; score = 0; $("res").hidden = true;
+  $("cats").hidden = CATS.length < 3; $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
+}
+function show() {
+  const { d, opts } = qs[i]; locked = false; $("next").hidden = true;
+  $("q").innerHTML = (LABEL || d[3] ? `<small>${esc(LABEL || d[3])}</small>` : "") + esc(d[0]);
+  $("opts").className = "opts" + (opts.some(o => String(o).length > 9) ? " one" : "");
+  $("opts").innerHTML = opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join("");
+  $("no").textContent = (i + 1) + "/" + qs.length; $("score").textContent = score; $("best").textContent = best;
+}
+function pick(k) {
+  if (locked) return; locked = true; const { d, opts } = qs[i]; if (opts[k] === d[1]) score++;
+  document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === d[1]) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
+  if (d[4]) $("q").insertAdjacentHTML("beforeend", `<span class="note">${esc(d[4])}</span>`);
+  $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
+}
+function finish() {
+  const full = qs.length === ROUND; let note = ""; if (full && cat === "전체" && score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("next").hidden = true;
+  $("res").innerHTML = `<b>${qs.length}문제 중 ${score}개 정답</b><p class="muted">${score >= qs.length * .9 ? "박사님이시네요! 🎓" : score >= qs.length * .6 ? "잘했어요 👍" : "조금만 더 힘내요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
+  $("res").hidden = false; $("best").textContent = best; $("again").onclick = start;
+}
+$("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); });
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; start(); } });
+$("next").onclick = () => { if (i === qs.length - 1) finish(); else { i++; show(); } };
+start();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

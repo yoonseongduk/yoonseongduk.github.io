@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>순우리말 퀴즈</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: (분류 버튼), 점수 줄, 문제 카드, 네 개의 보기. 고르면 정답이 바로 표시되고 10문제를 풀면 결과가 나온다 */
+:root{--bg:hsl(85 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(85 22% 86%);--accent:hsl(85 60% 42%);--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(85 22% 10%);--surface:hsl(85 20% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(85 18% 24%);--accent:hsl(85 75% 68%);--accent-fg:#10131c;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.9rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 16px;text-align:center;font-family:var(--font-display);font-size:clamp(1.5rem,7vw,2.1rem);line-height:1.4;overflow-wrap:anywhere}
+.q small{display:block;color:var(--accent);font-family:var(--font-body);font-weight:700;font-size:.85rem;margin-bottom:4px}
+.q .note{display:block;color:var(--muted);font-family:var(--font-body);font-size:.9rem;margin-top:6px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.opts.one{grid-template-columns:1fr}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:58px;padding:8px 10px;font-weight:700;font-size:1.02rem;overflow-wrap:anywhere}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}.opt:disabled{cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>순우리말 퀴즈 🌾</h1>
+  <div class="chips" id="cats" role="group" aria-label="분류" hidden></div>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <p class="muted">예쁜 순우리말의 뜻을 맞혀 보세요. 10문제를 풀면 결과가 나와요.</p>
+</main>
+<script>
+// [문제, 정답, 틀린 보기(없으면 같은 분류의 다른 정답에서 뽑음), 분류, 해설]
+const D = [["'가람'은 무슨 뜻일까요?", "강", ["산", "바다", "들"]], ["'마루'는 무슨 뜻일까요?", "꼭대기·산등성이", ["바다", "구름", "강"]], ["'아라'는 무슨 뜻일까요?", "바다", ["강", "하늘", "산"]], ["'미르'는 무슨 뜻일까요?", "용", ["호랑이", "뱀", "봉황"]], ["'온누리'는 무슨 뜻일까요?", "온 세상", ["한 마을", "하늘나라", "바다"]], ["'나래'는 무슨 뜻일까요?", "날개", ["구름", "나무", "나비"]], ["'슬기'는 무슨 뜻일까요?", "지혜", ["용기", "힘", "재산"]], ["'다솜'은 무슨 뜻일까요?", "사랑", ["기쁨", "슬픔", "꿈"]], ["'가온'은 무슨 뜻일까요?", "가운데·중심", ["처음", "끝", "옆"]], ["'어버이'는 누구를 부르는 말일까요?", "아버지와 어머니", ["형제", "친구", "선생님"]], ["'볼우물'은 무엇일까요?", "웃을 때 볼에 생기는 우묵한 곳", ["우물", "볼펜", "연못"]], ["'노을'은 언제 볼 수 있을까요?", "해가 뜨거나 질 때 하늘이 붉게 물든 것", ["비가 올 때", "눈이 올 때", "바람 불 때"]], ["'소나기'는 어떤 비일까요?", "갑자기 세게 내리다 그치는 비", ["오래 내리는 비", "눈 섞인 비", "안개비"]], ["'이슬비'는 어떤 비일까요?", "아주 가늘게 내리는 비", ["갑자기 쏟아지는 비", "얼음이 섞인 비", "오래 오는 장마"]], ["'새벽'은 하루 중 언제일까요?", "날이 밝아 오기 전", ["해가 가장 높을 때", "저녁", "한밤중"]], ["'어스름'은 언제일까요?", "조금 어두운 저녁 무렵", ["한낮", "새벽 두 시", "아침 열 시"]], ["'꿈나무'는 어떤 사람일까요?", "앞으로 크게 자랄 어린이", ["오래된 나무", "꿈을 파는 사람", "나무꾼"]], ["'도란도란'은 어떤 모양일까요?", "다정하게 이야기하는 모양", ["크게 다투는 모양", "울고 있는 모양", "뛰는 모양"]], ["'아름드리'는 무엇을 말할까요?", "두 팔로 안아야 할 만큼 큰 나무", ["작은 꽃", "긴 줄", "둥근 돌"]], ["'한가위'는 어떤 날일까요?", "추석", ["설날", "단오", "동지"]], ["도토리는 무슨 나무의 열매일까요?", "참나무", ["소나무", "감나무", "밤나무"]], ["'눈썰미'는 무슨 뜻일까요?", "보고 곧 잘 따라 하는 재주", ["눈이 나쁜 것", "눈물 많은 것", "눈이 큰 것"]], ["'손사래'는 무엇일까요?", "손을 내저으며 거절하는 몸짓", ["손뼉", "박수", "악수"]]];
+const LABEL = "순우리말 뜻", KEY = "purekorean-quiz-best-v1", ROUND = 10;
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const CATS = ["전체", ...new Set(D.map(d => d[3]).filter(Boolean))];
+let cat = "전체", qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+
+function options(d) {                                   // 보기를 만든다: 정답 + 틀린 보기 (같은 분류의 다른 정답 중에서 자동으로 뽑기도 함)
+  let wrong = d[2] && d[2].length ? d[2].slice(0, 3) : shuf(D.filter(x => x !== d && x[1] !== d[1] && (!d[3] || x[3] === d[3])).map(x => x[1])).filter((v, k, a) => a.indexOf(v) === k).slice(0, 3);
+  return shuf([d[1], ...wrong]);
+}
+function start() {
+  const pool = D.filter(d => cat === "전체" || d[3] === cat);
+  qs = shuf(pool).slice(0, ROUND).map(d => ({ d, opts: options(d) })); i = 0; score = 0; $("res").hidden = true;
+  $("cats").hidden = CATS.length < 3; $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
+}
+function show() {
+  const { d, opts } = qs[i]; locked = false; $("next").hidden = true;
+  $("q").innerHTML = (LABEL || d[3] ? `<small>${esc(LABEL || d[3])}</small>` : "") + esc(d[0]);
+  $("opts").className = "opts" + (opts.some(o => String(o).length > 9) ? " one" : "");
+  $("opts").innerHTML = opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join("");
+  $("no").textContent = (i + 1) + "/" + qs.length; $("score").textContent = score; $("best").textContent = best;
+}
+function pick(k) {
+  if (locked) return; locked = true; const { d, opts } = qs[i]; if (opts[k] === d[1]) score++;
+  document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === d[1]) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
+  if (d[4]) $("q").insertAdjacentHTML("beforeend", `<span class="note">${esc(d[4])}</span>`);
+  $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
+}
+function finish() {
+  const full = qs.length === ROUND; let note = ""; if (full && cat === "전체" && score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("next").hidden = true;
+  $("res").innerHTML = `<b>${qs.length}문제 중 ${score}개 정답</b><p class="muted">${score >= qs.length * .9 ? "박사님이시네요! 🎓" : score >= qs.length * .6 ? "잘했어요 👍" : "조금만 더 힘내요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
+  $("res").hidden = false; $("best").textContent = best; $("again").onclick = start;
+}
+$("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); });
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; start(); } });
+$("next").onclick = () => { if (i === qs.length - 1) finish(); else { i++; show(); } };
+start();
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

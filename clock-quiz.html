@@ -80,5 +80,6 @@ $("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"
 $("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && b.dataset.l !== lv) { lv = b.dataset.l; sv(KEY + "-lv", lv); start(); } }); start();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="wrong-hook.js"></script>
 </body>
 </html>

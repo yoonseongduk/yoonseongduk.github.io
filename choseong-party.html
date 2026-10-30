@@ -54,9 +54,9 @@ const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(ra
 const KEY = "choseong-party-v1";
 const CH = "ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ";
 let names = ["1번", "2번", "3번", "4번"], pts = [0, 0, 0, 0], left = 0, total = 10, timer = 0, tempo = 1, sec = 10;
-function newCho() { const a = CH[ri(0, CH.length - 1)], b = CH[ri(0, CH.length - 1)]; $("cho").textContent = a + b; stop(); $("msg").textContent = "다음 사람은 이 초성으로 시작하는 말을 하세요"; }
-function stop() { clearInterval(timer); timer = 0; $("bar").style.width = "100%"; $("timer").textContent = "⏱ 타이머 시작"; }
-function startTimer() { if (timer) return stop(); left = total; $("timer").textContent = "⏹ 멈추기"; timer = setInterval(() => { left -= 0.1; $("bar").style.width = Math.max(0, left / total * 100) + "%"; if (left <= 0) { stop(); $("msg").textContent = "⏰ 시간 초과! 탈락(또는 감점)"; if (navigator.vibrate) navigator.vibrate(300); } }, 100 * tempo); }
+function newCho() { const a = CH[ri(0, CH.length - 1)], b = CH[ri(0, CH.length - 1)]; $("cho").textContent = a + b; stopTimer(); $("msg").textContent = "다음 사람은 이 초성으로 시작하는 말을 하세요"; }
+function stopTimer() { clearInterval(timer); timer = 0; $("bar").style.width = "100%"; $("timer").textContent = "⏱ 타이머 시작"; }
+function startTimer() { if (timer) return stopTimer(); left = total; $("timer").textContent = "⏹ 멈추기"; timer = setInterval(() => { left -= 0.1; $("bar").style.width = Math.max(0, left / total * 100) + "%"; if (left <= 0) { stopTimer(); $("msg").textContent = "⏰ 시간 초과! 탈락(또는 감점)"; if (navigator.vibrate) navigator.vibrate(300); } }, 100 * tempo); }
 function render() { $("board").innerHTML = names.map((n, k) => `<div class="pl"><input type="text" value="${esc(n)}" data-n="${k}" maxlength="6" aria-label="이름"><button type="button" data-d="${k}" data-v="-1">−</button><b>${pts[k]}</b><button type="button" data-d="${k}" data-v="1">+</button></div>`).join(""); }
 $("board").addEventListener("click", e => { const b = e.target.closest("[data-d]"); if (b) { pts[+b.dataset.d] += +b.dataset.v; render(); } });
 $("board").addEventListener("input", e => { const i = e.target.dataset.n; if (i !== undefined) names[+i] = e.target.value; });

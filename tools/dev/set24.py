@@ -1,10 +1,11 @@
 import sys
 sys.path.insert(0, ".")
 from mkpage import make
-BODY = '''  <div class="card" id="intro"><p>질문에 얼마나 공감하는지 고르면 <b>16가지 성격 유형</b> 중 나와 가까운 유형을 알려 줘요. 네 가지 선호 축(에너지 방향·정보 인식·판단 방식·생활 양식)을 따로 측정하고, 결과에는 <b>선호 강도, 인지 기능 순서, 소통·스트레스·성장 팁</b>까지 담았어요.</p><p class="muted">공식 MBTI® 검사가 아니에요. 심리 유형론을 참고해 직접 만든 비슷한 방식의 테스트예요.</p><div class="modes"><button class="btn" id="startQ" type="button">빠른 검사 · 28문항 · 약 3분</button><button class="btn" id="startF" type="button">정밀 검사 · 60문항 · 약 7분</button></div><div id="last"></div></div>
+BODY = '''  <div class="card" id="intro"><p>질문에 얼마나 공감하는지 고르면 <b>16가지 성격 유형</b> 중 나와 가까운 유형을 알려 줘요. 네 가지 선호 축(에너지 방향·정보 인식·판단 방식·생활 양식)을 따로 측정하고, 결과에는 <b>선호 강도, 인지 기능 순서, 소통·스트레스·성장 팁</b>까지 담았어요.</p><p class="muted">공식 MBTI® 검사가 아니에요. 심리 유형론을 참고해 직접 만든 비슷한 방식의 테스트예요.</p><div class="modes"><button class="btn" id="startQ" type="button">빠른 검사 · 28문항 · 약 3분</button><button class="btn" id="startF" type="button">정밀 검사 · 60문항 · 약 7분</button><button class="btn ghost" id="famBtn" type="button">👨‍👩‍👧 가족 비교 보기</button></div><div id="last"></div></div>
   <div class="card" id="quiz" hidden><div class="step"><span class="muted" id="qn">1 / 28</span><span class="muted" id="axis"></span></div><div class="bar"><i id="prog"></i></div><p class="q" id="qt"></p><div class="ans" id="ans"></div><button class="btn ghost" id="back" type="button">← 이전 문항</button></div>
-  <div id="result" hidden></div>'''
-CSS = '''.bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}.q{font-family:var(--font-display);font-size:1.35rem;line-height:1.5;min-height:4.2em;display:flex;align-items:center}.ans{display:grid;gap:8px}.ans button{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px;font-weight:700;text-align:left}.ans button.on{border-color:var(--accent);background:var(--soft)}.rt{font-family:var(--font-display);font-size:3rem;letter-spacing:.06em;color:var(--accent);line-height:1.1}.rn{font-family:var(--font-display);font-size:1.4rem}.ax{display:grid;gap:10px}.ax .r{display:grid;gap:4px}.ax .l{display:flex;justify-content:space-between;font-size:.88rem;font-weight:700}.ax .t{height:12px;background:var(--soft);border-radius:99px;position:relative;overflow:hidden}.ax .t i{position:absolute;top:0;bottom:0;background:var(--accent);border-radius:99px}.tags{display:flex;flex-wrap:wrap;gap:6px}.tags span{background:var(--soft);border-radius:999px;padding:3px 10px;font-size:.88rem}.sec{display:grid;gap:4px}.sec b{font-size:.95rem}.sec ul{margin:0;padding-left:20px}.modes{display:grid;gap:8px;margin:10px 0}.fn{display:grid;gap:6px}.fn div{display:flex;gap:10px;align-items:flex-start;background:var(--soft);border-radius:12px;padding:8px 10px}.fn b.k{min-width:2.4em;font-family:var(--font-display);font-size:1.15rem;color:var(--accent)}.fn small{display:block;color:var(--muted)}.hist{margin:0;padding-left:18px}.warn{background:var(--soft);border-radius:12px;padding:8px 10px}'''
+  <div id="result" hidden></div>
+  <div id="fam" hidden></div>'''
+CSS = '''.bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}.q{font-family:var(--font-display);font-size:1.35rem;line-height:1.5;min-height:4.2em;display:flex;align-items:center}.ans{display:grid;gap:8px}.ans button{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:12px;font-weight:700;text-align:left}.ans button.on{border-color:var(--accent);background:var(--soft)}.rt{font-family:var(--font-display);font-size:3rem;letter-spacing:.06em;color:var(--accent);line-height:1.1}.rn{font-family:var(--font-display);font-size:1.4rem}.ax{display:grid;gap:10px}.ax .r{display:grid;gap:4px}.ax .l{display:flex;justify-content:space-between;font-size:.88rem;font-weight:700}.ax .t{height:12px;background:var(--soft);border-radius:99px;position:relative;overflow:hidden}.ax .t i{position:absolute;top:0;bottom:0;background:var(--accent);border-radius:99px}.tags{display:flex;flex-wrap:wrap;gap:6px}.tags span{background:var(--soft);border-radius:999px;padding:3px 10px;font-size:.88rem}.sec{display:grid;gap:4px}.sec b{font-size:.95rem}.sec ul{margin:0;padding-left:20px}.modes{display:grid;gap:8px;margin:10px 0}.fn{display:grid;gap:6px}.fn div{display:flex;gap:10px;align-items:flex-start;background:var(--soft);border-radius:12px;padding:8px 10px}.fn b.k{min-width:2.4em;font-family:var(--font-display);font-size:1.15rem;color:var(--accent)}.fn small{display:block;color:var(--muted)}.hist{margin:0;padding-left:18px}.frow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.frow button{padding:4px 10px;font-size:.85rem}.fin{width:100%;box-sizing:border-box;border:2px solid var(--line);border-radius:12px;padding:10px;background:var(--surface);color:var(--fg);font:inherit}.sel{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.sel select{width:100%;border:2px solid var(--line);border-radius:10px;padding:8px 4px;background:var(--surface);color:var(--fg);font:inherit}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.warn{background:var(--soft);border-radius:12px;padding:8px 10px}'''
 JS = r'''
 const QBASE = [
  ["처음 보는 사람과도 금방 이야기를 시작한다.", "EI", 1], ["사람들과 함께 있으면 에너지가 생긴다.", "EI", 1], ["쉬는 날에는 혼자 조용히 보내는 것이 더 좋다.", "EI", -1], ["모임에서 말을 많이 하는 편이다.", "EI", 1], ["생각을 충분히 정리한 뒤에 말하는 편이다.", "EI", -1], ["전화나 메시지보다 직접 만나서 이야기하는 것이 편하다.", "EI", 1], ["많은 사람 앞에 나서는 일이 부담스럽다.", "EI", -1],
@@ -74,6 +75,58 @@ function finish() {
   res = { code, pct, n: Q.length, d: new Date().toISOString().slice(0, 10) }; sv(KEY, res);
   hist = [{ code, n: Q.length, d: res.d }].concat(hist).slice(0, 8); sv(HK, hist); showResult(res);
 }
+
+const FK = KEY + "-fam";
+let fam = ld(FK) || [];
+const AD = {
+ EI: ["둘 다 대화와 활동으로 힘을 얻어 잘 어울려요. 다만 서로 말을 끊지 않도록 신경 써요.", "둘 다 조용한 시간을 좋아해 편안하지만, 마음을 말로 꺼내는 시간을 일부러 만들면 좋아요.", "에너지를 얻는 방식이 달라요. 외향 쪽은 대화로, 내향 쪽은 혼자만의 시간으로 충전하니 외출·모임 뒤에는 쉬는 시간을 서로 존중해 주세요."],
+ SN: ["둘 다 현실적이라 계획이 잘 실행돼요. 새로운 시도는 의식적으로 한 번씩 해 보세요.", "둘 다 아이디어가 풍부해 대화가 즐겁지만, 마무리와 현실 점검이 비면 일이 흩어질 수 있어요.", "한쪽은 사실과 경험, 다른 쪽은 가능성과 아이디어를 봐요. 계획을 짤 때 현실 점검과 새 아이디어를 나눠 맡으면 시너지가 나요."],
+ TF: ["둘 다 논리적이라 대화가 명쾌하지만 감정 표현이 부족해 차갑게 느껴질 수 있어요. 고마움과 사과를 말로 해 보세요.", "서로 마음을 잘 알아줘 따뜻하지만, 불편한 이야기를 미루기 쉬워요. 필요한 말은 부드럽게라도 꺼내요.", "판단 기준이 논리와 배려로 갈려요. 의견이 부딪히면 '이유'와 '마음'을 각각 한 문장씩 말해 보세요."],
+ JP: ["둘 다 계획적이라 약속이 잘 지켜지지만, 변수가 생기면 같이 예민해질 수 있어요. 예비 시간을 두세요.", "둘 다 유연해 편하지만, 마감과 정리가 밀리기 쉬워요. 공동 일정은 달력에 적어 두세요.", "계획형과 즉흥형의 만남이에요. 일정은 큰 틀만 정하고 세부는 여유를 두는 식으로 타협해 보세요."]
+};
+const AXN = { EI: "에너지 방향", SN: "정보 인식", TF: "판단 방식", JP: "생활 양식" };
+function famSave() { sv(FK, fam); }
+function addFam(n, code, pct) {
+  n = (n || "").trim().slice(0, 8); if (!n) return false;
+  const m = { n, code, pct }, i = fam.findIndex(x => x.n === n); if (i >= 0) fam[i] = m; else fam.push(m);
+  fam = fam.slice(-12); famSave(); return true;
+}
+function pairHtml(a, b) {
+  const ks = Object.keys(AX); let same = 0;
+  const rows = ks.map((k, i) => {
+    const x = a.code[i], y = b.code[i], eq = x === y; if (eq) same++;
+    const ix = AX[k].indexOf(x) % 2, txt = AD[k][eq ? ix : 2];
+    return `<div class="sec"><b>${eq ? "🤝" : "🔀"} ${AXN[k]}: ${x} · ${y}</b><p>${esc(txt)}</p></div>`;
+  }).join("");
+  const fa = ST[a.code].split(" ")[0], fb = ST[b.code].split(" ")[0];
+  const fnote = fa === fb ? `두 사람 모두 <b>${fa}(${FN[fa][0]})</b>를 가장 편하게 써요. 서로 생각의 방식이 비슷해 이해가 빠른 편이에요.` : `${esc(a.n)}의 주기능은 <b>${fa}(${FN[fa][0]})</b>, ${esc(b.n)}의 주기능은 <b>${fb}(${FN[fb][0]})</b>예요. 같은 일을 보는 출발점이 달라서, 서로의 이유를 먼저 물어보면 오해가 줄어요.`;
+  const lvl = same === 4 ? "거의 쌍둥이처럼 닮았어요" : same === 3 ? "많이 닮았어요" : same === 2 ? "닮은 점과 다른 점이 반반이에요" : same === 1 ? "서로 다른 점이 많아 배울 점도 많아요" : "정반대라서 서로를 보완해 줘요";
+  return `<div class="card"><div style="text-align:center"><b>${esc(a.n)} ${a.code} ↔ ${esc(b.n)} ${b.code}</b><div class="rn">닮은 정도 ${same}/4</div><div class="muted">${lvl}</div></div>${rows}<div class="sec"><b>🧠 생각의 출발점</b><p>${fnote}</p></div><p class="muted">'잘 맞는다/안 맞는다'를 정하는 점수가 아니에요. 서로 다른 점을 이해하는 대화의 힌트로만 써 주세요.</p></div>`;
+}
+function groupHtml() {
+  const ks = Object.keys(AX), n = fam.length;
+  const rows = ks.map((k, i) => {
+    const L = AX[k], c0 = fam.filter(m => m.code[i] === L[0]).length, c1 = n - c0;
+    let msg = c0 === n ? `모두 ${L[2]}(${L[0]}) 쪽이에요. 편하지만 ${L[3]}(${L[1]}) 관점이 비기 쉬워요.` : c1 === n ? `모두 ${L[3]}(${L[1]}) 쪽이에요. 편하지만 ${L[2]}(${L[0]}) 관점이 비기 쉬워요.` : `${L[2]} ${c0}명, ${L[3]} ${c1}명이 섞여 있어 서로 보완돼요.`;
+    return `<div class="r"><div class="l"><span>${L[2]}(${L[0]}) ${c0}명</span><span>${c1}명 ${L[3]}(${L[1]})</span></div><div class="t"><i style="left:0;width:${c0 / n * 100}%"></i></div><div class="muted" style="font-size:.85rem">${msg}</div></div>`;
+  }).join("");
+  return `<div class="card"><b>👨‍👩‍👧 우리 가족 성향 분포</b><div class="ax" style="margin-top:8px">${rows}</div></div>`;
+}
+function renderFam() {
+  const opt = (i, sel) => fam.map((m, j) => `<option value="${j}"${j === sel ? " selected" : ""}>${esc(m.n)} (${m.code})</option>`).join("");
+  const sels = Object.keys(AX).map(k => `<select data-k="${k}"><option value="0">${AX[k][0]} ${AX[k][2]}</option><option value="1">${AX[k][1]} ${AX[k][3]}</option></select>`).join("");
+  $("fam").innerHTML = `<div class="card"><b>👨‍👩‍👧 가족 비교</b><p class="muted">가족 각자의 결과를 모아 서로의 성향 차이를 비교해요. 이 폰에만 저장돼요. 가족이 다른 폰에서 검사했다면 아래에서 결과를 직접 입력해 주세요.</p>`
+    + (fam.length ? fam.map((m, j) => `<div class="frow"><span><b>${esc(m.n)}</b> · ${m.code} ${esc(T[m.code][0])}</span><button type="button" class="btn ghost" data-del="${j}">삭제</button></div>`).join("") : `<p class="muted">아직 저장된 가족이 없어요.</p>`) + `</div>`
+    + `<div class="card"><b>➕ 가족 직접 추가</b><p class="muted" style="margin:4px 0 8px">이름과 결과 유형(예: ENFP)을 골라 주세요.</p><input class="fin" id="fn2" maxlength="8" placeholder="이름 (예: 엄마)" style="margin-bottom:8px"><div class="sel">${sels}</div><button class="btn" id="fadd" type="button" style="margin-top:8px">추가하기</button></div>`
+    + (fam.length >= 2 ? groupHtml() + `<div class="card"><b>🔍 두 사람 비교하기</b><div class="pair" style="margin-top:8px"><select class="fin" id="pa">${opt(0, 0)}</select><select class="fin" id="pb">${opt(1, 1)}</select></div></div><div id="pairOut">${pairHtml(fam[0], fam[1])}</div>` : `<p class="muted">2명 이상 저장하면 비교 결과가 나타나요.</p>`)
+    + `<button class="btn ghost" id="fback" type="button">← 돌아가기</button>`;
+  const upd = () => { const a = fam[+$("pa").value], b = fam[+$("pb").value]; $("pairOut").innerHTML = a === b ? `<p class="muted">서로 다른 두 사람을 골라 주세요.</p>` : pairHtml(a, b); };
+  if ($("pa")) { $("pa").onchange = upd; $("pb").onchange = upd; $("pb").value = "1"; }
+  $("fadd").onclick = () => { const sel = [...document.querySelectorAll("#fam .sel select")], code = sel.map(e => AX[e.dataset.k][+e.value]).join(""), pct = {}; sel.forEach(e => { pct[e.dataset.k] = +e.value ? 25 : 75; }); if (addFam($("fn2").value, code, pct)) renderFam(); else $("fn2").focus(); };
+  $("fam").querySelectorAll("[data-del]").forEach(b => { b.onclick = () => { fam.splice(+b.dataset.del, 1); famSave(); renderFam(); }; });
+  $("fback").onclick = () => { $("fam").hidden = true; $("intro").hidden = false; renderLast(); };
+}
+function openFam() { $("intro").hidden = true; $("quiz").hidden = true; $("result").hidden = true; $("fam").hidden = false; renderFam(); window.scrollTo(0, 0); }
 function level(p) { const d = Math.abs(p - 50) * 2; return d < 12 ? "거의 비슷" : d < 30 ? "약한 선호" : d < 60 ? "뚜렷한 선호" : "매우 뚜렷한 선호"; }
 function showResult(r) {
   const [nm, sum, st, wk, mt, jobs, tip] = T[r.code], li = k => `<li>${esc(k)}</li>`, ks = Object.keys(AX);
@@ -89,7 +142,9 @@ function showResult(r) {
     + `<div class="card"><b>🧠 마음이 일하는 순서 (인지 기능)</b><p class="muted" style="margin:4px 0 8px">심리학자 융의 유형론에서 말하는 여덟 가지 힘 중 이 유형이 주로 쓰는 네 가지를 순서대로 보여 줘요.</p><div class="fn">${fn}</div></div>`
     + `<div class="card"><div class="sec"><b>💪 강점</b><ul>${st.map(li).join("")}</ul></div><div class="sec"><b>⚠️ 조심할 점</b><ul>${wk.map(li).join("")}</ul></div><div class="sec"><b>🗣️ 소통 스타일</b><p>${esc(cm)}</p></div><div class="sec"><b>😰 스트레스를 받으면</b><p>${esc(ss)}</p></div><div class="sec"><b>🌱 성장 팁</b><p>${esc(gr)}</p></div></div>`
     + `<div class="card"><div class="sec"><b>💞 잘 맞는 유형(일반적으로)</b><div class="tags">${mt.map(m => `<span>${m} · ${T[m][0]}</span>`).join("")}</div></div><div class="sec"><b>🎯 어울리는 일·활동</b><div class="tags">${jobs.map(j => `<span>${esc(j)}</span>`).join("")}</div></div><div class="sec"><b>💬 한마디</b><p>${esc(tip)}</p></div></div>`
+    + `<div class="card"><b>👨‍👩‍👧 가족 비교에 저장</b><p class="muted" style="margin:4px 0 8px">이름을 적고 저장하면 가족과 성향을 비교할 수 있어요.</p><input class="fin" id="fname" maxlength="8" placeholder="이름 (예: 아빠)" style="margin-bottom:8px"><button class="btn" id="fsave" type="button">저장하고 가족 비교 보기</button></div>`
     + `<button class="btn" id="copy" type="button">📋 결과 복사하기</button> <button class="btn ghost" id="again" type="button">다시 테스트하기</button><p class="muted">이 테스트는 심리 유형론을 참고해 직접 만든 자기보고식 검사예요. 공식 MBTI® 검사와 달라 결과가 다를 수 있고, 진단이나 채용·진로 결정의 근거로 쓰기엔 적절하지 않아요. 유형은 '선호하는 경향'일 뿐 능력이나 한계를 뜻하지 않으며, 같은 사람도 시기와 기분에 따라 달라질 수 있어요. (MBTI®는 해당 권리자의 상표예요.)</p>`;
+  $("fsave").onclick = () => { if (addFam($("fname").value, r.code, r.pct)) openFam(); else $("fname").focus(); };
   $("copy").onclick = () => { const t = `나의 성격 유형: ${r.code} (${nm})\n` + ks.map(k => `${AX[k][2]}(${AX[k][0]}) ${r.pct[k]}% : ${100 - r.pct[k]}% ${AX[k][3]}(${AX[k][1]})`).join("\n") + `\n인지 기능: ${ST[r.code]}`; try { navigator.clipboard.writeText(t).then(() => { $("copy").textContent = "✅ 복사했어요"; }, () => { $("copy").textContent = "복사에 실패했어요"; }); } catch (e) { $("copy").textContent = "복사에 실패했어요"; } };
   $("again").onclick = () => { $("result").hidden = true; $("intro").hidden = false; idx = 0; ans = []; renderLast(); };
 }
@@ -99,6 +154,7 @@ function renderLast() {
   const b = $("seeLast"); if (b && res && T[res.code]) b.onclick = () => showResult(res);
 }
 function begin(m) { mode = m; Q = mix(m === "f" ? QBASE.concat(QMORE) : QBASE); idx = 0; ans = []; $("intro").hidden = true; $("quiz").hidden = false; showQ(); }
+$("famBtn").onclick = openFam;
 $("startQ").onclick = () => begin("q");
 $("startF").onclick = () => begin("f");
 $("ans").addEventListener("click", e => { const b = e.target.closest("[data-v]"); if (!b) return; ans[idx] = +b.dataset.v; if (idx < Q.length - 1) { idx++; showQ(); } else { $("prog").style.width = "100%"; finish(); } });

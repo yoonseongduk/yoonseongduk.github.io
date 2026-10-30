@@ -17,6 +17,8 @@ set /p MSG=변경 내용을 짧게 적어 주세요 (예: 속담 퀴즈 문제 �
 if "%MSG%"=="" set MSG=게임 수정
 echo [4/5] 저장(커밋)합니다...
 git add -A
+git diff --cached --quiet
+if not errorlevel 1 goto nothing
 git commit -m "%MSG%"
 if errorlevel 1 goto noid
 echo [5/5] 사이트에 올립니다...

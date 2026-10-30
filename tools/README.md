@@ -18,12 +18,12 @@
 
 ### 준비물
 - Git for Windows (이미 설치하셨어요)
-- Python 3 (https://www.python.org , 설치할 때 "Add python.exe to PATH"에 체크)
+- Python 3 (https://www.python.org). `py --version`을 입력했을 때 `Python 3.xx.x`가 나오면 준비된 거예요. (`python`만 입력했을 때 이름만 나오면 가짜 연결이니 `py`를 쓰세요.)
 - 처음 올릴 때 GitHub 로그인 창이 뜰 수 있어요.
 
 ## `sw.js`만 다시 만들고 싶을 때
 ```
-python tools\make-sw.py
+py tools\make-sw.py
 ```
 게임 파일을 고치거나 추가했다면 올리기 전에 꼭 한 번 실행하세요. (`올리기.bat`이 대신 해 줘요.)
 

@@ -6,7 +6,8 @@ echo [1/5] 사이트의 최신 내용을 먼저 받아 옵니다...
 git pull
 if errorlevel 1 goto fail
 echo [2/5] 폰 저장 목록(sw.js)을 새로 만듭니다...
-python tools\make-sw.py
+py tools\make-sw.py
+if errorlevel 1 python tools\make-sw.py
 if errorlevel 1 goto nopy
 echo [3/5] 바뀐 파일 목록:
 git status --short
@@ -24,7 +25,7 @@ pause
 exit /b 0
 :nopy
 echo.
-echo 파이썬(python)이 없거나 실행에 실패했어요. https://www.python.org 에서 설치한 뒤 다시 해 보세요.
+echo 파이썬(py 또는 python)이 없거나 실행에 실패했어요. https://www.python.org 에서 설치한 뒤 다시 해 보세요.
 pause
 exit /b 1
 :fail

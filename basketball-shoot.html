@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>농구 슛</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 점수·최고·상태 줄, 가운데 게임 판(캔버스, 손가락으로 조작), 아래 설명. 시작과 끝은 판 위의 안내 화면에서 */
+:root{--bg:hsl(25 30% 94%);--surface:#fff;--fg:#1b2133;--muted:#5f6881;--line:hsl(25 22% 84%);--field:hsl(25 40% 16%);--accent:hsl(25 75% 50%);--accent-fg:#fff;--ok:#2fb36a;--bad:#e8453c;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(25 25% 9%);--surface:hsl(25 20% 15%);--fg:#e8ecf8;--muted:#95a0c0;--line:hsl(25 20% 24%);--field:hsl(25 40% 7%);--accent:hsl(25 85% 66%);--accent-fg:#10131c;--ok:#4cd486;--bad:#ff6b5e;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.88rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.35rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wrap{position:relative;border-radius:14px;overflow:hidden;border:2px solid var(--line);background:var(--field);touch-action:none;aspect-ratio:300/400}
+canvas{width:100%;height:100%;display:block}
+.ov{position:absolute;inset:0;background:rgba(5,8,20,.58);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px}
+.ov b{font-family:var(--font-display);font-weight:400;font-size:1.9rem;line-height:1.2}.ov p{color:#e4e8f6}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:12px;padding:10px 24px;font-family:var(--font-display);font-size:1.3rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>농구 슛 🏀</h1>
+  <div class="stats"><div class="stat"><small>점수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div><div class="stat"><small>남은 공</small><b id="info">-</b></div></div>
+  <div class="wrap" id="wrap"><canvas id="cv" aria-label="농구 슛 게임 판"></canvas><div class="ov" id="ov"></div></div>
+  <p class="muted">아래 <b>게이지가 왔다 갔다</b> 해요. 초록 구간에서 화면을 눌러 슛을 던지세요! 연속으로 넣으면 보너스 점수. 공은 10개이고, 골대 거리가 매번 달라져요. (일시정지: 창을 벗어나면 자동, 컴퓨터는 P 키)</p>
+</main>
+<script>
+const W = 300, H = 400, KEY = "basketball-best-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1));
+const cv = $("cv"), ctx = cv.getContext("2d");
+let score = 0, best = ld(KEY) || 0, state = "ready", info = "", newBest = false, last = 0, keys = { l: 0, r: 0, u: 0, d: 0 }, C = {};
+function readColors() { const css = getComputedStyle(document.documentElement); for (const k of ["fg", "surface", "line", "muted", "accent", "ok", "bad", "field"]) C[k] = css.getPropertyValue("--" + k).trim(); }
+function setScore(n) { score = n; $("score").textContent = score; }
+function addScore(n) { setScore(score + n); }
+function setInfo(s) { info = s; $("info").textContent = s; }
+function end() { if (state !== "play") return; state = "over"; if (score > best) { best = score; sv(KEY, best); newBest = true; } ui(); }
+function start() { if (state === "ready" || state === "over") { setScore(0); newBest = false; reset(); } state = "play"; last = performance.now(); ui(); }
+function pause() { if (state === "play") { state = "paused"; ui(); } }
+function ui() {
+  $("best").textContent = best; $("score").textContent = score; $("info").textContent = info; const ov = $("ov"); ov.hidden = state === "play";
+  ov.innerHTML = state === "ready" ? `<b>농구 슛</b><p>타이밍을 맞춰 골을 넣으세요</p><button class="btn" data-a="go" type="button">시작</button>`
+    : state === "paused" ? `<b>일시정지</b><button class="btn" data-a="go" type="button">계속하기</button>`
+    : `<b>게임 오버</b><p>${score}점${newBest ? "<br>🏆 최고 기록!" : ""}</p><button class="btn" data-a="go" type="button">다시 하기</button>`;
+}
+function frame(t) {
+  const dt = Math.min(.033, (t - last) / 1000 || 0); last = t; if (state === "play") update(dt);
+  const w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (w) { const pw = Math.round(w * dpr); if (cv.width !== pw) { cv.width = pw; cv.height = Math.round(pw * H / W); } ctx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); ctx.clearRect(0, 0, W, H); draw(ctx); }
+  requestAnimationFrame(frame);
+}
+const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+$("wrap").addEventListener("pointerdown", e => { if (e.target.closest("[data-a]")) return; if (state === "play") { e.preventDefault(); pointer("down", ...pos(e)); } });
+$("wrap").addEventListener("pointermove", e => { if (state === "play") pointer("move", ...pos(e)); });
+["pointerup", "pointercancel", "pointerleave"].forEach(ev => $("wrap").addEventListener(ev, e => { if (state === "play") pointer("up", ...pos(e)); }));
+$("ov").addEventListener("click", e => { if (e.target.closest("[data-a=go]")) start(); });
+document.addEventListener("keydown", e => {
+  const m = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d", a: "l", d: "r", w: "u", s: "d" }[e.key];
+  if (m) { keys[m] = 1; e.preventDefault(); if (state === "play" && typeof key === "function") key("down", m); }
+  else if (e.key === " ") { e.preventDefault(); if (state === "ready" || state === "over" || state === "paused") start(); else if (typeof key === "function") key("down", "space"); }
+  else if (e.key === "p" || e.key === "P") { state === "play" ? pause() : state === "paused" && start(); }
+});
+document.addEventListener("keyup", e => { const m = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d", a: "l", d: "r", w: "u", s: "d" }[e.key]; if (m) keys[m] = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+readColors(); matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readColors);
+let balls, meter, mdir, zone, ball, hoopX, wait, streak, msg, msgT;
+function reset() { balls = 10; meter = 0; mdir = 1; streak = 0; ball = null; wait = 0; msg = ""; msgT = 0; newShot(); setInfo(balls); }
+function newShot() { hoopX = rand(170, 260); const c = clamp((hoopX - 150) / 120, 0, 1); zone = [.25 + c * .45 - .06 - (score > 15 ? .02 : 0), .25 + c * .45 + .06 + (score > 15 ? 0 : .02)]; }
+function pointer(t) { if (t === "down") shoot(); }
+function key(t, k) { if (k === "space" || k === "u") shoot(); }
+function shoot() {
+  if (ball || wait > 0 || balls <= 0) return; const ok = meter >= zone[0] && meter <= zone[1], err = meter < zone[0] ? meter - zone[0] : meter - zone[1];
+  balls--; setInfo(balls); const endX = ok ? hoopX : hoopX + (err * 260), endY = 120; ball = { t: 0, ok, sx: 50, sy: H - 40, ex: endX, ey: endY, hx: hoopX };
+}
+function update(dt) {
+  if (!ball) { meter += mdir * dt * (1.1 + score * .01); if (meter > 1) { meter = 1; mdir = -1; } if (meter < 0) { meter = 0; mdir = 1; } }
+  if (ball) { ball.t += dt / .9; if (ball.t >= 1) { if (ball.ok) { streak++; addScore(2 + Math.min(streak, 5)); msg = "골인! 🎉"; } else { streak = 0; msg = "아쉬워요"; } msgT = .8; ball = null; wait = .6; } }
+  else if (wait > 0) { wait -= dt; if (wait <= 0) { if (balls <= 0) return end(); newShot(); } } msgT = Math.max(0, msgT - dt);
+}
+function draw(c) {
+  c.font = "34px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = C.muted; c.fillRect(hoopX - 22, 112, 44, 6); c.fillRect(hoopX + 22, 80, 5, 44); c.fillText("🧑", 50, H - 30);
+  const b = ball; if (b) { const x = b.sx + (b.ex - b.sx) * b.t, y = b.sy + (b.ey - b.sy) * b.t - Math.sin(b.t * Math.PI) * 130; c.fillText("🏀", x, y); } else c.fillText("🏀", 70, H - 50);
+  c.fillStyle = C.line; c.fillRect(30, H - 14, W - 60, 10); c.fillStyle = C.ok; c.fillRect(30 + zone[0] * (W - 60), H - 14, (zone[1] - zone[0]) * (W - 60), 10); c.fillStyle = C.fg; c.fillRect(30 + meter * (W - 60) - 3, H - 20, 6, 22);
+  if (msgT > 0) { c.font = "700 22px sans-serif"; c.fillStyle = C.fg; c.fillText(msg, W / 2, 190); }
+}
+reset(); ui(); requestAnimationFrame(frame);
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

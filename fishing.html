@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>낚시 게임</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 점수·최고·상태 줄, 가운데 게임 판(캔버스, 손가락으로 조작), 아래 설명. 시작과 끝은 판 위의 안내 화면에서 */
+:root{--bg:hsl(205 30% 94%);--surface:#fff;--fg:#1b2133;--muted:#5f6881;--line:hsl(205 22% 84%);--field:hsl(205 40% 16%);--accent:hsl(205 75% 50%);--accent-fg:#fff;--ok:#2fb36a;--bad:#e8453c;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(205 25% 9%);--surface:hsl(205 20% 15%);--fg:#e8ecf8;--muted:#95a0c0;--line:hsl(205 20% 24%);--field:hsl(205 40% 7%);--accent:hsl(205 85% 66%);--accent-fg:#10131c;--ok:#4cd486;--bad:#ff6b5e;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.88rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.35rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wrap{position:relative;border-radius:14px;overflow:hidden;border:2px solid var(--line);background:var(--field);touch-action:none;aspect-ratio:300/420}
+canvas{width:100%;height:100%;display:block}
+.ov{position:absolute;inset:0;background:rgba(5,8,20,.58);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px}
+.ov b{font-family:var(--font-display);font-weight:400;font-size:1.9rem;line-height:1.2}.ov p{color:#e4e8f6}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:12px;padding:10px 24px;font-family:var(--font-display);font-size:1.3rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>낚시 게임 🎣</h1>
+  <div class="stats"><div class="stat"><small>점수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div><div class="stat"><small>남은 시간</small><b id="info">-</b></div></div>
+  <div class="wrap" id="wrap"><canvas id="cv" aria-label="낚시 게임 게임 판"></canvas><div class="ov" id="ov"></div></div>
+  <p class="muted">화면을 <b>누르고 있으면 낚싯줄이 내려가고</b>, 손을 떼면 올라와요. 물고기에 닿으면 걸려 올라오고, 배까지 끌어올리면 점수! 깊은 곳 물고기일수록 점수가 높아요. 🪼 해파리는 피하세요! (일시정지: 창을 벗어나면 자동, 컴퓨터는 P 키)</p>
+</main>
+<script>
+const W = 300, H = 420, KEY = "fishing-best-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1));
+const cv = $("cv"), ctx = cv.getContext("2d");
+let score = 0, best = ld(KEY) || 0, state = "ready", info = "", newBest = false, last = 0, keys = { l: 0, r: 0, u: 0, d: 0 }, C = {};
+function readColors() { const css = getComputedStyle(document.documentElement); for (const k of ["fg", "surface", "line", "muted", "accent", "ok", "bad", "field"]) C[k] = css.getPropertyValue("--" + k).trim(); }
+function setScore(n) { score = n; $("score").textContent = score; }
+function addScore(n) { setScore(score + n); }
+function setInfo(s) { info = s; $("info").textContent = s; }
+function end() { if (state !== "play") return; state = "over"; if (score > best) { best = score; sv(KEY, best); newBest = true; } ui(); }
+function start() { if (state === "ready" || state === "over") { setScore(0); newBest = false; reset(); } state = "play"; last = performance.now(); ui(); }
+function pause() { if (state === "play") { state = "paused"; ui(); } }
+function ui() {
+  $("best").textContent = best; $("score").textContent = score; $("info").textContent = info; const ov = $("ov"); ov.hidden = state === "play";
+  ov.innerHTML = state === "ready" ? `<b>낚시 게임</b><p>45초 동안 물고기를 낚으세요</p><button class="btn" data-a="go" type="button">시작</button>`
+    : state === "paused" ? `<b>일시정지</b><button class="btn" data-a="go" type="button">계속하기</button>`
+    : `<b>게임 오버</b><p>${score}점${newBest ? "<br>🏆 최고 기록!" : ""}</p><button class="btn" data-a="go" type="button">다시 하기</button>`;
+}
+function frame(t) {
+  const dt = Math.min(.033, (t - last) / 1000 || 0); last = t; if (state === "play") update(dt);
+  const w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (w) { const pw = Math.round(w * dpr); if (cv.width !== pw) { cv.width = pw; cv.height = Math.round(pw * H / W); } ctx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); ctx.clearRect(0, 0, W, H); draw(ctx); }
+  requestAnimationFrame(frame);
+}
+const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+$("wrap").addEventListener("pointerdown", e => { if (e.target.closest("[data-a]")) return; if (state === "play") { e.preventDefault(); pointer("down", ...pos(e)); } });
+$("wrap").addEventListener("pointermove", e => { if (state === "play") pointer("move", ...pos(e)); });
+["pointerup", "pointercancel", "pointerleave"].forEach(ev => $("wrap").addEventListener(ev, e => { if (state === "play") pointer("up", ...pos(e)); }));
+$("ov").addEventListener("click", e => { if (e.target.closest("[data-a=go]")) start(); });
+document.addEventListener("keydown", e => {
+  const m = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d", a: "l", d: "r", w: "u", s: "d" }[e.key];
+  if (m) { keys[m] = 1; e.preventDefault(); if (state === "play" && typeof key === "function") key("down", m); }
+  else if (e.key === " ") { e.preventDefault(); if (state === "ready" || state === "over" || state === "paused") start(); else if (typeof key === "function") key("down", "space"); }
+  else if (e.key === "p" || e.key === "P") { state === "play" ? pause() : state === "paused" && start(); }
+});
+document.addEventListener("keyup", e => { const m = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d", a: "l", d: "r", w: "u", s: "d" }[e.key]; if (m) keys[m] = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+readColors(); matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readColors);
+let hook, fish, t, left, caught, spawnT, shake;
+function reset() { hook = { x: W / 2, y: 70, down: false }; fish = []; t = 0; left = 45; caught = null; spawnT = 0; shake = 0; setInfo(45); for (let k = 0; k < 5; k++) spawn(true); }
+function spawn(init) { const jelly = Math.random() < .16, lane = ri(0, 4), y = 120 + lane * 58, dir = Math.random() < .5 ? 1 : -1, e = jelly ? "🪼" : ["🐟", "🐠", "🐡", "🦑", "🐙"][lane]; fish.push({ x: init ? rand(20, W - 20) : (dir > 0 ? -20 : W + 20), y, dir, vx: rand(30, 70) * dir, e, jelly, pts: jelly ? 0 : lane + 1 }); }
+function pointer(type, x) { if (type === "down") hook.down = true; if (type === "up") hook.down = false; if (type !== "up") hook.x = clamp(x, 14, W - 14); }
+function key(type, k) { if (k === "space") hook.down = !hook.down; }
+function update(dt) {
+  t += dt; left -= dt; setInfo(Math.max(0, Math.ceil(left))); if (left <= 0) return end(); hook.x = clamp(hook.x + (keys.r - keys.l) * 160 * dt, 14, W - 14);
+  if (keys.d) hook.down = true; spawnT -= dt; if (spawnT <= 0 && fish.length < 9) { spawn(false); spawnT = rand(.6, 1.4); }
+  hook.y += (hook.down && !caught ? 150 : -190) * dt; hook.y = clamp(hook.y, 70, H - 20);
+  if (caught) { caught.x = hook.x; caught.y = hook.y + 12; if (hook.y <= 72) { addScore(caught.pts * 2); fish.splice(fish.indexOf(caught), 1); caught = null; shake = .2; } }
+  for (const f of fish) { if (f === caught) continue; f.x += f.vx * dt; }
+  fish = fish.filter(f => f === caught || (f.x > -40 && f.x < W + 40));
+  if (!caught && hook.down) for (const f of fish) if (Math.hypot(f.x - hook.x, f.y - (hook.y + 8)) < 20) { if (f.jelly) { left = Math.max(0, left - 4); fish.splice(fish.indexOf(f), 1); hook.down = false; } else { caught = f; hook.down = false; } break; }
+}
+function draw(c) {
+  c.fillStyle = "rgba(60,150,220,.28)"; c.fillRect(0, 90, W, H - 90); c.font = "26px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("⛵", W / 2, 55);
+  c.strokeStyle = C.fg; c.lineWidth = 1.5; c.beginPath(); c.moveTo(hook.x, 72); c.lineTo(hook.x, hook.y); c.stroke(); c.fillText("🪝", hook.x, hook.y + 8);
+  for (const f of fish) { c.save(); c.translate(f.x, f.y); if (f.vx > 0 && !f.jelly) c.scale(-1, 1); c.fillText(f.e, 0, 0); c.restore(); }
+}
+reset(); ui(); requestAnimationFrame(frame);
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

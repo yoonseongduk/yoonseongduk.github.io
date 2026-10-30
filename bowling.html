@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>볼링</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 점수·최고·상태 줄, 가운데 게임 판(캔버스, 손가락으로 조작), 아래 설명. 시작과 끝은 판 위의 안내 화면에서 */
+:root{--bg:hsl(220 30% 94%);--surface:#fff;--fg:#1b2133;--muted:#5f6881;--line:hsl(220 22% 84%);--field:hsl(220 40% 16%);--accent:hsl(220 75% 50%);--accent-fg:#fff;--ok:#2fb36a;--bad:#e8453c;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(220 25% 9%);--surface:hsl(220 20% 15%);--fg:#e8ecf8;--muted:#95a0c0;--line:hsl(220 20% 24%);--field:hsl(220 40% 7%);--accent:hsl(220 85% 66%);--accent-fg:#10131c;--ok:#4cd486;--bad:#ff6b5e;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.88rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.35rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wrap{position:relative;border-radius:14px;overflow:hidden;border:2px solid var(--line);background:var(--field);touch-action:none;aspect-ratio:300/440}
+canvas{width:100%;height:100%;display:block}
+.ov{position:absolute;inset:0;background:rgba(5,8,20,.58);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px}
+.ov b{font-family:var(--font-display);font-weight:400;font-size:1.9rem;line-height:1.2}.ov p{color:#e4e8f6}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:12px;padding:10px 24px;font-family:var(--font-display);font-size:1.3rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>볼링 🎳</h1>
+  <div class="stats"><div class="stat"><small>점수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div><div class="stat"><small>프레임</small><b id="info">-</b></div></div>
+  <div class="wrap" id="wrap"><canvas id="cv" aria-label="볼링 게임 판"></canvas><div class="ov" id="ov"></div></div>
+  <p class="muted">화면을 <b>누르고 위쪽으로 끌었다 놓으면</b> 공이 굴러가요. 끈 방향이 공이 가는 방향이고, 길게 끌수록 빨라요. 한 프레임에 2번 던지고 모두 5프레임이에요. 한 번에 모두 쓰러뜨리면(스트라이크) 보너스! (일시정지: 창을 벗어나면 자동, 컴퓨터는 P 키)</p>
+</main>
+<script>
+const W = 300, H = 440, KEY = "bowling-best-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1));
+const cv = $("cv"), ctx = cv.getContext("2d");
+let score = 0, best = ld(KEY) || 0, state = "ready", info = "", newBest = false, last = 0, keys = { l: 0, r: 0, u: 0, d: 0 }, C = {};
+function readColors() { const css = getComputedStyle(document.documentElement); for (const k of ["fg", "surface", "line", "muted", "accent", "ok", "bad", "field"]) C[k] = css.getPropertyValue("--" + k).trim(); }
+function setScore(n) { score = n; $("score").textContent = score; }
+function addScore(n) { setScore(score + n); }
+function setInfo(s) { info = s; $("info").textContent = s; }
+function end() { if (state !== "play") return; state = "over"; if (score > best) { best = score; sv(KEY, best); newBest = true; } ui(); }
+function start() { if (state === "ready" || state === "over") { setScore(0); newBest = false; reset(); } state = "play"; last = performance.now(); ui(); }
+function pause() { if (state === "play") { state = "paused"; ui(); } }
+function ui() {
+  $("best").textContent = best; $("score").textContent = score; $("info").textContent = info; const ov = $("ov"); ov.hidden = state === "play";
+  ov.innerHTML = state === "ready" ? `<b>볼링</b><p>핀을 최대한 많이 쓰러뜨리세요</p><button class="btn" data-a="go" type="button">시작</button>`
+    : state === "paused" ? `<b>일시정지</b><button class="btn" data-a="go" type="button">계속하기</button>`
+    : `<b>게임 오버</b><p>${score}점${newBest ? "<br>🏆 최고 기록!" : ""}</p><button class="btn" data-a="go" type="button">다시 하기</button>`;
+}
+function frame(t) {
+  const dt = Math.min(.033, (t - last) / 1000 || 0); last = t; if (state === "play") update(dt);
+  const w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (w) { const pw = Math.round(w * dpr); if (cv.width !== pw) { cv.width = pw; cv.height = Math.round(pw * H / W); } ctx.setTransform(cv.width / W, 0, 0, cv.width / W, 0, 0); ctx.clearRect(0, 0, W, H); draw(ctx); }
+  requestAnimationFrame(frame);
+}
+const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+$("wrap").addEventListener("pointerdown", e => { if (e.target.closest("[data-a]")) return; if (state === "play") { e.preventDefault(); pointer("down", ...pos(e)); } });
+$("wrap").addEventListener("pointermove", e => { if (state === "play") pointer("move", ...pos(e)); });
+["pointerup", "pointercancel", "pointerleave"].forEach(ev => $("wrap").addEventListener(ev, e => { if (state === "play") pointer("up", ...pos(e)); }));
+$("ov").addEventListener("click", e => { if (e.target.closest("[data-a=go]")) start(); });
+document.addEventListener("keydown", e => {
+  const m = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d", a: "l", d: "r", w: "u", s: "d" }[e.key];
+  if (m) { keys[m] = 1; e.preventDefault(); if (state === "play" && typeof key === "function") key("down", m); }
+  else if (e.key === " ") { e.preventDefault(); if (state === "ready" || state === "over" || state === "paused") start(); else if (typeof key === "function") key("down", "space"); }
+  else if (e.key === "p" || e.key === "P") { state === "play" ? pause() : state === "paused" && start(); }
+});
+document.addEventListener("keyup", e => { const m = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d", a: "l", d: "r", w: "u", s: "d" }[e.key]; if (m) keys[m] = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+readColors(); matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readColors);
+let ball, pins, fr, throwNo, aim, wait, bx, standing;
+const PX = [[0, 0], [-1, 1], [1, 1], [-2, 2], [0, 2], [2, 2], [-3, 3], [-1, 3], [1, 3], [3, 3]];
+function rack() { pins = PX.map(([c, r]) => ({ x: W / 2 + c * 15, y: 70 + r * 26, up: true })); standing = 10; }
+function reset() { fr = 1; throwNo = 1; ball = null; aim = null; wait = 0; bx = W / 2; rack(); setInfo("1/5"); }
+function pointer(t, x, y) {
+  if (ball || wait > 0) return;
+  if (t === "down") { aim = { sx: x, sy: y, x, y }; bx = clamp(x, 50, W - 50); } else if (t === "move" && aim) { aim.x = x; aim.y = y; }
+  else if (t === "up" && aim) { const dx = aim.x - aim.sx, dy = aim.y - aim.sy; aim = null; if (dy > -14) return; const d = Math.hypot(dx, dy), sp = clamp(d * 4.5, 260, 560); ball = { x: bx, y: H - 40, vx: dx / d * sp, vy: dy / d * sp }; }
+}
+function knock() {
+  const hit = []; for (const p of pins) if (p.up && Math.hypot(p.x - ball.x, p.y - ball.y) < 15) { p.up = false; hit.push(p); }
+  for (let i = 0; i < hit.length; i++) for (const p of pins) if (p.up && Math.hypot(p.x - hit[i].x, p.y - hit[i].y) < 31 && Math.random() < .55) { p.up = false; hit.push(p); }
+}
+function settle() {
+  const now = pins.filter(p => p.up).length, down = standing - now; standing = now; addScore(down);
+  if (throwNo === 1 && now === 0) { addScore(10); return nextFrame(); } if (throwNo === 1) { throwNo = 2; return; } if (now === 0) addScore(5); nextFrame();
+}
+function nextFrame() { fr++; throwNo = 1; if (fr > 5) return end(); rack(); setInfo(fr + "/5"); }
+function update(dt) {
+  if (ball) { ball.x += ball.vx * dt; ball.y += ball.vy * dt; if (ball.x < 22 || ball.x > W - 22) { ball = null; wait = .7; return; } knock(); if (ball.y < 40) { ball = null; wait = .7; } }
+  else if (wait > 0) { wait -= dt; if (wait <= 0) settle(); }
+}
+function draw(c) {
+  c.fillStyle = "rgba(200,160,90,.35)"; c.fillRect(22, 0, W - 44, H); c.font = "20px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
+  for (const p of pins) { c.globalAlpha = p.up ? 1 : .15; c.fillText("🎳", p.x, p.y); } c.globalAlpha = 1;
+  if (aim) { c.strokeStyle = C.accent; c.lineWidth = 3; c.setLineDash([6, 6]); c.beginPath(); c.moveTo(bx, H - 40); c.lineTo(bx + (aim.x - aim.sx), H - 40 + (aim.y - aim.sy)); c.stroke(); c.setLineDash([]); }
+  if (!ball && wait <= 0) { c.fillStyle = C.fg; c.beginPath(); c.arc(bx, H - 40, 12, 0, 7); c.fill(); } if (ball) { c.fillStyle = C.fg; c.beginPath(); c.arc(ball.x, ball.y, 11, 0, 7); c.fill(); }
+}
+reset(); ui(); requestAnimationFrame(frame);
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

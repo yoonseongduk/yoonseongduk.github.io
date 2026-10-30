@@ -88,6 +88,7 @@ footer { color: var(--muted); font-size: .85rem; }
     <p id="pwaSave"></p>
     <p id="pwaHow"></p>
     <button type="button" id="pwaBtn" hidden>앱으로 설치하기</button>
+    <button type="button" id="pwaCopy" hidden>주소 복사하기</button>
   </section>
   <input type="search" id="q" placeholder="게임 이름이나 설명으로 찾기" autocomplete="off" aria-label="게임 검색">
   <div class="chips" id="chips" role="group" aria-label="분류"></div>
@@ -240,8 +241,10 @@ render();
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
   box.hidden = false;
-  how.textContent = standalone ? "" : ios ? "설치 방법: Safari 아래쪽 공유 버튼(□↑) → '홈 화면에 추가'를 누르세요." : "설치 방법: 브라우저 메뉴(⋮) → '앱 설치' 또는 '홈 화면에 추가'를 누르세요.";
+  const inApp = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|DaumApps|; wv\)|Line\//i.test(navigator.userAgent);
+  how.textContent = standalone ? "" : inApp ? "⚠️ 지금은 카카오톡 같은 앱 안의 브라우저라서 설치할 수 없어요. 오른쪽 아래 ⋮ 메뉴에서 '다른 브라우저로 열기'(또는 'Chrome으로 열기')를 누른 뒤, 크롬에서 다시 설치하세요. 주소를 복사해서 크롬에 붙여 넣어도 돼요." : ios ? "설치 방법: Safari 아래쪽 공유 버튼(□↑) → '홈 화면에 추가'를 누르세요." : "설치 방법: 크롬 메뉴(⋮) → '앱 설치' 또는 '홈 화면에 추가'를 누르세요. 설치 후에는 폰 홈 화면(또는 앱 목록)에서 '가족 게임' 아이콘을 찾으세요.";
   how.hidden = standalone;
+  if (inApp && !standalone) { const c = document.getElementById("pwaCopy"); c.hidden = false; c.onclick = async () => { try { await navigator.clipboard.writeText(location.origin + "/"); c.textContent = "복사됐어요! 크롬에 붙여 넣으세요"; } catch (e) { c.textContent = location.origin + "/"; } }; }
   let deferred = null;
   addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; btn.hidden = false; });
   addEventListener("appinstalled", () => { btn.hidden = true; how.textContent = "설치됐어요! 홈 화면의 '가족 게임' 아이콘으로 열어 보세요."; });

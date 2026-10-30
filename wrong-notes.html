@@ -64,10 +64,21 @@ function render() {
   items = load(); if (filt !== "전체" && !items.some(x => x.t === filt)) filt = "전체"; chips(); $("cnt").textContent = items.length; $("mas").textContent = mastered(); $("kinds").textContent = kinds().length;
   const v = view().sort((a, b) => (b.n || 1) - (a.n || 1) || b.d - a.d);
   $("list").innerHTML = v.length ? v.map((x, k) => `<div class="wi"><div class="wh"><span class="muted">${esc(x.t)} · ${x.n || 1}번 틀림</span><button type="button" data-del="${esc(x.id)}" aria-label="삭제">✕</button></div><div class="wq">${esc(x.q)}</div><details><summary>정답 보기</summary><b class="wa">${esc(x.a)}</b>${x.k === "write" ? ' <a href="hanja-write.html">✍️ 쓰기 연습</a>' : ""}</details></div>`).join("") : '<p class="muted center" style="padding:14px 0">🎉 틀린 문제가 없어요! 퀴즈를 풀다 틀리면 여기에 모여요.</p>';
-  $("go").disabled = !v.filter(x => x.k !== "write" && x.o).length; $("acts").hidden = false;
+  $("go").disabled = !v.filter(x => x.k === "write" || (x.o && x.o.length >= 2)).length; $("acts").hidden = false;
 }
-function startReview() {
-  const pool = view().filter(x => x.k !== "write" && x.o && x.o.length >= 2); if (!pool.length) return;
+let HJ = null;
+async function loadHanja() { if (HJ) return HJ; try { HJ = await (await fetch("data/hanja.json")).json(); } catch (e) { HJ = []; } return HJ; }
+// 한자 쓰기에서 틀린 글자는 "뜻과 음 → 알맞은 한자 고르기" 4지선다로 바꿔서 낸다
+function asChoice(x) {
+  if (x.k !== "write") return x.o && x.o.length >= 2 ? x : null;
+  const me = HJ.find(h => h[0] === x.a); if (!me) return null;
+  const same = HJ.filter(h => h[2] === me[2] && h[0] !== x.a), o = [x.a];
+  while (o.length < 4 && same.length) o.push(same.splice(ri(0, same.length - 1), 1)[0][0]);
+  return o.length < 2 ? null : { ...x, q: x.q + " — 알맞은 한자는?", o };
+}
+async function startReview() {
+  await loadHanja();
+  const pool = view().map(asChoice).filter(Boolean); if (!pool.length) return;
   q = pool.map(x => ({ x, w: (x.n || 1) + Math.random() * 1.5 })).sort((a, b) => b.w - a.w).slice(0, 10).map(o => o.x); q = shuf(q); qi = 0; good = 0; $("sum").hidden = true; $("rev").hidden = false; $("acts").hidden = true; $("listbox").hidden = true; showQ();
 }
 function showQ() { const x = q[qi]; locked = false; $("rt").textContent = `${x.t} · ${qi + 1}/${q.length}`; $("rq").textContent = x.q; $("rm").textContent = ""; $("rn").hidden = true; $("ro").innerHTML = shuf(x.o).map((o, k) => `<button class="opt" type="button" data-o="${esc(o)}">${esc(o)}</button>`).join(""); }

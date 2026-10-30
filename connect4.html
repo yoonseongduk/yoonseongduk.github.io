@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>사목 (커넥트 4)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 상대 선택, 차례 표시, 7열×6행 판(열을 누르면 돌이 떨어진다), 새 판 버튼 */
+:root{--bg:#eaf0f8;--surface:#fff;--fg:#1a2233;--muted:#5e6a82;--line:#d1dbea;--board:#2a5bd0;--hole:#dfe8f8;--red:#e8453c;--yel:#f2c200;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1420;--surface:#18202f;--fg:#e8eef8;--muted:#95a3bd;--line:#2a3750;--board:#2349a8;--hole:#0e1420;--red:#ff6b5e;--yel:#ffd23f;--accent:#ff7f5a;--accent-fg:#0e1420;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.turn{text-align:center;font-family:var(--font-display);font-size:1.4rem;min-height:1.8em}
+.score{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.sc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 12px;text-align:center}.sc small{display:block;color:var(--muted);font-size:.72rem}.sc b{font-family:var(--font-display);font-weight:400;font-size:1.3rem}
+.board{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;background:var(--board);padding:8px;border-radius:16px;touch-action:manipulation}
+.col{display:flex;flex-direction:column;gap:6px;border:0;background:none;padding:0}.col:disabled{cursor:default}
+.cell{aspect-ratio:1;border-radius:50%;background:var(--hole);position:relative}
+.cell.r{background:var(--red)}.cell.y{background:var(--yel)}.cell.w{box-shadow:0 0 0 3px #fff,0 0 12px 3px #fff}
+.cell.drop{animation:drop .28s ease-in}@keyframes drop{from{transform:translateY(-260%)}}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+@media(prefers-reduced-motion:reduce){.cell.drop{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>사목 (커넥트 4) 🔴🟡</h1>
+  <div class="seg" id="opp" role="radiogroup" aria-label="상대"></div>
+  <div class="score"><div class="sc"><small>내 승</small><b id="sw">0</b></div><div class="sc"><small>무승부</small><b id="sd">0</b></div><div class="sc"><small id="ln">컴퓨터 승</small><b id="sl">0</b></div></div>
+  <div class="turn" id="turn" aria-live="polite"></div>
+  <div class="board" id="board"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="newGame" type="button">새 판</button>
+  <p class="muted">내 돌(🔴)을 위에서 떨어뜨리려면 <b>열을 누르세요.</b> 가로, 세로, 대각선으로 같은 색 4개를 먼저 이으면 이겨요.</p>
+</main>
+<script>
+const R = 6, C = 7, KEY = "connect4-v1";
+const OPP = { easy: ["쉬움", "컴퓨터 · 약함"], hard: ["어려움", "컴퓨터 · 강함"], two: ["2명", "번갈아 두기"] };
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let cfg = ld(KEY) || { opp: "easy", st: {} }, g, turn, over, win, busy, lastDrop; if (!OPP[cfg.opp]) cfg.opp = "easy"; cfg.st = cfg.st || {};
+const stat = () => (cfg.st[cfg.opp] = cfg.st[cfg.opp] || { w: 0, d: 0, l: 0 });
+
+const empty = () => Array.from({ length: R }, () => Array(C).fill(0));        // g[행][열]: 0 빈칸, 1 빨강(나), 2 노랑
+const dropRow = (b, c) => { for (let r = R - 1; r >= 0; r--) if (!b[r][c]) return r; return -1; };
+function four(b, p) {                                                           // p가 4개를 이은 줄이 있으면 그 칸들을 돌려준다
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) for (const [dr, dc] of [[0, 1], [1, 0], [1, 1], [1, -1]]) {
+    const cells = []; for (let k = 0; k < 4; k++) { const rr = r + dr * k, cc = c + dc * k; if (rr < 0 || rr >= R || cc < 0 || cc >= C || b[rr][cc] !== p) break; cells.push([rr, cc]); }
+    if (cells.length === 4) return cells;
+  }
+  return null;
+}
+const validCols = b => [...Array(C).keys()].filter(c => b[0][c] === 0);
+function evalBoard(b, p) {                                                      // 4칸짜리 창마다 점수를 매긴다 (내 돌이 많고 상대가 없으면 +)
+  let s = 0; const q = p === 1 ? 2 : 1;
+  for (let r = 0; r < R; r++) b[r][3] === p && (s += 3);
+  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) for (const [dr, dc] of [[0, 1], [1, 0], [1, 1], [1, -1]]) {
+    let a = 0, o = 0, e = 0; for (let k = 0; k < 4; k++) { const rr = r + dr * k, cc = c + dc * k; if (rr < 0 || rr >= R || cc < 0 || cc >= C) { a = -9; break; } const v = b[rr][cc]; v === p ? a++ : v === q ? o++ : e++; }
+    if (a < 0) continue; if (a === 4) s += 1000; else if (a === 3 && e === 1) s += 5; else if (a === 2 && e === 2) s += 2; if (o === 3 && e === 1) s -= 4;
+  }
+  return s;
+}
+function minimax(b, d, alpha, beta, maxing) {                                   // 컴퓨터(노랑, 2)가 최대화
+  if (four(b, 2)) return 100000 + d; if (four(b, 1)) return -100000 - d;
+  const cols = validCols(b); if (!cols.length || d === 0) return evalBoard(b, 2) - evalBoard(b, 1);
+  let best = maxing ? -1e9 : 1e9;
+  for (const c of cols.sort((x, y) => Math.abs(x - 3) - Math.abs(y - 3))) {
+    const r = dropRow(b, c); b[r][c] = maxing ? 2 : 1; const v = minimax(b, d - 1, alpha, beta, !maxing); b[r][c] = 0;
+    if (maxing) { best = Math.max(best, v); alpha = Math.max(alpha, v); } else { best = Math.min(best, v); beta = Math.min(beta, v); } if (alpha >= beta) break;
+  }
+  return best;
+}
+function aiCol() {
+  const cols = validCols(g);
+  for (const p of [2, 1]) for (const c of cols) { const r = dropRow(g, c); g[r][c] = p; const w = !!four(g, p); g[r][c] = 0; if (w) return c; }   // 이길 수 있으면 이기고, 아니면 상대의 승리를 막는다
+  if (cfg.opp === "easy") return cols[Math.floor(Math.random() * cols.length)];
+  let bestC = cols[0], bv = -1e9; for (const c of cols) { const r = dropRow(g, c); g[r][c] = 2; const v = minimax(g, 4, -1e9, 1e9, false) + Math.random() * .5; g[r][c] = 0; if (v > bv) { bv = v; bestC = c; } } return bestC;
+}
+function newGame() { g = empty(); turn = 1; over = false; win = null; busy = false; lastDrop = null; $("res").hidden = true; render(); }
+function play(c) {
+  const r = dropRow(g, c); if (r < 0 || over) return; g[r][c] = turn; lastDrop = [r, c]; const w = four(g, turn);
+  if (w) { over = true; win = w; const s = stat(); turn === 1 ? s.w++ : s.l++; sv(KEY, cfg); }
+  else if (!validCols(g).length) { over = true; stat().d++; sv(KEY, cfg); } else turn = turn === 1 ? 2 : 1;
+  render();
+}
+function tap(c) {
+  if (over || busy) return; if (cfg.opp === "two") return play(c); if (turn !== 1) return;
+  play(c); if (!over) { busy = true; render(); setTimeout(() => { play(aiCol()); busy = false; render(); }, 450); }
+}
+function render() {
+  const two = cfg.opp === "two";
+  $("board").innerHTML = Array.from({ length: C }, (_, c) => `<button type="button" class="col" data-c="${c}" ${over || busy || g[0][c] ? "disabled" : ""} aria-label="${c + 1}열">${Array.from({ length: R }, (_, r) => { const v = g[r][c], isW = win && win.some(([a, b]) => a === r && b === c); return `<span class="cell ${v === 1 ? "r" : v === 2 ? "y" : ""} ${isW ? "w" : ""} ${lastDrop && lastDrop[0] === r && lastDrop[1] === c ? "drop" : ""}"></span>`; }).join("")}</button>`).join("");
+  const s = stat(); $("sw").textContent = s.w; $("sd").textContent = s.d; $("sl").textContent = s.l; $("ln").textContent = two ? "🟡 승" : "컴퓨터 승";
+  $("turn").textContent = over ? (win ? (two ? (turn === 1 ? "🔴 승리! 🎉" : "🟡 승리! 🎉") : turn === 1 ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요") : "비겼어요 🤝") : busy ? "컴퓨터가 생각 중…" : two ? (turn === 1 ? "🔴 차례예요" : "🟡 차례예요") : "내 차례예요 (🔴)";
+  $("opp").innerHTML = Object.keys(OPP).map(k => `<button type="button" class="${k === cfg.opp ? "on" : ""}" data-o="${k}" role="radio" aria-checked="${k === cfg.opp}">${OPP[k][0]}<small>${OPP[k][1]}</small></button>`).join("");
+}
+$("board").addEventListener("click", e => { const c = e.target.closest("[data-c]"); if (c) tap(+c.dataset.c); });
+$("opp").addEventListener("click", e => { const o = e.target.closest("[data-o]"); if (o && o.dataset.o !== cfg.opp) { cfg.opp = o.dataset.o; sv(KEY, cfg); newGame(); } });
+$("newGame").onclick = newGame; newGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>숫자 기억</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 단계·최고 줄, 숫자가 잠깐 보이는 큰 카드, 시간 막대, 숫자 키패드. 한 단계씩 숫자가 한 자리씩 늘어난다 */
+:root{--bg:#eef3f6;--surface:#fff;--fg:#1a2630;--muted:#5d7080;--line:#d3dee6;--accent:#2a7fc4;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--key:#fafcfd;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f171d;--surface:#18232c;--fg:#e8f0f5;--muted:#95a9b8;--line:#293b48;--accent:#5ab0f0;--accent-fg:#0f171d;--ok:#4cc98a;--bad:#ff7b68;--key:#1f2d38;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+.show{background:var(--surface);border:2px solid var(--line);border-radius:20px;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:12px}
+.show .num{font-family:var(--font-display);font-size:clamp(2.4rem,13vw,3.6rem);letter-spacing:.1em;padding-left:.1em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.show.good{border-color:var(--ok)}.show.bad{border-color:var(--bad)}.show .big{font-family:var(--font-display);font-size:1.5rem}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--accent)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.key{background:var(--key);border:1px solid var(--line);border-radius:14px;min-height:52px;font-family:var(--font-display);font-size:1.6rem;box-shadow:0 2px 0 var(--line)}.key:active{transform:translateY(1px);box-shadow:none}.key:disabled{opacity:.4;cursor:default}.key.fn{font-family:var(--font-body);font-size:1rem;font-weight:700}.key.ok{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>숫자 기억 🧠</h1>
+  <div class="stats"><div class="stat"><small>단계 (숫자 자릿수)</small><b id="lvl">3</b></div><div class="stat"><small>최고 단계</small><b id="best">0</b></div></div>
+  <div class="show" id="show"></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="pad" id="pad"></div>
+  <button class="btn" id="start" type="button">시작</button>
+  <p class="muted">나타나는 숫자를 잠깐 보고 기억했다가, 사라지면 <b>똑같이 입력</b>하세요. 맞힐 때마다 숫자가 한 자리씩 길어져요. 한 번 틀리면 끝! (컴퓨터는 숫자 키와 Enter)</p>
+</main>
+<script>
+const KEY = "numbermemory-best-v1", START = 3;
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let len = START, target = "", input = "", state = "idle", best = ld(KEY) || 0, tm = 0, tempo = 1, anim = 0;
+const showMs = n => (900 + n * 450) * tempo;                        // 자리가 늘수록 더 오래 보여 준다
+
+function makeNum(n) { let s = ""; for (let i = 0; i < n; i++) s += Math.floor(Math.random() * 10); return s; }
+function start() { len = START; round(); }
+function round() {
+  target = makeNum(len); input = ""; state = "show"; render(); clearTimeout(tm); cancelAnimationFrame(anim);
+  const t0 = performance.now(), total = showMs(len); const loop = t => { const f = Math.min(1, (t - t0) / total); $("bar").style.width = (100 - f * 100) + "%"; if (f < 1 && state === "show") anim = requestAnimationFrame(loop); }; anim = requestAnimationFrame(loop);
+  tm = setTimeout(() => { state = "input"; render(); }, total);
+}
+function submit() {
+  if (state !== "input" || input.length < len) return;
+  if (input === target) { state = "good"; render(); tm = setTimeout(() => { len++; round(); }, 800 * tempo); }
+  else { state = "over"; const reached = len - 1; if (reached > best) { best = reached; sv(KEY, best); } render(); }
+}
+function render() {
+  const s = $("show"); s.className = "show" + (state === "good" ? " good" : state === "over" ? " bad" : "");
+  if (state === "idle") s.innerHTML = `<div class="big">준비됐나요?</div><p class="muted">시작을 누르면 ${START}자리 숫자가 나와요</p>`;
+  else if (state === "show") s.innerHTML = `<p class="muted">기억하세요! (${len}자리)</p><div class="num">${target}</div>`;
+  else if (state === "input") s.innerHTML = `<p class="muted">방금 본 숫자는?</p><div class="num">${input.padEnd(len, "·")}</div>`;
+  else if (state === "good") s.innerHTML = `<div class="big">🎉 정답!</div><div class="num">${target}</div>`;
+  else s.innerHTML = `<div class="big">😢 틀렸어요</div><p class="muted">정답 ${target} · 내 답 ${input}</p><p>${len - 1}단계까지 성공${len - 1 && len - 1 >= best ? " 🏆" : ""}</p>`;
+  $("lvl").textContent = state === "over" ? len - 1 : len; $("best").textContent = best; $("bar").style.opacity = state === "show" ? 1 : 0;
+  const can = state === "input"; $("pad").innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(d => `<button class="key" type="button" data-d="${d}" ${can ? "" : "disabled"}>${d}</button>`).join("")
+    + `<button class="key fn" type="button" data-k="del" ${can ? "" : "disabled"}>지우기</button><button class="key" type="button" data-d="0" ${can ? "" : "disabled"}>0</button><button class="key fn ok" type="button" data-k="ok" ${can ? "" : "disabled"}>확인</button>`;
+  $("start").hidden = state === "show" || state === "input" || state === "good"; $("start").textContent = state === "over" ? "다시 하기" : "시작";
+}
+function press(ch) { if (state !== "input") return; if (ch === "del") input = input.slice(0, -1); else if (ch === "ok") return submit(); else if (input.length < len) input += ch; render(); }
+$("pad").addEventListener("click", e => { const b = e.target.closest("button"); if (b && !b.disabled) press(b.dataset.d ?? b.dataset.k); });
+document.addEventListener("keydown", e => { if (/^[0-9]$/.test(e.key)) press(e.key); else if (e.key === "Backspace") press("del"); else if (e.key === "Enter") press("ok"); });
+$("start").onclick = start; render();
+</script>
+</body>
+</html>

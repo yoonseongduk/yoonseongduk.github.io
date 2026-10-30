@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>컬러 코드 맞추기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 난이도, 지난 추리 목록(색 칸과 힌트 점), 지금 고르는 줄, 색 고르는 버튼. 색 순서를 추리해서 맞히는 게임 */
+:root{--bg:#f0f2f6;--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:#d8deea;--accent:#e8643f;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10131c;--surface:#1a1f2e;--fg:#e9edf7;--muted:#97a1b9;--line:#2c3448;--accent:#ff7f5a;--accent-fg:#10131c;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.left{text-align:center;font-family:var(--font-display);font-size:1.3rem}
+.hist{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}.h{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 10px}.h .n{color:var(--muted);font-size:.75rem;width:1.6em}
+.pegs{display:flex;gap:6px;flex:1}.peg{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--bg);flex:none}.peg.cur{border-color:var(--accent);border-style:dashed}
+.fb{display:grid;grid-template-columns:repeat(3,14px);gap:4px;flex:none;min-width:58px}.fb i{width:14px;height:14px;border-radius:50%;border:1px solid var(--muted);display:block}.fb i.s{background:var(--fg);border-color:var(--fg)}.fb i.b{background:transparent}
+.cur-row{display:flex;gap:8px;justify-content:center;padding:8px;background:var(--surface);border:2px solid var(--accent);border-radius:16px}.cur-row .peg{width:46px;height:46px}
+.pal{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.col{aspect-ratio:1;border-radius:50%;border:3px solid transparent;padding:0}.col:disabled{opacity:.3;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.25rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}.res .ans{display:flex;gap:6px;justify-content:center;margin-top:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>컬러 코드 맞추기 🎨</h1>
+  <div class="seg" id="lv" role="radiogroup" aria-label="난이도"></div>
+  <div class="left" id="left"></div>
+  <div class="hist" id="hist" aria-label="지난 추리"></div>
+  <div class="cur-row" id="cur"></div>
+  <div class="pal" id="pal" aria-label="색 고르기"></div>
+  <div class="row"><button class="btn ghost" id="del" type="button">← 지우기</button><button class="btn" id="ok" type="button">확인</button></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn ghost" id="newGame" type="button">새 게임</button>
+  <p class="muted">컴퓨터가 정한 <b>색 순서</b>를 맞혀 보세요. 확인을 누르면 힌트가 나와요. <b>● 검은 점</b>은 색과 자리가 모두 맞음, <b>○ 빈 점</b>은 색은 있지만 자리가 다름이에요.</p>
+</main>
+<script>
+const COLORS = ["#e8453c", "#f2a000", "#f2d600", "#2fb36a", "#2f7fe0", "#9b59d6"], NAMES = ["빨강", "주황", "노랑", "초록", "파랑", "보라"];
+const LV = { easy: { slots: 4, colors: 5, repeat: false, tries: 12, label: "쉬움", hint: "5색 · 겹치지 않음" }, normal: { slots: 4, colors: 6, repeat: true, tries: 10, label: "보통", hint: "6색 · 겹칠 수 있음" }, hard: { slots: 5, colors: 6, repeat: true, tries: 10, label: "어려움", hint: "5칸 · 6색" } };
+const KEY = "colorcode-best-v1", LKEY = "colorcode-level-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let lv = (ld(LKEY) in LV) ? ld(LKEY) : "normal", secret, guesses, cur, over, won, best = ld(KEY) || {};
+const L = () => LV[lv];
+
+// 점수: 자리까지 맞은 것(s)과 색만 맞은 것(b). 같은 색이 여러 개여도 중복해서 세지 않는다
+function score(guess, ans) {
+  let s = 0; const ga = [], aa = [];
+  guess.forEach((g, i) => { if (g === ans[i]) s++; else { ga.push(g); aa.push(ans[i]); } });
+  let b = 0; for (const g of ga) { const k = aa.indexOf(g); if (k >= 0) { b++; aa.splice(k, 1); } }
+  return { s, b };
+}
+function makeSecret() {
+  const { slots, colors, repeat } = L(); const pool = [...Array(colors).keys()], out = [];
+  while (out.length < slots) { const k = Math.floor(Math.random() * pool.length); out.push(pool[k]); if (!repeat) pool.splice(k, 1); }
+  return out;
+}
+function newGame() { secret = makeSecret(); guesses = []; cur = []; over = false; won = false; $("res").hidden = true; render(); }
+function add(c) { if (over || cur.length >= L().slots) return; if (!L().repeat && cur.includes(c)) return; cur.push(c); render(); }
+function submit() {
+  if (over || cur.length < L().slots) return; const r = score(cur, secret); guesses.push({ g: cur.slice(), ...r }); cur = [];
+  if (r.s === L().slots) { over = won = true; const n = guesses.length; let t = `${n}번 만에 맞혔어요.`; if (!best[lv] || n < best[lv]) { best[lv] = n; sv(KEY, best); t += " 🏆 최고 기록이에요!"; } showRes("🎉 정답이에요!", t); }
+  else if (guesses.length >= L().tries) { over = true; showRes("😢 기회를 모두 썼어요", "정답은 아래와 같아요."); }
+  render();
+}
+function showRes(h, t) { $("res").innerHTML = `<b>${h}</b><p class="muted">${t}</p><div class="ans">${secret.map(c => `<span class="peg" style="background:${COLORS[c]}"></span>`).join("")}</div>`; $("res").hidden = false; }
+function render() {
+  const { slots, colors, tries } = L();
+  $("left").textContent = over ? "" : `남은 기회 ${tries - guesses.length} / ${tries}` + (best[lv] ? ` · 최고 ${best[lv]}번` : "");
+  $("hist").innerHTML = guesses.map((x, i) => `<div class="h"><span class="n">${i + 1}</span><div class="pegs">${x.g.map(c => `<span class="peg" style="background:${COLORS[c]}" title="${NAMES[c]}"></span>`).join("")}</div><div class="fb" aria-label="색과 자리 맞음 ${x.s}개, 색만 맞음 ${x.b}개">${"<i class=s></i>".repeat(x.s)}${"<i class=b></i>".repeat(x.b)}</div></div>`).join("");
+  $("hist").scrollTop = 1e6;
+  $("cur").innerHTML = Array.from({ length: slots }, (_, i) => `<span class="peg ${cur[i] === undefined ? "cur" : ""}" style="${cur[i] !== undefined ? "background:" + COLORS[cur[i]] : ""}"></span>`).join("");
+  $("pal").innerHTML = COLORS.slice(0, colors).map((c, i) => `<button class="col" type="button" data-c="${i}" style="background:${c}" aria-label="${NAMES[i]}" ${over || (!L().repeat && cur.includes(i)) || cur.length >= slots ? "disabled" : ""}></button>`).join("");
+  $("pal").style.gridTemplateColumns = `repeat(${colors}, 1fr)`;
+  $("ok").disabled = over || cur.length < slots; $("del").disabled = over || !cur.length;
+  $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+}
+$("pal").addEventListener("click", e => { const c = e.target.closest("[data-c]"); if (c && !c.disabled) add(+c.dataset.c); });
+$("del").onclick = () => { cur.pop(); render(); }; $("ok").onclick = submit; $("newGame").onclick = newGame;
+$("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && b.dataset.l !== lv) { lv = b.dataset.l; sv(LKEY, lv); newGame(); } });
+newGame();
+</script>
+</body>
+</html>

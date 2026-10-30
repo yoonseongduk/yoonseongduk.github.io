@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>숫자 24 만들기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 점수 줄, 네 개의 숫자 카드, 연산 기호 줄, 되돌리기·힌트·새 문제 버튼. 카드 → 기호 → 카드를 차례로 눌러 하나로 합친다 */
+:root{--bg:#f3eff8;--surface:#fff;--fg:#241f33;--muted:#6a6282;--line:#ddd6ea;--accent:#7b4fd6;--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14111f;--surface:#1f1a31;--fg:#ece8f8;--muted:#a199bd;--line:#352e4f;--accent:#a483ff;--accent-fg:#14111f;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.target{text-align:center;font-family:var(--font-display);font-size:1.4rem}.target b{color:var(--accent);font-size:1.6em}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;min-height:104px}
+.card{background:var(--surface);border:3px solid var(--line);border-radius:16px;min-height:104px;font-family:var(--font-display);font-size:clamp(1.5rem,8vw,2.2rem);padding:2px;overflow-wrap:anywhere;line-height:1.1}.card.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent);transform:translateY(-4px)}.card.gone{visibility:hidden}
+.ops{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.op{background:var(--accent);color:var(--accent-fg);border:3px solid transparent;border-radius:14px;min-height:56px;font-family:var(--font-display);font-size:1.9rem}.op.sel{border-color:var(--fg)}
+.log{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 12px;min-height:3.4em;font-size:.95rem;font-variant-numeric:tabular-nums}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:11px;font-family:var(--font-display);font-size:1.2rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:.95rem;font-weight:700}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>숫자 24 만들기 🎯</h1>
+  <div class="stats"><div class="stat"><small>푼 문제</small><b id="solved">0</b></div><div class="stat"><small>연속</small><b id="streak">0</b></div><div class="stat"><small>최고 연속</small><b id="best">0</b></div></div>
+  <div class="target">네 숫자로 <b>24</b>를 만드세요</div>
+  <div class="cards" id="cards"></div>
+  <div class="ops" id="ops"></div>
+  <div class="log" id="log" aria-live="polite"></div>
+  <div class="res" id="res" hidden></div>
+  <div class="row"><button class="btn ghost" id="undo" type="button">↶ 되돌리기</button><button class="btn ghost" id="hint" type="button">💡 정답 보기</button><button class="btn" id="next" type="button">새 문제</button></div>
+  <p class="muted">숫자 카드를 누르고, 연산 기호(＋ − × ÷)를 누르고, 다른 숫자 카드를 누르면 두 카드가 계산 결과 하나로 합쳐져요. 네 숫자를 모두 한 번씩 써서 <b>24</b>가 되면 성공! 나누기에서 나머지가 생기면 분수로 나와요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id), KEY = "make24-best-v1";
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+// 분수 [분자, 분모]로 계산한다 (소수 오차가 없도록)
+const gcd = (a, b) => (b ? gcd(b, a % b) : Math.abs(a));
+const fr = (n, d = 1) => { const g = gcd(n, d) || 1; if (d < 0) { n = -n; d = -d; } return [n / g, d / g]; };
+const calc = (a, o, b) => o === "+" ? fr(a[0] * b[1] + b[0] * a[1], a[1] * b[1]) : o === "−" ? fr(a[0] * b[1] - b[0] * a[1], a[1] * b[1]) : o === "×" ? fr(a[0] * b[0], a[1] * b[1]) : (b[0] === 0 ? null : fr(a[0] * b[1], a[1] * b[0]));
+const show = f => (f[1] === 1 ? String(f[0]) : f[0] + "/" + f[1]);
+const is24 = f => f[0] === 24 && f[1] === 1;
+// 풀이를 찾는다: 두 수를 골라 계산해서 하나로 합치기를 끝까지 해 본다
+function solve(items) {
+  if (items.length === 1) return is24(items[0].v) ? items[0].e : null;
+  for (let i = 0; i < items.length; i++) for (let j = 0; j < items.length; j++) if (i !== j) for (const o of ["+", "−", "×", "÷"]) {
+    if ((o === "+" || o === "×") && i > j) continue; const v = calc(items[i].v, o, items[j].v); if (!v) continue;
+    const rest = items.filter((_, k) => k !== i && k !== j); const r = solve([...rest, { v, e: `(${items[i].e} ${o} ${items[j].e})` }]); if (r) return r;
+  }
+  return null;
+}
+const trim = s => s.startsWith("(") && s.endsWith(")") ? s.slice(1, -1) : s;
+function makePuzzle() { for (;;) { const nums = Array.from({ length: 4 }, () => 1 + Math.floor(Math.random() * 13)); if (solve(nums.map(n => ({ v: fr(n), e: String(n) })))) return nums; } }
+
+let nums, cards, hist, selC = -1, selO = "", solved = 0, streak = 0, best = ld(KEY) || 0, done = false, usedHint = false;
+function newPuzzle() { nums = makePuzzle(); cards = nums.map(n => ({ v: fr(n), e: String(n) })); hist = []; selC = -1; selO = ""; done = false; usedHint = false; $("res").hidden = true; $("log").textContent = "카드를 눌러 시작하세요."; render(); }
+function pickCard(i) {
+  if (done || !cards[i]) return;
+  if (selC < 0 || selC === i) { selC = selC === i ? -1 : i; selO = selC < 0 ? "" : selO; return render(); }
+  if (!selO) { selC = i; return render(); }                           // 기호를 고르기 전이면 첫 카드를 바꾼다
+  const a = cards[selC], b = cards[i], v = calc(a.v, selO, b.v);
+  if (!v) { $("log").textContent = "0으로는 나눌 수 없어요."; selC = -1; selO = ""; return render(); }
+  hist.push({ cards: cards.map(c => c && { ...c }), line: `${show(a.v)} ${selO} ${show(b.v)} = ${show(v)}` });
+  cards[i] = { v, e: `(${a.e} ${selO} ${b.e})` }; cards[selC] = null; selC = -1; selO = "";
+  const left = cards.filter(Boolean);
+  if (left.length === 1) finish(left[0]); else render();
+}
+function finish(c) {
+  if (is24(c.v)) {
+    done = true; solved++; streak++; if (streak > best && !usedHint) { best = streak; sv(KEY, best); } else if (usedHint) streak = 0;
+    $("res").innerHTML = `<b>🎉 성공! 24 완성</b><p class="muted">${trim(c.e)} = 24${usedHint ? " (정답을 봐서 연속 기록은 끊겼어요)" : ""}</p>`; $("res").hidden = false;
+  } else { $("res").innerHTML = `<b>결과는 ${show(c.v)}</b><p class="muted">24가 아니에요. 되돌려서 다시 해 보세요!</p>`; $("res").hidden = false; streak = 0; }
+  render();
+}
+function undo() { if (!hist.length) return; const h = hist.pop(); cards = h.cards; selC = -1; selO = ""; done = false; $("res").hidden = true; render(); }
+function hint() { if (done) return; const r = solve(cards.filter(Boolean)); usedHint = true; $("log").textContent = r ? "💡 예: " + trim(r) + " = 24" : "이 상태에서는 24를 만들 수 없어요. 되돌려 보세요."; }
+function render() {
+  $("cards").innerHTML = cards.map((c, i) => c ? `<button class="card ${i === selC ? "sel" : ""}" type="button" data-i="${i}" aria-label="${show(c.v)}">${show(c.v)}</button>` : `<span class="card gone"></span>`).join("");
+  $("ops").innerHTML = ["+", "−", "×", "÷"].map(o => `<button class="op ${selO === o ? "sel" : ""}" type="button" data-o="${o}" aria-label="${o}">${o === "+" ? "＋" : o}</button>`).join("");
+  if (hist.length && !$("log").textContent.startsWith("💡")) $("log").textContent = hist.map(h => h.line).join("  →  ");
+  $("solved").textContent = solved; $("streak").textContent = streak; $("best").textContent = best;
+}
+$("cards").addEventListener("click", e => { const c = e.target.closest("[data-i]"); if (c) pickCard(+c.dataset.i); });
+$("ops").addEventListener("click", e => { const o = e.target.closest("[data-o]"); if (o && selC >= 0 && !done) { selO = selO === o.dataset.o ? "" : o.dataset.o; render(); } else if (o && selC < 0) $("log").textContent = "먼저 숫자 카드를 고르세요."; });
+$("undo").onclick = undo; $("hint").onclick = hint; $("next").onclick = newPuzzle;
+newPuzzle();
+</script>
+</body>
+</html>

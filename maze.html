@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>미로 탈출</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 크기 선택, 시간·걸음 줄, 정사각형 미로(밀거나 방향 버튼으로 이동), 힌트와 새 미로 버튼 */
+:root{--bg:#eef2ec;--surface:#fff;--fg:#1d2a1f;--muted:#5c705f;--line:#d0dccf;--wall:#2b3a2e;--floor:#fbfdf9;--me:#e8643f;--goal:#2fa05a;--hint:#7fc4ff;--accent:#e8643f;--accent-fg:#fff;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1810;--surface:#18241a;--fg:#e8f2ea;--muted:#96b09a;--line:#2a3d2d;--wall:#9bc9a0;--floor:#101a12;--me:#ff7f5a;--goal:#4cd17d;--hint:#4a9be0;--accent:#ff7f5a;--accent-fg:#0f1810;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 12px}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.3rem;font-variant-numeric:tabular-nums}
+.wrap{border-radius:10px;overflow:hidden;border:2px solid var(--line);background:var(--floor);touch-action:none}canvas{width:100%;display:block;aspect-ratio:1}
+.dpad{display:grid;grid-template-columns:repeat(3,60px);grid-template-rows:repeat(2,52px);gap:6px;justify-content:center}.dpad button{background:var(--surface);border:1px solid var(--line);border-radius:14px;font-size:1.3rem;box-shadow:0 2px 0 var(--line)}.dpad button:active{transform:translateY(1px);box-shadow:none}
+.dpad .u{grid-column:2}.dpad .l{grid-column:1;grid-row:2}.dpad .d{grid-column:2;grid-row:2}.dpad .r{grid-column:3;grid-row:2}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.25rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>미로 탈출 🌀</h1>
+  <div class="seg" id="lv" role="radiogroup" aria-label="크기"></div>
+  <div class="stats"><div class="stat"><small>시간</small><b id="time">0.0</b></div><div class="stat"><small>걸음</small><b id="steps">0</b></div><div class="stat"><small>최고(시간)</small><b id="best">-</b></div></div>
+  <div class="wrap" id="wrap"><canvas id="cv" aria-label="미로"></canvas></div>
+  <div class="dpad"><button class="u" data-d="U" type="button" aria-label="위">▲</button><button class="l" data-d="L" type="button" aria-label="왼쪽">◀</button><button class="d" data-d="D" type="button" aria-label="아래">▼</button><button class="r" data-d="R" type="button" aria-label="오른쪽">▶</button></div>
+  <div class="res" id="res" hidden></div>
+  <div class="row"><button class="btn ghost" id="hint" type="button">💡 길 보여 주기</button><button class="btn" id="newGame" type="button">새 미로</button></div>
+  <p class="muted">주황색 점을 움직여 초록색 도착 칸까지 가세요. 미로를 <b>밀거나(스와이프)</b> 방향 버튼을 쓰세요. (컴퓨터: 화살표 키) 첫 이동부터 시간이 흘러요. 길을 보면 기록이 남지 않아요.</p>
+</main>
+<script>
+const LV = { s: { n: 8, label: "작게", hint: "8×8" }, m: { n: 12, label: "보통", hint: "12×12" }, l: { n: 16, label: "크게", hint: "16×16" } };
+const KEY = "maze-best-v1", LKEY = "maze-level-v1";
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let lv = (ld(LKEY) in LV) ? ld(LKEY) : "s", n, wall, px, py, steps, t0, timer, done, showHint, path, best = ld(KEY) || {};
+// wall[y][x] = {r: 오른쪽 벽, d: 아래쪽 벽} 이 있으면 true
+const DIR = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
+const blocked = (x, y, d) => { const [dx, dy] = DIR[d], nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= n || ny >= n) return true; if (d === "R") return wall[y][x].r; if (d === "L") return wall[y][nx].r; if (d === "D") return wall[y][x].d; return wall[ny][x].d; };
+
+function generate() {                                       // 깊이 우선 탐색으로 모든 칸이 길 하나로 이어진 미로를 만든다
+  wall = Array.from({ length: n }, () => Array.from({ length: n }, () => ({ r: true, d: true })));
+  const seen = Array.from({ length: n }, () => Array(n).fill(false)), st = [[0, 0]]; seen[0][0] = true;
+  while (st.length) {
+    const [x, y] = st[st.length - 1], opts = Object.keys(DIR).filter(d => { const nx = x + DIR[d][0], ny = y + DIR[d][1]; return nx >= 0 && ny >= 0 && nx < n && ny < n && !seen[ny][nx]; });
+    if (!opts.length) { st.pop(); continue; }
+    const d = opts[Math.floor(Math.random() * opts.length)], nx = x + DIR[d][0], ny = y + DIR[d][1];
+    if (d === "R") wall[y][x].r = false; else if (d === "L") wall[y][nx].r = false; else if (d === "D") wall[y][x].d = false; else wall[ny][x].d = false;
+    seen[ny][nx] = true; st.push([nx, ny]);
+  }
+}
+function solve() {                                          // 현재 위치에서 도착 칸까지의 길 (너비 우선 탐색)
+  const prev = new Map(), key = (x, y) => y * n + x, q = [[px, py]]; prev.set(key(px, py), null);
+  while (q.length) { const [x, y] = q.shift(); if (x === n - 1 && y === n - 1) break; for (const d of Object.keys(DIR)) if (!blocked(x, y, d)) { const nx = x + DIR[d][0], ny = y + DIR[d][1]; if (!prev.has(key(nx, ny))) { prev.set(key(nx, ny), [x, y]); q.push([nx, ny]); } } }
+  const out = []; let c = [n - 1, n - 1]; while (c) { out.push(c); c = prev.get(key(c[0], c[1])); } return out.reverse();
+}
+function newGame() {
+  clearInterval(timer); n = LV[lv].n; generate(); px = py = 0; steps = 0; t0 = 0; done = false; showHint = false; hinted = false; $("res").hidden = true; $("time").textContent = "0.0"; draw(); ui();
+}
+let hinted = false;
+function move(d) {
+  if (done || blocked(px, py, d)) return; px += DIR[d][0]; py += DIR[d][1]; steps++;
+  if (!t0) { t0 = performance.now(); timer = setInterval(() => { $("time").textContent = ((performance.now() - t0) / 1000).toFixed(1); }, 100); }
+  if (px === n - 1 && py === n - 1) win(); draw(); ui();
+}
+function win() {
+  done = true; clearInterval(timer); const s = (performance.now() - t0) / 1000; $("time").textContent = s.toFixed(1); let t = `${s.toFixed(1)}초, ${steps}걸음 만에 탈출했어요.`;
+  if (!hinted && (!best[lv] || s < best[lv])) { best[lv] = +s.toFixed(1); sv(KEY, best); t += " 🏆 최고 기록이에요!"; } else if (hinted) t += " (길을 봐서 기록은 남지 않아요)";
+  $("res").innerHTML = `<b>🎉 탈출 성공!</b><p class="muted">${t}</p>`; $("res").hidden = false;
+}
+function draw() {
+  const cv = $("cv"), w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!w) return; cv.width = cv.height = Math.round(w * dpr);
+  const c = cv.getContext("2d"), css = getComputedStyle(document.documentElement), col = v => css.getPropertyValue(v).trim(); c.scale(dpr, dpr);
+  const u = w / n; c.fillStyle = col("--floor"); c.fillRect(0, 0, w, w);
+  c.fillStyle = col("--goal"); c.fillRect((n - 1) * u + 2, (n - 1) * u + 2, u - 4, u - 4);
+  if (showHint) { c.strokeStyle = col("--hint"); c.lineWidth = Math.max(3, u * .22); c.lineJoin = c.lineCap = "round"; c.beginPath(); solve().forEach(([x, y], i) => { const X = (x + .5) * u, Y = (y + .5) * u; i ? c.lineTo(X, Y) : c.moveTo(X, Y); }); c.stroke(); }
+  c.strokeStyle = col("--wall"); c.lineWidth = Math.max(2, u * .1); c.lineCap = "round"; c.beginPath();
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { if (wall[y][x].r) { c.moveTo((x + 1) * u, y * u); c.lineTo((x + 1) * u, (y + 1) * u); } if (wall[y][x].d) { c.moveTo(x * u, (y + 1) * u); c.lineTo((x + 1) * u, (y + 1) * u); } }
+  c.moveTo(0, 0); c.lineTo(0, w); c.moveTo(0, 0); c.lineTo(w, 0); c.stroke();
+  c.fillStyle = col("--me"); c.beginPath(); c.arc((px + .5) * u, (py + .5) * u, u * .3, 0, 7); c.fill();
+}
+function ui() {
+  $("steps").textContent = steps; $("best").textContent = best[lv] ? best[lv] + "초" : "-";
+  $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
+}
+document.querySelector(".dpad").addEventListener("click", e => { const b = e.target.closest("[data-d]"); if (b) move(b.dataset.d); });
+document.addEventListener("keydown", e => { const d = { ArrowUp: "U", ArrowDown: "D", ArrowLeft: "L", ArrowRight: "R" }[e.key]; if (d) { e.preventDefault(); move(d); } });
+let sx = 0, sy = 0; const wrap = $("wrap");
+wrap.addEventListener("touchstart", e => { sx = e.changedTouches[0].clientX; sy = e.changedTouches[0].clientY; }, { passive: true });
+wrap.addEventListener("touchend", e => { const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return; const d = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "L" : "R") : (dy < 0 ? "U" : "D"); let k = 0; while (k++ < 60 && !blocked(px, py, d) && !done) { move(d); const open = Object.keys(DIR).filter(x => x !== d && x !== { U: "D", D: "U", L: "R", R: "L" }[d] && !blocked(px, py, x)).length; if (open) break; } });   // 밀면 갈림길까지 쭉 간다
+$("hint").onclick = () => { if (done) return; showHint = !showHint; if (showHint) hinted = true; draw(); };
+$("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && b.dataset.l !== lv) { lv = b.dataset.l; sv(LKEY, lv); newGame(); } });
+$("newGame").onclick = newGame; window.addEventListener("resize", draw);
+newGame();
+</script>
+</body>
+</html>

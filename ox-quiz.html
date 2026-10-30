@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OX 퀴즈</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: (분류 버튼), 점수 줄, 문제 카드, 네 개의 보기. 고르면 정답이 바로 표시되고 10문제를 풀면 결과가 나온다 */
+:root{--bg:hsl(345 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(345 22% 86%);--accent:hsl(345 60% 42%);--accent-fg:#fff;--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(345 22% 10%);--surface:hsl(345 20% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(345 18% 24%);--accent:hsl(345 75% 68%);--accent-fg:#10131c;--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.9rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 16px;text-align:center;font-family:var(--font-display);font-size:clamp(1.5rem,7vw,2.1rem);line-height:1.4;overflow-wrap:anywhere}
+.q small{display:block;color:var(--accent);font-family:var(--font-body);font-weight:700;font-size:.85rem;margin-bottom:4px}
+.q .note{display:block;color:var(--muted);font-family:var(--font-body);font-size:.9rem;margin-top:6px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.opts.one{grid-template-columns:1fr}
+.opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:58px;padding:8px 10px;font-weight:700;font-size:1.02rem;overflow-wrap:anywhere}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}.opt:disabled{cursor:default}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>OX 퀴즈 ⭕</h1>
+  <div class="chips" id="cats" role="group" aria-label="분류" hidden></div>
+  <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+  <div class="res" id="res" hidden></div>
+  <button class="btn" id="next" type="button" hidden>다음 문제</button>
+  <p class="muted">문장이 맞는지 틀리는지 골라 보세요. 정답을 고르면 짧은 설명이 나와요. 10문제를 풀면 결과가 나와요.</p>
+</main>
+<script>
+// [문제, 정답, 틀린 보기(없으면 같은 분류의 다른 정답에서 뽑음), 분류, 해설]
+const D = [["고래는 물고기다.", "X 아니에요", [], "동물", "고래는 새끼를 낳아 젖을 먹이는 포유류예요."], ["박쥐는 새다.", "X 아니에요", [], "동물", "박쥐는 날 수 있는 포유류예요."], ["펭귄은 하늘을 날 수 있다.", "X 아니에요", [], "동물", "펭귄은 날개가 헤엄치기에 알맞게 변했어요."], ["거미는 곤충이다.", "X 아니에요", [], "동물", "거미는 다리가 8개인 거미류예요. 곤충은 다리가 6개예요."], ["개미는 곤충이다.", "O 맞아요", [], "동물", "개미는 다리가 6개인 곤충이에요."], ["상어는 포유류다.", "X 아니에요", [], "동물", "상어는 물고기예요."], ["오징어의 다리는 모두 10개다.", "O 맞아요", [], "동물", "다리 8개와 더 긴 촉수 2개를 합쳐 10개예요."], ["문어의 심장은 3개다.", "O 맞아요", [], "동물", "문어는 심장이 3개예요."], ["개구리는 알에서 태어난다.", "O 맞아요", [], "동물", "알 → 올챙이 → 개구리 순서로 자라요."], ["호주에는 캥거루가 산다.", "O 맞아요", [], "동물", "캥거루는 호주의 대표 동물이에요."], ["북극에는 펭귄이 산다.", "X 아니에요", [], "동물", "펭귄은 주로 남쪽 지방에 살아요. 북극에는 북극곰이 살아요."], ["지구에서 가장 큰 동물은 흰수염고래다.", "O 맞아요", [], "동물", "몸길이가 30m에 이르기도 해요."], ["달은 스스로 빛을 낸다.", "X 아니에요", [], "과학", "달은 태양 빛을 반사해서 빛나요."], ["태양은 별이다.", "O 맞아요", [], "과학", "태양은 스스로 빛을 내는 별이에요."], ["지구는 태양 주위를 돈다.", "O 맞아요", [], "과학", "한 바퀴 도는 데 1년이 걸려요."], ["토성에는 고리가 있다.", "O 맞아요", [], "과학", "얼음과 돌 조각으로 된 고리예요."], ["소리는 진공에서도 전달된다.", "X 아니에요", [], "과학", "소리는 공기 같은 물질이 있어야 전달돼요."], ["얼음은 물에 뜬다.", "O 맞아요", [], "과학", "얼음은 물보다 가벼워요."], ["금은 자석에 붙는다.", "X 아니에요", [], "과학", "금은 자석에 붙지 않아요."], ["번개는 같은 곳에 두 번 칠 수 있다.", "O 맞아요", [], "과학", "높은 건물에는 여러 번 치기도 해요."], ["사람은 뇌의 10%만 쓴다.", "X 아니에요", [], "과학", "뇌는 대부분의 부분이 하루 종일 쓰여요."], ["피부는 사람 몸에서 가장 큰 장기다.", "O 맞아요", [], "과학", "피부도 우리 몸의 장기예요."], ["플라스틱은 자연에서 금방 썩는다.", "X 아니에요", [], "과학", "수백 년이 걸릴 수 있어요."], ["물은 1기압에서 섭씨 100도에 끓는다.", "O 맞아요", [], "과학", "높은 산에서는 더 낮은 온도에서 끓어요."], ["번개는 천둥보다 먼저 보인다.", "O 맞아요", [], "과학", "빛이 소리보다 훨씬 빠르기 때문이에요."], ["한글은 세종대왕이 만들었다.", "O 맞아요", [], "한국", "1443년에 만들어 1446년에 널리 알렸어요."], ["독도는 울릉도보다 크다.", "X 아니에요", [], "한국", "울릉도가 훨씬 커요."], ["대한민국의 수도는 부산이다.", "X 아니에요", [], "한국", "수도는 서울이에요."], ["대한민국의 국기는 태극기다.", "O 맞아요", [], "한국", "태극과 4괘로 이루어져 있어요."], ["우리나라에서 가장 큰 섬은 제주도다.", "O 맞아요", [], "한국", "제주도는 우리나라에서 가장 큰 섬이에요."], ["광복절은 8월 15일이다.", "O 맞아요", [], "한국", "1945년 8월 15일에 광복을 맞았어요."], ["한글날은 10월 9일이다.", "O 맞아요", [], "한국", "한글을 기념하는 날이에요."], ["피라미드는 이집트에 있다.", "O 맞아요", [], "세계", "기자의 대피라미드가 가장 유명해요."], ["에펠탑은 영국에 있다.", "X 아니에요", [], "세계", "프랑스 파리에 있어요."], ["올림픽은 4년마다 열린다.", "O 맞아요", [], "세계", "여름과 겨울 올림픽이 번갈아 2년마다 열리지만 각각은 4년마다예요."], ["지구의 대부분은 바다로 덮여 있다.", "O 맞아요", [], "세계", "지구 표면의 약 70%가 바다예요."], ["세계에서 가장 큰 대륙은 아시아다.", "O 맞아요", [], "세계", "아시아가 가장 커요."], ["사하라 사막은 아시아에 있다.", "X 아니에요", [], "세계", "아프리카 대륙에 있어요."]];
+const LABEL = "", KEY = "ox-quiz-best-v1", ROUND = 10;
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const CATS = ["전체", ...new Set(D.map(d => d[3]).filter(Boolean))];
+let cat = "전체", qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+
+function options(d) { return ["O 맞아요", "X 아니에요"]; }
+function _unused(d) {                                   // 보기를 만든다: 정답 + 틀린 보기 (같은 분류의 다른 정답 중에서 자동으로 뽑기도 함)
+  let wrong = d[2] && d[2].length ? d[2].slice(0, 3) : shuf(D.filter(x => x !== d && x[1] !== d[1] && (!d[3] || x[3] === d[3])).map(x => x[1])).filter((v, k, a) => a.indexOf(v) === k).slice(0, 3);
+  return shuf([d[1], ...wrong]);
+}
+function start() {
+  const pool = D.filter(d => cat === "전체" || d[3] === cat);
+  qs = shuf(pool).slice(0, ROUND).map(d => ({ d, opts: options(d) })); i = 0; score = 0; $("res").hidden = true;
+  $("cats").hidden = CATS.length < 3; $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
+}
+function show() {
+  const { d, opts } = qs[i]; locked = false; $("next").hidden = true;
+  $("q").innerHTML = (LABEL || d[3] ? `<small>${esc(LABEL || d[3])}</small>` : "") + esc(d[0]);
+  $("opts").className = "opts" + (opts.some(o => String(o).length > 9) ? " one" : "");
+  $("opts").innerHTML = opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join("");
+  $("no").textContent = (i + 1) + "/" + qs.length; $("score").textContent = score; $("best").textContent = best;
+}
+function pick(k) {
+  if (locked) return; locked = true; const { d, opts } = qs[i]; if (opts[k] === d[1]) score++;
+  document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === d[1]) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
+  if (d[4]) $("q").insertAdjacentHTML("beforeend", `<span class="note">${esc(d[4])}</span>`);
+  $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
+}
+function finish() {
+  const full = qs.length === ROUND; let note = ""; if (full && cat === "전체" && score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("next").hidden = true;
+  $("res").innerHTML = `<b>${qs.length}문제 중 ${score}개 정답</b><p class="muted">${score >= qs.length * .9 ? "박사님이시네요! 🎓" : score >= qs.length * .6 ? "잘했어요 👍" : "조금만 더 힘내요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
+  $("res").hidden = false; $("best").textContent = best; $("again").onclick = start;
+}
+$("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); });
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; start(); } });
+$("next").onclick = () => { if (i === qs.length - 1) finish(); else { i++; show(); } };
+start();
+</script>
+</body>
+</html>

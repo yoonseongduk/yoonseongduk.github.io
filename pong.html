@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>퐁</title>
+<title>탁구 대결</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#c4552b">
@@ -32,9 +32,9 @@ canvas{width:100%;height:100%;display:block}
 </head>
 <body>
 <main>
-  <h1>퐁 🏓</h1>
+  <h1>탁구 대결 🏓</h1>
   <div class="stats"><div class="stat"><small>점수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div><div class="stat"><small>목숨</small><b id="info">-</b></div></div>
-  <div class="wrap" id="wrap"><canvas id="cv" aria-label="퐁 게임 판"></canvas><div class="ov" id="ov"></div></div>
+  <div class="wrap" id="wrap"><canvas id="cv" aria-label="탁구 대결 게임 판"></canvas><div class="ov" id="ov"></div></div>
   <p class="muted">손가락을 <b>좌우로 끌어서</b> 아래 막대를 움직여 공을 받아치세요. 컴퓨터(위)가 공을 놓치면 1점, 내가 놓치면 목숨이 줄어요. 점수가 오를수록 공이 빨라져요. (컴퓨터: ← → 키) (일시정지: 창을 벗어나면 자동, 컴퓨터는 P 키)</p>
 </main>
 <script>
@@ -54,7 +54,7 @@ function start() { if (state === "ready" || state === "over") { setScore(0); new
 function pause() { if (state === "play") { state = "paused"; ui(); } }
 function ui() {
   $("best").textContent = best; $("score").textContent = score; $("info").textContent = info; const ov = $("ov"); ov.hidden = state === "play";
-  ov.innerHTML = state === "ready" ? `<b>퐁</b><p>컴퓨터가 공을 놓치게 만드세요</p><button class="btn" data-a="go" type="button">시작</button>`
+  ov.innerHTML = state === "ready" ? `<b>탁구 대결</b><p>컴퓨터가 공을 놓치게 만드세요</p><button class="btn" data-a="go" type="button">시작</button>`
     : state === "paused" ? `<b>일시정지</b><button class="btn" data-a="go" type="button">계속하기</button>`
     : `<b>게임 오버</b><p>${score}점${newBest ? "<br>🏆 최고 기록!" : ""}</p><button class="btn" data-a="go" type="button">다시 하기</button>`;
 }

@@ -75,7 +75,7 @@ function place(first) {               // 첫 번째로 연 칸과 그 둘레에�
   pool.slice(0, L().m).forEach(i => { cells[i].mine = true; });
   cells.forEach((cl, i) => { cl.n = nb(i).filter(j => cells[j].mine).length; });
 }
-function open(i) {
+function openCell(i) {
   const cl = cells[i]; if (state !== "play" || cl.open || cl.flag) return;
   if (!started) { started = true; place(i); t0 = Date.now(); timer = setInterval(tick, 250); }
   if (cl.mine) { return lose(i); }
@@ -87,7 +87,7 @@ function open(i) {
 function chord(i) {                   // 숫자 칸: 둘레 깃발 수가 숫자와 같으면 나머지를 연다
   const cl = cells[i]; if (!cl.open || !cl.n) return;
   const ns = nb(i); if (ns.filter(j => cells[j].flag).length !== cl.n) return;
-  ns.forEach(j => { if (state === "play") open(j); });
+  ns.forEach(j => { if (state === "play") openCell(j); });
 }
 function flag(i) { const c = cells[i]; if (state !== "play" || c.open) return; c.flag = !c.flag; render(); }
 const elapsed = () => started ? Math.floor((Date.now() - t0) / 1000) : 0;
@@ -123,7 +123,7 @@ grid.addEventListener("pointerdown", e => { const b = e.target.closest("[data-i]
 grid.addEventListener("click", e => {
   const b = e.target.closest("[data-i]"); if (!b) return; if (held) { held = false; return; }
   const i = +b.dataset.i, c = cells[i];
-  if (flagMode) flag(i); else if (c.open) chord(i); else open(i);
+  if (flagMode) flag(i); else if (c.open) chord(i); else openCell(i);
 });
 grid.addEventListener("contextmenu", e => { const b = e.target.closest("[data-i]"); if (!b) return; e.preventDefault(); flag(+b.dataset.i); });
 $("flagMode").onclick = () => { flagMode = !flagMode; render(); };

@@ -48,22 +48,22 @@ let level = 1, seq = [], pos = 0, state = "idle", best = ld(KEY) || 0, tempo = 1
 const sleep = ms => new Promise(r => setTimeout(r, ms * tempo));
 const sizeFor = l => (l < 6 ? 3 : l < 13 ? 4 : 5);
 function build() { n = sizeFor(level); $("grid").style.gridTemplateColumns = `repeat(${n}, 1fr)`; $("grid").innerHTML = Array.from({ length: n * n }, (_, i) => `<button type="button" class="pc" data-i="${i}" aria-label="칸 ${i + 1}"></button>`).join(""); }
-function status(t) { $("st").textContent = t; $("lvl").textContent = level; $("best").textContent = best; $("grid").classList.toggle("lock", state !== "input"); }
+function setStatus(t) { $("st").textContent = t; $("lvl").textContent = level; $("best").textContent = best; $("grid").classList.toggle("lock", state !== "input"); }
 async function show() {
-  const my = ++gen; state = "show"; pos = 0; build(); status("잘 보세요"); await sleep(700);
+  const my = ++gen; state = "show"; pos = 0; build(); setStatus("잘 보세요"); await sleep(700);
   for (const i of seq) { if (my !== gen) return; const el = document.querySelector(`[data-i="${i}"]`); el.classList.add("lit"); await sleep(Math.max(260, 520 - level * 12)); el.classList.remove("lit"); await sleep(170); }
-  if (my !== gen) return; state = "input"; status("따라 눌러요");
+  if (my !== gen) return; state = "input"; setStatus("따라 눌러요");
 }
 function addStep() { seq.push(ri(0, sizeFor(level) ** 2 - 1)); }
 function start() { level = 1; seq = []; $("res").hidden = true; $("start").hidden = true; for (let k = 0; k < 3; k++) addStep(); show(); }
 async function press(i) {
   if (state !== "input") return; const el = document.querySelector(`[data-i="${i}"]`);
-  if (seq[pos] !== i) { state = "over"; gen++; el.classList.add("bad"); const reached = level - 1; if (reached > best) { best = reached; sv(KEY, best); } status("끝"); $("res").innerHTML = `<b>${reached}단계까지 성공!</b><p class="muted">${reached >= 10 ? "기억력 천재 🧠" : reached >= 5 ? "잘했어요 👍" : "다시 도전해 볼까요?"}</p>`; $("res").hidden = false; $("start").hidden = false; $("start").textContent = "다시 하기"; return; }
+  if (seq[pos] !== i) { state = "over"; gen++; el.classList.add("bad"); const reached = level - 1; if (reached > best) { best = reached; sv(KEY, best); } setStatus("끝"); $("res").innerHTML = `<b>${reached}단계까지 성공!</b><p class="muted">${reached >= 10 ? "기억력 천재 🧠" : reached >= 5 ? "잘했어요 👍" : "다시 도전해 볼까요?"}</p>`; $("res").hidden = false; $("start").hidden = false; $("start").textContent = "다시 하기"; return; }
   el.classList.add("ok"); setTimeout(() => el.classList.remove("ok"), 160); pos++;
-  if (pos === seq.length) { state = "wait"; status("정답! 👍"); await sleep(800); level++; const oldN = n; if (sizeFor(level) !== oldN) seq = seq.map(() => ri(0, sizeFor(level) ** 2 - 1)); addStep(); show(); }
+  if (pos === seq.length) { state = "wait"; setStatus("정답! 👍"); await sleep(800); level++; const oldN = n; if (sizeFor(level) !== oldN) seq = seq.map(() => ri(0, sizeFor(level) ** 2 - 1)); addStep(); show(); }
 }
 $("grid").addEventListener("pointerdown", e => { const c = e.target.closest("[data-i]"); if (c) { e.preventDefault(); press(+c.dataset.i); } });
-$("start").onclick = start; build(); status("준비");
+$("start").onclick = start; build(); setStatus("준비");
 </script>
 </body>
 </html>

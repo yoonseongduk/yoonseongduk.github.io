@@ -19,6 +19,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.3rem}
 .q{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px 16px;text-align:center;font-family:var(--font-display);font-size:clamp(1.5rem,7vw,2.1rem);line-height:1.4;overflow-wrap:anywhere}
 .q small{display:block;color:var(--accent);font-family:var(--font-body);font-weight:700;font-size:.85rem;margin-bottom:4px}
+.q .hanja{display:block;font-size:.62em;color:var(--muted);font-weight:400;margin-top:2px}
 .q .note.eg{background:var(--soft);border-radius:10px;padding:8px 10px;color:var(--fg)}
 .q .note{display:block;color:var(--muted);font-family:var(--font-body);font-size:.9rem;margin-top:6px}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.opts.one{grid-template-columns:1fr}
@@ -36,7 +37,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
   <div class="opts" id="opts"></div>
   <div class="res" id="res" hidden></div>
   <button class="btn" id="next" type="button" hidden>다음 문제</button>
-  <p class="muted">사자성어의 뜻을 맞혀 보세요. 정답을 고르면 한자와 풀이, 쓰이는 예시가 나와요. 사자성어 124개가 들어 있어요.</p>
+  <p class="muted">사자성어의 뜻을 맞혀 보세요. 문제에 한글과 한자가 함께 나오고, 정답을 고르면 풀이와 쓰이는 예시가 나와요. 사자성어 124개가 들어 있어요.</p>
 </main>
 <script>
 // [사자성어, 뜻, 틀린 보기(비우면 다른 성어의 뜻에서 뽑음), 분류, 한자·풀이, 쓰이는 예시]
@@ -61,7 +62,7 @@ function start() {
 }
 function show() {
   const { d, opts } = qs[i]; locked = false; $("next").hidden = true;
-  $("q").innerHTML = (LABEL || d[3] ? `<small>${esc(LABEL || d[3])}</small>` : "") + esc(d[0]);
+  $("q").innerHTML = (LABEL || d[3] ? `<small>${esc(LABEL || d[3])}</small>` : "") + esc(d[0]) + (d[4] ? `<span class="hanja">(${esc(d[4].split(" · ")[0])})</span>` : "");
   $("opts").className = "opts" + (opts.some(o => String(o).length > 9) ? " one" : "");
   $("opts").innerHTML = opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${esc(o)}</button>`).join("");
   $("no").textContent = (i + 1) + "/" + qs.length; $("score").textContent = score; $("best").textContent = best;

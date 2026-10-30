@@ -11,9 +11,13 @@ files = ["./"] + sorted(os.path.basename(f) for f in glob.glob(R + "*.html"))
 files += ["manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "favicon-48.png", "fonts/fonts.css"]
 files += ["fonts/" + os.path.basename(f) for f in sorted(glob.glob(R + "fonts/*.woff2"))]
 h = hashlib.md5()
+TEXT = (".html", ".css", ".webmanifest", ".js")   # Windows가 줄 끝 표시(CRLF)를 바꿔도 같은 버전이 되도록 맞춘다
 for f in files:
     if f != "./":
-        h.update(open(R + f, "rb").read())
+        data = open(R + f, "rb").read()
+        if f.endswith(TEXT):
+            data = data.replace(b"\r\n", b"\n")
+        h.update(data)
 ver = "family-games-" + h.hexdigest()[:10]
 js = '''// 오프라인에서도 게임이 실행되도록 모든 파일을 폰에 저장해 두는 서비스 워커예요. (자동 생성 파일)
 const VERSION = "%s";

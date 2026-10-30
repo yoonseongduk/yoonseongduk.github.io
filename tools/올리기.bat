@@ -11,11 +11,14 @@ if errorlevel 1 python tools\make-sw.py
 if errorlevel 1 goto nopy
 echo [3/5] 바뀐 파일 목록:
 git status --short
+git status --porcelain | findstr "." >nul
+if errorlevel 1 goto nothing
 set /p MSG=변경 내용을 짧게 적어 주세요 (예: 속담 퀴즈 문제 추가): 
 if "%MSG%"=="" set MSG=게임 수정
 echo [4/5] 저장(커밋)합니다...
 git add -A
 git commit -m "%MSG%"
+if errorlevel 1 goto noid
 echo [5/5] 사이트에 올립니다...
 git push
 if errorlevel 1 goto fail
@@ -23,6 +26,18 @@ echo.
 echo 완료! 1~2분 뒤 사이트에 반영되고, 폰은 인터넷이 될 때 앱을 열면 새 버전을 받아요.
 pause
 exit /b 0
+:nothing
+echo.
+echo 올릴 변경 내용이 없어요. (파일을 고친 뒤에 다시 실행하세요.)
+pause
+exit /b 0
+:noid
+echo.
+echo 저장(커밋)에 실패했어요. 처음이라면 아래 두 줄을 한 번만 실행한 뒤 다시 해 보세요. (이름과 이메일은 본인 것으로 바꾸세요)
+echo   git config --global user.name "내이름"
+echo   git config --global user.email "내이메일@gmail.com"
+pause
+exit /b 1
 :nopy
 echo.
 echo 파이썬(py 또는 python)이 없거나 실행에 실패했어요. https://www.python.org 에서 설치한 뒤 다시 해 보세요.
@@ -30,6 +45,6 @@ pause
 exit /b 1
 :fail
 echo.
-echo 중간에 오류가 났어요. 위의 빨간 글씨나 메시지를 캡처해서 알려 주세요.
+echo 중간에 오류가 났어요. 위의 메시지를 캡처해서 알려 주세요.
 pause
 exit /b 1

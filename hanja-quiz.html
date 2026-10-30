@@ -70,16 +70,23 @@ function start() {
   $("cats").hidden = CATS.length < 3; $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
 }
 let DET = null;
+const RX = "丨 뚫을 곤,丶 점 주,丿 삐침 별,亅 갈고리 궐,亠 돼지해머리 두,儿 어진사람 인,冂 멀 경,冖 덮을 멱,冫 이수변 빙,凵 입벌릴 감,勹 쌀 포,匚 상자 방,匸 감출 혜,卩 병부 절,厂 기슭 엄,厶 사사 사,囗 에울 위,夊 천천히걸을 쇠,宀 집 면,尢 절름발이 왕,尸 주검 시,屮 싹날 철,巛 내 천,幺 작을 요,广 집 엄,廴 길게걸을 인,廾 받쳐들 공,弋 주살 익,彐 돼지머리 계,彡 터럭 삼,彳 걸을 척,攴 칠 복,无 없을 무,歹 뼈앙상할 알,殳 몽둥이 수,气 기운 기,疒 병질 엄,癶 걸을 발,禸 짐승발자국 유,糸 실 사,缶 장군 부,网 그물 망,耒 가래 뢰,聿 붓 율,舛 어그러질 천,艸 풀 초,虍 범호엄 호,虫 벌레 훼,襾 덮을 아,豕 돼지 시,豸 갖은돼지시 치,辵 쉬엄쉬엄갈 착,釆 분별할 변,隶 미칠 이,隹 새 추,頁 머리 혈,髟 터럭발 표,鬥 싸울 투,鬯 울창주 창,鹵 짠땅 로,黽 맹꽁이 맹";
+let RM = null;
+function rname(c) {
+  if (!RM) { RM = {}; RX.split(",").forEach(x => { RM[x[0]] = x.slice(2); }); D.forEach(x => { const k = x[0].normalize("NFKC"); if (!RM[k]) RM[k] = x[1].split(" / ")[0]; }); }
+  const n = RM[(c || "").normalize("NFKC")]; return n ? c + "(" + n + ")" : c;
+}
+function rinfo(t) { return (t || "").replace(/부수 (\S+)/, (m, c) => "부수 " + rname(c)); }
 async function openDet(d) {
   const box = $("det"); if (!box.hidden) { box.hidden = true; return; }
   box.hidden = false; box.innerHTML = '<p class="muted">불러오는 중…</p>';
   try { if (!DET) DET = await (await fetch("data/hanja-detail.json")).json(); } catch (e) { box.innerHTML = '<p class="muted">자세한 설명을 불러오지 못했어요. 인터넷에 한 번 연결한 뒤 다시 눌러 주세요.</p>'; return; }
   const e = DET[d[0]] || {}, info = (d[4] || "").split(" · ");
-  let h = `<div class="big">${esc(d[0])}</div><div class="hd">${esc(d[1])} · ${esc(d[3])}</div><p class="muted" style="text-align:center">${esc(d[4] || "")}</p>`;
-  h += e.o ? `<div><h3>🌱 글자의 유래</h3><p>${esc(e.o)}</p><p class="muted">※ 한자의 유래는 학설에 따라 다를 수 있어요.</p></div>` : `<div><h3>🌱 글자의 유래</h3><p class="muted">이 글자의 유래 설명은 아직 준비 중이에요. 부수(${esc(((d[4] || "").match(/부수 (\S+)/) || [])[1] || "-")})와 획수를 참고해 보세요.</p></div>`;
+  let h = `<div class="big">${esc(d[0])}</div><div class="hd">${esc(d[1])} · ${esc(d[3])}</div><p class="muted" style="text-align:center">${esc(rinfo(d[4]))}</p>`;
+  h += e.o ? `<div><h3>🌱 글자의 유래</h3><p>${esc(e.o)}</p><p class="muted">※ 한자의 유래는 학설에 따라 다를 수 있어요.</p></div>` : `<div><h3>🌱 글자의 유래</h3><p class="muted">이 글자의 유래 설명은 아직 준비 중이에요. 부수(${esc(rname(((d[4] || "").match(/부수 (\S+)/) || [])[1] || "-"))})와 획수를 참고해 보세요.</p></div>`;
   if (e.w) h += `<div><h3>📝 이렇게 써요 (한자어)</h3><ul>${e.w.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
   if (e.i) h += `<div><h3>📜 사자성어 속 쓰임</h3><ul>${e.i.map(x => `<li><b>${esc(x[0])}</b> (${esc(x[1])}) — ${esc(x[2])}</li>`).join("")}</ul></div>`;
-  if (e.r) h += `<div><h3>🧩 같은 부수(${esc(e.r[0])}) 한자</h3><div class="tags">${e.r[1].map(x => `<span>${esc(x[0])} ${esc(x[1])}</span>`).join("")}</div></div>`;
+  if (e.r) h += `<div><h3>🧩 같은 부수 ${esc(rname(e.r[0]))} 한자</h3><div class="tags">${e.r[1].map(x => `<span>${esc(x[0])} ${esc(x[1])}</span>`).join("")}</div></div>`;
   box.innerHTML = h; box.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 function show() { $("det").hidden = true;
@@ -92,7 +99,7 @@ function show() { $("det").hidden = true;
 function pick(k) {
   if (locked) return; locked = true; const { d, opts } = qs[i]; if (opts[k] === d[1]) score++;
   document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === d[1]) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
-  if (d[4]) $("q").insertAdjacentHTML("beforeend", `<span class="note">${esc(d[4])}</span>`);
+  if (d[4]) $("q").insertAdjacentHTML("beforeend", `<span class="note">${esc(rinfo(d[4]))}</span>`);
   $("q").insertAdjacentHTML("beforeend", `<button type="button" class="btn ghost mre" id="mre">📖 이 한자 자세히 보기</button>`); $("mre").onclick = () => openDet(d);
   $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
 }

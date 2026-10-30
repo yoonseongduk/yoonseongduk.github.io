@@ -51,27 +51,33 @@ canvas{width:100%;height:100%;display:block}
       <div class="box"><small>점수</small><b id="score">0</b></div>
       <div class="box"><small>줄 / 레벨</small><b id="lines">0</b> <span class="muted">/</span> <b id="level">1</b></div>
       <div class="box"><small>최고 점수</small><b id="best">0</b></div>
+      <div class="box"><small>알림</small><b id="note" style="font-size:.95rem;min-height:1.3em"></b></div>
       <button class="btn ghost" id="pause" type="button">일시정지</button>
     </div>
   </div>
   <div class="ctl"><button data-a="L" type="button" aria-label="왼쪽">◀</button><button data-a="R" type="button" aria-label="오른쪽">▶</button><button class="rot" data-a="ROT" type="button" aria-label="돌리기">⟳</button><button data-a="SOFT" type="button" aria-label="천천히 내리기">▼</button><button data-a="DROP" type="button" aria-label="바로 떨어뜨리기">⤓</button></div>
+  <details class="muted"><summary><b>✨ 이 게임만의 규칙 4가지 (눌러서 보기)</b></summary><ol style="margin:8px 0 0;padding-left:20px"><li><b>새로운 블록 8종</b> — 3칸 2종과 5칸 6종이 나와요. 십자(+)·U·W 같은 모양이라 쌓는 재미가 달라요.</li><li><b>💣 폭탄 블록</b> — 가끔 1칸짜리 폭탄이 나와요. 닿는 순간 주변 3×3칸이 터져요. (터진 칸마다 10점)</li><li><b>🌊 연쇄 낙하</b> — 줄이 지워지면 공중에 뜬 칸이 아래로 떨어져요. 그 결과 또 줄이 만들어지면 연쇄가 되어 점수가 배로 늘어요.</li><li><b>⭐ 콤보</b> — 블록을 놓을 때마다 연속으로 줄을 지우면 콤보 보너스 점수가 붙어요.</li></ol></details>
   <p class="muted">◀ ▶ 이동 · ⟳ 돌리기 · ▼ 빨리 내리기(꾹 누르기) · ⤓ 바로 떨어뜨리기. 가로 한 줄을 채우면 사라져요. 컴퓨터는 ← → ↑(돌리기) ↓ 스페이스(바로 떨어뜨리기), P(정지)</p>
 </main>
 <script>
-const W = 10, H = 20, KEY = "tetris-best-v1";
+const W = 10, H = 20, KEY = "blockstack-best-v2";
+// 새로운 블록 8종 (3칸 2종 + 5칸 6종) + 폭탄. 표준 7종과 다른 모양이에요
 const SHAPES = {
-  I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], O: [[1,1],[1,1]], T: [[0,1,0],[1,1,1],[0,0,0]],
-  S: [[0,1,1],[1,1,0],[0,0,0]], Z: [[1,1,0],[0,1,1],[0,0,0]], J: [[1,0,0],[1,1,1],[0,0,0]], L: [[0,0,1],[1,1,1],[0,0,0]]
+  A: [[0,0,0],[1,1,1],[0,0,0]], B: [[0,0,0],[1,0,0],[1,1,0]],
+  C: [[0,1,1],[0,1,1],[0,1,0]], D: [[1,1,1],[0,1,0],[0,1,0]], E: [[1,0,1],[1,1,1],[0,0,0]],
+  F: [[1,0,0],[1,1,0],[0,1,1]], G: [[0,1,0],[1,1,1],[0,1,0]], H: [[1,0,0],[1,0,0],[1,1,1]],
+  X: [[1]]
 };
-const COLOR = { I: "#2fc6e8", O: "#f2c200", T: "#a75be0", S: "#3cc46a", Z: "#e8453c", J: "#3f6fe0", L: "#f08a24" };
+const COLOR = { A: "#ff8fa3", B: "#ffb86b", C: "#7bd389", D: "#4fc3c8", E: "#8ea2ff", F: "#d79bf0", G: "#ffd166", H: "#ef7674", X: "#555b6e" };
 const $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-let grid, cur, nextT, bag = [], score = 0, lines = 0, level = 1, best = ld(KEY) || 0, state = "ready", timer = 0;
+let grid, cur, nextT, bag = [], sinceBomb = 0, combo = 0, fx = null, score = 0, lines = 0, level = 1, best = ld(KEY) || 0, state = "ready", timer = 0;
 
 const rotate = m => m[0].map((_, c) => m.map((_, r) => m[m.length - 1 - r][c]));          // 시계 방향으로 90도
-function nextType() {                                    // 7가지를 한 번씩 섞은 가방에서 뽑는다 (같은 블록이 너무 오래 안 나오는 일이 없다)
-  if (!bag.length) { bag = Object.keys(SHAPES); for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; } }
+function nextType() {                                    // 8가지를 한 번씩 섞은 가방에서 뽑되, 가끔 폭탄(X)이 끼어든다
+  if (++sinceBomb >= 7 && Math.random() < .4) { sinceBomb = 0; return "X"; }
+  if (!bag.length) { bag = Object.keys(SHAPES).filter(k => k !== "X"); for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; } }
   return bag.pop();
 }
 const collide = (m, x, y) => m.some((row, r) => row.some((v, c) => v && (x + c < 0 || x + c >= W || y + r >= H || (y + r >= 0 && grid[y + r][x + c]))));
@@ -81,30 +87,50 @@ function spawn() {
   if (collide(cur.m, cur.x, cur.y)) { gameOver(); return false; } return true;
 }
 function reset() {
-  grid = Array.from({ length: H }, () => Array(W).fill("")); score = 0; lines = 0; level = 1; bag = []; nextT = null; spawn();
+  grid = Array.from({ length: H }, () => Array(W).fill("")); score = 0; lines = 0; level = 1; bag = []; sinceBomb = 0; combo = 0; fx = null; nextT = null; spawn();
 }
 const speed = () => Math.max(90, 800 - (level - 1) * 70);
 function move(dx) { if (state !== "play") return false; if (!collide(cur.m, cur.x + dx, cur.y)) { cur.x += dx; draw(); return true; } return false; }
 function rot() {                                        // 벽에 걸리면 살짝 옆으로 밀어서라도 돌린다
-  if (state !== "play" || cur.t === "O") return;
+  if (state !== "play" || cur.m.length === 1) return;
   const m = rotate(cur.m);
   for (const k of [0, -1, 1, -2, 2]) if (!collide(m, cur.x + k, cur.y)) { cur.m = m; cur.x += k; draw(); return; }
 }
 function soft() { if (state !== "play") return; if (!collide(cur.m, cur.x, cur.y + 1)) { cur.y++; score += 1; draw(); ui(); return true; } lock(); return false; }
 function drop() { if (state !== "play") return; let n = 0; while (!collide(cur.m, cur.x, cur.y + 1)) { cur.y++; n++; } score += n * 2; lock(); }
+function gravity() {                                    // 줄이 사라지면 공중에 뜬 칸이 아래로 떨어진다
+  for (let x = 0; x < W; x++) { const col = []; for (let y = H - 1; y >= 0; y--) if (grid[y][x]) col.push(grid[y][x]); for (let y = H - 1, i = 0; y >= 0; y--, i++) grid[y][x] = col[i] || ""; }
+}
+function clearLines() { let n = 0; for (let r = H - 1; r >= 0; r--) if (grid[r].every(Boolean)) { grid.splice(r, 1); grid.unshift(Array(W).fill("")); n++; r++; } return n; }
 function lock() {
-  cur.m.forEach((row, r) => row.forEach((v, c) => { if (v && cur.y + r >= 0) grid[cur.y + r][cur.x + c] = cur.t; }));
-  let n = 0; for (let r = H - 1; r >= 0; r--) if (grid[r].every(Boolean)) { grid.splice(r, 1); grid.unshift(Array(W).fill("")); n++; r++; }
-  if (n) { score += [0, 100, 300, 500, 800][n] * level; lines += n; level = 1 + Math.floor(lines / 10); restartTimer(); }
+  let gotLine = 0, chain = 0, msg = "";
+  if (cur.t === "X") {                                  // 폭탄: 닿으면 주변 3×3칸이 터진다
+    const bx = cur.x, by = cur.y; let boom = 0; fx = { x: bx, y: by, t: Date.now() };
+    for (let yy = by - 1; yy <= by + 1; yy++) for (let xx = bx - 1; xx <= bx + 1; xx++) if (yy >= 0 && yy < H && xx >= 0 && xx < W && grid[yy][xx]) { grid[yy][xx] = ""; boom++; }
+    score += boom * 10; msg = boom ? `💥 ${boom}칸 폭발!` : "💥"; gravity();
+  } else cur.m.forEach((row, r) => row.forEach((v, c) => { if (v && cur.y + r >= 0) grid[cur.y + r][cur.x + c] = cur.t; }));
+  for (;;) {                                            // 연쇄: 줄을 지우고 → 떨어뜨리고 → 또 줄이 생기면 반복
+    const n = clearLines(); if (!n) break; chain++; gotLine += n; lines += n;
+    score += [0, 100, 300, 500, 800, 1200][Math.min(n, 5)] * level * chain; gravity();
+  }
+  if (gotLine) { combo++; if (combo >= 2) score += 50 * combo * level; level = 1 + Math.floor(lines / 10); restartTimer(); msg = (chain >= 2 ? `🌊 ${chain}연쇄! ` : "") + (combo >= 2 ? `⭐ ${combo}콤보!` : msg); } else combo = 0;
+  note(msg);
   if (spawn()) { draw(); ui(); }
 }
+let noteT = 0; function note(m) { const e = $("note"); if (!e) return; e.textContent = m || ""; clearTimeout(noteT); if (m) noteT = setTimeout(() => e.textContent = "", 1600); }
 function gameOver() { state = "over"; clearTimeout(timer); if (score > best) { best = score; sv(KEY, best); } draw(); ui(); }
 function tick() { if (state !== "play") return; if (!collide(cur.m, cur.x, cur.y + 1)) { cur.y++; draw(); } else lock(); timer = setTimeout(tick, speed()); }
 function restartTimer() { clearTimeout(timer); if (state === "play") timer = setTimeout(tick, speed()); }
 function start() { if (state === "over" || state === "ready") reset(); state = "play"; restartTimer(); draw(); ui(); }
 function pause() { if (state === "play") { state = "paused"; clearTimeout(timer); } else if (state === "paused") { state = "play"; restartTimer(); } draw(); ui(); }
 
-function cell(c, x, y, u, color) { c.fillStyle = color; c.fillRect(x * u + 1, y * u + 1, u - 2, u - 2); c.fillStyle = "rgba(255,255,255,.28)"; c.fillRect(x * u + 1, y * u + 1, u - 2, Math.max(2, u * .16)); }
+function cell(c, x, y, u, color) {                       // 동글동글한 젤리 모양
+  const r = u * .28, px = x * u + 1.5, py = y * u + 1.5, w = u - 3; c.fillStyle = color; c.beginPath();
+  if (c.roundRect) c.roundRect(px, py, w, w, r); else c.rect(px, py, w, w); c.fill();
+  c.fillStyle = "rgba(255,255,255,.38)"; c.beginPath(); c.ellipse(px + w * .3, py + w * .27, w * .17, w * .1, -.5, 0, 7); c.fill();
+  c.fillStyle = "rgba(0,0,0,.14)"; c.fillRect(px + w * .12, py + w * .78, w * .76, Math.max(2, w * .1));
+}
+function bombFace(c, x, y, u) { c.font = `${u * .72}px system-ui,"Apple Color Emoji","Noto Color Emoji",sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = "#fff"; c.fillText("💣", x * u + u / 2, y * u + u / 2 + 1); }
 function draw() {
   const cv = $("cv"), w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!w) return;
   const pw = Math.round(w * dpr); if (cv.width !== pw) { cv.width = pw; cv.height = pw * 2; }
@@ -114,16 +140,17 @@ function draw() {
   for (let x = 1; x < W; x++) { c.beginPath(); c.moveTo(x * u, 0); c.lineTo(x * u, cv.height); c.stroke(); }
   for (let y = 1; y < H; y++) { c.beginPath(); c.moveTo(0, y * u); c.lineTo(cv.width, y * u); c.stroke(); }
   grid.forEach((row, y) => row.forEach((t, x) => { if (t) cell(c, x, y, u, COLOR[t]); }));
+  if (fx && Date.now() - fx.t < 400) { c.strokeStyle = "#ff9f1c"; c.lineWidth = u * .18; c.globalAlpha = 1 - (Date.now() - fx.t) / 400; c.beginPath(); c.arc((fx.x + .5) * u, (fx.y + .5) * u, u * 1.7, 0, 7); c.stroke(); c.globalAlpha = 1; setTimeout(draw, 50); }
   if (state !== "over" && cur) {
     let gy = cur.y; while (!collide(cur.m, cur.x, gy + 1)) gy++;                          // 떨어질 자리를 흐리게 보여 준다
     c.globalAlpha = .25; cur.m.forEach((row, r) => row.forEach((v, cc) => { if (v) cell(c, cur.x + cc, gy + r, u, COLOR[cur.t]); }));
-    c.globalAlpha = 1; cur.m.forEach((row, r) => row.forEach((v, cc) => { if (v) cell(c, cur.x + cc, cur.y + r, u, COLOR[cur.t]); }));
+    c.globalAlpha = 1; cur.m.forEach((row, r) => row.forEach((v, cc) => { if (v) { cell(c, cur.x + cc, cur.y + r, u, COLOR[cur.t]); if (cur.t === "X") bombFace(c, cur.x + cc, cur.y + r, u); } }));
   }
   const nc = $("nextCv"), nw = nc.clientWidth; if (nw && nextT) {
     const np = Math.round(nw * dpr); if (nc.width !== np) { nc.width = nc.height = np; }
     const x = nc.getContext("2d"), m = SHAPES[nextT], nu = nc.width / 5; x.clearRect(0, 0, nc.width, nc.height);
     const off = (5 - m[0].length) / 2, offY = (5 - m.length) / 2;
-    m.forEach((row, r) => row.forEach((v, cc) => { if (v) cell(x, off + cc, offY + r, nu, COLOR[nextT]); }));
+    m.forEach((row, r) => row.forEach((v, cc) => { if (v) { cell(x, off + cc, offY + r, nu, COLOR[nextT]); if (nextT === "X") bombFace(x, off + cc, offY + r, nu); } }));
   }
 }
 function ui() {

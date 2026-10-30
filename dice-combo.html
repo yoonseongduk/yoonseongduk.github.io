@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>요트 다이스</title>
+<title>주사위 족보</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#c4552b">
@@ -37,14 +37,14 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 </head>
 <body>
 <main>
-  <h1>요트 다이스 🎲</h1>
+  <h1>주사위 족보 🎲</h1>
   <div class="stats"><div class="stat"><small>턴</small><b id="turn">1/12</b></div><div class="stat"><small>눈 합계</small><b id="upper">0/63</b></div><div class="stat"><small>총점</small><b id="total">0</b></div></div>
   <div class="dice" id="dice"></div>
   <button class="btn" id="roll" type="button">굴리기</button>
   <div class="cats" id="cats"></div>
   <div class="res" id="res" hidden></div>
   <button class="btn ghost" id="again" type="button" hidden>다시 하기</button>
-  <p class="muted">주사위 5개를 <b>한 턴에 최대 3번</b> 굴릴 수 있어요. 마음에 드는 주사위는 눌러서 <b>고정</b>하고 나머지만 다시 굴려요. 12개 족보를 한 번씩 채우면 끝! 1~6의 눈 합계가 63점 이상이면 <b>보너스 35점</b>. 스트레이트는 연속된 눈이 4개면 스몰(15점), 5개면 라지(30점), 같은 눈 5개는 요트(50점)예요.</p>
+  <p class="muted">주사위 5개를 <b>한 턴에 최대 3번</b> 굴릴 수 있어요. 마음에 드는 주사위는 눌러서 <b>고정</b>하고 나머지만 다시 굴려요. 12개 족보를 한 번씩 채우면 끝! 1~6의 눈 합계가 63점 이상이면 <b>보너스 35점</b>. 스트레이트는 연속된 눈이 4개면 스몰(15점), 5개면 라지(30점), 같은 눈 5개는 파이브(50점)예요.</p>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -54,7 +54,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const KEY = "yacht-best-v1";
-const NAMES = ["1의 눈", "2의 눈", "3의 눈", "4의 눈", "5의 눈", "6의 눈", "초이스(합계)", "포카드", "풀하우스", "스몰 스트레이트", "라지 스트레이트", "요트"];
+const NAMES = ["1의 눈", "2의 눈", "3의 눈", "4의 눈", "5의 눈", "6의 눈", "초이스(합계)", "포카드", "풀하우스", "스몰 스트레이트", "라지 스트레이트", "파이브"];
 const HINT = ["1의 합", "2의 합", "3의 합", "4의 합", "5의 합", "6의 합", "다 더하기", "같은 눈 4개↑", "3개 + 2개", "연속 4개 15점", "연속 5개 30점", "5개 같음 50점"];
 let dice = [0, 0, 0, 0, 0], held = [false, false, false, false, false], left = 3, used = Array(12).fill(null), turn = 0, over = false, best = ld(KEY) || 0;
 function scoreOf(c, d) {

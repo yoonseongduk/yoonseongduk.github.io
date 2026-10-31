@@ -91,7 +91,7 @@ function update(dt) {
 }
 function draw(c) {
   c.fillStyle = C.muted; for (let k = 0; k < cols.length; k++) { const x = k * CW - off; c.fillRect(x, 0, CW + 1, cols[k] - gap / 2); c.fillRect(x, cols[k] + gap / 2, CW + 1, H); }
-  c.font = "28px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.save(); c.translate(60, hy); c.rotate(vy / 700); c.fillText("🚁", 0, 0); c.restore();
+  c.font = "28px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.save(); c.translate(60, hy); c.rotate(vy / 700); c.scale(-1, 1); c.fillText("🚁", 0, 0); c.restore();
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>

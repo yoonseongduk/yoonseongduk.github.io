@@ -92,7 +92,7 @@ function update(dt) {
 }
 function draw(c) {
   c.fillStyle = C.muted; c.fillRect(0, 0, W, GY); c.fillRect(0, H - GY, W, GY); c.fillStyle = C.bad; for (const o of obs) { c.beginPath(); if (o.top) { c.moveTo(o.x - 12, GY); c.lineTo(o.x + 12, GY); c.lineTo(o.x, GY + 26); } else { c.moveTo(o.x - 12, H - GY); c.lineTo(o.x + 12, H - GY); c.lineTo(o.x, H - GY - 26); } c.fill(); }
-  c.font = "28px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.save(); c.translate(70, y); if (g < 0) c.scale(1, -1); c.fillText("🏃", 0, 0); c.restore();
+  c.font = "28px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.save(); c.translate(70, y); if (g < 0) c.scale(1, -1); c.scale(-1, 1); c.fillText("🏃", 0, 0); c.restore();
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>

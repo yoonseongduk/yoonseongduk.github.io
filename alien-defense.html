@@ -96,7 +96,7 @@ function update(dt) {
 function draw(c) {
   c.font = "22px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; for (const a of aliens) if (a.alive) c.fillText(a.e, a.x, a.y);
   c.fillStyle = C.accent; for (const b of bullets) c.fillRect(b.x - 2, b.y - 7, 4, 12); c.fillStyle = C.bad; for (const e of ebul) c.fillRect(e.x - 2, e.y - 6, 4, 12);
-  c.globalAlpha = inv > 0 && Math.floor(inv * 10) % 2 ? .4 : 1; c.font = "28px sans-serif"; c.fillText("🚀", px, H - 36); c.globalAlpha = 1;
+  c.globalAlpha = inv > 0 && Math.floor(inv * 10) % 2 ? .4 : 1; c.font = "28px sans-serif"; c.save(); c.translate(px, H - 36); c.rotate(-Math.PI / 4); c.fillText("🚀", 0, 0); c.restore(); c.globalAlpha = 1;
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>

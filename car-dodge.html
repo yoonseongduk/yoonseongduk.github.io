@@ -93,7 +93,10 @@ function update(dt) {
 const shuf3 = a => a.sort(() => Math.random() - .5);
 function draw(c) {
   c.fillStyle = "#555"; c.fillRect(20, 0, W - 40, H); c.strokeStyle = "#fff"; c.lineWidth = 3; c.setLineDash([22, 18]); c.lineDashOffset = -roadOff; for (const x of [105, 195]) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, H); c.stroke(); } c.setLineDash([]);
-  c.font = "34px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; for (const k of cars) { c.save(); c.translate(LANE[k.l], k.y); if (!k.oil) c.rotate(Math.PI / 2 * 0); c.fillText(k.oil ? "🛢️" : "🚙", 0, 0); c.restore(); } c.fillText("🏎️", LANE[lane], H - 80);
+  c.font = "34px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; const car = (x, y, col, up) => { c.save(); c.translate(x, y); if (!up) c.scale(1, -1); c.fillStyle = col; c.beginPath(); c.roundRect(-15, -30, 30, 60, 8); c.fill(); c.fillStyle = "rgba(255,255,255,.75)"; c.fillRect(-11, -14, 22, 12); c.fillRect(-11, 12, 22, 7); c.fillStyle = "#222"; for (const sx of [-17, 12]) for (const sy of [-22, 12]) c.fillRect(sx, sy, 5, 12); c.restore(); };
+  const cols = ["#3b82f6", "#a855f7", "#f59e0b", "#14b8a6"];
+  for (const k of cars) { if (k.oil) { c.save(); c.translate(LANE[k.l], k.y); c.fillText("🛢️", 0, 0); c.restore(); } else car(LANE[k.l], k.y, k.col || (k.col = cols[Math.floor(Math.random() * 4)]), false); }
+  car(LANE[lane], H - 80, C.accent, true);
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>

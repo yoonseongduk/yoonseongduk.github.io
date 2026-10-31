@@ -90,7 +90,7 @@ function update(dt) {
   else if (boxes.every(b => !b.alive)) { level++; addScore(20); setup(); } else if (shots <= 0) end();
 }
 function draw(c) {
-  c.fillStyle = C.muted; c.fillRect(0, GY + 12, W, H); c.font = "30px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("🔫", GX - 4, GY);
+  c.fillStyle = C.muted; c.fillRect(0, GY + 12, W, H); c.font = "30px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.save(); c.translate(GX - 4, GY); c.scale(-1, 1); c.fillText("🔫", 0, 0); c.restore();
   for (const b of boxes) if (b.alive) c.fillText("📦", b.x, b.y);
   if (aim) { const dx = aim.sx - aim.x, dy = aim.sy - aim.y, d = Math.hypot(dx, dy) || 1, p = Math.min(d, 110) / 110 * 560, ux = dx / d * p, uy = dy / d * p; c.fillStyle = C.accent; for (let k = 1; k <= 14; k++) { const t = k * .07; c.beginPath(); c.arc(GX + ux * t, GY + uy * t + .5 * G * t * t, 3, 0, 7); c.fill(); } }
   if (ball) { c.fillStyle = C.fg; c.beginPath(); c.arc(ball.x, ball.y, 6, 0, 7); c.fill(); }

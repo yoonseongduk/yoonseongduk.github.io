@@ -77,15 +77,15 @@ document.addEventListener("keydown", e => {
 document.addEventListener("keyup", e => { const m = { ArrowLeft: "l", ArrowRight: "r", ArrowUp: "u", ArrowDown: "d", a: "l", d: "r", w: "u", s: "d" }[e.key]; if (m) keys[m] = 0; });
 document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
 readColors(); matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readColors);
-let px, py, vy, plats, topY, height;
+let px, py, vy, plats, topY, height, face = 1, lastPx = 0;
 function addPlat(y) { const w = rand(54, 80); plats.push({ x: rand(0, W - w), y, w }); }
 function reset() {
   px = W / 2; py = H - 70; vy = -560; height = 0; plats = [{ x: 0, y: H - 20, w: W }]; topY = H - 20;
   while (topY > -40) { topY -= rand(58, 88); addPlat(topY); } setInfo("0m");
 }
-function pointer(type, x) { px = x; }
+function pointer(type, x) { if (Math.abs(x - px) > 2) face = x > px ? 1 : -1; px = x; }
 function update(dt) {
-  px += (keys.r - keys.l) * 300 * dt; if (px < 0) px += W; if (px > W) px -= W;
+  if (keys.r - keys.l) face = keys.r - keys.l; px += (keys.r - keys.l) * 300 * dt; if (px < 0) px += W; if (px > W) px -= W;
   vy += 1000 * dt; const prevY = py; py += vy * dt;
   if (vy > 0) for (const p of plats) if (prevY + 14 <= p.y + 2 && py + 14 >= p.y && px + 10 > p.x && px - 10 < p.x + p.w) { vy = -560; py = p.y - 14; break; }
   if (py < H * .4) { const dy = H * .4 - py; py = H * .4; height += dy; for (const p of plats) p.y += dy; topY += dy; setScore(Math.floor(height / 10)); setInfo(Math.floor(height / 10) + "m"); }
@@ -94,7 +94,7 @@ function update(dt) {
 }
 function draw(c) {
   c.fillStyle = C.ok; for (const p of plats) { c.fillRect(p.x, p.y, p.w, 9); c.fillStyle = "rgba(255,255,255,.3)"; c.fillRect(p.x, p.y, p.w, 3); c.fillStyle = C.ok; }
-  c.textAlign = "center"; c.textBaseline = "middle"; c.font = "30px sans-serif"; c.fillText("🦘", px, py - 4); if (px < 16) c.fillText("🦘", px + W, py - 4); if (px > W - 16) c.fillText("🦘", px - W, py - 4);
+  c.textAlign = "center"; c.textBaseline = "middle"; c.font = "30px sans-serif"; const roo = x => { c.save(); c.translate(x, py - 4); c.scale(-face, 1); c.fillText("🦘", 0, 0); c.restore(); }; roo(px); if (px < 16) roo(px + W); if (px > W - 16) roo(px - W);
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>

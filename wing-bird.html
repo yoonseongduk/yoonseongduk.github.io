@@ -94,7 +94,7 @@ function update(dt) {
 }
 function draw(c) {
   c.fillStyle = C.ok; for (const p of pipes) { c.fillRect(p.x, 0, 52, p.gy - GAP / 2); c.fillRect(p.x, p.gy + GAP / 2, 52, H); c.fillStyle = "rgba(255,255,255,.25)"; c.fillRect(p.x, 0, 8, p.gy - GAP / 2); c.fillRect(p.x, p.gy + GAP / 2, 8, H); c.fillStyle = C.ok; }
-  c.fillStyle = C.line; c.fillRect(0, H - 24, W, 24); c.font = "30px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.save(); c.translate(BX, by); c.rotate(clamp(bv / 600, -.5, .9)); c.fillText("🐤", 0, 0); c.restore();
+  c.fillStyle = C.line; c.fillRect(0, H - 24, W, 24); c.font = "30px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.save(); c.translate(BX, by); c.rotate(clamp(bv / 600, -.5, .9)); c.scale(-1, 1); c.fillText("🐤", 0, 0); c.restore();
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>

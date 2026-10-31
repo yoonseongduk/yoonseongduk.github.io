@@ -92,7 +92,7 @@ function update(dt) {
 function draw(c) {
   c.textAlign = "center"; c.textBaseline = "middle"; c.font = "26px sans-serif"; for (const s of stars) c.fillText("⭐", s.x, s.y);
   for (const r of rocks) { c.save(); c.translate(r.x, r.y); c.rotate(r.rot); c.fillStyle = "#8a7a6a"; c.beginPath(); for (let k = 0; k < 7; k++) { const a = k / 7 * 6.283, rr = r.r * (k % 2 ? .8 : 1.05); c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } c.closePath(); c.fill(); c.restore(); }
-  c.font = "30px sans-serif"; c.fillText("🚀", px, H - 44);
+  c.font = "30px sans-serif"; c.save(); c.translate(px, H - 44); c.rotate(-Math.PI / 4); c.fillText("🚀", 0, 0); c.restore();
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>

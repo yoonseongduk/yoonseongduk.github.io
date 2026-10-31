@@ -94,7 +94,7 @@ function update(dt) {
 function draw(c) {
   c.fillStyle = "#ffd23f"; for (const b of bullets) c.fillRect(b.x - 2, b.y - 8, 4, 12);
   c.textAlign = "center"; c.textBaseline = "middle"; c.font = "28px sans-serif"; for (const e of enemies) c.fillText("👾", e.x, e.y);
-  for (const m of booms) { c.globalAlpha = 1 - m.t / .3; c.font = "30px sans-serif"; c.fillText("💥", m.x, m.y); c.globalAlpha = 1; } c.font = "32px sans-serif"; c.fillText("🚀", sx, SY);
+  for (const m of booms) { c.globalAlpha = 1 - m.t / .3; c.font = "30px sans-serif"; c.fillText("💥", m.x, m.y); c.globalAlpha = 1; } c.font = "32px sans-serif"; c.save(); c.translate(sx, SY); c.rotate(-Math.PI / 4); c.fillText("🚀", 0, 0); c.restore();
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>

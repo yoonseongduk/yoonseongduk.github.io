@@ -93,7 +93,7 @@ function update(dt) {
 function draw(c) {
   c.fillStyle = C.line; c.fillRect(0, GY, W, H - GY); c.fillStyle = C.accent; c.fillRect(0, GY, W, 3);
   for (const o of obs) { c.fillStyle = C.bad; c.fillRect(o.x, GY - o.h, o.w, o.h); }
-  c.font = "34px sans-serif"; c.textAlign = "center"; c.textBaseline = "bottom"; c.fillText("🏃", 58, y + 4);
+  c.font = "34px sans-serif"; c.textAlign = "center"; c.textBaseline = "bottom"; c.save(); c.translate(58, y + 4); c.scale(-1, 1); c.fillText("🏃", 0, 0); c.restore();
 }
 reset(); ui(); requestAnimationFrame(frame);
 </script>

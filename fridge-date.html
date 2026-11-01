@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>냉장고 유통기한</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(190 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(190 22% 86%);--accent:hsl(190 65% 46%);--accent-fg:#fff;--soft:hsl(190 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(190 22% 10%);--surface:hsl(190 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(190 16% 25%);--accent:hsl(190 75% 68%);--accent-fg:#10131c;--soft:hsl(190 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+select,input[type=date],input[type=time]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;min-width:0}
+.f{display:grid;gap:4px}.f>label,.lb{font-size:.88rem;color:var(--muted);font-weight:700}.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.x{background:none;border:0;color:var(--muted);font-size:1.15rem;padding:4px 8px}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.82rem;font-weight:700;background:var(--soft)}.tag.ok{background:color-mix(in srgb,var(--ok) 22%,var(--surface))}.tag.bad{background:color-mix(in srgb,var(--bad) 22%,var(--surface))}.tag.wn{background:color-mix(in srgb,#e0a100 25%,var(--surface))}
+.btn.sm{padding:7px 14px;font-size:.95rem}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.92rem}.chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.num{font-family:var(--font-display);font-size:1.9rem;color:var(--accent);line-height:1.2}.note{font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>냉장고 유통기한 🧊</h1>
+  <div class="card"><div class="f"><label for="n">음식 이름</label><input type="text" id="n" maxlength="20" placeholder="예: 우유, 두부"></div>
+    <div class="g2"><div class="f"><label for="d">유통기한(소비기한)</label><input type="date" id="d"></div><div class="f"><label for="pl">보관 장소</label><select id="pl"><option value="fr">냉장</option><option value="fz">냉동</option><option value="rm">실온</option></select></div></div>
+    <div class="f"><label>오늘부터 며칠 뒤로 입력</label><div class="chips"><button type="button" class="chip" data-p="3">3일</button><button type="button" class="chip" data-p="7">1주</button><button type="button" class="chip" data-p="14">2주</button><button type="button" class="chip" data-p="30">1달</button><button type="button" class="chip" data-p="90">3달</button><button type="button" class="chip" data-p="180">6달</button></div></div>
+    <button class="btn" id="add" type="button">➕ 추가하기</button></div>
+  <div class="seg" id="flt" style="--n:4"><button type="button" data-v="all" class="on">전체</button><button type="button" data-v="fr">냉장</button><button type="button" data-v="fz">냉동</button><button type="button" data-v="rm">실온</button></div>
+  <div class="card" id="list"></div>
+  <p class="muted">냉장고 속 음식의 유통기한을 적어 두면 임박한 순서대로 알려 줘요. 기한이 지난 음식은 상태를 꼭 확인하고 의심되면 버리세요. 이 폰에만 저장돼요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "fridge-date-v1";
+
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayS = () => ymd(new Date());
+const dnum = s => { const [y, m, d] = s.split("-").map(Number); return Math.round(Date.UTC(y, m - 1, d) / 86400000); };
+const addDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return ymd(new Date(y, m - 1, d + n)); };
+const WD = ["일", "월", "화", "수", "목", "금", "토"];
+const wdOf = s => WD[new Date(s + "T00:00:00").getDay()];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+const PL = { fr: "냉장", fz: "냉동", rm: "실온" };
+let S = ld(KEY) || { items: [] }, flt = "all";
+const save = () => sv(KEY, S);
+$("d").value = addDays(todayS(), 7);
+document.querySelector(".chips").onclick = e => { const b = e.target.closest("[data-p]"); if (b) $("d").value = addDays(todayS(), +b.dataset.p); };
+$("add").onclick = () => { const n = $("n").value.trim(); if (!n) { $("n").focus(); return; } if (!$("d").value) { $("d").focus(); return; } S.items.push({ id: uid(), n, d: $("d").value, p: $("pl").value }); save(); $("n").value = ""; render(); };
+$("flt").onclick = e => { const b = e.target.closest("[data-v]"); if (!b) return; flt = b.dataset.v; document.querySelectorAll("#flt button").forEach(x => x.classList.toggle("on", x === b)); render(); };
+function render() {
+  const t = dnum(todayS()), arr = S.items.filter(x => flt === "all" || x.p === flt).map(x => ({ ...x, left: dnum(x.d) - t })).sort((a, b) => a.left - b.left);
+  const soon = S.items.filter(x => dnum(x.d) - t <= 3 && dnum(x.d) - t >= 0).length, over = S.items.filter(x => dnum(x.d) - t < 0).length;
+  const head = S.items.length ? `<div class="note">${over ? `<b style="color:var(--bad)">기한 지남 ${over}개</b> · ` : ""}${soon ? `<b>3일 이내 ${soon}개</b> · ` : ""}전체 ${S.items.length}개</div>` : "";
+  $("list").innerHTML = head + (arr.length ? arr.map(x => { const c = x.left < 0 ? "bad" : x.left <= 3 ? "wn" : "ok", lb = x.left < 0 ? `${-x.left}일 지남` : x.left === 0 ? "오늘까지" : `D-${x.left}`; return `<div class="li"><span><b>${esc(x.n)}</b> <span class="tag">${PL[x.p]}</span><br><span class="note">${x.d.replace(/-/g, ".")}</span></span><span style="display:flex;gap:4px;align-items:center"><span class="tag ${c}">${lb}</span><button class="x" data-id="${x.id}" type="button" aria-label="다 먹음 또는 버림">✕</button></span></div>`; }).join("") + `<p class="note">✕ 를 누르면 목록에서 지워요 (다 먹었거나 버렸을 때).</p>` : '<p class="muted">등록된 음식이 없어요.</p>');
+  $("list").querySelectorAll("[data-id]").forEach(b => b.onclick = () => { S.items = S.items.filter(x => x.id !== b.dataset.id); save(); render(); });
+}
+render();
+
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

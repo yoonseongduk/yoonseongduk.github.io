@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>감정 기록 일기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(330 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(330 22% 86%);--accent:hsl(330 65% 46%);--accent-fg:#fff;--soft:hsl(330 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(330 22% 10%);--surface:hsl(330 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(330 16% 25%);--accent:hsl(330 75% 68%);--accent-fg:#10131c;--soft:hsl(330 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+select,input[type=date],input[type=time]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;min-width:0}
+.f{display:grid;gap:4px}.f>label,.lb{font-size:.88rem;color:var(--muted);font-weight:700}.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.x{background:none;border:0;color:var(--muted);font-size:1.15rem;padding:4px 8px}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.82rem;font-weight:700;background:var(--soft)}.tag.ok{background:color-mix(in srgb,var(--ok) 22%,var(--surface))}.tag.bad{background:color-mix(in srgb,var(--bad) 22%,var(--surface))}.tag.wn{background:color-mix(in srgb,#e0a100 25%,var(--surface))}
+.btn.sm{padding:7px 14px;font-size:.95rem}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.92rem}.chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.num{font-family:var(--font-display);font-size:1.9rem;color:var(--accent);line-height:1.2}.note{font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>감정 기록 일기 🌈</h1>
+  <div class="card"><div class="lb" id="dt"></div><div class="chips" id="moods" style="justify-content:space-between"></div><div class="lb">오늘 한 일 (여러 개 선택)</div><div class="chips" id="acts"></div><textarea id="memo" rows="3" maxlength="200" placeholder="오늘 한 줄 메모 (선택)"></textarea><button class="btn" id="save" type="button">기록하기</button></div>
+  <div class="card"><div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center"><button class="x" id="pm" type="button" aria-label="이전 달">◀</button><b class="center" id="ml"></b><button class="x" id="nm" type="button" aria-label="다음 달">▶</button></div><div id="cal"></div></div>
+  <div class="card" id="stat"></div>
+  <p class="muted">오늘 기분을 이모지로 남기고 한 줄 메모를 적어요. 한 달 달력과 통계로 내 마음의 흐름을 볼 수 있어요. 이 폰에만 저장돼요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "mood-diary-v1";
+
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayS = () => ymd(new Date());
+const dnum = s => { const [y, m, d] = s.split("-").map(Number); return Math.round(Date.UTC(y, m - 1, d) / 86400000); };
+const addDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return ymd(new Date(y, m - 1, d + n)); };
+const WD = ["일", "월", "화", "수", "목", "금", "토"];
+const wdOf = s => WD[new Date(s + "T00:00:00").getDay()];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+const MOODS = [[5, "😄", "아주 좋음"], [4, "🙂", "좋음"], [3, "😐", "보통"], [2, "😟", "별로"], [1, "😢", "힘듦"]];
+const ACTS = ["가족", "친구", "운동", "일·공부", "휴식", "취미", "외출", "맛집", "독서", "잠 푹"];
+let S = ld(KEY) || { e: {} };
+let sel = todayS(), vm = new Date(), curM = null, curA = [];
+const save = () => sv(KEY, S);
+$("acts").innerHTML = ACTS.map(a => `<button type="button" class="chip" data-a="${a}">${a}</button>`).join("");
+$("moods").innerHTML = MOODS.map(([v, e, n]) => `<button type="button" class="chip" data-m="${v}" style="font-size:1.5rem;padding:6px 10px" aria-label="${n}" title="${n}">${e}</button>`).join("");
+function load(d) { sel = d; const x = S.e[d]; curM = x ? x.m : null; curA = x ? [...x.a] : []; $("memo").value = x ? x.t : ""; paint(); }
+function paint() {
+  $("dt").textContent = `기분 기록 · ${sel.replace(/-/g, ".")} (${wdOf(sel)})${sel === todayS() ? " · 오늘" : ""}`;
+  document.querySelectorAll("#moods .chip").forEach(b => b.classList.toggle("on", +b.dataset.m === curM));
+  document.querySelectorAll("#acts .chip").forEach(b => b.classList.toggle("on", curA.includes(b.dataset.a)));
+  $("save").textContent = S.e[sel] ? "수정하기" : "기록하기";
+}
+$("moods").onclick = e => { const b = e.target.closest("[data-m]"); if (b) { curM = +b.dataset.m; paint(); } };
+$("acts").onclick = e => { const b = e.target.closest("[data-a]"); if (!b) return; const a = b.dataset.a; curA = curA.includes(a) ? curA.filter(x => x !== a) : [...curA, a]; paint(); };
+$("save").onclick = () => { if (!curM) { $("moods").scrollIntoView({ block: "center" }); return; } S.e[sel] = { m: curM, a: curA, t: $("memo").value.trim() }; save(); cal(); stat(); paint(); $("save").textContent = "✅ 저장했어요"; };
+function cal() {
+  const y = vm.getFullYear(), m = vm.getMonth(), first = new Date(y, m, 1).getDay(), n = new Date(y, m + 1, 0).getDate();
+  $("ml").textContent = `${y}년 ${m + 1}월`;
+  let h = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-top:8px">' + WD.map(w => `<div class="note">${w}</div>`).join("") + "<div></div>".repeat(first);
+  for (let d = 1; d <= n; d++) { const k = `${y}-${pad(m + 1)}-${pad(d)}`, x = S.e[k], mo = x ? MOODS.find(z => z[0] === x.m)[1] : ""; h += `<button type="button" data-d="${k}" style="border:1px solid ${k === sel ? "var(--accent)" : "var(--line)"};background:var(--surface);border-radius:8px;padding:2px 0;min-height:44px;line-height:1.2"><div class="note">${d}</div><div>${mo}</div></button>`; }
+  $("cal").innerHTML = h + "</div>"; $("cal").querySelectorAll("[data-d]").forEach(b => b.onclick = () => { load(b.dataset.d); });
+}
+function stat() {
+  const pre = `${vm.getFullYear()}-${pad(vm.getMonth() + 1)}`, ks = Object.keys(S.e).filter(k => k.startsWith(pre)), xs = ks.map(k => S.e[k]);
+  if (!xs.length) { $("stat").innerHTML = '<p class="muted">이 달의 기록이 아직 없어요.</p>'; return; }
+  const avg = xs.reduce((a, x) => a + x.m, 0) / xs.length, cnt = MOODS.map(([v, e]) => `${e} ${xs.filter(x => x.m === v).length}`).join(" &nbsp; ");
+  const at = {}; xs.forEach(x => x.a.forEach(a => { (at[a] = at[a] || []).push(x.m); }));
+  const top = Object.entries(at).filter(([, v]) => v.length >= 2).map(([a, v]) => [a, v.reduce((p, q) => p + q, 0) / v.length, v.length]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  $("stat").innerHTML = `<b>📊 이번 달 마음 통계</b><div>기록한 날 <b>${xs.length}일</b> · 평균 기분 <b>${avg.toFixed(1)}</b> / 5</div><div>${cnt}</div>${top.length ? `<div class="note">기분이 좋았던 날 자주 한 일: ${top.map(t => `<b>${t[0]}</b>(평균 ${t[1].toFixed(1)}, ${t[2]}번)`).join(", ")}</div>` : ""}`;
+}
+$("pm").onclick = () => { vm = new Date(vm.getFullYear(), vm.getMonth() - 1, 1); cal(); stat(); };
+$("nm").onclick = () => { vm = new Date(vm.getFullYear(), vm.getMonth() + 1, 1); cal(); stat(); };
+load(todayS()); cal(); stat();
+
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

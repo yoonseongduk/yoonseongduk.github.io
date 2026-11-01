@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>혈압·혈당 기록장</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(355 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(355 22% 86%);--accent:hsl(355 65% 46%);--accent-fg:#fff;--soft:hsl(355 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(355 22% 10%);--surface:hsl(355 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(355 16% 25%);--accent:hsl(355 75% 68%);--accent-fg:#10131c;--soft:hsl(355 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+select,input[type=date],input[type=time]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;min-width:0}
+.f{display:grid;gap:4px}.f>label,.lb{font-size:.88rem;color:var(--muted);font-weight:700}.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.x{background:none;border:0;color:var(--muted);font-size:1.15rem;padding:4px 8px}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.82rem;font-weight:700;background:var(--soft)}.tag.ok{background:color-mix(in srgb,var(--ok) 22%,var(--surface))}.tag.bad{background:color-mix(in srgb,var(--bad) 22%,var(--surface))}.tag.wn{background:color-mix(in srgb,#e0a100 25%,var(--surface))}
+.btn.sm{padding:7px 14px;font-size:.95rem}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.92rem}.chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.num{font-family:var(--font-display);font-size:1.9rem;color:var(--accent);line-height:1.2}.note{font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>혈압·혈당 기록장 🩺</h1>
+  <div class="card"><div class="f"><label for="who">기록하는 사람</label><div style="display:grid;grid-template-columns:1fr auto;gap:8px"><select id="who"></select><button class="btn ghost sm" id="addw" type="button">＋ 사람 추가</button></div></div><div id="addbox" hidden style="display:none"></div></div>
+  <div class="seg" id="tab" style="--n:2"><button type="button" data-v="bp" class="on">혈압</button><button type="button" data-v="bs">혈당</button></div>
+  <div class="card" id="form"></div>
+  <div class="card" id="sum"></div>
+  <div class="card" id="list"></div>
+  <p class="muted">혈압과 혈당 수치를 기록하고 추이를 봐요. 분류는 참고용이며 진단이 아니에요. 걱정되는 수치나 증상이 있으면 병원에 문의하세요. 기록은 이 폰에만 저장돼요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "health-log-v1";
+
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayS = () => ymd(new Date());
+const dnum = s => { const [y, m, d] = s.split("-").map(Number); return Math.round(Date.UTC(y, m - 1, d) / 86400000); };
+const addDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return ymd(new Date(y, m - 1, d + n)); };
+const WD = ["일", "월", "화", "수", "목", "금", "토"];
+const wdOf = s => WD[new Date(s + "T00:00:00").getDay()];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+let S = Object.assign({ people: ["나"], cur: "나", bp: [], bs: [] }, ld(KEY) || {});
+let tab = "bp";
+const save = () => sv(KEY, S);
+function nowParts() { const d = new Date(); return [ymd(d), pad(d.getHours()) + ":" + pad(d.getMinutes())]; }
+function bpCls(s, d) {
+  if (s >= 180 || d >= 120) return ["매우 높음", "bad", "🚨 수치가 매우 높아요. 증상이 있으면 바로 119나 병원에 연락하세요."];
+  if (s >= 140 || d >= 90) return ["고혈압 범위", "bad", "높은 편이에요. 반복해서 나오면 병원 상담을 권해요."];
+  if (s >= 130 || d >= 80) return ["고혈압 전단계", "wn", ""];
+  if (s >= 120) return ["주의", "wn", ""];
+  if (s < 90 || d < 60) return ["낮은 편", "wn", "어지러우면 앉거나 누워 쉬세요."];
+  return ["정상", "ok", ""];
+}
+function bsCls(v, t) {
+  if (v < 70) return ["저혈당 주의", "bad", "🚨 식은땀·떨림이 있으면 당분을 먹고, 계속되면 병원에 연락하세요."];
+  if (v >= 300) return ["매우 높음", "bad", "🚨 수치가 매우 높아요. 병원에 연락하세요."];
+  if (t === "fast") return v >= 126 ? ["당뇨 범위", "bad", ""] : v >= 100 ? ["공복혈당 주의", "wn", ""] : ["정상", "ok", ""];
+  if (t === "after") return v >= 200 ? ["높음", "bad", ""] : v >= 140 ? ["주의", "wn", ""] : ["정상", "ok", ""];
+  return v >= 200 ? ["높음", "bad", ""] : v >= 140 ? ["주의", "wn", ""] : ["정상 범위", "ok", ""];
+}
+const BT = { fast: "공복", after: "식후 2시간", bed: "취침 전", etc: "기타" };
+function form() {
+  const [d, t] = nowParts();
+  const dt = `<div class="g2"><div class="f"><label for="fd">날짜</label><input type="date" id="fd" value="${d}"></div><div class="f"><label for="ft">시간</label><input type="time" id="ft" value="${t}"></div></div>`;
+  $("form").innerHTML = tab === "bp" ? dt + `<div class="g3"><div class="f"><label for="a">수축기(높은)</label><input type="number" id="a" inputmode="numeric" placeholder="120"></div><div class="f"><label for="b">이완기(낮은)</label><input type="number" id="b" inputmode="numeric" placeholder="80"></div><div class="f"><label for="c">맥박</label><input type="number" id="c" inputmode="numeric" placeholder="70"></div></div><button class="btn" id="save" type="button">기록하기</button>`
+    : dt + `<div class="g2"><div class="f"><label for="a">혈당(mg/dL)</label><input type="number" id="a" inputmode="numeric" placeholder="95"></div><div class="f"><label for="k">측정 시점</label><select id="k"><option value="fast">공복</option><option value="after">식후 2시간</option><option value="bed">취침 전</option><option value="etc">기타</option></select></div></div><button class="btn" id="save" type="button">기록하기</button>`;
+  $("save").onclick = () => {
+    const a = +$("a").value, o = { id: uid(), p: S.cur, d: $("fd").value || d, t: $("ft").value || t };
+    if (!(a > 0)) { $("a").focus(); return; }
+    if (tab === "bp") { const b = +$("b").value; if (!(b > 0)) { $("b").focus(); return; } o.s = a; o.dd = b; o.hr = +$("c").value || 0; S.bp.push(o); } else { o.v = a; o.k = $("k").value; S.bs.push(o); }
+    save(); render();
+  };
+}
+function chart(arr, get, lo, hi) {
+  if (arr.length < 2) return "";
+  const W = 300, H = 90, vs = arr.map(get), mn = Math.min(...vs, lo) - 5, mx = Math.max(...vs, hi) + 5;
+  const X = i => 8 + i * (W - 16) / (arr.length - 1), Y = v => H - 6 - (v - mn) / (mx - mn) * (H - 12);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="추이 그래프"><rect x="0" y="${Y(hi)}" width="${W}" height="${Math.max(0, Y(lo) - Y(hi))}" fill="var(--ok)" opacity=".12"/><polyline fill="none" stroke="var(--accent)" stroke-width="2" points="${arr.map((x, i) => X(i) + "," + Y(get(x))).join(" ")}"/>${arr.map((x, i) => `<circle cx="${X(i)}" cy="${Y(get(x))}" r="3" fill="var(--accent)"/>`).join("")}</svg>`;
+}
+function render() {
+  $("who").innerHTML = S.people.map(p => `<option${p === S.cur ? " selected" : ""}>${esc(p)}</option>`).join("");
+  document.querySelectorAll("#tab button").forEach(b => b.classList.toggle("on", b.dataset.v === tab));
+  form();
+  const all = (tab === "bp" ? S.bp : S.bs).filter(x => x.p === S.cur).sort((a, b) => (a.d + a.t).localeCompare(b.d + b.t)), last = all.slice(-14);
+  $("list").hidden = !all.length; if (!all.length) { $("sum").innerHTML = '<p class="muted">아직 기록이 없어요. 위에서 첫 기록을 남겨 보세요.</p>'; $("list").innerHTML = ""; return; }
+  const l = all[all.length - 1], w7 = all.filter(x => dnum(x.d) >= dnum(todayS()) - 6), avg = f => w7.length ? Math.round(w7.reduce((a, x) => a + f(x), 0) / w7.length) : 0;
+  const c = tab === "bp" ? bpCls(l.s, l.dd) : bsCls(l.v, l.k);
+  $("sum").innerHTML = `<div class="note">가장 최근 (${l.d} ${l.t})</div><div class="num">${tab === "bp" ? `${l.s} / ${l.dd}${l.hr ? ` <span class="note">맥박 ${l.hr}</span>` : ""}` : `${l.v} mg/dL <span class="note">${BT[l.k]}</span>`}</div><div><span class="tag ${c[1]}">${c[0]}</span></div>${c[2] ? `<p class="note" style="color:var(--bad)">${c[2]}</p>` : ""}
+    ${w7.length ? `<div class="note">최근 7일 평균 (${w7.length}회): <b>${tab === "bp" ? avg(x => x.s) + " / " + avg(x => x.dd) : avg(x => x.v) + " mg/dL"}</b></div>` : ""}
+    ${chart(last, tab === "bp" ? x => x.s : x => x.v, tab === "bp" ? 90 : 70, tab === "bp" ? 120 : 100)}<div class="note">초록 띠는 대략 정상 범위예요 · 최근 ${last.length}회</div>
+    <p class="note">참고용 분류예요. 같은 수치도 사람과 상황에 따라 의미가 달라서, 진단과 치료는 의사와 상의하세요.</p>`;
+  $("list").innerHTML = `<b>📋 기록</b>` + all.slice().reverse().slice(0, 40).map(x => { const cc = tab === "bp" ? bpCls(x.s, x.dd) : bsCls(x.v, x.k); return `<div class="li"><span>${x.d.slice(5).replace("-", "/")} ${x.t}<br><b>${tab === "bp" ? x.s + "/" + x.dd : x.v}</b> ${tab === "bs" ? `<span class="note">${BT[x.k]}</span>` : ""} <span class="tag ${cc[1]}">${cc[0]}</span></span><button class="x" data-id="${x.id}" type="button" aria-label="삭제">✕</button></div>`; }).join("") + `<button class="btn ghost sm" id="cp" type="button" style="margin-top:8px">📋 기록 복사(병원 상담용)</button>`;
+  $("list").querySelectorAll("[data-id]").forEach(b => b.onclick = () => { const k = tab === "bp" ? "bp" : "bs"; S[k] = S[k].filter(x => x.id !== b.dataset.id); save(); render(); });
+  $("cp").onclick = () => { const t = `[${S.cur}] ${tab === "bp" ? "혈압" : "혈당"} 기록\n` + all.map(x => `${x.d} ${x.t} ${tab === "bp" ? x.s + "/" + x.dd + (x.hr ? " 맥박" + x.hr : "") : x.v + " (" + BT[x.k] + ")"}`).join("\n"); try { navigator.clipboard.writeText(t).then(() => { $("cp").textContent = "✅ 복사했어요"; }, () => { $("cp").textContent = "복사 실패"; }); } catch (e) { $("cp").textContent = "복사 실패"; } };
+}
+$("tab").onclick = e => { const b = e.target.closest("[data-v]"); if (b) { tab = b.dataset.v; render(); } };
+$("who").onchange = () => { S.cur = $("who").value; save(); render(); };
+$("addw").onclick = () => { const n = (window.prompt("추가할 사람 이름") || "").trim().slice(0, 8); if (n && !S.people.includes(n)) { S.people.push(n); S.cur = n; save(); render(); } };
+render();
+
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

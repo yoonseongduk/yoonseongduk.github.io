@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>집안일 당번표</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(95 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(95 22% 86%);--accent:hsl(95 65% 46%);--accent-fg:#fff;--soft:hsl(95 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(95 22% 10%);--surface:hsl(95 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(95 16% 25%);--accent:hsl(95 75% 68%);--accent-fg:#10131c;--soft:hsl(95 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+select,input[type=date],input[type=time]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;min-width:0}
+.f{display:grid;gap:4px}.f>label,.lb{font-size:.88rem;color:var(--muted);font-weight:700}.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.x{background:none;border:0;color:var(--muted);font-size:1.15rem;padding:4px 8px}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.82rem;font-weight:700;background:var(--soft)}.tag.ok{background:color-mix(in srgb,var(--ok) 22%,var(--surface))}.tag.bad{background:color-mix(in srgb,var(--bad) 22%,var(--surface))}.tag.wn{background:color-mix(in srgb,#e0a100 25%,var(--surface))}
+.btn.sm{padding:7px 14px;font-size:.95rem}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.92rem}.chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.num{font-family:var(--font-display);font-size:1.9rem;color:var(--accent);line-height:1.2}.note{font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>집안일 당번표 🧹</h1>
+  <div class="seg" id="tab" style="--n:3"><button type="button" data-v="0" class="on">이번 주</button><button type="button" data-v="1">다음 주</button><button type="button" data-v="s">설정</button></div>
+  <div id="view"></div>
+  <p class="muted">가족 이름과 집안일을 넣으면 매주 돌아가며 당번이 바뀌어요. 한 일은 체크해 두면 누가 얼마나 했는지 알 수 있어요. 이 폰에만 저장돼요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "chore-rota-v1";
+
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayS = () => ymd(new Date());
+const dnum = s => { const [y, m, d] = s.split("-").map(Number); return Math.round(Date.UTC(y, m - 1, d) / 86400000); };
+const addDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return ymd(new Date(y, m - 1, d + n)); };
+const WD = ["일", "월", "화", "수", "목", "금", "토"];
+const wdOf = s => WD[new Date(s + "T00:00:00").getDay()];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+let S = Object.assign({ members: ["엄마", "아빠", "첫째"], chores: ["설거지", "청소기", "쓰레기 버리기", "빨래 개기"], off: 0, done: {}, cnt: {} }, ld(KEY) || {});
+let tab = "0";
+const wk = () => Math.floor((dnum(todayS()) + 3) / 7);
+function weekLabel(w) { const mon = dnum("1970-01-01") + w * 7 - 3; const d = new Date(mon * 86400000); const e = new Date((mon + 6) * 86400000); return `${d.getUTCMonth() + 1}/${d.getUTCDate()}(월) ~ ${e.getUTCMonth() + 1}/${e.getUTCDate()}(일)`; }
+const who = (w, k) => S.members.length ? S.members[(((k + w + S.off) % S.members.length) + S.members.length) % S.members.length] : "-";
+function save() { sv(KEY, S); }
+function render() {
+  document.querySelectorAll("#tab button").forEach(b => b.classList.toggle("on", b.dataset.v === tab));
+  if (tab === "s") {
+    $("view").innerHTML = `<div class="card"><b>👨‍👩‍👧 가족</b>${S.members.map((m, i) => `<div class="li"><span>${esc(m)}</span><button class="x" data-dm="${i}" type="button" aria-label="삭제">✕</button></div>`).join("")}<div class="g2" style="grid-template-columns:1fr auto"><input type="text" id="nm" maxlength="8" placeholder="이름 추가"><button class="btn sm" id="am" type="button">추가</button></div></div>
+      <div class="card"><b>🧽 집안일</b>${S.chores.map((m, i) => `<div class="li"><span>${esc(m)}</span><button class="x" data-dc="${i}" type="button" aria-label="삭제">✕</button></div>`).join("")}<div class="g2" style="grid-template-columns:1fr auto"><input type="text" id="nc" maxlength="14" placeholder="집안일 추가"><button class="btn sm" id="ac" type="button">추가</button></div></div>
+      <div class="card"><b>🔄 이번 주 당번 한 칸 밀기</b><p class="note">누구에게 어떤 일이 걸릴지 바꾸고 싶을 때 눌러요.</p><button class="btn ghost" id="shift" type="button">한 칸 밀기</button></div>`;
+    $("am").onclick = () => { const v = $("nm").value.trim(); if (v) { S.members.push(v); save(); render(); } };
+    $("ac").onclick = () => { const v = $("nc").value.trim(); if (v) { S.chores.push(v); save(); render(); } };
+    $("shift").onclick = () => { S.off++; save(); $("shift").textContent = "✅ 밀었어요"; };
+    $("view").querySelectorAll("[data-dm]").forEach(b => b.onclick = () => { S.members.splice(+b.dataset.dm, 1); save(); render(); });
+    $("view").querySelectorAll("[data-dc]").forEach(b => b.onclick = () => { S.chores.splice(+b.dataset.dc, 1); save(); render(); });
+    return;
+  }
+  const w = wk() + +tab;
+  if (!S.members.length || !S.chores.length) { $("view").innerHTML = '<div class="card"><p class="muted">설정에서 가족과 집안일을 먼저 추가해 주세요.</p></div>'; return; }
+  const rows = S.chores.map((c, k) => { const p = who(w, k), key = w + "|" + c, d = !!S.done[key]; return `<div class="li"><span><b>${esc(c)}</b><br><span class="note">당번: ${esc(p)}</span></span>${tab === "0" ? `<button type="button" class="chip${d ? " on" : ""}" data-k="${esc(key)}" data-p="${esc(p)}">${d ? "✅ 했어요" : "아직"}</button>` : ""}</div>`; }).join("");
+  const tot = Object.keys(S.cnt).filter(n => S.members.includes(n)).map(n => `<span class="tag">${esc(n)} ${S.cnt[n]}번</span>`).join(" ");
+  const dn = tab === "0" ? S.chores.filter(c => S.done[w + "|" + c]).length : 0;
+  $("view").innerHTML = `<div class="card"><div class="note">${weekLabel(w)}</div>${rows}${tab === "0" ? `<div class="note">이번 주 ${dn}/${S.chores.length} 완료${dn === S.chores.length ? " 🎉 모두 끝!" : ""}</div>` : ""}</div>${tot ? `<div class="card"><b>📊 지금까지 한 횟수</b><div class="chips">${tot}</div></div>` : ""}`;
+  $("view").querySelectorAll("[data-k]").forEach(b => b.onclick = () => { const k = b.dataset.k, p = b.dataset.p; if (S.done[k]) { delete S.done[k]; S.cnt[p] = Math.max(0, (S.cnt[p] || 1) - 1); } else { S.done[k] = 1; S.cnt[p] = (S.cnt[p] || 0) + 1; } save(); render(); });
+}
+$("tab").onclick = e => { const b = e.target.closest("[data-v]"); if (b) { tab = b.dataset.v; render(); } };
+render();
+
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

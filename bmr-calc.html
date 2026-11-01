@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>대사량·칼로리 계산기</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(15 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(15 22% 86%);--accent:hsl(15 65% 46%);--accent-fg:#fff;--soft:hsl(15 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(15 22% 10%);--surface:hsl(15 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(15 16% 25%);--accent:hsl(15 75% 68%);--accent-fg:#10131c;--soft:hsl(15 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+select,input[type=date],input[type=time]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;min-width:0}
+.f{display:grid;gap:4px}.f>label,.lb{font-size:.88rem;color:var(--muted);font-weight:700}.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.x{background:none;border:0;color:var(--muted);font-size:1.15rem;padding:4px 8px}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.82rem;font-weight:700;background:var(--soft)}.tag.ok{background:color-mix(in srgb,var(--ok) 22%,var(--surface))}.tag.bad{background:color-mix(in srgb,var(--bad) 22%,var(--surface))}.tag.wn{background:color-mix(in srgb,#e0a100 25%,var(--surface))}
+.btn.sm{padding:7px 14px;font-size:.95rem}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:.92rem}.chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.num{font-family:var(--font-display);font-size:1.9rem;color:var(--accent);line-height:1.2}.note{font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>대사량·칼로리 계산기 🔥</h1>
+  <div class="card"><div class="seg" id="sex" style="--n:2"><button type="button" data-v="m" class="on">남성</button><button type="button" data-v="f">여성</button></div>
+    <div class="g3"><div class="f"><label for="age">나이(세)</label><input type="number" id="age" inputmode="numeric" min="10" max="100" value="40"></div><div class="f"><label for="h">키(cm)</label><input type="number" id="h" inputmode="decimal" min="100" max="230" value="170"></div><div class="f"><label for="w">몸무게(kg)</label><input type="number" id="w" inputmode="decimal" min="25" max="250" value="65"></div></div>
+    <div class="f"><label for="act">활동량</label><select id="act"><option value="1.2">거의 앉아서 생활 (운동 거의 안 함)</option><option value="1.375" selected>가벼운 활동 (주 1~3회 운동)</option><option value="1.55">보통 활동 (주 3~5회 운동)</option><option value="1.725">활동 많음 (주 6~7회 운동)</option><option value="1.9">매우 많음 (육체노동·선수)</option></select></div>
+    <div class="f"><label>목표</label><div class="seg" id="goal" style="--n:3"><button type="button" data-v="-500">감량</button><button type="button" data-v="0" class="on">유지</button><button type="button" data-v="300">증량</button></div></div></div>
+  <div class="card" id="out"></div>
+  <p class="muted">기초대사량(가만히 있어도 쓰는 열량)과 하루에 필요한 칼로리를 추정해요. 몸 상태와 질환에 따라 달라서 참고용이에요. 입력값은 이 폰에만 저장돼요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "bmr-calc-v1";
+
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayS = () => ymd(new Date());
+const dnum = s => { const [y, m, d] = s.split("-").map(Number); return Math.round(Date.UTC(y, m - 1, d) / 86400000); };
+const addDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return ymd(new Date(y, m - 1, d + n)); };
+const WD = ["일", "월", "화", "수", "목", "금", "토"];
+const wdOf = s => WD[new Date(s + "T00:00:00").getDay()];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+let S = Object.assign({ sex: "m", age: 40, h: 170, w: 65, act: "1.375", goal: "0" }, ld(KEY) || {});
+function setSeg(id, v) { document.querySelectorAll("#" + id + " button").forEach(b => b.classList.toggle("on", b.dataset.v === String(v))); }
+function calc() {
+  const a = +$("age").value, h = +$("h").value, w = +$("w").value;
+  if (!(a > 0 && h > 0 && w > 0)) { $("out").innerHTML = '<p class="muted">나이·키·몸무게를 입력해 주세요.</p>'; return; }
+  S = { sex: S.sex, age: a, h, w, act: $("act").value, goal: S.goal }; sv(KEY, S);
+  const bmr = 10 * w + 6.25 * h - 5 * a + (S.sex === "m" ? 5 : -161), tdee = bmr * +S.act, goal = +S.goal, tgt = Math.round(tdee + goal);
+  const floor = S.sex === "m" ? 1500 : 1200, low = tgt < floor;
+  const rows = [["탄수화물", .5, 4], ["단백질", .25, 4], ["지방", .25, 9]].map(([n, r, k]) => `<tr><td>${n}</td><td>${Math.round(tgt * r / k)} g</td><td class="muted">${Math.round(tgt * r)} kcal · ${r * 100}%</td></tr>`).join("");
+  $("out").innerHTML = `<div class="center"><div class="note">기초대사량 (BMR)</div><div class="num">${Math.round(bmr).toLocaleString()} kcal</div><div class="note">하루 총 소비 열량 (활동 반영)</div><div class="num">${Math.round(tdee).toLocaleString()} kcal</div></div>
+    <div class="center" style="background:var(--soft);border-radius:12px;padding:10px"><div class="note">하루 섭취 목표 (${goal < 0 ? "체중 감량" : goal > 0 ? "체중 증량" : "체중 유지"})</div><div class="num">${tgt.toLocaleString()} kcal</div>${goal < 0 ? `<div class="note">한 달에 약 2kg(주 0.5kg) 감량 속도예요</div>` : goal > 0 ? `<div class="note">근력 운동과 함께하면 좋아요</div>` : ""}</div>
+    ${low ? `<p class="note" style="color:var(--bad)">⚠️ 목표가 ${floor.toLocaleString()}kcal보다 낮아요. 너무 적게 먹으면 근육이 줄고 건강을 해칠 수 있어요. 활동량을 늘리는 쪽을 권해요.</p>` : ""}
+    <div><b>🍚 영양소 배분 예시</b><table style="width:100%;border-collapse:collapse;margin-top:4px"><tbody>${rows}</tbody></table></div>
+    <p class="note">미플린-세인트 지오 공식으로 추정한 값이에요. 근육량·질환·임신·약 복용에 따라 실제와 다를 수 있고 의학적 진단이 아니에요. 몸 상태가 걱정되면 의사나 영양사와 상의하세요.</p>`;
+}
+setSeg("sex", S.sex); setSeg("goal", S.goal); $("age").value = S.age; $("h").value = S.h; $("w").value = S.w; $("act").value = S.act;
+$("sex").onclick = e => { const b = e.target.closest("[data-v]"); if (!b) return; S.sex = b.dataset.v; setSeg("sex", S.sex); calc(); };
+$("goal").onclick = e => { const b = e.target.closest("[data-v]"); if (!b) return; S.goal = b.dataset.v; setSeg("goal", S.goal); calc(); };
+["age", "h", "w", "act"].forEach(i => $(i).addEventListener("input", calc)); calc();
+
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

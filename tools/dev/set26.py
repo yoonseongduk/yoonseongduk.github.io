@@ -199,12 +199,15 @@ render();
 mk("med-check.html", "약 복용 체크표", "💊", 200, "med-check-v1",
  "약 이름과 먹는 시간을 등록하고 먹을 때마다 체크해요. 지난 7일간 잘 챙겼는지도 볼 수 있어요. 복용 방법은 의사·약사의 안내를 따르세요. 이 폰에만 저장돼요.",
  '''  <div class="card"><div class="g2" style="grid-template-columns:auto 1fr auto;align-items:center"><button class="x" id="prev" type="button" aria-label="전날">◀</button><b class="center" id="dl"></b><button class="x" id="next" type="button" aria-label="다음날">▶</button></div></div>
+  <div id="banner"></div>
   <div class="card" id="today"></div>
   <div class="card" id="wk"></div>
+  <details class="card" id="alm"><summary><b>⏰ 복용 알림</b></summary><div id="alarm" style="display:grid;gap:10px;margin-top:10px"></div></details>
   <details class="card"><summary><b>➕ 약 등록·관리</b></summary><div id="mgr" style="display:grid;gap:10px;margin-top:10px"></div></details>''',
  r'''
 const SL = [["m", "아침"], ["n", "점심"], ["e", "저녁"], ["b", "자기 전"]];
-let S = Object.assign({ meds: [], log: {} }, ld(KEY) || {});
+let S = Object.assign({ meds: [], log: {}, al: { on: false, t: { m: "08:00", n: "12:30", e: "18:30", b: "22:00" } }, rung: {} }, ld(KEY) || {});
+S.al = Object.assign({ on: false }, S.al); S.al.t = Object.assign({ m: "08:00", n: "12:30", e: "18:30", b: "22:00" }, S.al.t);
 let day = todayS();
 const save = () => sv(KEY, S);
 function due(d) { const a = []; S.meds.forEach(m => { if ((m.since || "0000") > d) return; SL.forEach(([k]) => { if (m.t.includes(k)) a.push(m.id + "|" + k); }); }); return a; }
@@ -223,7 +226,53 @@ function render() {
 }
 $("prev").onclick = () => { day = addDays(day, -1); render(); };
 $("next").onclick = () => { if (day < todayS()) { day = addDays(day, 1); render(); } };
-render();
+
+// ───── 알림 ─────
+const perm = () => ("Notification" in window) ? Notification.permission : "unsupported";
+function pending(slot, d) { const lg = S.log[d] || {}; return S.meds.filter(m => m.t.includes(slot) && (m.since || "0000") <= d && !lg[m.id + "|" + slot]); }
+function beep() { try { const A = window.AudioContext || window.webkitAudioContext, c = new A(); [0, .35, .7].forEach(t => { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(.2, c.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + t + .25); o.start(c.currentTime + t); o.stop(c.currentTime + t + .27); }); } catch (e) {} }
+async function notify(title, body) {
+  try { if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {}
+  if (perm() !== "granted") return;
+  try { const r = await navigator.serviceWorker.getRegistration(); if (r) { await r.showNotification(title, { body, tag: "med", renotify: true, icon: "icon-192.png", vibrate: [300, 150, 300] }); return; } } catch (e) {}
+  try { new Notification(title, { body, icon: "icon-192.png" }); } catch (e) {}
+}
+function banners() {
+  const d = todayS(), now = pad(new Date().getHours()) + ":" + pad(new Date().getMinutes()), out = [];
+  SL.forEach(([k, nm]) => { if (S.al.t[k] <= now) { const ps = pending(k, d); if (ps.length) out.push([k, nm, ps]); } });
+  $("banner").innerHTML = out.map(([k, nm, ps]) => `<div class="card" style="border-color:var(--accent)"><b>💊 ${nm} 약 아직이에요 (${S.al.t[k]})</b><div>${ps.map(m => esc(m.n)).join(", ")}</div><button class="btn sm" data-ok="${k}" type="button">먹었어요 ✅</button></div>`).join("");
+  $("banner").querySelectorAll("[data-ok]").forEach(b => b.onclick = () => { const k = b.dataset.ok, l = S.log[d] || (S.log[d] = {}); pending(k, d).forEach(m => { l[m.id + "|" + k] = 1; }); save(); day = d; render(); banners(); });
+}
+function tick() {
+  const dt = new Date(), now = pad(dt.getHours()) + ":" + pad(dt.getMinutes()), d = todayS();
+  Object.keys(S.rung).forEach(k => { if (!k.startsWith(d)) delete S.rung[k]; });
+  if (S.al.on) SL.forEach(([k, nm]) => { const key = d + k; if (S.al.t[k] === now && !S.rung[key]) { const ps = pending(k, d); S.rung[key] = 1; save(); if (ps.length) { notify("💊 " + nm + " 약 먹을 시간이에요", ps.map(m => m.n).join(", ")); beep(); banners(); } } });
+}
+function ics() {
+  const dt = new Date(), now = pad(dt.getHours()) + ":" + pad(dt.getMinutes()), stamp = ymd(dt).replace(/-/g, "") + "T" + pad(dt.getHours()) + pad(dt.getMinutes()) + "00";
+  const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//family-games//med//KO", "CALSCALE:GREGORIAN"];
+  SL.forEach(([k, nm]) => { const ms = S.meds.filter(m => m.t.includes(k)); if (!ms.length) return; const t = S.al.t[k], start = (t <= now ? addDays(todayS(), 1) : todayS()).replace(/-/g, "") + "T" + t.replace(":", "") + "00", names = ms.map(m => m.n).join(", ");
+    L.push("BEGIN:VEVENT", "UID:med-" + k + "-" + (ms.map(m => m.id).join("")) + "@yoonseongduk.github.io", "DTSTAMP:" + stamp, "DTSTART:" + start, "DURATION:PT10M", "RRULE:FREQ=DAILY", "SUMMARY:💊 " + nm + " 약: " + names, "DESCRIPTION:약 먹을 시간이에요 - " + names, "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:약 먹을 시간이에요", "TRIGGER:PT0M", "END:VALARM", "END:VEVENT"); });
+  L.push("END:VCALENDAR");
+  if (L.length <= 5) return false;
+  const blob = new Blob([L.join("\r\n")], { type: "text/calendar;charset=utf-8" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "med-alarm.ics"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); return true;
+}
+function alarmUi() {
+  const p = perm(), pt = p === "granted" ? "✅ 허용됨" : p === "denied" ? "⛔ 차단됨 (브라우저 설정에서 허용 필요)" : p === "unsupported" ? "이 브라우저는 알림을 지원하지 않아요" : "아직 허용 안 함";
+  $("alarm").innerHTML = `<label class="opt" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="aon"${S.al.on ? " checked" : ""}> 앱이 열려 있을 때 시간이 되면 알려 주기</label>
+    <div class="g2">${SL.map(([k, n]) => `<div class="f"><label for="at${k}">${n}</label><input type="time" id="at${k}" value="${S.al.t[k]}"></div>`).join("")}</div>
+    <div class="f"><label>알림 권한: ${pt}</label><div class="g2"><button class="btn ghost sm" id="ap" type="button">🔔 알림 허용</button><button class="btn ghost sm" id="atest" type="button">🔊 테스트</button></div></div>
+    <button class="btn sm" id="aics" type="button">📅 폰 달력에 매일 알람 등록하기</button>
+    <div class="note">⚠️ <b>앱을 완전히 닫으면</b> 위의 알림은 울리지 못해요. 앱 화면이 켜져 있거나 백그라운드에 있을 때만 동작하고, 폰이 절전 상태면 늦거나 안 올 수 있어요.<br>🔒 <b>확실한 알람</b>이 필요하면 아래 "달력에 등록"을 쓰세요. 받은 파일(.ics)을 열어 삼성 달력 등에 추가하면 앱을 켜지 않아도 매일 정해진 시간에 폰이 알려 줘요. (약이나 시간을 바꾸면 다시 등록하고 예전 일정은 달력에서 지우세요.) 시계 앱의 알람을 직접 맞춰도 좋아요.</div>`;
+  $("aon").onchange = () => { S.al.on = $("aon").checked; save(); if (S.al.on && perm() === "default") $("ap").click(); };
+  SL.forEach(([k]) => { $("at" + k).onchange = () => { S.al.t[k] = $("at" + k).value || S.al.t[k]; save(); banners(); }; });
+  $("ap").onclick = async () => { try { await Notification.requestPermission(); } catch (e) {} alarmUi(); };
+  $("atest").onclick = () => { notify("💊 알림 테스트", "이 알림이 보이면 잘 동작해요"); beep(); };
+  $("aics").onclick = () => { if (!ics()) $("aics").textContent = "먼저 약을 등록해 주세요"; };
+}
+render(); alarmUi(); banners(); tick();
+setInterval(tick, 15000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { tick(); banners(); } });
 ''')
 
 # ───────── 7. 감정 기록 일기

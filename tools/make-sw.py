@@ -64,6 +64,15 @@ self.addEventListener("fetch", e => {
   })());
 });
 
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const cs = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const c of cs) if ("focus" in c) return c.focus();
+    return self.clients.openWindow("med-check.html");
+  })());
+});
+
 self.addEventListener("message", e => {
   if (e.data && e.data.type === "status" && e.ports[0]) {
     e.waitUntil((async () => {

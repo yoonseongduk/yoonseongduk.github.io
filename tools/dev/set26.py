@@ -259,15 +259,18 @@ function ics() {
   const dt = new Date(), stamp = ymd(dt).replace(/-/g, "") + "T" + pad(dt.getHours()) + pad(dt.getMinutes()) + pad(dt.getSeconds()), seq = Math.floor(Date.now() / 1000);
   const first = ($("astart") && $("astart").value) || todayS(), prev = (S.exp && S.exp.slots) || [], usedSlots = [];
   const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//family-games//med//KO", "CALSCALE:GREGORIAN"];
-  for (let i = 0; i < 7; i++) { const d = addDays(first, i), ds = d.replace(/-/g, ""), lg = S.log[d] || {};
-    SL.forEach(([k, nm]) => { const ms = S.meds.filter(m => m.t.includes(k) && (m.since || "0000") <= d), step = +S.al.rep || 10, nmax = S.al.cal2 ? 3 : 1;
-      const names = ms.map(m => m.n).join(", "), cancel = !ms.length || (d === todayS() && ms.every(m => lg[m.id + "|" + k]));
-      if (!ms.length && !prev.includes(k)) return; if (ms.length) usedSlots.push(k);
-      const [hh, mm] = S.al.t[k].split(":").map(Number);
-      for (let r = 0; r < Math.max(nmax, (S.exp && S.exp.n) || 1); r++) { const tm = hh * 60 + mm + r * step; if (tm >= 1440) break; const hs = pad(Math.floor(tm / 60)) + pad(tm % 60), off = r >= nmax && ms.length;
-        L.push("BEGIN:VEVENT", "UID:med-" + ds + "-" + k + (r ? "-r" + r : "") + "@yoonseongduk.github.io", "SEQUENCE:" + seq, "DTSTAMP:" + stamp, "DTSTART:" + ds + "T" + hs + "00", "DURATION:PT10M", "SUMMARY:💊 " + (r ? "(다시 알림) " : "") + nm + " 약: " + (names || "-"), "DESCRIPTION:약 먹을 시간이에요 - " + names);
-        if (cancel || off) L.push("STATUS:CANCELLED"); else L.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:약 먹을 시간이에요", "TRIGGER:PT0M", "END:VALARM");
-        L.push("END:VEVENT"); } }); }
+  const fs = first.replace(/-/g, ""), days = Array.from({ length: 7 }, (_, i) => addDays(first, i));
+  SL.forEach(([k, nm]) => {
+    const per = days.map(d => ({ d, ms: S.meds.filter(m => m.t.includes(k) && (m.since || "0000") <= d) })), any = per.some(x => x.ms.length);
+    if (!any && !prev.includes(k)) return; if (any) usedSlots.push(k);
+    const names = [...new Set(per.flatMap(x => x.ms.map(m => m.n)))].join(", "), [hh, mm] = S.al.t[k].split(":").map(Number), step = +S.al.rep || 10, nmax = S.al.cal2 ? 3 : 1;
+    const skip = per.filter(x => !x.ms.length || (x.d === todayS() && x.ms.every(m => ((S.log[x.d] || {})[m.id + "|" + k])))).map(x => x.d);
+    for (let r = 0; r < Math.max(nmax, (S.exp && S.exp.n) || 1); r++) { const tm = hh * 60 + mm + r * step; if (tm >= 1440) break; const hm = pad(Math.floor(tm / 60)) + pad(tm % 60) + "00", off = !any || r >= nmax;
+      L.push("BEGIN:VEVENT", "UID:med-" + fs + "-" + k + (r ? "-r" + r : "") + "@yoonseongduk.github.io", "SEQUENCE:" + seq, "DTSTAMP:" + stamp, "DTSTART:" + fs + "T" + hm, "DURATION:PT10M", "RRULE:FREQ=DAILY;COUNT=7");
+      skip.forEach(d => L.push("EXDATE:" + d.replace(/-/g, "") + "T" + hm));
+      L.push("SUMMARY:💊 " + (r ? "(다시 알림) " : "") + nm + " 약: " + (names || "-"), "DESCRIPTION:약 먹을 시간이에요 - " + names);
+      if (off) L.push("STATUS:CANCELLED"); else L.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:약 먹을 시간이에요", "TRIGGER:PT0M", "END:VALARM");
+      L.push("END:VEVENT"); } });
   L.push("END:VCALENDAR");
   if (!usedSlots.length) return false;
   S.exp = { sig: sig(), until: addDays(first, 6), slots: [...new Set(usedSlots)], n: S.al.cal2 ? 3 : 1 }; save();
@@ -293,11 +296,11 @@ function alarmUi() {
     ${/Android/i.test(navigator.userAgent) ? "" : `<div class="note">안드로이드 폰에서만 보여요.</div>`}
     <hr style="border:0;border-top:1px solid var(--line);width:100%">
     <div class="lb" style="color:var(--fg)">③ 📅 폰 달력에 등록 <span class="note">(앱이 꺼져 있어도 울려요)</span></div>
-    <div class="note">위 ①의 시간대로 <b>일주일치 일정 파일</b>을 만들어요. 받은 파일을 열면 삼성 달력 등에 일정이 추가되고, 일정마다 하루하루 따로라 한 날만 고치거나 지울 수 있어요. 일정 이름은 "💊"로 시작해요.</div>
+    <div class="note">위 ①의 시간대로 <b>일주일치 일정 파일</b>을 만들어요. 받은 파일을 열면 삼성 달력 등에 일정이 추가되고, 아침·점심·저녁마다 <b>"7일 반복 일정" 하나씩</b>만 만들어져서, 달력에서 일정을 열어 <b>"모든 일정"</b>을 고치거나 지우면 한 번에 끝나요. 일정 이름은 "💊"로 시작해요.</div>
     <label class="opt" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="acal2"${S.al.cal2 ? " checked" : ""}> '다시 알림' 일정도 2번 더 넣기 (위 간격으로)</label>
     <div class="f"><label for="astart">시작일 (이 날부터 7일치)</label><input type="date" id="astart" value="${todayS()}"></div>
     <button class="btn" id="aics" type="button">📅 달력에 등록하기 (일정 파일 받기)</button>
-    <div class="note">버튼을 누르면 <b>med-alarm-날짜.ics</b> 파일이 받아져요. 알림창이나 "내 파일/다운로드"에서 그 파일을 눌러 <b>삼성 캘린더</b>(또는 구글 캘린더)로 열면 일정이 들어가요. 약이나 시간을 바꾼 뒤에는 이 버튼을 다시 눌러 새 파일을 여세요. 이미 먹은 오늘 약과 없앤 약은 "취소" 표시로 담겨요 (달력 앱에 따라 안 지워질 수 있어요).</div>
+    <div class="note">버튼을 누르면 <b>med-alarm-날짜.ics</b> 파일이 받아져요. 알림창이나 "내 파일/다운로드"에서 그 파일을 눌러 <b>삼성 캘린더</b>(또는 구글 캘린더)로 열면 일정이 들어가요. 약이나 시간을 바꾼 뒤에는 이 버튼을 다시 눌러 새 파일을 여세요. 오늘 이미 먹은 약은 그날만 빼고 담겨요. 없앤 약의 일정은 "취소" 표시로 담겨요 (달력 앱에 따라 안 지워질 수 있어요).</div>
     <div class="note">⚠️ 달력·시계 앱 알람은 앱이 "먹었는지" 모르기 때문에 먹어도 멈추지 않고 정해진 횟수만 울려요. ①의 앱 알림은 앱을 완전히 닫으면 울리지 못해요.</div>`;
   $("aon").onchange = () => { S.al.on = $("aon").checked; save(); if (S.al.on && perm() === "default") $("ap").click(); };
   $("arep").onchange = () => { S.al.rep = +$("arep").value; save(); };

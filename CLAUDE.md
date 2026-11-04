@@ -67,6 +67,9 @@
 - **공용 스크립트**: `family.js`(가족 명단 `family-members-v1` + 시작 화면 백업 알림), `med-notify.js`(약 알림, 모든 화면), `wrong-hook.js`(오답 노트). 새 페이지에서 가족 명단을 쓰려면 JS에 `FAMILY.get()`을 쓰면 `ship.py`가 `family.js`를 넣어요.
 - **기록 백업·복원(`backup.html`)**: 모든 localStorage를 JSON 파일로 저장/복원(`tools/dev/keymap.json`에 키→화면 이름, 새 도구가 생기면 `set27.py` 앞부분의 keymap 생성 코드를 다시 실행). 가족 명단은 `family-members.html`.
 
+- **한자 획순 번호**: `data/stroke-6~1.json`(Make Me a Hanzi 파생, `tools/dev/build_stroke.py`로 생성, 라이선스 `data/stroke-LICENSE.txt`). 한자 쓰기 화면의 🔢(번호 켜기/끄기)·✏️(획 시작 위치를 순서대로 눌러 직접 입력/수정). 직접 고친 내용은 폰 localStorage `hanja-write-strokefix-v1`에 저장되고, "📋 내가 고친 획순 복사"로 JSON을 복사해 `tools/dev/merge_stroke_fix.py`로 `data/stroke-fix.json`에 합치면 모든 폰에 반영돼요(형식 `{"한자":[[x,y],...]}`, 좌표는 300×300 쓰기 칸 기준). 자료에 없는 172자는 이 방법으로 채워요.
+- **오늘의 한자**: `hanja-today.html`(`set28.py`) — 급수별 하루 3개 + 퀴즈.
+
 ## 5. 앞으로 할 만한 일 (사용자가 원하면)
 - 한자 자세히 보기: 6·5·4·3·2·1급 3,500자 전부 유래·사용 예 작성 완료(`hd5~hd13.txt`, 형식 `한자|유래|예1|예2|예3`, 예는 0~3개; 희귀·인명용 한자는 예가 적음). 수정 시 해당 `hd*.txt`를 고치고 `py build_hanja_detail.py` 후 `py tools\make-sw.py`.
 - 퀴즈 문제 더 늘리기(한국사 1,000+ 달성, 일본어 2,500+, 사자성어 560, 순우리말 1,317은 사용자가 계속 "더 늘려 달라" 요청해 옴). 늘릴 때는 새로 쓴 문제 중 애매한 것은 걸러서 넣기.

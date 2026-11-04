@@ -36,7 +36,7 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 .dock{position:sticky;bottom:0;z-index:5;display:grid;gap:8px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));background:var(--bg);box-shadow:0 -10px 10px -8px var(--bg)}.dock .res{padding:8px 12px}.dock .res b{font-size:1.3rem}.dock[data-done] #undo,.dock[data-done] #clear,.dock[data-done] #check{display:none}.dock[data-done] .row3{display:none}
 @media(max-height:820px){h1{font-size:1.5rem}main{gap:8px}.seg button small{display:none}.seg button{padding:6px 4px}.stats{gap:6px}.stat{padding:2px 10px;display:flex;align-items:baseline;justify-content:space-between}.stat small{margin-right:6px}.stat b{font-size:1.1rem}.card{padding:8px 12px}.card .big{font-size:1.4rem!important}.dock .res p.muted{font-size:.8rem;line-height:1.35}#help{display:none}}
 .dock[data-done]{grid-template-columns:1fr 1fr}.dock[data-done] .res{grid-column:1/-1}.dock[data-done]:has(#self:not([hidden])){grid-template-columns:1fr 1fr 1fr}.dock[data-done] .btn{font-size:1rem;padding:10px 4px}.dock .btn{padding:10px 6px;font-size:1.1rem}
-.ovl{position:fixed;inset:0;z-index:20;background:rgba(5,8,20,.6);display:flex;align-items:flex-end;justify-content:center}.ovl[hidden]{display:none!important}.sheet{background:var(--bg);color:var(--fg);width:100%;max-width:440px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:10px;box-sizing:border-box}.sheet .big{font-size:4rem;line-height:1;text-align:center;font-family:"Noto Serif KR","Noto Serif CJK KR","Batang",serif}.sheet .hd{text-align:center;font-weight:700}.sheet h3{margin:0;font-size:.95rem}.sheet p{margin:2px 0 0}.sheet ul{margin:4px 0 0;padding-left:20px}.sheet .tags{display:flex;flex-wrap:wrap;gap:6px}.sheet .tags span{background:color-mix(in srgb,var(--fg) 10%,var(--surface));border-radius:999px;padding:3px 10px;font-size:.9rem}.why{margin-top:6px;padding:6px 14px!important;font-size:1rem!important}</style>
+.ovl{position:fixed;inset:0;z-index:20;background:rgba(5,8,20,.6);display:flex;align-items:flex-end;justify-content:center}.ovl[hidden]{display:none!important}.sheet{background:var(--bg);color:var(--fg);width:100%;max-width:440px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:10px;box-sizing:border-box}.sheet .big{font-size:4rem;line-height:1;text-align:center;font-family:"Noto Serif KR","Noto Serif CJK KR","Batang",serif}.sheet .hd{text-align:center;font-weight:700}.sheet h3{margin:0;font-size:.95rem}.sheet p{margin:2px 0 0}.sheet ul{margin:4px 0 0;padding-left:20px}.sheet .tags{display:flex;flex-wrap:wrap;gap:6px}.sheet .tags span{background:color-mix(in srgb,var(--fg) 10%,var(--surface));border-radius:999px;padding:3px 10px;font-size:.9rem}.why{margin-top:6px;padding:6px 14px!important;font-size:1rem!important}.card.center{position:relative}.tl{position:absolute;top:6px;right:6px;display:flex;gap:4px}.tl button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:1rem;line-height:1;padding:0}.tl button.on{background:var(--fg);border-color:var(--fg)}#editbar{display:none;grid-template-columns:1fr 1fr;gap:8px}.dock[data-edit]>*{display:none!important}.dock[data-edit] #editbar{display:grid!important}#editbar .btn{padding:10px 6px;font-size:1rem}.fixb{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.88rem;font-weight:700}</style>
 </head>
 <body>
 <main>
@@ -44,17 +44,19 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
   <div class="chips" id="cats"></div>
   <div class="seg" id="mode" style="--n:2"><button type="button" data-m="trace" class="on">따라 쓰기<small>연한 글자를 따라</small></button><button type="button" data-m="memo">보고 쓰기<small>뜻과 음만 보고</small></button></div>
   <div class="stats"><div class="stat"><small>문제</small><b id="no">1/10</b></div><div class="stat"><small>성공</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
-  <div class="card center"><p class="muted" id="ask"></p><p class="big" id="mean" style="font-size:1.8rem"></p></div>
+  <div class="card center"><div class="tl"><button type="button" id="numt" aria-label="획순 번호 켜고 끄기" title="획순 번호">🔢</button><button type="button" id="edt" aria-label="획순 번호 고치기" title="획순 고치기">✏️</button></div><p class="muted" id="ask" style="padding:0 70px"></p><p class="big" id="mean" style="font-size:1.8rem"></p></div>
   <div class="padwrap"><canvas id="pad" width="300" height="300" aria-label="한자를 쓰는 칸"></canvas></div>
   <div class="dock" id="dock">
   <div class="row3"><button class="btn ghost" id="undo" type="button">↩ 한 획 지우기</button><button class="btn ghost" id="clear" type="button">🧽 모두 지우기</button><button class="btn" id="check" type="button">확인</button></div>
+  <div id="editbar"><button class="btn ghost" id="e_undo" type="button">↩ 한 개 취소</button><button class="btn ghost" id="e_clear" type="button">🧹 처음부터</button><button class="btn ghost" id="e_reset" type="button">🗑 원래대로</button><button class="btn" id="e_save" type="button">✅ 저장</button></div>
   <div class="res" id="res" hidden></div>
   <button class="btn ghost" id="self" type="button" hidden>맞게 썼어요</button>
   <button class="btn ghost" id="retry" type="button" hidden>✏️ 다시 쓰기</button>
   <button class="btn" id="next" type="button" hidden>다음 문제</button>
   </div>
   <p class="muted" id="help">화면의 네모 칸에 <b>손가락으로 한자를 써 보세요</b>. <b>따라 쓰기</b>는 연하게 보이는 한자를 따라 쓰고, <b>보고 쓰기</b>는 뜻과 음만 보고 기억해서 써요. <b>확인</b>을 누르면 쓴 모양과 정답 모양이 얼마나 겹치는지 계산해요 (AI가 아니라 모양 비교예요). 획순은 검사하지 않아요.</p>
-  <p class="muted center">자료 출처: <a href="licenses.html" style="color:inherit">출처와 저작권</a></p>
+  <p class="center"><button type="button" class="fixb" id="expfix">📋 내가 고친 획순 복사</button></p>
+  <p class="muted center">획순 번호: Make Me a Hanzi(Arphic Public License) · 자료 출처: <a href="licenses.html" style="color:inherit">출처와 저작권</a></p>
 </main>
 <div class="ovl" id="ovl" hidden><div class="sheet" id="sheet" role="dialog" aria-label="한자 유래"></div></div>
 <script>
@@ -65,18 +67,28 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const KEY = "hanja-write-best-v1";
+const FIXK = "hanja-write-strokefix-v1", NUMK = "hanja-write-nums-v1";
+let SD = {}, FIXS = {}, FIXL = ld(FIXK) || {}, numsOn = ld(NUMK) !== false, editing = false, editPts = [], OC = {}, stl = {};
 let tried = false, DET = null, ALL = [], pool = [], cat = "6급", mode = "trace", qs = [], i = 0, score = 0, best = ld(KEY) || 0, strokes = [], cur = null, done = false, guideCache = null;
 const cv = $("pad"), ctx = cv.getContext("2d"), S = 300, G = 60, CELL = S / G, FONT = '"Noto Serif CJK KR","Noto Serif KR","Noto Sans CJK KR","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo","AppleGothic","Batang","serif"';
 fetch("data/hanja.json").then(r => r.json()).then(d => { ALL = d; chips(); start(); }).catch(() => { $("ask").textContent = "한자 자료를 불러오지 못했어요. 인터넷에 한 번 연결한 뒤 다시 열어 주세요."; });
 function chips() { $("cats").innerHTML = ["6급", "5급", "4급", "3급", "2급", "1급"].map(c => `<button type="button" class="chip${c === cat ? " on" : ""}" data-c="${c}">${c}</button>`).join(""); }
-function start() { pool = ALL.filter(d => d[2] === cat); qs = shuf(pool).slice(0, 10); i = 0; score = 0; $("res").hidden = true; show(); }
-function glyphCanvas(ch, scale = 1) { const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"); x.fillStyle = "#000"; x.textAlign = "center"; x.textBaseline = "middle"; x.font = `${Math.round(S * .78 * scale)}px ${FONT}`; x.fillText(ch, S / 2, S / 2 + S * .04); return c; }
+function start() { loadStroke(cat); pool = ALL.filter(d => d[2] === cat); qs = shuf(pool).slice(0, 10); i = 0; score = 0; $("res").hidden = true; show(); }
+function outlineCanvas(ch) { if (OC[ch]) return OC[ch]; const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"), k = S / 256; x.setTransform(k, 0, 0, -k, 0, 225 * k); x.fillStyle = "#000"; SD[ch].s.forEach(p => x.fill(new Path2D(p))); return (OC[ch] = c); }
+const nums = ch => FIXL[ch] || FIXS[ch] || (SD[ch] ? SD[ch].n.map(([a, b]) => [a * S / 256, (225 - b) * S / 256]) : null);
+function drawNums(c, pts, col) { c.save(); c.font = "bold 12px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; pts.forEach((p, k) => { c.beginPath(); c.arc(p[0], p[1], 9, 0, 7); c.fillStyle = col; c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1.5; c.stroke(); c.fillStyle = "#fff"; c.fillText(String(k + 1), p[0], p[1] + .5); }); c.restore(); }
+function loadStroke(g) { const f = g.replace("급", ""); if (stl[f]) return; stl[f] = 1; fetch("data/stroke-" + f + ".json").then(r => r.json()).then(d => { Object.assign(SD, d); if (qs.length) { if (!editing) $("ask").textContent = askTxt(); render(done); } }).catch(() => { stl[f] = 0; }); }
+fetch("data/stroke-fix.json").then(r => r.ok ? r.json() : {}).then(d => { FIXS = d || {}; if (qs.length && !editing) render(done); }).catch(() => {});
+function askTxt() { const d = qs[i]; let t = mode === "trace" ? "연하게 보이는 한자를 따라 써 보세요" : "이 뜻과 음의 한자를 써 보세요"; if (d && mode === "trace" && numsOn && !nums(d[0]) && !FIXL[d[0]]) t += " (획순 번호가 없는 글자예요 · ✏️로 직접 넣을 수 있어요)"; return t; }
+function glyphCanvas(ch, scale = 1) { if (SD[ch] && scale === 1) return outlineCanvas(ch); const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"); x.fillStyle = "#000"; x.textAlign = "center"; x.textBaseline = "middle"; x.font = `${Math.round(S * .78 * scale)}px ${FONT}`; x.fillText(ch, S / 2, S / 2 + S * .04); return c; }
 function drawStroke(x, pts, w, col) { x.strokeStyle = col; x.fillStyle = col; x.lineWidth = w; x.lineCap = x.lineJoin = "round"; if (pts.length === 1) { x.beginPath(); x.arc(pts[0][0], pts[0][1], w / 2, 0, 7); x.fill(); return; } x.beginPath(); pts.forEach(([a, b], k) => k ? x.lineTo(a, b) : x.moveTo(a, b)); x.stroke(); }
 function render(overlay) {
   const d = qs[i], style = getComputedStyle(document.documentElement), fg = style.getPropertyValue("--fg").trim() || "#222", line = style.getPropertyValue("--line").trim() || "#ccc", surf = style.getPropertyValue("--surface").trim() || "#fff", acc = style.getPropertyValue("--accent").trim() || "#c4552b";
   ctx.clearRect(0, 0, S, S); ctx.fillStyle = surf; ctx.fillRect(0, 0, S, S); ctx.strokeStyle = line; ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.strokeRect(.5, .5, S - 1, S - 1); ctx.beginPath(); ctx.moveTo(S / 2, 0); ctx.lineTo(S / 2, S); ctx.moveTo(0, S / 2); ctx.lineTo(S, S / 2); ctx.stroke(); ctx.setLineDash([]);
-  if (mode === "trace" || overlay) { ctx.globalAlpha = overlay ? .28 : .16; ctx.drawImage(glyphTinted(d[0], overlay ? "#d6453a" : fg), 0, 0); ctx.globalAlpha = 1; }
+  if (mode === "trace" || overlay || editing) { ctx.globalAlpha = overlay ? .28 : .16; ctx.drawImage(glyphTinted(d[0], overlay ? "#d6453a" : fg), 0, 0); ctx.globalAlpha = 1; }
+  if (editing) { drawNums(ctx, editPts, "#2563eb"); return; }
   strokes.forEach(s => drawStroke(ctx, s, 15, fg)); if (cur) drawStroke(ctx, cur, 15, fg);
+  const np = numsOn && (mode === "trace" || overlay) ? nums(d[0]) : null; if (np) drawNums(ctx, np, "#2563eb");
 }
 function glyphTinted(ch, color) { const g = glyphCanvas(ch), c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"); x.drawImage(g, 0, 0); x.globalCompositeOperation = "source-in"; x.fillStyle = color; x.fillRect(0, 0, S, S); return c; }
 const RX = "丨 뚫을 곤,丶 점 주,丿 삐침 별,亅 갈고리 궐,亠 돼지해머리 두,儿 어진사람 인,冂 멀 경,冖 덮을 멱,冫 이수변 빙,凵 입벌릴 감,勹 쌀 포,匚 상자 방,匸 감출 혜,卩 병부 절,厂 기슭 엄,厶 사사 사,囗 에울 위,夊 천천히걸을 쇠,宀 집 면,尢 절름발이 왕,尸 주검 시,屮 싹날 철,巛 내 천,幺 작을 요,广 집 엄,廴 길게걸을 인,廾 받쳐들 공,弋 주살 익,彐 돼지머리 계,彡 터럭 삼,彳 걸을 척,攴 칠 복,无 없을 무,歹 뼈앙상할 알,殳 몽둥이 수,气 기운 기,疒 병질 엄,癶 걸을 발,禸 짐승발자국 유,糸 실 사,缶 장군 부,网 그물 망,耒 가래 뢰,聿 붓 율,舛 어그러질 천,艸 풀 초,虍 범호엄 호,虫 벌레 훼,襾 덮을 아,豕 돼지 시,豸 갖은돼지시 치,辵 쉬엄쉬엄갈 착,釆 분별할 변,隶 미칠 이,隹 새 추,頁 머리 혈,髟 터럭발 표,鬥 싸울 투,鬯 울창주 창,鹵 짠땅 로,黽 맹꽁이 맹";
@@ -100,7 +112,7 @@ async function openOrigin(d) {
 $("ovl").addEventListener("click", e => { if (e.target === $("ovl")) $("ovl").hidden = true; });
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("ovl").hidden = true; });
 function show() { tried = false; $("retry").hidden = true; $("ovl").hidden = true; $("self").hidden = true; const d = qs[i]; $("dock").removeAttribute("data-done"); strokes = []; cur = null; done = false; $("res").hidden = true; $("next").hidden = true; $("check").hidden = false; $("undo").disabled = $("clear").disabled = false; const [hun, um] = d[1].split(" ").length > 1 ? [d[1].slice(0, d[1].lastIndexOf(" ")), d[1].slice(d[1].lastIndexOf(" ") + 1)] : [d[1], ""];
-  $("ask").textContent = mode === "trace" ? "연하게 보이는 한자를 따라 써 보세요" : "이 뜻과 음의 한자를 써 보세요"; $("mean").textContent = d[1]; $("no").textContent = (i + 1) + "/10"; $("score").textContent = score; $("best").textContent = best; render(false); }
+  $("ask").textContent = askTxt(); $("mean").textContent = d[1]; $("no").textContent = (i + 1) + "/10"; $("score").textContent = score; $("best").textContent = best; render(false); }
 // 모양 비교: 60×60 칸으로 줄인 글자 마스크와 내가 쓴 마스크를 겹쳐 본다
 function maskOf(canvasLike) { const t = document.createElement("canvas"); t.width = t.height = G; const x = t.getContext("2d"); x.drawImage(canvasLike, 0, 0, G, G); const px = x.getImageData(0, 0, G, G).data, m = new Uint8Array(G * G); for (let k = 0; k < G * G; k++) m[k] = px[k * 4 + 3] > 40 ? 1 : 0; return m; }
 function inkCanvas() { const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"); strokes.forEach(s => drawStroke(x, s, 15, "#000")); return c; }
@@ -121,7 +133,7 @@ function check() {
 function finish() { $("self").hidden = true; $("dock").dataset.done = ""; let note = ""; if (score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; } $("next").hidden = true; $("check").hidden = true; $("res").hidden = false; $("res").innerHTML = `<b>10문제 중 ${score}개 성공</b><p class="muted">${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`; $("best").textContent = best; $("again").onclick = start; }
 // 그리기 (손가락/마우스)
 function pt(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * S, (e.clientY - r.top) / r.height * S]; }
-cv.addEventListener("pointerdown", e => { if (done) return; e.preventDefault(); cv.setPointerCapture(e.pointerId); cur = [pt(e)]; render(false); });
+cv.addEventListener("pointerdown", e => { if (editing) { e.preventDefault(); editPts.push(pt(e)); $("ask").textContent = editMsg(); render(false); return; } if (done) return; e.preventDefault(); cv.setPointerCapture(e.pointerId); cur = [pt(e)]; render(false); });
 cv.addEventListener("pointermove", e => { if (!cur) return; e.preventDefault(); cur.push(pt(e)); render(false); });
 ["pointerup", "pointercancel"].forEach(ev => cv.addEventListener(ev, e => { if (!cur) return; strokes.push(cur); cur = null; render(false); }));
 $("undo").onclick = () => { if (!done) { strokes.pop(); render(false); } }; $("clear").onclick = () => { if (!done) { strokes = []; render(false); } }; $("check").onclick = check;
@@ -130,6 +142,17 @@ $("next").onclick = () => { if (i === 9) finish(); else { i++; show(); } };
 $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; chips(); start(); } });
 $("mode").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b) return; document.querySelectorAll("#mode button").forEach(x => x.classList.toggle("on", x === b)); mode = b.dataset.m; if (ALL.length) start(); });
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => ALL.length && render(done));
+
+function editMsg() { return `획이 시작되는 곳을 순서대로 눌러 주세요 · 지금 ${editPts.length + 1}번째`; }
+function setEdit(on) { editing = on; $("dock").toggleAttribute("data-edit", on); $("edt").classList.toggle("on", on); editPts = []; $("ask").textContent = on ? editMsg() : askTxt(); render(done); }
+$("numt").classList.toggle("on", numsOn);
+$("numt").onclick = () => { numsOn = !numsOn; sv(NUMK, numsOn); $("numt").classList.toggle("on", numsOn); $("ask").textContent = editing ? editMsg() : askTxt(); render(done); };
+$("edt").onclick = () => { if (editing) return setEdit(false); if (mode === "memo" && !done) { $("ask").textContent = "보고 쓰기에서는 확인을 누른 뒤에 고칠 수 있어요"; return; } setEdit(true); };
+$("expfix").onclick = () => { const t = JSON.stringify(FIXL); try { navigator.clipboard.writeText(t).then(() => { $("expfix").textContent = Object.keys(FIXL).length ? "✅ 복사했어요 (" + Object.keys(FIXL).length + "자)" : "고친 글자가 아직 없어요"; }, () => { $("expfix").textContent = "복사에 실패했어요"; }); } catch (e) { $("expfix").textContent = "복사에 실패했어요"; } };
+$("e_undo").onclick = () => { editPts.pop(); $("ask").textContent = editMsg(); render(false); };
+$("e_clear").onclick = () => { editPts = []; $("ask").textContent = editMsg(); render(false); };
+$("e_reset").onclick = () => { const ch = qs[i][0]; if (!FIXL[ch]) { $("ask").textContent = "고쳐 둔 번호가 없어요 (원래 번호 그대로예요)"; return; } if (confirm("내가 고친 번호를 지우고 원래대로 돌릴까요?")) { delete FIXL[ch]; sv(FIXK, FIXL); setEdit(false); } };
+$("e_save").onclick = () => { if (!editPts.length) { $("ask").textContent = "번호를 한 개 이상 찍어 주세요"; return; } FIXL[qs[i][0]] = editPts.map(p => [Math.round(p[0]), Math.round(p[1])]); sv(FIXK, FIXL); setEdit(false); };
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="wrong-hook.js"></script>

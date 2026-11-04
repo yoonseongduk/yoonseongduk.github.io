@@ -1,0 +1,33 @@
+한자 획순 데이터 출처·라이선스 (data/stroke-*.json)
+
+원본: Make Me a Hanzi — https://github.com/skishore/makemeahanzi
+이 폴더의 stroke-*.json 은 위 프로젝트의 graphics.txt 에서 한자 3,500자에 해당하는 글자만 뽑아
+좌표를 4로 나눠 줄인 파생 데이터예요. (생성 스크립트: tools/dev/build_stroke.py)
+
+----- 원본 프로젝트의 COPYING 안내문 -----
+dictionary.txt is derived from:
+    Unihan - http://unicode.org/charts/unihan.html
+    CJKlib - https://github.com/cburgmer/cjklib
+
+You can redistribute and/or modify dictionary.txt under the terms of the GNU
+Lesser General Public License as published by the Free Software Foundation,
+either version 3 of the license, or (at your option) any later version. You
+should have recieved a copy of this license (the file "LGPL") along with
+dictionary.txt; if not, see see <http://www.gnu.org/licenses/>.
+
+
+
+graphics.txt is derived from:
+    Arphic PL KaitiM GB - https://apps.ubuntu.com/cat/applications/precise/fonts-arphic-gkai00mp/
+    Arphic PL UKai - https://apps.ubuntu.com/cat/applications/fonts-arphic-ukai/
+
+You can redistribute and/or modify graphics.txt under the terms of the Arphic
+Public License as published by Arphic Technology Co., Ltd. You should have
+received a copy of this license (the directory "APL") along with graphics.txt;
+if not, see <http://ftp.gnu.org/non-gnu/chinese-fonts-truetype/LICENSE>.
+
+
+graphics.txt 는 Arphic Public License(Arphic Technology Co., Ltd.)에 따라 재배포할 수 있어요.
+라이선스 전문: http://ftp.gnu.org/non-gnu/chinese-fonts-truetype/LICENSE
+(원본 저장소의 APL 폴더에도 있어요: https://github.com/skishore/makemeahanzi)
+이 파생 데이터도 같은 Arphic Public License 조건을 따라요.

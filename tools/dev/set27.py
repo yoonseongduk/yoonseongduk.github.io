@@ -1,7 +1,8 @@
 import sys, json
 sys.path.insert(0, ".")
 from mkpage import make
-KM = json.dumps(json.load(open("keymap.json", encoding="utf-8")), ensure_ascii=False)
+_km = json.load(open("keymap.json", encoding="utf-8")); _km.update({"hanja-write-strokefix-v1": "한자 획순 수정", "hanja-write-nums-v1": "한자 쓰기 설정", "hanja-today-v1": "오늘의 한자 학습 기록"})
+KM = json.dumps(_km, ensure_ascii=False)
 CSS = '''.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.x{background:none;border:0;color:var(--muted);font-size:1.1rem;padding:4px 8px}.btn.sm{padding:8px 14px;font-size:1rem}.lb{font-size:.88rem;color:var(--muted);font-weight:700}.note{font-size:.85rem;color:var(--muted)}.nm{flex:1;min-width:0}.nm input{background:transparent;border:1px solid transparent;font-weight:700;padding:8px 6px}.nm input:focus{border-color:var(--line);background:var(--soft)}.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}input[type=file]{width:100%;font:inherit}.opt{display:flex;gap:8px;align-items:flex-start;font-size:.95rem}.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:4px 2px;border-bottom:1px solid var(--line)}.tbl td:last-child{text-align:right;color:var(--muted)}'''
 
 # ───── 가족 명단

@@ -68,6 +68,7 @@
 - **기록 백업·복원(`backup.html`)**: 모든 localStorage를 JSON 파일로 저장/복원(`tools/dev/keymap.json`에 키→화면 이름, 새 도구가 생기면 `set27.py` 앞부분의 keymap 생성 코드를 다시 실행). 가족 명단은 `family-members.html`.
 
 - **한자 획순 번호**: `data/stroke-6~1.json`(Make Me a Hanzi 파생, `tools/dev/build_stroke.py`로 생성, 라이선스 `data/stroke-LICENSE.txt`). 한자 쓰기 화면의 🔢(번호 켜기/끄기)·✏️(획 시작 위치를 순서대로 눌러 직접 입력/수정). 직접 고친 내용은 폰 localStorage `hanja-write-strokefix-v1`에 저장되고, "📋 내가 고친 획순 복사"로 JSON을 복사해 `tools/dev/merge_stroke_fix.py`로 `data/stroke-fix.json`에 합치면 모든 폰에 반영돼요(형식 `{"한자":[[x,y],...]}`, 좌표는 300×300 쓰기 칸 기준). 자료에 없는 172자는 이 방법으로 채워요.
+- **퀸 놓기(`n-queens.html`)**: 힌트·공격 범위는 HTML에 직접 추가했어요(`set17.py`로 다시 만들면 사라지니 주의).
 - **오늘의 한자**: `hanja-today.html`(`set28.py`) — 급수별 하루 3개 + 퀴즈.
 
 ## 5. 앞으로 할 만한 일 (사용자가 원하면)

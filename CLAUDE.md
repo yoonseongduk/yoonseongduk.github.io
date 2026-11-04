@@ -67,7 +67,7 @@
 - **공용 스크립트**: `family.js`(가족 명단 `family-members-v1` + 시작 화면 백업 알림), `med-notify.js`(약 알림, 모든 화면), `wrong-hook.js`(오답 노트). 새 페이지에서 가족 명단을 쓰려면 JS에 `FAMILY.get()`을 쓰면 `ship.py`가 `family.js`를 넣어요.
 - **기록 백업·복원(`backup.html`)**: 모든 localStorage를 JSON 파일로 저장/복원(`tools/dev/keymap.json`에 키→화면 이름, 새 도구가 생기면 `set27.py` 앞부분의 keymap 생성 코드를 다시 실행). 가족 명단은 `family-members.html`.
 
-- **한자 획순 번호**: `data/stroke-6~1.json`(Make Me a Hanzi 파생, `tools/dev/build_stroke.py`로 생성, 라이선스 `data/stroke-LICENSE.txt`). 한자 쓰기 화면의 🔢(번호 켜기/끄기)·✏️(획 시작 위치를 순서대로 눌러 직접 입력/수정). 직접 고친 내용은 폰 localStorage `hanja-write-strokefix-v1`에 저장되고, "📋 내가 고친 획순 복사"로 JSON을 복사해 `tools/dev/merge_stroke_fix.py`로 `data/stroke-fix.json`에 합치면 모든 폰에 반영돼요(형식 `{"한자":[[x,y],...]}`, 좌표는 300×300 쓰기 칸 기준). 자료에 없는 172자(`data/stroke-missing.json`)는 한자 쓰기 급수 버튼 끝의 ✏️ '번호 없는 글자만' 모드로 한 글자씩 순서대로 찍어 채워요.
+- **한자 획순 번호**: `data/stroke-6~1.json`(Make Me a Hanzi 파생, `tools/dev/build_stroke.py`로 생성, 라이선스 `data/stroke-LICENSE.txt`). 한자 쓰기 화면의 🔢(번호 켜기/끄기)·✏️(획 시작 위치를 순서대로 눌러 직접 입력/수정). 직접 고친 내용은 폰 localStorage `hanja-write-strokefix-v1`에 저장되고, "📋 내가 고친 획순 복사"로 JSON을 복사해 `tools/dev/merge_stroke_fix.py`로 `data/stroke-fix.json`에 합치면 모든 폰에 반영돼요(형식 `{"한자":[[x,y],...]}`, 좌표는 300×300 쓰기 칸 기준). 자료에 없는 172자(`data/stroke-missing.json`) 중 131자는 `build_stroke_auto.py`(글자 분해로 추정)+`snap_auto.js`(글꼴 모양에 맞춤)가 `data/stroke-auto.json`으로 임시 번호를 채웠고(화면에 '자동 추정' 표시, 우선순위 직접수정>stroke-fix>auto), 나머지 41자는 비어 있어요. 모두 한자 쓰기 급수 버튼 끝의 ✏️ '번호 없는 글자만' 모드로 한 글자씩 순서대로 찍어 채워요.
 - **퀸 놓기(`n-queens.html`)**: 힌트·공격 범위는 HTML에 직접 추가했어요(`set17.py`로 다시 만들면 사라지니 주의).
 - **오늘의 한자**: `hanja-today.html`(`set28.py`) — 급수별 하루 3개 + 퀴즈.
 

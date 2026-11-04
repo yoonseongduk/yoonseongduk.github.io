@@ -74,7 +74,9 @@ function rinfo(t) { return (t || "").replace(/부수 (\S+)/, (m, c) => "부수 "
 const SC = 300, BR = 9, BD = 21, FONT = '"Noto Serif CJK KR","Noto Serif KR","Noto Sans CJK KR","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo","AppleGothic","Batang","serif"';
 let SD = {}, FIXS = {}, FIXL = ld("hanja-write-strokefix-v1") || {}, stl = {};
 const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
-const nums = ch => FIXL[ch] || FIXS[ch] || (SD[ch] ? SD[ch].n.map(([a, b]) => [a * SC / 256, (225 - b) * SC / 256]) : null);
+let AUTO = {};
+fetch("data/stroke-auto.json").then(r => r.ok ? r.json() : {}).then(d => { AUTO = d || {}; if (step < 3 && set.length) drawStrokeCard(set[step][0]); }).catch(() => {});
+const nums = ch => FIXL[ch] || FIXS[ch] || AUTO[ch] || (SD[ch] ? SD[ch].n.map(([a, b]) => [a * SC / 256, (225 - b) * SC / 256]) : null);
 function spread(pts) {
   let P = pts.map(p => [p[0], p[1]]);
   for (let it = 0; it < 8; it++) {
@@ -106,7 +108,7 @@ function drawStrokeCard(ch) {
   if (SD[ch]) { c.save(); const k = SC / 256; c.setTransform(k, 0, 0, -k, 0, 225 * k); SD[ch].s.forEach(p => c.fill(new Path2D(p))); c.restore(); }
   else { c.textAlign = "center"; c.textBaseline = "middle"; c.font = `${Math.round(SC * .78)}px ${FONT}`; c.fillText(ch, SC / 2, SC / 2 + SC * .04); }
   c.globalAlpha = 1; const np = nums(ch); if (np) drawNums(c, np, "#2563eb");
-  const m = $("scn"); if (m) m.textContent = np ? "번호 순서대로 쓰세요 (파란 점은 획이 시작되는 곳이에요)" : "이 글자는 획순 번호가 없어요. 한자 쓰기 화면의 ✏️로 직접 넣을 수 있어요.";
+  const m = $("scn"); if (m) m.textContent = np ? (AUTO[ch] && !FIXL[ch] && !FIXS[ch] ? "자동으로 추정한 번호예요 (틀릴 수 있어요). 한자 쓰기의 ✏️로 고칠 수 있어요." : "번호 순서대로 쓰세요 (파란 점은 획이 시작되는 곳이에요)") : "이 글자는 획순 번호가 없어요. 한자 쓰기 화면의 ✏️로 직접 넣을 수 있어요.";
 }
 function loadStroke(g) { const f = g.replace("급", ""); if (stl[f]) return; stl[f] = 1; fetch("data/stroke-" + f + ".json").then(r => r.json()).then(d => { Object.assign(SD, d); if (step < 3) drawStrokeCard(set[step][0]); }).catch(() => { stl[f] = 0; }); }
 fetch("data/stroke-fix.json").then(r => r.ok ? r.json() : {}).then(d => { FIXS = d || {}; if (step < 3 && set.length) drawStrokeCard(set[step][0]); }).catch(() => {});

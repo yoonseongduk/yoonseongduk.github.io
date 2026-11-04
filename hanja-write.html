@@ -81,7 +81,9 @@ function start() {
   if (cat === "없음") { const m = new Set(missPool()); qs = ALL.filter(d => m.has(d[0])); i = 0; score = 0; $("res").hidden = true; if (!qs.length) { qs = []; $("ask").textContent = "번호 없는 글자를 모두 채웠어요 🎉"; $("mean").textContent = ""; $("no").textContent = "0/0"; ctx.clearRect(0, 0, S, S); return; } mode = "trace"; document.querySelectorAll("#mode button").forEach(b => b.classList.toggle("on", b.dataset.m === "trace")); show(); setEdit(true); return; }
   loadStroke(cat); pool = ALL.filter(d => d[2] === cat); qs = shuf(pool).slice(0, 10); i = 0; score = 0; $("res").hidden = true; show(); }
 function outlineCanvas(ch) { if (OC[ch]) return OC[ch]; const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"), k = S / 256; x.setTransform(k, 0, 0, -k, 0, 225 * k); x.fillStyle = "#000"; SD[ch].s.forEach(p => x.fill(new Path2D(p))); return (OC[ch] = c); }
-const nums = ch => FIXL[ch] || FIXS[ch] || (SD[ch] ? SD[ch].n.map(([a, b]) => [a * S / 256, (225 - b) * S / 256]) : null);
+let AUTO = {};
+fetch("data/stroke-auto.json").then(r => r.ok ? r.json() : {}).then(d => { AUTO = d || {}; if (qs.length && !editing) { $("ask").textContent = askTxt(); render(done); } }).catch(() => {});
+const nums = ch => FIXL[ch] || FIXS[ch] || AUTO[ch] || (SD[ch] ? SD[ch].n.map(([a, b]) => [a * S / 256, (225 - b) * S / 256]) : null);
 const BR = 9, BD = 21;     // 번호표 반지름, 번호표 사이 최소 간격
 function spread(pts) {      // 겹치는 번호표는 한 줄(가로)로 나란히 펼쳐요
   let P = pts.map(p => [p[0], p[1]]);
@@ -109,7 +111,7 @@ function drawNums(c, pts, col) {
 }
 function loadStroke(g) { const f = g.replace("급", ""); if (stl[f]) return; stl[f] = 1; fetch("data/stroke-" + f + ".json").then(r => r.json()).then(d => { Object.assign(SD, d); if (qs.length) { if (!editing) $("ask").textContent = askTxt(); render(done); } }).catch(() => { stl[f] = 0; }); }
 fetch("data/stroke-fix.json").then(r => r.ok ? r.json() : {}).then(d => { FIXS = d || {}; if (qs.length && !editing) render(done); }).catch(() => {});
-function askTxt() { const d = qs[i]; let t = mode === "trace" ? "연하게 보이는 한자를 따라 써 보세요" : "이 뜻과 음의 한자를 써 보세요"; if (d && mode === "trace" && numsOn && !nums(d[0]) && !FIXL[d[0]]) t += " (획순 번호가 없는 글자예요 · ✏️로 직접 넣을 수 있어요)"; return t; }
+function askTxt() { const d = qs[i]; let t = mode === "trace" ? "연하게 보이는 한자를 따라 써 보세요" : "이 뜻과 음의 한자를 써 보세요"; if (d && mode === "trace" && numsOn) { if (!nums(d[0])) t += " (획순 번호가 없는 글자예요 · ✏️로 직접 넣을 수 있어요)"; else if (AUTO[d[0]] && !FIXL[d[0]] && !FIXS[d[0]]) t += " (자동으로 추정한 번호예요 · 틀리면 ✏️로 고쳐 주세요)"; } return t; }
 function glyphCanvas(ch, scale = 1) { if (SD[ch] && scale === 1) return outlineCanvas(ch); const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"); x.fillStyle = "#000"; x.textAlign = "center"; x.textBaseline = "middle"; x.font = `${Math.round(S * .78 * scale)}px ${FONT}`; x.fillText(ch, S / 2, S / 2 + S * .04); return c; }
 function drawStroke(x, pts, w, col) { x.strokeStyle = col; x.fillStyle = col; x.lineWidth = w; x.lineCap = x.lineJoin = "round"; if (pts.length === 1) { x.beginPath(); x.arc(pts[0][0], pts[0][1], w / 2, 0, 7); x.fill(); return; } x.beginPath(); pts.forEach(([a, b], k) => k ? x.lineTo(a, b) : x.moveTo(a, b)); x.stroke(); }
 function render(overlay) {

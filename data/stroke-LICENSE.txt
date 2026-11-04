@@ -31,3 +31,8 @@ graphics.txt 는 Arphic Public License(Arphic Technology Co., Ltd.)에 따라 �
 라이선스 전문: http://ftp.gnu.org/non-gnu/chinese-fonts-truetype/LICENSE
 (원본 저장소의 APL 폴더에도 있어요: https://github.com/skishore/makemeahanzi)
 이 파생 데이터도 같은 Arphic Public License 조건을 따라요.
+
+[data/stroke-auto.json]
+획순 데이터가 없는 일부 글자(131자)의 번호 위치는 글자 분해식(cjkvi-ids, https://github.com/cjkvi/cjkvi-ids ; 원자료 CHISE IDS)으로
+글자를 부품으로 나눈 뒤, 위 Make Me a Hanzi 의 부품 획 좌표를 옮겨 붙여 '추정'한 값이에요. (생성: tools/dev/build_stroke_auto.py, snap_auto.js)
+정확하지 않을 수 있어서 화면에 '자동으로 추정한 번호'라고 표시하고, 직접 고칠 수 있게 했어요.

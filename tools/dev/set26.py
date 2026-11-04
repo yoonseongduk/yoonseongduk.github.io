@@ -254,7 +254,7 @@ function tick() {
     if (diff < 0 || diff > 180 || S.rung[key]) return; const rep = +S.al.rep || 0; if (!(diff === 0 || (rep > 0 && diff % rep === 0))) return;
     S.rung[key] = 1; save(); const ps = pending(k, d); if (ps.length) { notify((diff ? "💊 (다시 알림) " : "💊 ") + nm + " 약 먹을 시간이에요", ps.map(x => x.n).join(", ") + (diff ? " · 먹었으면 체크해 주세요" : "")); beep(); banners(); } });
 }
-const sig = () => JSON.stringify([S.meds.map(m => [m.id, m.n, m.t]), S.al.t, S.al.cal2 ? S.al.rep : 0]);
+const sig = () => JSON.stringify([S.meds.map(m => [m.id, m.n, m.t]), S.al.t]);
 function ics() {
   const dt = new Date(), stamp = ymd(dt).replace(/-/g, "") + "T" + pad(dt.getHours()) + pad(dt.getMinutes()) + pad(dt.getSeconds()), seq = Math.floor(Date.now() / 1000);
   const first = ($("astart") && $("astart").value) || todayS(), prev = (S.exp && S.exp.slots) || [], usedSlots = [];
@@ -263,17 +263,17 @@ function ics() {
   SL.forEach(([k, nm]) => {
     const per = days.map(d => ({ d, ms: S.meds.filter(m => m.t.includes(k) && (m.since || "0000") <= d) })), any = per.some(x => x.ms.length);
     if (!any && !prev.includes(k)) return; if (any) usedSlots.push(k);
-    const names = [...new Set(per.flatMap(x => x.ms.map(m => m.n)))].join(", "), [hh, mm] = S.al.t[k].split(":").map(Number), step = +S.al.rep || 10, nmax = S.al.cal2 ? 3 : 1;
+    const names = [...new Set(per.flatMap(x => x.ms.map(m => m.n)))].join(", "), [hh, mm] = S.al.t[k].split(":").map(Number);
     const skip = per.filter(x => !x.ms.length || (x.d === todayS() && x.ms.every(m => ((S.log[x.d] || {})[m.id + "|" + k])))).map(x => x.d);
-    for (let r = 0; r < Math.max(nmax, (S.exp && S.exp.n) || 1); r++) { const tm = hh * 60 + mm + r * step; if (tm >= 1440) break; const hm = pad(Math.floor(tm / 60)) + pad(tm % 60) + "00", off = !any || r >= nmax;
+    for (let r = 0; r < 1; r++) { const tm = hh * 60 + mm; if (tm >= 1440) break; const hm = pad(Math.floor(tm / 60)) + pad(tm % 60) + "00", off = !any;
       L.push("BEGIN:VEVENT", "UID:med-" + fs + "-" + k + (r ? "-r" + r : "") + "@yoonseongduk.github.io", "SEQUENCE:" + seq, "DTSTAMP:" + stamp, "DTSTART:" + fs + "T" + hm, "DURATION:PT10M", "RRULE:FREQ=DAILY;COUNT=" + cnt);
       skip.forEach(d => L.push("EXDATE:" + d.replace(/-/g, "") + "T" + hm));
-      L.push("SUMMARY:💊 " + (r ? "(다시 알림) " : "") + nm + " 약: " + (names || "-"), "DESCRIPTION:약 먹을 시간이에요 - " + names);
+      L.push("SUMMARY:💊 " + nm + " 약: " + (names || "-"), "DESCRIPTION:약 먹을 시간이에요 - " + names);
       if (off) L.push("STATUS:CANCELLED"); else L.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:약 먹을 시간이에요", "TRIGGER:PT0M", "END:VALARM");
       L.push("END:VEVENT"); } });
   L.push("END:VCALENDAR");
   if (!usedSlots.length) return false;
-  S.exp = { sig: sig(), until: addDays(first, cnt - 1), slots: [...new Set(usedSlots)], n: S.al.cal2 ? 3 : 1 }; save();
+  S.exp = { sig: sig(), until: addDays(first, cnt - 1), slots: [...new Set(usedSlots)] }; save();
   const blob = new Blob([L.join("\r\n")], { type: "text/calendar;charset=utf-8" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "med-alarm-" + first + "-to-sat.ics"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); return true;
 }
 const nextStart = () => (S.exp && S.exp.until >= todayS()) ? addDays(S.exp.until, 1) : todayS();
@@ -298,14 +298,12 @@ function alarmUi() {
     <hr style="border:0;border-top:1px solid var(--line);width:100%">
     <div class="lb" style="color:var(--fg)">③ 📅 폰 달력에 등록 <span class="note">(앱이 꺼져 있어도 울려요)</span></div>
     <div class="note">위 ①의 시간대로 <b>일주일치 일정 파일</b>을 만들어요. 받은 파일을 열면 삼성 달력 등에 일정이 추가되고, 아침·점심·저녁마다 <b>"일요일~토요일 한 주 반복 일정" 하나씩</b>만 만들어져서 (주 중간에 등록하면 오늘부터 토요일까지), 달력에서 일정을 열어 <b>"모든 일정"</b>을 고치거나 지우면 한 번에 끝나요. 일정 이름은 "💊"로 시작해요.</div>
-    <label class="opt" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="acal2"${S.al.cal2 ? " checked" : ""}> '다시 알림' 일정도 2번 더 넣기 (위 간격으로)</label>
     <div class="f"><label for="astart">시작일 (그 주 토요일까지 등록돼요 · 일~토 한 주 단위)</label><input type="date" id="astart" value="${todayS()}"></div>
     <button class="btn" id="aics" type="button">📅 달력에 등록하기 (일정 파일 받기)</button>
     <div class="note">버튼을 누르면 <b>med-alarm-…ics</b> 파일이 받아져요. 알림창이나 "내 파일/다운로드"에서 그 파일을 눌러 <b>삼성 캘린더</b>(또는 구글 캘린더)로 열면 일정이 들어가요. 약이나 시간을 바꾼 뒤에는 이 버튼을 다시 눌러 새 파일을 여세요. 일요일에 앱을 열면 한 주(일~토) 등록 안내가 맨 위에 나와요. 오늘 이미 먹은 약은 그날만 빼고 담겨요. 없앤 약의 일정은 "취소" 표시로 담겨요 (달력 앱에 따라 안 지워질 수 있어요).</div>
     <div class="note">⚠️ 달력·시계 앱 알람은 앱이 "먹었는지" 모르기 때문에 먹어도 멈추지 않고 정해진 횟수만 울려요. ①의 앱 알림은 앱을 완전히 닫으면 울리지 못해요.</div>`;
   $("aon").onchange = () => { S.al.on = $("aon").checked; save(); if (S.al.on && perm() === "default") $("ap").click(); };
   $("arep").onchange = () => { S.al.rep = +$("arep").value; save(); };
-  $("acal2").onchange = () => { S.al.cal2 = $("acal2").checked; save(); };
   SL.forEach(([k]) => { $("at" + k).onchange = () => { S.al.t[k] = $("at" + k).value || S.al.t[k]; save(); banners(); }; });
   $("ap").onclick = async () => { try { await Notification.requestPermission(); } catch (e) {} alarmUi(); };
   $("atest").onclick = () => { notify("💊 알림 테스트", "이 알림이 보이면 잘 동작해요"); beep(); };

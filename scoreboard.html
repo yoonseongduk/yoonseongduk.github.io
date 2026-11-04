@@ -38,10 +38,11 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 <body>
 <main>
   <h1>가족 점수판 📊</h1>
-  <div class="card"><div id="board"></div><div class="row"><button class="btn ghost" id="add" type="button">+ 사람 추가</button><button class="btn ghost" id="reset" type="button">점수만 0으로</button></div></div>
+  <div class="card"><div id="board"></div><div class="row"><button class="btn ghost" id="add" type="button">+ 사람 추가</button><button class="btn ghost" id="reset" type="button">점수만 0으로</button></div><button class="btn ghost" id="fam" type="button">👨‍👩‍👧 가족 명단 불러오기</button></div>
   <div class="card"><b>📝 기록</b><div id="log" class="muted"></div></div>
   <p class="muted">보드게임, 윷놀이, 퀴즈 대회… <b>모든 놀이의 점수</b>를 여기에 적어요. 이름을 고치고 +1, +5, -1 버튼으로 점수를 바꾸면 <b>1등이 자동으로 표시</b>돼요. 닫아도 점수가 저장돼요.</p>
 </main>
+<script src="family.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
@@ -56,6 +57,8 @@ function render() { const mx = Math.max(...st.p.map(x => x.s)); $("board").inner
 $("board").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (!b) return; const p = st.p[+b.dataset.k], v = +b.dataset.v; p.s += v; st.log.push(`${p.n} ${v > 0 ? "+" : ""}${v} → ${p.s}점`); st.log = st.log.slice(-40); save(); render(); });
 $("board").addEventListener("input", e => { const k = e.target.dataset.n; if (k !== undefined) { st.p[+k].n = e.target.value; save(); } });
 $("add").onclick = () => { if (st.p.length < 10) { st.p.push({ n: "참가자" + (st.p.length + 1), s: 0 }); save(); render(); } }; $("reset").onclick = () => { st.p.forEach(x => { x.s = 0; }); st.log = []; save(); render(); }; render();
+const FAMLIST = () => (window.FAMILY ? FAMILY.get() : []); const needFam = () => { if (confirm("가족 명단이 아직 없어요. 지금 만들러 갈까요?")) location.href = "family-members.html"; };
+$("fam").onclick = () => { const f = FAMLIST(); if (!f.length) return needFam(); st.p = f.map(n => ({ n, s: (st.p.find(x => x.n === n) || { s: 0 }).s })); save(); render(); };
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="med-notify.js" defer></script>

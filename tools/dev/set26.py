@@ -102,11 +102,12 @@ function save() { sv(KEY, S); }
 function render() {
   document.querySelectorAll("#tab button").forEach(b => b.classList.toggle("on", b.dataset.v === tab));
   if (tab === "s") {
-    $("view").innerHTML = `<div class="card"><b>👨‍👩‍👧 가족</b>${S.members.map((m, i) => `<div class="li"><span>${esc(m)}</span><button class="x" data-dm="${i}" type="button" aria-label="삭제">✕</button></div>`).join("")}<div class="g2" style="grid-template-columns:1fr auto"><input type="text" id="nm" maxlength="8" placeholder="이름 추가"><button class="btn sm" id="am" type="button">추가</button></div></div>
+    $("view").innerHTML = `<div class="card"><b>👨‍👩‍👧 가족</b>${S.members.map((m, i) => `<div class="li"><span>${esc(m)}</span><button class="x" data-dm="${i}" type="button" aria-label="삭제">✕</button></div>`).join("")}<div class="g2" style="grid-template-columns:1fr auto"><input type="text" id="nm" maxlength="8" placeholder="이름 추가"><button class="btn sm" id="am" type="button">추가</button></div><button class="btn ghost sm" id="fam" type="button">👨‍👩‍👧 가족 명단 불러오기</button></div>
       <div class="card"><b>🧽 집안일</b>${S.chores.map((m, i) => `<div class="li"><span>${esc(m)}</span><button class="x" data-dc="${i}" type="button" aria-label="삭제">✕</button></div>`).join("")}<div class="g2" style="grid-template-columns:1fr auto"><input type="text" id="nc" maxlength="14" placeholder="집안일 추가"><button class="btn sm" id="ac" type="button">추가</button></div></div>
       <div class="card"><b>🔄 이번 주 당번 한 칸 밀기</b><p class="note">누구에게 어떤 일이 걸릴지 바꾸고 싶을 때 눌러요.</p><button class="btn ghost" id="shift" type="button">한 칸 밀기</button></div>`;
     $("am").onclick = () => { const v = $("nm").value.trim(); if (v) { S.members.push(v); save(); render(); } };
     $("ac").onclick = () => { const v = $("nc").value.trim(); if (v) { S.chores.push(v); save(); render(); } };
+    $("fam").onclick = () => { const f = window.FAMILY ? FAMILY.get() : []; if (!f.length) { if (confirm("가족 명단이 아직 없어요. 지금 만들러 갈까요?")) location.href = "family-members.html"; return; } S.members = f; save(); render(); };
     $("shift").onclick = () => { S.off++; save(); $("shift").textContent = "✅ 밀었어요"; };
     $("view").querySelectorAll("[data-dm]").forEach(b => b.onclick = () => { S.members.splice(+b.dataset.dm, 1); save(); render(); });
     $("view").querySelectorAll("[data-dc]").forEach(b => b.onclick = () => { S.chores.splice(+b.dataset.dc, 1); save(); render(); });
@@ -129,7 +130,7 @@ render();
 # ───────── 5. 혈압·혈당 기록장
 mk("health-log.html", "혈압·혈당 기록장", "🩺", 355, "health-log-v1",
  "혈압과 혈당 수치를 기록하고 추이를 봐요. 분류는 참고용이며 진단이 아니에요. 걱정되는 수치나 증상이 있으면 병원에 문의하세요. 기록은 이 폰에만 저장돼요.",
- '''  <div class="card"><div class="f"><label for="who">기록하는 사람</label><div style="display:grid;grid-template-columns:1fr auto;gap:8px"><select id="who"></select><button class="btn ghost sm" id="addw" type="button">＋ 사람 추가</button></div></div><div id="addbox" hidden style="display:none"></div></div>
+ '''  <div class="card"><div class="f"><label for="who">기록하는 사람</label><div style="display:grid;grid-template-columns:1fr auto;gap:8px"><select id="who"></select><button class="btn ghost sm" id="addw" type="button">＋ 사람 추가</button></div></div><button class="btn ghost sm" id="famw" type="button">👨‍👩‍👧 가족 명단 넣기</button></div>
   <div class="seg" id="tab" style="--n:2"><button type="button" data-v="bp" class="on">혈압</button><button type="button" data-v="bs">혈당</button></div>
   <div class="card" id="form"></div>
   <div class="card" id="sum"></div>
@@ -191,6 +192,7 @@ function render() {
 }
 $("tab").onclick = e => { const b = e.target.closest("[data-v]"); if (b) { tab = b.dataset.v; render(); } };
 $("who").onchange = () => { S.cur = $("who").value; save(); render(); };
+$("famw").onclick = () => { const f = window.FAMILY ? FAMILY.get() : []; if (!f.length) { if (confirm("가족 명단이 아직 없어요. 지금 만들러 갈까요?")) location.href = "family-members.html"; return; } f.forEach(n => { if (!S.people.includes(n)) S.people.push(n); }); save(); render(); };
 $("addw").onclick = () => { const n = (window.prompt("추가할 사람 이름") || "").trim().slice(0, 8); if (n && !S.people.includes(n)) { S.people.push(n); S.cur = n; save(); render(); } };
 render();
 ''')

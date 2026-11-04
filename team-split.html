@@ -41,6 +41,7 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
   <section class="card">
     <h2>참가자 이름</h2>
     <textarea id="names" placeholder="예)&#10;아빠&#10;엄마&#10;첫째&#10;둘째" aria-label="참가자 이름"></textarea>
+    <button class="btn ghost" id="fam" type="button">👨‍👩‍👧 가족 명단 불러오기</button>
     <p class="muted" id="count"></p>
     <div class="step"><h2>팀 수</h2><div><button id="minus" type="button" aria-label="줄이기">−</button><b id="k">2</b><button id="plus" type="button" aria-label="늘리기">＋</button></div></div>
     <button class="btn" id="go" type="button">팀 나누기</button>
@@ -48,6 +49,7 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
   <div id="out"></div>
   <p class="muted">이름을 한 줄에 하나씩(또는 쉼표로) 적고 팀 수를 정하면 공평하게 섞어서 나눠 줘요. 팀 인원은 최대 1명까지만 차이 나요. 다시 섞기를 누르면 새로 나눠요.</p>
 </main>
+<script src="family.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
@@ -73,6 +75,8 @@ function go() {
 }
 $("names").value = cfg.names; $("names").addEventListener("input", show);
 $("minus").onclick = () => { if (cfg.k > 2) { cfg.k--; show(); } }; $("plus").onclick = () => { if (cfg.k < 6) { cfg.k++; show(); } }; $("go").onclick = go; show();
+const FAMLIST = () => (window.FAMILY ? FAMILY.get() : []); const needFam = () => { if (confirm("가족 명단이 아직 없어요. 지금 만들러 갈까요?")) location.href = "family-members.html"; };
+$("fam").onclick = () => { const f = FAMLIST(); if (!f.length) return needFam(); $("names").value = f.join("\n"); $("names").dispatchEvent(new Event("input")); };
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="med-notify.js" defer></script>

@@ -38,11 +38,12 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 <body>
 <main>
   <h1>순서·벌칙 정하기 📋</h1>
-  <div class="card"><div id="names"></div><div class="row"><button class="btn ghost" id="add" type="button">+ 이름 추가</button><button class="btn ghost" id="clear" type="button">모두 지우기</button></div></div>
+  <div class="card"><div id="names"></div><div class="row"><button class="btn ghost" id="add" type="button">+ 이름 추가</button><button class="btn ghost" id="clear" type="button">모두 지우기</button></div><button class="btn ghost" id="fam" type="button">👨‍👩‍👧 가족 명단 불러오기</button></div>
   <div class="row"><button class="btn" id="order" type="button">🔀 순서 정하기</button><button class="btn" id="pick" type="button" style="background:var(--bad)">🎯 벌칙자 뽑기</button></div>
   <div class="card center" id="out" hidden></div>
   <p class="muted">이름을 적고 <b>'순서 정하기'</b>를 누르면 모두의 순서가 무작위로 정해져요. <b>'벌칙자 뽑기'</b>는 한 명을 랜덤으로 골라 줘요. 누가 먼저 할지, 누가 설거지할지 공평하게 정해 보세요!</p>
 </main>
+<script src="family.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
@@ -61,6 +62,8 @@ $("add").onclick = () => { if (names.length < 12) { names.push(""); render(); } 
 $("order").onclick = () => { const v = valid(); if (v.length < 2) return show("이름을 2개 이상 적어 주세요"); show("<b>🔀 순서</b>" + shuf(v).map((n, k) => `<div class="ord"><b>${k + 1}</b> ${esc(n)}</div>`).join("")); };
 $("pick").onclick = async () => { const v = valid(); if (v.length < 2) return show("이름을 2개 이상 적어 주세요"); for (let k = 0; k < 14; k++) { show(`<p class="big">🎯 ${esc(v[ri(0, v.length - 1)])}</p>`); await new Promise(r => setTimeout(r, 70 + k * 18)); } const w = v[ri(0, v.length - 1)]; show(`<b>벌칙자는…</b><p class="big">😱 ${esc(w)}</p>`); if (navigator.vibrate) navigator.vibrate(200); };
 function show(h) { $("out").hidden = false; $("out").innerHTML = h; } render();
+const FAMLIST = () => (window.FAMILY ? FAMILY.get() : []); const needFam = () => { if (confirm("가족 명단이 아직 없어요. 지금 만들러 갈까요?")) location.href = "family-members.html"; };
+$("fam").onclick = () => { const f = FAMLIST(); if (!f.length) return needFam(); names = f.slice(); save(); render(); };
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="med-notify.js" defer></script>

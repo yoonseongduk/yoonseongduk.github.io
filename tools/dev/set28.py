@@ -1,7 +1,8 @@
 import sys
 sys.path.insert(0, ".")
 from mkpage import make
-RX = open("/tmp/rx.js", encoding="utf-8").read()
+_q = open("../../hanja-quiz.html", encoding="utf-8").read()      # 부수 이름 표(RX)와 rname/rinfo 함수를 한자 급수 퀴즈 페이지에서 가져와요
+RX = _q[_q.index('const RX = "'):_q.index("async function openDet")].replace("D.forEach", "ALL.forEach")
 COM = r"""
 const pad = n => String(n).padStart(2, "0");
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;

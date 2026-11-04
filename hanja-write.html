@@ -76,7 +76,31 @@ function chips() { $("cats").innerHTML = ["6급", "5급", "4급", "3급", "2급"
 function start() { loadStroke(cat); pool = ALL.filter(d => d[2] === cat); qs = shuf(pool).slice(0, 10); i = 0; score = 0; $("res").hidden = true; show(); }
 function outlineCanvas(ch) { if (OC[ch]) return OC[ch]; const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"), k = S / 256; x.setTransform(k, 0, 0, -k, 0, 225 * k); x.fillStyle = "#000"; SD[ch].s.forEach(p => x.fill(new Path2D(p))); return (OC[ch] = c); }
 const nums = ch => FIXL[ch] || FIXS[ch] || (SD[ch] ? SD[ch].n.map(([a, b]) => [a * S / 256, (225 - b) * S / 256]) : null);
-function drawNums(c, pts, col) { c.save(); c.font = "bold 12px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; pts.forEach((p, k) => { c.beginPath(); c.arc(p[0], p[1], 9, 0, 7); c.fillStyle = col; c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1.5; c.stroke(); c.fillStyle = "#fff"; c.fillText(String(k + 1), p[0], p[1] + .5); }); c.restore(); }
+const BR = 9, BD = 21;     // 번호표 반지름, 번호표 사이 최소 간격
+function spread(pts) {      // 겹치는 번호표는 한 줄(가로)로 나란히 펼쳐요
+  let P = pts.map(p => [p[0], p[1]]);
+  for (let it = 0; it < 8; it++) {
+    const n = P.length, par = Array.from({ length: n }, (_, k) => k), fd = x => par[x] === x ? x : (par[x] = fd(par[x]));
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (Math.hypot(P[a][0] - P[b][0], P[a][1] - P[b][1]) < BD - 1) par[fd(a)] = fd(b);
+    const gr = {}; for (let k = 0; k < n; k++) (gr[fd(k)] = gr[fd(k)] || []).push(k);
+    let moved = false;
+    Object.values(gr).forEach(g => { if (g.length < 2) return; g.sort((a, b) => a - b); const cx = g.reduce((t, k) => t + P[k][0], 0) / g.length, cy = g.reduce((t, k) => t + P[k][1], 0) / g.length, w = (g.length - 1) * BD, x0 = clamp(cx - w / 2, BR + 2, S - BR - 2 - w); g.forEach((k, m) => { P[k] = [x0 + m * BD, clamp(cy, BR + 2, S - BR - 2)]; }); moved = true; });
+    if (!moved) break;
+  }
+  for (let it = 0; it < 400; it++) {     // 그래도 겹치면 서로 밀어내요
+    let any = false;
+    for (let a = 0; a < P.length; a++) for (let b = a + 1; b < P.length; b++) { let dx = P[b][0] - P[a][0], dy = P[b][1] - P[a][1], d = Math.hypot(dx, dy); if (d < BD - .5) { if (d < .01) { dx = 1; dy = 0; d = 1; } const m = (BD - d) / 2 + .1, ux = dx / d, uy = dy / d; P[a][0] -= ux * m; P[a][1] -= uy * m; P[b][0] += ux * m; P[b][1] += uy * m; any = true; } }
+    P.forEach(p => { p[0] = clamp(p[0], BR + 2, S - BR - 2); p[1] = clamp(p[1], BR + 2, S - BR - 2); });
+    if (!any) break;
+  }
+  return P;
+}
+function drawNums(c, pts, col) {
+  const P = spread(pts); c.save(); c.font = "bold 12px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
+  pts.forEach((p, k) => { if (Math.hypot(p[0] - P[k][0], p[1] - P[k][1]) > 3) { c.strokeStyle = col; c.globalAlpha = .55; c.lineWidth = 1.2; c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(P[k][0], P[k][1]); c.stroke(); c.globalAlpha = 1; c.fillStyle = col; c.beginPath(); c.arc(p[0], p[1], 2.5, 0, 7); c.fill(); } });
+  P.forEach((p, k) => { c.beginPath(); c.arc(p[0], p[1], BR, 0, 7); c.fillStyle = col; c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1.5; c.stroke(); c.fillStyle = "#fff"; c.fillText(String(k + 1), p[0], p[1] + .5); });
+  c.restore();
+}
 function loadStroke(g) { const f = g.replace("급", ""); if (stl[f]) return; stl[f] = 1; fetch("data/stroke-" + f + ".json").then(r => r.json()).then(d => { Object.assign(SD, d); if (qs.length) { if (!editing) $("ask").textContent = askTxt(); render(done); } }).catch(() => { stl[f] = 0; }); }
 fetch("data/stroke-fix.json").then(r => r.ok ? r.json() : {}).then(d => { FIXS = d || {}; if (qs.length && !editing) render(done); }).catch(() => {});
 function askTxt() { const d = qs[i]; let t = mode === "trace" ? "연하게 보이는 한자를 따라 써 보세요" : "이 뜻과 음의 한자를 써 보세요"; if (d && mode === "trace" && numsOn && !nums(d[0]) && !FIXL[d[0]]) t += " (획순 번호가 없는 글자예요 · ✏️로 직접 넣을 수 있어요)"; return t; }

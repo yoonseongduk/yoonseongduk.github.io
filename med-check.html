@@ -126,12 +126,14 @@ function alarmUi() {
   $("alarm").innerHTML = `<label class="opt" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="aon"${S.al.on ? " checked" : ""}> 앱이 열려 있을 때 시간이 되면 알려 주기</label>
     <div class="g2">${SL.map(([k, n]) => `<div class="f"><label for="at${k}">${n}</label><input type="time" id="at${k}" value="${S.al.t[k]}"></div>`).join("")}</div>
     <div class="f"><label>알림 권한: ${pt}</label><div class="g2"><button class="btn ghost sm" id="ap" type="button">🔔 알림 허용</button><button class="btn ghost sm" id="atest" type="button">🔊 테스트</button></div></div>
+    ${/Android/i.test(navigator.userAgent) ? `<div class="f"><label>⏰ 폰 기본 시계 앱 알람으로 만들기 (알람 화면이 열려요)</label><div class="g2">${SL.map(([k, n]) => `<button class="btn ghost sm" data-clk="${k}" type="button">${n} ${S.al.t[k]}</button>`).join("")}</div><div class="note">누르면 시계 앱의 알람 만들기 화면이 시간·이름이 채워진 채로 열려요. <b>반복 요일을 '매일'로 켜고 저장</b>하면 끝! 기종·브라우저에 따라 안 열릴 수 있어요.</div></div>` : ""}
     <button class="btn sm" id="aics" type="button">📅 폰 달력에 매일 알람 등록하기</button>
     <div class="note">⚠️ <b>앱을 완전히 닫으면</b> 위의 알림은 울리지 못해요. 앱 화면이 켜져 있거나 백그라운드에 있을 때만 동작하고, 폰이 절전 상태면 늦거나 안 올 수 있어요.<br>🔒 <b>확실한 알람</b>이 필요하면 아래 "달력에 등록"을 쓰세요. 받은 파일(.ics)을 열어 삼성 달력 등에 추가하면 앱을 켜지 않아도 매일 정해진 시간에 폰이 알려 줘요. (약이나 시간을 바꾸면 다시 등록하고 예전 일정은 달력에서 지우세요.) 시계 앱의 알람을 직접 맞춰도 좋아요.</div>`;
   $("aon").onchange = () => { S.al.on = $("aon").checked; save(); if (S.al.on && perm() === "default") $("ap").click(); };
   SL.forEach(([k]) => { $("at" + k).onchange = () => { S.al.t[k] = $("at" + k).value || S.al.t[k]; save(); banners(); }; });
   $("ap").onclick = async () => { try { await Notification.requestPermission(); } catch (e) {} alarmUi(); };
   $("atest").onclick = () => { notify("💊 알림 테스트", "이 알림이 보이면 잘 동작해요"); beep(); };
+  $("alarm").querySelectorAll("[data-clk]").forEach(b => b.onclick = () => { const k = b.dataset.clk, nm = SL.find(x => x[0] === k)[1], [h, m] = S.al.t[k].split(":").map(Number), names = S.meds.filter(x => x.t.includes(k)).map(x => x.n).join(", "); location.href = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.alarm.HOUR=${h};i.android.intent.extra.alarm.MINUTES=${m};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent("💊 " + nm + " 약" + (names ? ": " + names : ""))};b.android.intent.extra.alarm.VIBRATE=true;end`; });
   $("aics").onclick = () => { if (!ics()) $("aics").textContent = "먼저 약을 등록해 주세요"; };
 }
 render(); alarmUi(); banners(); tick();

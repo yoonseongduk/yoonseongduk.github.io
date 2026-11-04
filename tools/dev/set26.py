@@ -208,7 +208,7 @@ mk("med-check.html", "약 복용 체크표", "💊", 200, "med-check-v1",
 const SL = [["m", "아침"], ["n", "점심"], ["e", "저녁"], ["b", "자기 전"]];
 let S = Object.assign({ meds: [], log: {}, al: { on: false, t: { m: "08:00", n: "12:30", e: "18:30", b: "22:00" } }, rung: {} }, ld(KEY) || {});
 S.al = Object.assign({ on: false }, S.al); S.al.t = Object.assign({ m: "08:00", n: "12:30", e: "18:30", b: "22:00" }, S.al.t);
-let day = todayS();
+let day = todayS(), editId = null;
 const save = () => sv(KEY, S);
 function due(d) { const a = []; S.meds.forEach(m => { if ((m.since || "0000") > d) return; SL.forEach(([k]) => { if (m.t.includes(k)) a.push(m.id + "|" + k); }); }); return a; }
 function render() {
@@ -217,11 +217,14 @@ function render() {
   $("today").innerHTML = S.meds.length ? SL.map(([k, nm]) => { const ms = S.meds.filter(m => m.t.includes(k) && (m.since || "0000") <= day); if (!ms.length) return ""; return `<div><div class="lb">${nm}</div>${ms.map(m => { const key = m.id + "|" + k, on = lg[key]; return `<div class="li"><span><b>${esc(m.n)}</b>${m.memo ? `<br><span class="note">${esc(m.memo)}</span>` : ""}</span><button type="button" class="chip${on ? " on" : ""}" data-k="${key}">${on ? "✅ 먹었어요" : "아직"}</button></div>`; }).join("")}</div>`; }).join("") + `<div class="note">${items.filter(k => lg[k]).length}/${items.length} 복용</div>` : '<p class="muted">아래 "약 등록·관리"에서 약을 먼저 등록해 주세요.</p>';
   const days = Array.from({ length: 7 }, (_, i) => addDays(todayS(), i - 6));
   $("wk").innerHTML = `<b>📅 최근 7일</b><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">${days.map(d => { const it = due(d), done = it.filter(k => (S.log[d] || {})[k]).length, p = it.length ? done / it.length : null; return `<div><div class="note">${wdOf(d)}</div><div style="font-size:1.3rem">${p === null ? "·" : p === 1 ? "🟢" : p > 0 ? "🟡" : (d === todayS() ? "⚪" : "🔴")}</div><div class="note">${it.length ? done + "/" + it.length : ""}</div></div>`; }).join("")}</div><div class="note">🟢 모두 복용 · 🟡 일부 · 🔴 안 먹음</div>`;
-  $("mgr").innerHTML = S.meds.map(m => `<div class="li"><span><b>${esc(m.n)}</b> <span class="note">${SL.filter(([k]) => m.t.includes(k)).map(x => x[1]).join("·")}</span></span><button class="x" data-dm="${m.id}" type="button" aria-label="삭제">✕</button></div>`).join("")
-    + `<div class="f"><label for="mn">약 이름</label><input type="text" id="mn" maxlength="20" placeholder="예: 혈압약"></div><div class="f"><label>먹는 시간</label><div class="chips" id="mt">${SL.map(([k, n]) => `<button type="button" class="chip" data-t="${k}">${n}</button>`).join("")}</div></div><div class="f"><label for="mm">메모(선택)</label><input type="text" id="mm" maxlength="30" placeholder="예: 식후 30분"></div><button class="btn sm" id="am" type="button">등록하기</button>`;
+  const em = S.meds.find(m => m.id === editId) || null;
+  $("mgr").innerHTML = S.meds.map(m => `<div class="li"><span><b>${esc(m.n)}</b> <span class="note">${SL.filter(([k]) => m.t.includes(k)).map(x => x[1]).join("·")}${m.memo ? " · " + esc(m.memo) : ""}</span></span><span style="display:flex;gap:2px"><button class="x" data-em="${m.id}" type="button" aria-label="수정">✏️</button><button class="x" data-dm="${m.id}" type="button" aria-label="삭제">✕</button></span></div>`).join("")
+    + `<div class="lb">${em ? "✏️ 약 수정하기" : "➕ 새 약 등록"}</div><div class="f"><label for="mn">약 이름</label><input type="text" id="mn" maxlength="20" placeholder="예: 혈압약" value="${em ? esc(em.n) : ""}"></div><div class="f"><label>먹는 시간</label><div class="chips" id="mt">${SL.map(([k, n]) => `<button type="button" class="chip${em && em.t.includes(k) ? " on" : ""}" data-t="${k}">${n}</button>`).join("")}</div></div><div class="f"><label for="mm">메모(선택)</label><input type="text" id="mm" maxlength="30" placeholder="예: 식후 30분" value="${em ? esc(em.memo || "") : ""}"></div><div class="g2"><button class="btn sm" id="am" type="button">${em ? "수정 저장" : "등록하기"}</button>${em ? '<button class="btn ghost sm" id="ac" type="button">취소</button>' : ""}</div>`;
   $("mt").onclick = e => { const b = e.target.closest("[data-t]"); if (b) b.classList.toggle("on"); };
-  $("am").onclick = () => { const n = $("mn").value.trim(), t = [...document.querySelectorAll("#mt .on")].map(b => b.dataset.t); if (!n || !t.length) { (n ? $("mt") : $("mn")).focus && (n ? 0 : $("mn").focus()); return; } S.meds.push({ id: uid(), n, t, memo: $("mm").value.trim(), since: todayS() }); save(); render(); };
-  $("mgr").querySelectorAll("[data-dm]").forEach(b => b.onclick = () => { if (confirm("이 약을 삭제할까요?")) { S.meds = S.meds.filter(m => m.id !== b.dataset.dm); save(); render(); } });
+  $("am").onclick = () => { const n = $("mn").value.trim(), t = [...document.querySelectorAll("#mt .on")].map(b => b.dataset.t); if (!n || !t.length) { (n ? $("mt") : $("mn")).focus && (n ? 0 : $("mn").focus()); return; } if (em) { em.n = n; em.t = t; em.memo = $("mm").value.trim(); editId = null; } else S.meds.push({ id: uid(), n, t, memo: $("mm").value.trim(), since: todayS() }); save(); render(); alarmUi(); banners(); };
+  if ($("ac")) $("ac").onclick = () => { editId = null; render(); };
+  $("mgr").querySelectorAll("[data-em]").forEach(b => b.onclick = () => { editId = b.dataset.em; render(); $("mn").focus(); });
+  $("mgr").querySelectorAll("[data-dm]").forEach(b => b.onclick = () => { if (confirm("이 약을 삭제할까요?")) { S.meds = S.meds.filter(m => m.id !== b.dataset.dm); if (editId === b.dataset.dm) editId = null; save(); render(); banners(); } });
   $("today").querySelectorAll("[data-k]").forEach(b => b.onclick = () => { const l = S.log[day] || (S.log[day] = {}); if (l[b.dataset.k]) delete l[b.dataset.k]; else l[b.dataset.k] = 1; save(); render(); });
 }
 $("prev").onclick = () => { day = addDays(day, -1); render(); };
@@ -249,13 +252,15 @@ function tick() {
   if (S.al.on) SL.forEach(([k, nm]) => { const key = d + k; if (S.al.t[k] === now && !S.rung[key]) { const ps = pending(k, d); S.rung[key] = 1; save(); if (ps.length) { notify("💊 " + nm + " 약 먹을 시간이에요", ps.map(m => m.n).join(", ")); beep(); banners(); } } });
 }
 function ics() {
-  const dt = new Date(), now = pad(dt.getHours()) + ":" + pad(dt.getMinutes()), stamp = ymd(dt).replace(/-/g, "") + "T" + pad(dt.getHours()) + pad(dt.getMinutes()) + "00";
+  const dt = new Date(), stamp = ymd(dt).replace(/-/g, "") + "T" + pad(dt.getHours()) + pad(dt.getMinutes()) + pad(dt.getSeconds()), seq = Math.floor(Date.now() / 1000);
+  const first = ($("astart") && $("astart").value) || todayS();
   const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//family-games//med//KO", "CALSCALE:GREGORIAN"];
-  SL.forEach(([k, nm]) => { const ms = S.meds.filter(m => m.t.includes(k)); if (!ms.length) return; const t = S.al.t[k], start = (t <= now ? addDays(todayS(), 1) : todayS()).replace(/-/g, "") + "T" + t.replace(":", "") + "00", names = ms.map(m => m.n).join(", ");
-    L.push("BEGIN:VEVENT", "UID:med-" + k + "-" + (ms.map(m => m.id).join("")) + "@yoonseongduk.github.io", "DTSTAMP:" + stamp, "DTSTART:" + start, "DURATION:PT10M", "RRULE:FREQ=DAILY", "SUMMARY:💊 " + nm + " 약: " + names, "DESCRIPTION:약 먹을 시간이에요 - " + names, "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:약 먹을 시간이에요", "TRIGGER:PT0M", "END:VALARM", "END:VEVENT"); });
+  for (let i = 0; i < 7; i++) { const d = addDays(first, i), ds = d.replace(/-/g, "");
+    SL.forEach(([k, nm]) => { const ms = S.meds.filter(m => m.t.includes(k) && (m.since || "0000") <= d); if (!ms.length) return; const names = ms.map(m => m.n).join(", ");
+      L.push("BEGIN:VEVENT", "UID:med-" + ds + "-" + k + "@yoonseongduk.github.io", "SEQUENCE:" + seq, "DTSTAMP:" + stamp, "DTSTART:" + ds + "T" + S.al.t[k].replace(":", "") + "00", "DURATION:PT10M", "SUMMARY:💊 " + nm + " 약: " + names, "DESCRIPTION:약 먹을 시간이에요 - " + names, "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:약 먹을 시간이에요", "TRIGGER:PT0M", "END:VALARM", "END:VEVENT"); }); }
   L.push("END:VCALENDAR");
   if (L.length <= 5) return false;
-  const blob = new Blob([L.join("\r\n")], { type: "text/calendar;charset=utf-8" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "med-alarm.ics"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); return true;
+  const blob = new Blob([L.join("\r\n")], { type: "text/calendar;charset=utf-8" }), a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "med-alarm-" + first + ".ics"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); return true;
 }
 function alarmUi() {
   const p = perm(), pt = p === "granted" ? "✅ 허용됨" : p === "denied" ? "⛔ 차단됨 (브라우저 설정에서 허용 필요)" : p === "unsupported" ? "이 브라우저는 알림을 지원하지 않아요" : "아직 허용 안 함";
@@ -263,8 +268,9 @@ function alarmUi() {
     <div class="g2">${SL.map(([k, n]) => `<div class="f"><label for="at${k}">${n}</label><input type="time" id="at${k}" value="${S.al.t[k]}"></div>`).join("")}</div>
     <div class="f"><label>알림 권한: ${pt}</label><div class="g2"><button class="btn ghost sm" id="ap" type="button">🔔 알림 허용</button><button class="btn ghost sm" id="atest" type="button">🔊 테스트</button></div></div>
     ${/Android/i.test(navigator.userAgent) ? `<div class="f"><label>⏰ 폰 기본 시계 앱 알람으로 만들기 (알람 화면이 열려요)</label><div class="g2">${SL.map(([k, n]) => `<button class="btn ghost sm" data-clk="${k}" type="button">${n} ${S.al.t[k]}</button>`).join("")}</div><div class="note">누르면 시계 앱의 알람 만들기 화면이 시간·이름이 채워진 채로 열려요. <b>반복 요일을 '매일'로 켜고 저장</b>하면 끝! 기종·브라우저에 따라 안 열릴 수 있어요.</div></div>` : ""}
-    <button class="btn sm" id="aics" type="button">📅 폰 달력에 매일 알람 등록하기</button>
-    <div class="note">⚠️ <b>앱을 완전히 닫으면</b> 위의 알림은 울리지 못해요. 앱 화면이 켜져 있거나 백그라운드에 있을 때만 동작하고, 폰이 절전 상태면 늦거나 안 올 수 있어요.<br>🔒 <b>확실한 알람</b>이 필요하면 아래 "달력에 등록"을 쓰세요. 받은 파일(.ics)을 열어 삼성 달력 등에 추가하면 앱을 켜지 않아도 매일 정해진 시간에 폰이 알려 줘요. (약이나 시간을 바꾸면 다시 등록하고 예전 일정은 달력에서 지우세요.) 시계 앱의 알람을 직접 맞춰도 좋아요.</div>`;
+    <div class="f"><label for="astart">📅 달력 알람 시작일 (이 날부터 7일치)</label><input type="date" id="astart" value="${todayS()}"></div>
+    <button class="btn sm" id="aics" type="button">📅 폰 달력에 1주일치 알람 등록하기</button>
+    <div class="note">⚠️ <b>앱을 완전히 닫으면</b> 위의 알림은 울리지 못해요. 앱 화면이 켜져 있거나 백그라운드에 있을 때만 동작하고, 폰이 절전 상태면 늦거나 안 올 수 있어요.<br>🔒 <b>확실한 알람</b>이 필요하면 아래 "달력에 등록"을 쓰세요. 받은 파일(.ics)을 열어 삼성 달력 등에 추가하면 앱을 켜지 않아도 정해진 시간에 폰이 알려 줘요. <b>하루하루가 따로 등록</b>돼서 달력에서 한 날만 수정·삭제할 수 있고, 일정 이름이 "💊"로 시작해 검색하기 쉬워요. 같은 날짜 파일을 다시 열면 겹쳐 쌓이지 않고 갱신돼요(기기에 따라 중복되면 예전 일정을 지워 주세요).</div>`;
   $("aon").onchange = () => { S.al.on = $("aon").checked; save(); if (S.al.on && perm() === "default") $("ap").click(); };
   SL.forEach(([k]) => { $("at" + k).onchange = () => { S.al.t[k] = $("at" + k).value || S.al.t[k]; save(); banners(); }; });
   $("ap").onclick = async () => { try { await Notification.requestPermission(); } catch (e) {} alarmUi(); };

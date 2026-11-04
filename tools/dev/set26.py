@@ -202,7 +202,7 @@ mk("med-check.html", "약 복용 체크표", "💊", 200, "med-check-v1",
   <div id="banner"></div>
   <div class="card" id="today"></div>
   <div class="card" id="wk"></div>
-  <details class="card" id="alm"><summary><b>⏰ 복용 알림</b></summary><div id="alarm" style="display:grid;gap:10px;margin-top:10px"></div></details>
+  <details class="card" id="alm" open><summary><b>⏰ 복용 알림 · 달력 등록</b></summary><div id="alarm" style="display:grid;gap:10px;margin-top:10px"></div></details>
   <details class="card"><summary><b>➕ 약 등록·관리</b></summary><div id="mgr" style="display:grid;gap:10px;margin-top:10px"></div></details>''',
  r'''
 const SL = [["m", "아침"], ["n", "점심"], ["e", "저녁"], ["b", "자기 전"]];
@@ -282,15 +282,23 @@ function staleBanner() {
 }
 function alarmUi() {
   const p = perm(), pt = p === "granted" ? "✅ 허용됨" : p === "denied" ? "⛔ 차단됨 (브라우저 설정에서 허용 필요)" : p === "unsupported" ? "이 브라우저는 알림을 지원하지 않아요" : "아직 허용 안 함";
-  $("alarm").innerHTML = `<label class="opt" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="aon"${S.al.on ? " checked" : ""}> 앱이 열려 있을 때 시간이 되면 알려 주기</label>
+  $("alarm").innerHTML = `<div class="lb" style="color:var(--fg)">① 앱 알림 <span class="note">(앱이 열려 있을 때만 울려요)</span></div>
+    <label class="opt" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="aon"${S.al.on ? " checked" : ""}> 시간이 되면 알림·진동·소리로 알려 주기</label>
     <div class="f"><label for="arep">안 먹었으면 다시 알려 주기 (체크할 때까지, 최대 3시간)</label><select id="arep">${[[0, "다시 알리지 않기"], [5, "5분마다"], [10, "10분마다"], [15, "15분마다"], [30, "30분마다"]].map(([v, t]) => `<option value="${v}"${+S.al.rep === v ? " selected" : ""}>${t}</option>`).join("")}</select></div>
-    <div class="g2">${SL.map(([k, n]) => `<div class="f"><label for="at${k}">${n}</label><input type="time" id="at${k}" value="${S.al.t[k]}"></div>`).join("")}</div>
+    <div class="g2">${SL.map(([k, n]) => `<div class="f"><label for="at${k}">${n} 시간</label><input type="time" id="at${k}" value="${S.al.t[k]}"></div>`).join("")}</div>
     <div class="f"><label>알림 권한: ${pt}</label><div class="g2"><button class="btn ghost sm" id="ap" type="button">🔔 알림 허용</button><button class="btn ghost sm" id="atest" type="button">🔊 테스트</button></div></div>
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <div class="lb" style="color:var(--fg)">② 폰 시계 앱 알람 <span class="note">(앱이 꺼져 있어도 울려요)</span></div>
     ${/Android/i.test(navigator.userAgent) ? `<div class="f"><label>⏰ 폰 기본 시계 앱 알람으로 만들기 (알람 화면이 열려요)</label><div class="g2">${SL.map(([k, n]) => `<button class="btn ghost sm" data-clk="${k}" type="button">${n} ${S.al.t[k]}</button>`).join("")}</div><div class="note">누르면 시계 앱의 알람 만들기 화면이 시간·이름이 채워진 채로 열려요. <b>반복 요일을 '매일'로 켜고 저장</b>하면 끝! 기종·브라우저에 따라 안 열릴 수 있어요.</div></div>` : ""}
-    <label class="opt" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="acal2"${S.al.cal2 ? " checked" : ""}> 달력에 '다시 알림' 일정도 2번 더 넣기 (위 간격으로)</label>
-    <div class="f"><label for="astart">📅 달력 알람 시작일 (이 날부터 7일치)</label><input type="date" id="astart" value="${todayS()}"></div>
-    <button class="btn sm" id="aics" type="button">📅 지금 상태로 달력 일정 만들기/업데이트 (1주일치)</button>
-    <div class="note">⚠️ <b>앱을 완전히 닫으면</b> 위의 알림(다시 알림 포함)은 울리지 못해요. 달력·시계 앱 알람은 앱이 "먹었는지" 모르기 때문에, 먹어도 멈추지 않고 정해진 횟수만큼만 울려요. 앱 화면이 켜져 있거나 백그라운드에 있을 때만 동작하고, 폰이 절전 상태면 늦거나 안 올 수 있어요.<br>🔒 <b>확실한 알람</b>이 필요하면 아래 "달력에 등록"을 쓰세요. 받은 파일(.ics)을 열어 삼성 달력 등에 추가하면 앱을 켜지 않아도 정해진 시간에 폰이 알려 줘요. <b>하루하루가 따로 등록</b>돼서 달력에서 한 날만 수정·삭제할 수 있고, 일정 이름이 "💊"로 시작해 검색하기 쉬워요. 같은 날짜 파일을 다시 열면 겹쳐 쌓이지 않고 갱신돼요. 이미 먹은 오늘 약과 없앤 약의 일정은 "취소" 표시로 담아 보내요. (달력 앱마다 취소를 반영하는 정도가 달라서, 안 지워지면 직접 지워 주세요.)</div>`;
+    ${/Android/i.test(navigator.userAgent) ? "" : `<div class="note">안드로이드 폰에서만 보여요.</div>`}
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <div class="lb" style="color:var(--fg)">③ 📅 폰 달력에 등록 <span class="note">(앱이 꺼져 있어도 울려요)</span></div>
+    <div class="note">위 ①의 시간대로 <b>일주일치 일정 파일</b>을 만들어요. 받은 파일을 열면 삼성 달력 등에 일정이 추가되고, 일정마다 하루하루 따로라 한 날만 고치거나 지울 수 있어요. 일정 이름은 "💊"로 시작해요.</div>
+    <label class="opt" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="acal2"${S.al.cal2 ? " checked" : ""}> '다시 알림' 일정도 2번 더 넣기 (위 간격으로)</label>
+    <div class="f"><label for="astart">시작일 (이 날부터 7일치)</label><input type="date" id="astart" value="${todayS()}"></div>
+    <button class="btn" id="aics" type="button">📅 달력에 등록하기 (일정 파일 받기)</button>
+    <div class="note">버튼을 누르면 <b>med-alarm-날짜.ics</b> 파일이 받아져요. 알림창이나 "내 파일/다운로드"에서 그 파일을 눌러 <b>삼성 캘린더</b>(또는 구글 캘린더)로 열면 일정이 들어가요. 약이나 시간을 바꾼 뒤에는 이 버튼을 다시 눌러 새 파일을 여세요. 이미 먹은 오늘 약과 없앤 약은 "취소" 표시로 담겨요 (달력 앱에 따라 안 지워질 수 있어요).</div>
+    <div class="note">⚠️ 달력·시계 앱 알람은 앱이 "먹었는지" 모르기 때문에 먹어도 멈추지 않고 정해진 횟수만 울려요. ①의 앱 알림은 앱을 완전히 닫으면 울리지 못해요.</div>`;
   $("aon").onchange = () => { S.al.on = $("aon").checked; save(); if (S.al.on && perm() === "default") $("ap").click(); };
   $("arep").onchange = () => { S.al.rep = +$("arep").value; save(); };
   $("acal2").onchange = () => { S.al.cal2 = $("acal2").checked; save(); };

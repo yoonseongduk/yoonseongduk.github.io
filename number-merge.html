@@ -118,5 +118,6 @@ const s = ld(KEY);
 if (s && Array.isArray(s.b) && s.b.length === N && s.b.every(r => Array.isArray(r) && r.length === N)) { b = s.b; score = s.score || 0; won = !!s.won; keep = !!s.keep; dead = !!s.dead; render(); } else newGame();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

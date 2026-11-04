@@ -58,5 +58,6 @@ $("board").addEventListener("input", e => { const k = e.target.dataset.n; if (k 
 $("add").onclick = () => { if (st.p.length < 10) { st.p.push({ n: "참가자" + (st.p.length + 1), s: 0 }); save(); render(); } }; $("reset").onclick = () => { st.p.forEach(x => { x.s = 0; }); st.log = []; save(); render(); }; render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

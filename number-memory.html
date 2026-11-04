@@ -79,5 +79,6 @@ document.addEventListener("keydown", e => { if (/^[0-9]$/.test(e.key)) press(e.k
 $("start").onclick = start; render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

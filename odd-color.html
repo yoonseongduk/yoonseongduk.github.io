@@ -74,5 +74,6 @@ $("grid").addEventListener("pointerdown", e => { const c = e.target.closest("[da
 $("start").onclick = start; $("best").textContent = best; nextRound(); $("grid").style.opacity = .55;       // 시작 전에는 흐리게 보여 준다
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

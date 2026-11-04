@@ -65,5 +65,6 @@ $("a").onclick = () => pick("a"); $("b").onclick = () => pick("b");
 $("next").onclick = () => { pos++; if (pos >= order.length) { order = shuf(order); pos = 0; } show(); }; show();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

@@ -68,5 +68,6 @@ $("fam").addEventListener("input", e => { const k = e.target.dataset.n; if (k !=
 $("fam").addEventListener("click", e => { const d = e.target.closest("[data-d]"); if (d) { fam.splice(+d.dataset.d, 1); sv(KEY, fam); render(); } }); render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

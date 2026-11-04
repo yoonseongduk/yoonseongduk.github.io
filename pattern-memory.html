@@ -74,5 +74,6 @@ $("grid").addEventListener("pointerdown", e => { const c = e.target.closest("[da
 $("start").onclick = start; build(); setStatus("준비");
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

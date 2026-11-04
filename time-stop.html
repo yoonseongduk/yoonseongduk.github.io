@@ -69,5 +69,6 @@ function go() {
 $("go").addEventListener("pointerdown", e => { e.preventDefault(); go(); }); newSet();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

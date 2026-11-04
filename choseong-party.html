@@ -64,5 +64,6 @@ $("addp").onclick = () => { if (names.length < 8) { names.push((names.length + 1
 $("new").onclick = newCho; $("timer").onclick = startTimer; newCho(); render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

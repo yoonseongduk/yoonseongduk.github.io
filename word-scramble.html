@@ -69,5 +69,6 @@ $("hint").onclick = () => { if (locked || hinted) return; hinted = true; const w
 $("next").onclick = () => { if (i === 9) finish(); else { i++; show(); } }; newRound();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

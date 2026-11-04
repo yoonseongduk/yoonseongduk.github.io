@@ -64,5 +64,6 @@ $("plus").onclick = () => { st.log[todayKey()] = n() + 1; save(); render(); if (
 $("gm").onclick = () => { st.goal = Math.max(1, st.goal - 1); save(); render(); }; $("gp").onclick = () => { st.goal = Math.min(20, st.goal + 1); save(); render(); }; render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

@@ -63,5 +63,6 @@ function add(sign) { const a = parseInt($("a").value); if (!(a > 0)) return; row
 $("in").onclick = () => add(1); $("out").onclick = () => add(-1); $("list").addEventListener("click", e => { const d = e.target.closest("[data-d]"); if (d) { rows.splice(+d.dataset.d, 1); sv(KEY, rows); render(); } }); render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

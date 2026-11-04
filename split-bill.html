@@ -78,5 +78,6 @@ $("minus").onclick = () => { if (cfg.n > 2) { cfg.n--; render(); } }; $("plus").
 $("tip").addEventListener("click", e => { const b = e.target.closest("[data-t]"); if (b) { cfg.tip = +b.dataset.t; render(); } }); $("round").addEventListener("click", e => { const b = e.target.closest("[data-r]"); if (b) { cfg.round = +b.dataset.r; render(); } }); render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

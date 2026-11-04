@@ -58,5 +58,6 @@ function calc() { const h = parseFloat($("h").value), w = parseFloat($("w").valu
 $("go").onclick = calc; if (last) calc();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

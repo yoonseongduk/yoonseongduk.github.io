@@ -93,5 +93,6 @@ $("sound").onclick = () => { sound = !sound; sv(SKEY, sound); ui(); };
 ui("시작 버튼을 눌러 주세요");
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

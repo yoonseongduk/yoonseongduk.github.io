@@ -66,5 +66,6 @@ $("okb").onclick = () => act(true); $("passb").onclick = () => act(false); $("st
 $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b && !run) { cat = b.dataset.c; chips(); } }); chips(); upd();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

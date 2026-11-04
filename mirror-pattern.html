@@ -72,5 +72,6 @@ $("board").addEventListener("click", e => { const b = e.target.closest("[data-k]
 $("clear").onclick = () => { mine = mine.map(() => false); render(); }; $("check").onclick = check; $("again").onclick = () => { lv = 1; over = false; $("res").hidden = true; $("again").hidden = true; newPuzzle(); }; newPuzzle();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

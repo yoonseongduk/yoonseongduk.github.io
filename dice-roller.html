@@ -64,5 +64,6 @@ function roll() {
 $("roll").onclick = roll; $("minus").onclick = () => { if (n > 1) { n--; sv(KEY, n); vals = []; render(); } }; $("plus").onclick = () => { if (n < 6) { n++; sv(KEY, n); vals = []; render(); } }; render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

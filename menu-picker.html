@@ -60,5 +60,6 @@ async function go() { if (busy) return; const p = pool(); if (!p.length) { $("pi
 $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; render(); } }); $("menu").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b) return; const m = b.dataset.m; ban.has(m) ? ban.delete(m) : ban.add(m); sv(KEY, [...ban]); render(); }); $("go").onclick = go; render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

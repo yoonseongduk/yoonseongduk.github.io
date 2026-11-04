@@ -73,5 +73,6 @@ function render() { $("cur").innerHTML = cardHtml(cur); $("st").textContent = st
 $("hi").onclick = () => guess("hi"); $("lo").onclick = () => guess("lo"); $("again").onclick = start; start();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

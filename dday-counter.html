@@ -59,5 +59,6 @@ $("add").onclick = () => { const t = $("t").value.trim(), d = $("d").value; if (
 $("list").addEventListener("click", e => { const d = e.target.closest("[data-d]"); if (d) { items.splice(+d.dataset.d, 1); sv(KEY, items); render(); } }); $("a").oninput = $("b").oninput = calc; render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

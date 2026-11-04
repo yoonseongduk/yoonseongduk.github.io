@@ -80,5 +80,6 @@ $("lv").addEventListener("click", e => { const b = e.target.closest("[data-n]");
 $("again").onclick = newGame; setInterval(() => { if (!done) $("time").textContent = fmt(Math.floor((Date.now() - t0) / 1000)); }, 500); newGame();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

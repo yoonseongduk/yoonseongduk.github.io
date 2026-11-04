@@ -69,5 +69,6 @@ $("tap").addEventListener("pointerdown", e => { e.preventDefault(); press(); });
 $("start").onclick = start; $("best").textContent = best === null ? "-" : best.toFixed(1) + "초"; setLight(); draw();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

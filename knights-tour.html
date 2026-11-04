@@ -73,5 +73,6 @@ $("undo").onclick = () => { if (path.length) { path.pop(); $("res").hidden = tru
 $("lv").addEventListener("click", e => { const b = e.target.closest("[data-n]"); if (!b) return; document.querySelectorAll("#lv button").forEach(x => x.classList.toggle("on", x === b)); N = +b.dataset.n; newGame(); }); newGame();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

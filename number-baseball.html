@@ -227,5 +227,6 @@ const okSaved = saved && MODES[saved.mode] && typeof saved.answer === "string" &
 if (okSaved) { game = saved; msgText = game.state === "play" && game.guesses.length ? "이어서 추리해 보세요." : ""; render(); } else newGame(3);
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

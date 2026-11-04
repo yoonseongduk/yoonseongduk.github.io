@@ -174,5 +174,6 @@ if (saved) { $("bd").value = saved.v || ""; $("cal").value = saved.cal || "solar
 $("go").onclick = show; if (saved && (saved.cal === "lunar" ? saved.lun && saved.lun[0] : saved.v)) show();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

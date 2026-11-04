@@ -16,6 +16,7 @@ for f, *_ in games:
     if 'register("sw.js")' not in s:
         s = s.replace("</body>", REG + "</body>", 1)
     if ("class=\"opt\"" in s or "WrongNotes" in s) and "wrong-hook.js" not in s: s = s.replace("</body>", '<script src="wrong-hook.js"></script>\n</body>', 1)
+    if "med-notify.js" not in s and not f.endswith("med-check.html"): s = s.replace("</body>", '<script src="med-notify.js" defer></script>\n</body>', 1)
     assert "googleapis" not in s and 'rel="manifest"' in s and 'register("sw.js")' in s, f
     open(R + f, "w", encoding="utf-8").write(s)
 subprocess.run([sys.executable, "addgames.py", json.dumps(games, ensure_ascii=False)], check=True)

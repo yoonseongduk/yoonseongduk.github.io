@@ -77,5 +77,6 @@ $("picks").addEventListener("click", e => { const b = e.target.closest("[data-p]
 $("reset").onclick = () => { st = { w: 0, l: 0, s: 0 }; sv(KEY, st); phase = "rps"; att = null; $("mine").textContent = $("cpu").textContent = "❔"; $("msg").innerHTML = "<b>기록을 지웠어요</b>"; render(); }; render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

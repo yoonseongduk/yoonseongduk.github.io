@@ -69,5 +69,6 @@ $("grid").addEventListener("click", e => { const t = e.target.closest("[data-r]"
 $("undo").onclick = () => { if (hist.length) { b = JSON.parse(hist.pop()); moves--; sel = null; $("res").hidden = true; render(); } }; $("again").onclick = newGame; newGame();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

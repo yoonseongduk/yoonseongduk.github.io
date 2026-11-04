@@ -151,6 +151,7 @@ function staleBanner() {
 function alarmUi() {
   const p = perm(), pt = p === "granted" ? "✅ 허용됨" : p === "denied" ? "⛔ 차단됨 (브라우저 설정에서 허용 필요)" : p === "unsupported" ? "이 브라우저는 알림을 지원하지 않아요" : "아직 허용 안 함";
   $("alarm").innerHTML = `<div class="lb" style="color:var(--fg)">① 앱 알림 <span class="note">(앱이 열려 있을 때만 울려요)</span></div>
+    <div class="note">📱 <b>가족 게임 화면 어디에서든</b> 울려요 (첫 화면, 게임 중 모두). 단, 가족 게임을 <b>화면에 띄워 둔 상태</b>여야 해요. 최근 앱 목록에서 앱을 위로 밀어 끄거나, 폰이 잠자기 모드로 오래 있으면 못 울려요.</div>
     <label class="opt" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="aon"${S.al.on ? " checked" : ""}> 시간이 되면 알림·진동·소리로 알려 주기</label>
     <div class="f"><label for="arep">안 먹었으면 다시 알려 주기 (체크할 때까지, 최대 3시간)</label><select id="arep">${[[0, "다시 알리지 않기"], [5, "5분마다"], [10, "10분마다"], [15, "15분마다"], [30, "30분마다"]].map(([v, t]) => `<option value="${v}"${+S.al.rep === v ? " selected" : ""}>${t}</option>`).join("")}</select></div>
     <div class="g2">${SL.map(([k, n]) => `<div class="f"><label for="at${k}">${n} 시간</label><input type="time" id="at${k}" value="${S.al.t[k]}"></div>`).join("")}</div>

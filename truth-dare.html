@@ -61,5 +61,6 @@ function show(kind) { const c = draw(kind); $("cardbox").className = "cardbox " 
 $("t").onclick = () => show("t"); $("d").onclick = () => show("d"); $("r").onclick = () => show(Math.random() < .5 ? "t" : "d");
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

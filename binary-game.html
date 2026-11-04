@@ -66,5 +66,6 @@ $("check").onclick = () => { if (locked) return; locked = true; const ok = curVa
 $("next").onclick = () => { if (i === 9) { let note = ""; if (score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록!"; } $("next").hidden = true; $("bits").innerHTML = ""; $("res").innerHTML = `<b>10문제 중 ${score}개 정답</b><p class="muted">${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`; $("res").hidden = false; $("best").textContent = best; $("again").onclick = newRound; } else { i++; show(); } }; newRound();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

@@ -82,5 +82,6 @@ $("again").onclick = newGame;
 tm = setInterval(() => { if (!done) $("time").textContent = elapsed().toFixed(1); }, 100); newGame();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

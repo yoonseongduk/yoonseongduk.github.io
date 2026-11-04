@@ -71,5 +71,6 @@ $("go").onclick = guess; $("g").addEventListener("keydown", e => { if (e.key ===
 $("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && b.dataset.l !== lv) { lv = b.dataset.l; sv(KEY + "-lv", lv); newGame(); } }); newGame();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

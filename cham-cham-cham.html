@@ -80,5 +80,6 @@ $("L").onclick = () => choose("L"); $("R").onclick = () => choose("R"); $("start
 document.addEventListener("keydown", e => { if (e.key === "ArrowLeft") choose("L"); else if (e.key === "ArrowRight") choose("R"); });
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

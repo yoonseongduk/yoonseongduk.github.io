@@ -67,5 +67,6 @@ function calc() {
 $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (b) { cat = b.dataset.c; chips(); calc(); } }); $("v").oninput = $("u").onchange = calc; chips(); calc();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

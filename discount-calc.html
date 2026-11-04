@@ -58,5 +58,6 @@ function calc() { const p = parseFloat($("p").value), d1 = parseFloat($("d1").va
 ["p", "d1", "d2", "n"].forEach(k => { $(k).oninput = calc; }); calc();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

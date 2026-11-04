@@ -64,5 +64,6 @@ $("copy").onclick = async () => { if (!sets.length) return; const t = sets.map((
 $("minus").onclick = () => { if (n > 1) { n--; sv(KEY, n); render(); } }; $("plus").onclick = () => { if (n < 5) { n++; sv(KEY, n); render(); } }; go();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

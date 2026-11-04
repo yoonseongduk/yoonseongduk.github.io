@@ -81,5 +81,6 @@ document.querySelector(".cmds").addEventListener("click", e => { const b = e.tar
 $("undo").onclick = () => { if (!running) { prog.pop(); render(); } }; $("run").onclick = run; $("next").onclick = () => load(lv + 1); load(0);
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

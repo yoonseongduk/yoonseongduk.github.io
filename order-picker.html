@@ -63,5 +63,6 @@ $("pick").onclick = async () => { const v = valid(); if (v.length < 2) return sh
 function show(h) { $("out").hidden = false; $("out").innerHTML = h; } render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

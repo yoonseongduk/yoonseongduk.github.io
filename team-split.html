@@ -75,5 +75,6 @@ $("names").value = cfg.names; $("names").addEventListener("input", show);
 $("minus").onclick = () => { if (cfg.k > 2) { cfg.k--; show(); } }; $("plus").onclick = () => { if (cfg.k < 6) { cfg.k++; show(); } }; $("go").onclick = go; show();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

@@ -63,5 +63,6 @@ function toss() {
 $("coin").onclick = toss; $("reset").onclick = () => { st = { f: 0, b: 0, last: "", run: 0 }; sv(KEY, st); $("msg").textContent = "기록을 지웠어요"; show(); }; show();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
 </body>
 </html>

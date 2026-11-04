@@ -25,4 +25,5 @@ for gr, d in by.items():
     f = "../../data/stroke-%s.json" % gr.replace("급", "")
     open(f, "w", encoding="utf-8").write(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
     print(gr, len(d), "자", os.path.getsize(f) // 1024, "KB")
-print("획순 데이터가 없는 글자:", len(miss), "자")
+open("../../data/stroke-missing.json", "w", encoding="utf-8").write(json.dumps(miss, ensure_ascii=False, separators=(",", ":")))
+print("획순 데이터가 없는 글자:", len(miss), "자 → data/stroke-missing.json")

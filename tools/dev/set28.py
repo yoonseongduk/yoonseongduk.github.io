@@ -20,6 +20,45 @@ BODY = '''  <div class="chips" id="cats"></div>
   <div class="nav" id="nav"></div>'''
 JS = COM + r'''
 ''' + RX + r'''
+const SC = 300, BR = 9, BD = 21, FONT = '"Noto Serif CJK KR","Noto Serif KR","Noto Sans CJK KR","Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo","AppleGothic","Batang","serif"';
+let SD = {}, FIXS = {}, FIXL = ld("hanja-write-strokefix-v1") || {}, stl = {};
+const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+const nums = ch => FIXL[ch] || FIXS[ch] || (SD[ch] ? SD[ch].n.map(([a, b]) => [a * SC / 256, (225 - b) * SC / 256]) : null);
+function spread(pts) {
+  let P = pts.map(p => [p[0], p[1]]);
+  for (let it = 0; it < 8; it++) {
+    const n = P.length, par = Array.from({ length: n }, (_, k) => k), fd = x => par[x] === x ? x : (par[x] = fd(par[x]));
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (Math.hypot(P[a][0] - P[b][0], P[a][1] - P[b][1]) < BD - 1) par[fd(a)] = fd(b);
+    const gr = {}; for (let k = 0; k < n; k++) (gr[fd(k)] = gr[fd(k)] || []).push(k);
+    let moved = false;
+    Object.values(gr).forEach(g => { if (g.length < 2) return; g.sort((a, b) => a - b); const cx = g.reduce((t, k) => t + P[k][0], 0) / g.length, cy = g.reduce((t, k) => t + P[k][1], 0) / g.length, w = (g.length - 1) * BD, x0 = clampN(cx - w / 2, BR + 2, SC - BR - 2 - w); g.forEach((k, m) => { P[k] = [x0 + m * BD, clampN(cy, BR + 2, SC - BR - 2)]; }); moved = true; });
+    if (!moved) break;
+  }
+  for (let it = 0; it < 400; it++) {
+    let any = false;
+    for (let a = 0; a < P.length; a++) for (let b = a + 1; b < P.length; b++) { let dx = P[b][0] - P[a][0], dy = P[b][1] - P[a][1], d = Math.hypot(dx, dy); if (d < BD - .5) { if (d < .01) { dx = 1; dy = 0; d = 1; } const m = (BD - d) / 2 + .1, ux = dx / d, uy = dy / d; P[a][0] -= ux * m; P[a][1] -= uy * m; P[b][0] += ux * m; P[b][1] += uy * m; any = true; } }
+    P.forEach(p => { p[0] = clampN(p[0], BR + 2, SC - BR - 2); p[1] = clampN(p[1], BR + 2, SC - BR - 2); });
+    if (!any) break;
+  }
+  return P;
+}
+function drawNums(c, pts, col) {
+  const P = spread(pts); c.save(); c.font = "bold 12px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle";
+  pts.forEach((p, k) => { if (Math.hypot(p[0] - P[k][0], p[1] - P[k][1]) > 3) { c.strokeStyle = col; c.globalAlpha = .55; c.lineWidth = 1.2; c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(P[k][0], P[k][1]); c.stroke(); c.globalAlpha = 1; c.fillStyle = col; c.beginPath(); c.arc(p[0], p[1], 2.5, 0, 7); c.fill(); } });
+  P.forEach((p, k) => { c.beginPath(); c.arc(p[0], p[1], BR, 0, 7); c.fillStyle = col; c.fill(); c.strokeStyle = "#fff"; c.lineWidth = 1.5; c.stroke(); c.fillStyle = "#fff"; c.fillText(String(k + 1), p[0], p[1] + .5); });
+  c.restore();
+}
+function drawStrokeCard(ch) {
+  const cv = $("sc"); if (!cv) return; const c = cv.getContext("2d"), st = getComputedStyle(document.documentElement), fg = st.getPropertyValue("--fg").trim() || "#222", line = st.getPropertyValue("--line").trim() || "#ccc";
+  c.clearRect(0, 0, SC, SC); c.strokeStyle = line; c.lineWidth = 1; c.setLineDash([5, 5]); c.strokeRect(.5, .5, SC - 1, SC - 1); c.beginPath(); c.moveTo(SC / 2, 0); c.lineTo(SC / 2, SC); c.moveTo(0, SC / 2); c.lineTo(SC, SC / 2); c.stroke(); c.setLineDash([]);
+  c.globalAlpha = .3; c.fillStyle = fg;
+  if (SD[ch]) { c.save(); const k = SC / 256; c.setTransform(k, 0, 0, -k, 0, 225 * k); SD[ch].s.forEach(p => c.fill(new Path2D(p))); c.restore(); }
+  else { c.textAlign = "center"; c.textBaseline = "middle"; c.font = `${Math.round(SC * .78)}px ${FONT}`; c.fillText(ch, SC / 2, SC / 2 + SC * .04); }
+  c.globalAlpha = 1; const np = nums(ch); if (np) drawNums(c, np, "#2563eb");
+  const m = $("scn"); if (m) m.textContent = np ? "번호 순서대로 쓰세요 (파란 점은 획이 시작되는 곳이에요)" : "이 글자는 획순 번호가 없어요. 한자 쓰기 화면의 ✏️로 직접 넣을 수 있어요.";
+}
+function loadStroke(g) { const f = g.replace("급", ""); if (stl[f]) return; stl[f] = 1; fetch("data/stroke-" + f + ".json").then(r => r.json()).then(d => { Object.assign(SD, d); if (step < 3) drawStrokeCard(set[step][0]); }).catch(() => { stl[f] = 0; }); }
+fetch("data/stroke-fix.json").then(r => r.ok ? r.json() : {}).then(d => { FIXS = d || {}; if (step < 3 && set.length) drawStrokeCard(set[step][0]); }).catch(() => {});
 const GR = ["6급", "5급", "4급", "3급", "2급", "1급"];
 let S = Object.assign({ cat: "6급", done: {}, days: {} }, ld(KEY) || {});
 let ALL = [], DET = {}, pool = [], set = [], step = 0, off = 0, qs = [], qi = 0, right = 0, locked = false;
@@ -29,7 +68,7 @@ function seeded(arr, seed) { const r = rng(seed), a = [...arr]; for (let i = a.l
 const hash = s => { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
 const dkey = () => todayS() + "|" + S.cat + "|" + off;
 function pick() {
-  pool = ALL.filter(d => d[2] === S.cat); const order = seeded(pool, hash("hz" + S.cat)), n = order.length, base = ((dnum(todayS()) + off) * 3) % n;
+  loadStroke(S.cat); pool = ALL.filter(d => d[2] === S.cat); const order = seeded(pool, hash("hz" + S.cat)), n = order.length, base = ((dnum(todayS()) + off) * 3) % n;
   set = [0, 1, 2].map(k => order[(base + k) % n]);
 }
 const dt = () => { const d = new Date(); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${wdOf(todayS())})`; };
@@ -42,7 +81,7 @@ function head() {
 }
 function card(d) {
   const e = DET[d[0]] || {};
-  let h = `<div class="hz">${esc(d[0])}</div><div class="hd">${esc(d[1])} · ${esc(d[2])}</div><p class="note center">${esc(rinfo(d[3]))}</p>`;
+  let h = `<div class="hz">${esc(d[0])}</div><div class="hd">${esc(d[1])} · ${esc(d[2])}</div><p class="note center">${esc(rinfo(d[3]))}</p><div class="sec"><h3>✍️ 쓰는 순서</h3><canvas id="sc" width="300" height="300" style="width:100%;max-width:240px;margin:0 auto;display:block" aria-label="획순 번호"></canvas><p class="note center" id="scn"></p></div>`;
   h += e.o ? `<div class="sec"><h3>🌱 글자의 유래</h3><p>${esc(e.o)}</p><p class="note">※ 한자의 유래는 학설에 따라 다를 수 있어요.</p></div>` : `<div class="sec"><h3>🌱 글자의 유래</h3><p class="note">이 글자의 유래 설명은 아직 준비 중이에요.</p></div>`;
   if (e.w) h += `<div class="sec"><h3>📝 이렇게 써요 (한자어)</h3><ul>${e.w.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
   if (e.i) h += `<div class="sec"><h3>📜 사자성어 속 쓰임</h3><ul>${e.i.map(x => `<li><b>${esc(x[0])}</b> (${esc(x[1])}) — ${esc(x[2])}</li>`).join("")}</ul></div>`;
@@ -56,7 +95,7 @@ function makeQs() {
 }
 function render() {
   head();
-  if (step < 3) { $("view").innerHTML = card(set[step]); $("nav").innerHTML = `<button class="btn ghost" id="bk" type="button"${step ? "" : " disabled"}>◀ 이전</button><button class="btn" id="nx" type="button">${step < 2 ? "다음 한자 ▶" : "퀴즈 풀기 ▶"}</button>`;
+  if (step < 3) { $("view").innerHTML = card(set[step]); drawStrokeCard(set[step][0]); $("nav").innerHTML = `<button class="btn ghost" id="bk" type="button"${step ? "" : " disabled"}>◀ 이전</button><button class="btn" id="nx" type="button">${step < 2 ? "다음 한자 ▶" : "퀴즈 풀기 ▶"}</button>`;
     $("bk").onclick = () => { step--; render(); window.scrollTo(0, 0); }; $("nx").onclick = () => { step++; if (step === 3) makeQs(); render(); window.scrollTo(0, 0); }; return; }
   if (step === 3) { const q = qs[qi], big = q.type === "hun";
     $("view").innerHTML = `<div class="note center">퀴즈 ${qi + 1}/3</div>${q.type === "hun" ? `<div class="hz">${esc(q.d[0])}</div><p class="center"><b>이 한자의 뜻과 음은?</b></p>` : `<div class="hd" style="font-size:1.6rem">${esc(q.d[1])}</div><p class="center"><b>이 뜻과 음의 한자는?</b></p>`}<div class="opts${big ? "" : " big"}" id="op">${q.opts.map((o, i) => `<button type="button" class="opt" data-i="${i}">${esc(q.type === "hun" ? o[1] : o[0])}</button>`).join("")}</div><div class="note center" id="fb"></div>`;

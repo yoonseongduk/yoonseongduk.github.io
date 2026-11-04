@@ -43,7 +43,7 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
   <h1>한자 쓰기 ✍️</h1>
   <div class="chips" id="cats"></div>
   <div class="seg" id="mode" style="--n:2"><button type="button" data-m="trace" class="on">따라 쓰기<small>연한 글자를 따라</small></button><button type="button" data-m="memo">보고 쓰기<small>뜻과 음만 보고</small></button></div>
-  <div class="stats"><div class="stat"><small>문제</small><b id="no">1/10</b></div><div class="stat"><small>성공</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
+  <div class="stats"><div class="stat"><small id="l_no">문제</small><b id="no">1/10</b></div><div class="stat"><small id="l_sc">성공</small><b id="score">0</b></div><div class="stat"><small id="l_bs">최고</small><b id="best">0</b></div></div>
   <div class="card center"><div class="tl"><button type="button" id="numt" aria-label="획순 번호 켜고 끄기" title="획순 번호">🔢</button><button type="button" id="edt" aria-label="획순 번호 고치기" title="획순 고치기">✏️</button></div><p class="muted" id="ask" style="padding:0 70px"></p><p class="big" id="mean" style="font-size:1.8rem"></p></div>
   <div class="padwrap"><canvas id="pad" width="300" height="300" aria-label="한자를 쓰는 칸"></canvas></div>
   <div class="dock" id="dock">
@@ -55,7 +55,7 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
   <button class="btn" id="next" type="button" hidden>다음 문제</button>
   </div>
   <p class="muted" id="help">화면의 네모 칸에 <b>손가락으로 한자를 써 보세요</b>. <b>따라 쓰기</b>는 연하게 보이는 한자를 따라 쓰고, <b>보고 쓰기</b>는 뜻과 음만 보고 기억해서 써요. <b>확인</b>을 누르면 쓴 모양과 정답 모양이 얼마나 겹치는지 계산해요 (AI가 아니라 모양 비교예요). 획순은 검사하지 않아요.</p>
-  <p class="center"><button type="button" class="fixb" id="expfix">📋 내가 고친 획순 복사</button></p>
+  <p class="center"><button type="button" class="fixb" id="viewfix">🔎 내가 고친 글자 보기</button> <button type="button" class="fixb" id="expfix">📋 내가 고친 획순 복사</button></p>
   <p class="muted center">획순 번호: Make Me a Hanzi(Arphic Public License) · 자료 출처: <a href="licenses.html" style="color:inherit">출처와 저작권</a></p>
 </main>
 <div class="ovl" id="ovl" hidden><div class="sheet" id="sheet" role="dialog" aria-label="한자 유래"></div></div>
@@ -77,7 +77,7 @@ fetch("data/stroke-missing.json").then(r => r.json()).then(d => { MISS = d; chip
 const missPool = () => MISS.filter(c => !FIXL[c] && !FIXS[c]);
 function chips() { $("cats").innerHTML = ["6급", "5급", "4급", "3급", "2급", "1급"].map(c => `<button type="button" class="chip${c === cat ? " on" : ""}" data-c="${c}">${c}<small>${ALL.filter(d => d[2] === c).length}자</small></button>`).join("") + (MISS.length ? `<button type="button" class="chip${cat === "없음" ? " on" : ""}" data-c="없음" aria-label="획순 번호가 없는 글자만 연습" title="번호 없는 글자만">✏️<small>${missPool().length}자</small></button>` : ""); }
 function start() {
-  $("e_skip").hidden = cat !== "없음"; $("editbar").classList.toggle("sk", cat === "없음");
+  statUi(); $("e_skip").hidden = cat !== "없음"; $("editbar").classList.toggle("sk", cat === "없음");
   if (cat === "없음") { const m = new Set(missPool()); qs = ALL.filter(d => m.has(d[0])); i = 0; score = 0; $("res").hidden = true; if (!qs.length) { qs = []; $("ask").textContent = "번호 없는 글자를 모두 채웠어요 🎉"; $("mean").textContent = ""; $("no").textContent = "0/0"; ctx.clearRect(0, 0, S, S); return; } mode = "trace"; document.querySelectorAll("#mode button").forEach(b => b.classList.toggle("on", b.dataset.m === "trace")); show(); setEdit(true); return; }
   loadStroke(cat); pool = ALL.filter(d => d[2] === cat); qs = shuf(pool).slice(0, 10); i = 0; score = 0; $("res").hidden = true; show(); }
 function outlineCanvas(ch) { if (OC[ch]) return OC[ch]; const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"), k = S / 256; x.setTransform(k, 0, 0, -k, 0, 225 * k); x.fillStyle = "#000"; SD[ch].s.forEach(p => x.fill(new Path2D(p))); return (OC[ch] = c); }
@@ -144,7 +144,7 @@ async function openOrigin(d) {
 $("ovl").addEventListener("click", e => { if (e.target === $("ovl")) $("ovl").hidden = true; });
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("ovl").hidden = true; });
 function show() { tried = false; $("retry").hidden = true; $("ovl").hidden = true; $("self").hidden = true; const d = qs[i]; $("dock").removeAttribute("data-done"); strokes = []; cur = null; done = false; $("res").hidden = true; $("next").hidden = true; $("check").hidden = false; $("undo").disabled = $("clear").disabled = false; const [hun, um] = d[1].split(" ").length > 1 ? [d[1].slice(0, d[1].lastIndexOf(" ")), d[1].slice(d[1].lastIndexOf(" ") + 1)] : [d[1], ""];
-  $("ask").textContent = askTxt(); $("mean").textContent = d[1]; $("no").textContent = (i + 1) + "/" + (cat === "없음" ? qs.length : 10); $("score").textContent = score; $("best").textContent = best; render(false); }
+  $("ask").textContent = askTxt(); $("mean").textContent = d[1]; $("no").textContent = (i + 1) + "/" + (cat === "없음" ? qs.length : 10); $("score").textContent = score; $("best").textContent = best; render(false); statUi(); }
 // 모양 비교: 60×60 칸으로 줄인 글자 마스크와 내가 쓴 마스크를 겹쳐 본다
 function maskOf(canvasLike) { const t = document.createElement("canvas"); t.width = t.height = G; const x = t.getContext("2d"); x.drawImage(canvasLike, 0, 0, G, G); const px = x.getImageData(0, 0, G, G).data, m = new Uint8Array(G * G); for (let k = 0; k < G * G; k++) m[k] = px[k * 4 + 3] > 40 ? 1 : 0; return m; }
 function inkCanvas() { const c = document.createElement("canvas"); c.width = c.height = S; const x = c.getContext("2d"); strokes.forEach(s => drawStroke(x, s, 15, "#000")); return c; }
@@ -185,10 +185,19 @@ $("edt").onclick = () => { if (editing) return setEdit(false); if (mode === "mem
 $("expfix").onclick = () => { const t = JSON.stringify(FIXL); try { navigator.clipboard.writeText(t).then(() => { $("expfix").textContent = Object.keys(FIXL).length ? "✅ 복사했어요 (" + Object.keys(FIXL).length + "자)" : "고친 글자가 아직 없어요"; }, () => { $("expfix").textContent = "복사에 실패했어요"; }); } catch (e) { $("expfix").textContent = "복사에 실패했어요"; } };
 $("e_undo").onclick = () => { editPts.pop(); $("ask").textContent = editMsg(); okVis(); render(false); };
 $("e_clear").onclick = () => { editPts = []; $("ask").textContent = editMsg(); okVis(); render(false); };
-$("e_ok").onclick = () => { const ch = qs[i][0], np = nums(ch); if (!np) return; FIXL[ch] = np.map(p => [Math.round(p[0]), Math.round(p[1])]); sv(FIXK, FIXL); score++; $("score").textContent = score; setEdit(false); chips(); setTimeout(nextMiss, 300); };
+$("e_ok").onclick = () => { const ch = qs[i][0], np = nums(ch); if (!np) return; FIXL[ch] = np.map(p => [Math.round(p[0]), Math.round(p[1])]); sv(FIXK, FIXL); score++; $("score").textContent = score; statUi(); setEdit(false); chips(); setTimeout(nextMiss, 300); };
 $("e_reset").onclick = () => { const ch = qs[i][0]; if (!FIXL[ch]) { $("ask").textContent = "고쳐 둔 번호가 없어요 (원래 번호 그대로예요)"; return; } if (confirm("내가 고친 번호를 지우고 원래대로 돌릴까요?")) { delete FIXL[ch]; sv(FIXK, FIXL); setEdit(false); } };
-$("e_save").onclick = () => { if (!editPts.length) { $("ask").textContent = "번호를 한 개 이상 찍어 주세요"; return; } FIXL[qs[i][0]] = editPts.map(p => [Math.round(p[0]), Math.round(p[1])]); sv(FIXK, FIXL); if (cat === "없음") { score++; $("score").textContent = score; setEdit(false); chips(); setTimeout(nextMiss, 350); return; } setEdit(false); };
+$("e_save").onclick = () => { if (!editPts.length) { $("ask").textContent = "번호를 한 개 이상 찍어 주세요"; return; } FIXL[qs[i][0]] = editPts.map(p => [Math.round(p[0]), Math.round(p[1])]); sv(FIXK, FIXL); if (cat === "없음") { score++; $("score").textContent = score; statUi(); setEdit(false); chips(); setTimeout(nextMiss, 350); return; } setEdit(false); };
 $("e_skip").onclick = () => { setEdit(false); nextMiss(); };
+
+function statUi() { const sp = cat === "없음"; $("l_no").textContent = sp ? "남은 글자" : "문제"; $("l_sc").textContent = sp ? "이번에 저장" : "성공"; $("l_bs").textContent = sp ? "내가 고친 글자" : "최고"; $("best").textContent = sp ? Object.keys(FIXL).length : best; }
+function openFixList() {
+  const ks = Object.keys(FIXL), sh = $("sheet"); $("ovl").hidden = false;
+  sh.innerHTML = `<div class="hd">🔎 내가 고친 글자 (${ks.length}자)</div><p class="muted" style="text-align:center">글자를 누르면 그 글자로 연습하며 번호를 볼 수 있어요.</p><div class="tags" id="fl">${ks.length ? ks.map(c => { const d = ALL.find(x => x[0] === c); return `<button type="button" class="chip" data-ch="${c}" style="font-size:1.3rem">${c}<small>${d ? d[1] : ""}</small></button>`; }).join("") : '<span class="muted">아직 고친 글자가 없어요.</span>'}</div><button class="btn" id="cls" type="button">닫기</button>`;
+  $("cls").onclick = () => { $("ovl").hidden = true; };
+  sh.querySelectorAll("[data-ch]").forEach(b => b.onclick = () => { const d = ALL.find(x => x[0] === b.dataset.ch); if (!d) return; $("ovl").hidden = true; if (editing) setEdit(false); cat = d[2]; chips(); loadStroke(cat); pool = ALL.filter(x => x[2] === cat); qs = [d, ...shuf(pool.filter(x => x !== d)).slice(0, 9)]; i = 0; score = 0; $("res").hidden = true; $("e_skip").hidden = true; $("editbar").classList.remove("sk"); show(); window.scrollTo(0, 0); });
+}
+$("viewfix").onclick = openFixList;
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="wrong-hook.js"></script>

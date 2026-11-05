@@ -17,8 +17,9 @@ for f, *_ in games:
         s = s.replace("</body>", REG + "</body>", 1)
     if ("class=\"opt\"" in s or "WrongNotes" in s) and "wrong-hook.js" not in s: s = s.replace("</body>", '<script src="wrong-hook.js"></script>\n</body>', 1)
     if "FAMILY." in s and "family.js" not in s and "<script>\nconst $ = id" in s: s = s.replace("<script>\nconst $ = id", '<script src="family.js"></script>\n<script>\nconst $ = id', 1)
-    if "med-notify.js" not in s and not f.endswith("med-check.html"): s = s.replace("</body>", '<script src="med-notify.js" defer></script>\n</body>', 1)
+    # net-* 는 같이 하기 화면 안에서 열려서, 약 알림이 두 번 뜨지 않게 넣지 않아요
+    if "med-notify.js" not in s and not f.endswith("med-check.html") and not f.startswith("net-"): s = s.replace("</body>", '<script src="med-notify.js" defer></script>\n</body>', 1)
     assert "googleapis" not in s and 'rel="manifest"' in s and 'register("sw.js")' in s, f
     open(R + f, "w", encoding="utf-8").write(s)
-subprocess.run([sys.executable, "addgames.py", json.dumps(games, ensure_ascii=False)], check=True)
+subprocess.run([sys.executable, "addgames.py", json.dumps([g for g in games if g[4] != "-"], ensure_ascii=False)], check=True)  # 분류 "-"는 시작 화면에 등록하지 않음(같이 하기 안에서만 여는 게임 등)
 subprocess.run([sys.executable, R + "tools/make-sw.py"], check=True)

@@ -51,7 +51,7 @@ BODY = '''  <div class="card"><div class="f" style="display:grid;gap:4px"><label
   <div id="scan" hidden><p>QR 코드를 화면 가운데에 비춰 주세요</p><video id="vid" playsinline muted></video><button class="btn" id="scx" type="button">닫기</button></div>
   <div id="flash" hidden></div>'''
 
-JS = r'''
+QR_JS = r'''
 // ───── QR 코드 만들기 (바이트 모드, 오류 정정 M, 1~15버전) ─────
 const QR = (() => {
   const EC = [null, [10, 1, 16, 0, 0], [16, 1, 28, 0, 0], [26, 1, 44, 0, 0], [18, 2, 32, 0, 0], [24, 2, 43, 0, 0], [16, 4, 27, 0, 0], [18, 4, 31, 0, 0], [22, 2, 38, 2, 39], [22, 3, 36, 2, 37], [26, 4, 43, 1, 44], [30, 1, 50, 4, 51], [22, 6, 36, 2, 37], [22, 8, 37, 1, 38], [24, 4, 40, 5, 41], [24, 5, 41, 5, 42]];
@@ -114,7 +114,9 @@ const QR = (() => {
   }
   return { encode, draw };
 })();
+'''
 
+CODEC_JS = r'''
 // ───── 연결 코드 (SDP 줄이기·다시 만들기) ─────
 const PFX = "FGL1";
 const b64u = a => btoa(String.fromCharCode(...a)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -141,7 +143,9 @@ const linkOf = (k, code) => location.href.split("#")[0] + "#" + k + "=" + encode
 const gathered = pc => new Promise(res => { if (pc.iceGatheringState === "complete") return res(); const t = setTimeout(res, 3000); pc.addEventListener("icegatheringstatechange", () => { if (pc.iceGatheringState === "complete") { clearTimeout(t); res(); } }); });
 const newPc = () => new RTCPeerConnection({ iceServers: [] });
 const mkId = () => Math.random().toString(36).slice(2, 8);
+'''
 
+JS = QR_JS + CODEC_JS + r'''
 // ───── 상태 ─────
 let S = Object.assign({ name: "" }, ld(KEY) || {});
 if (!S.name) { S.name = "기기" + ri(100, 999); sv(KEY, S); }
@@ -289,6 +293,7 @@ $("buzz").onclick = () => { if (role === "host") { bcast({ t: "buzz", from: S.na
 if (!("RTCPeerConnection" in window)) { $("start").innerHTML = '<p>⚠️ 이 브라우저는 기기끼리 연결하는 기능(WebRTC)을 지원하지 않아요. 크롬이나 삼성 인터넷 최신 버전에서 열어 주세요.</p>'; }
 '''
 
-make("out/link-test.html", "폰 연결 테스트", "📡", 205, "link-test-v1",
-     "폰(또는 PC) 여러 대를 QR로 직접 연결해요. 인터넷 서버를 거치지 않고 같은 와이파이 안에서 기기끼리 바로 주고받아요. 방장과 처음 들어온 기기가 틱택토를 하고, 나머지는 구경해요. 화면이 꺼지거나 앱을 닫으면 연결이 끊겨요. QR코드는 (주)덴소웨이브의 등록상표예요.",
-     BODY, JS, CSS)
+if __name__ == "__main__":
+  make("out/link-test.html", "폰 연결 테스트", "📡", 205, "link-test-v1",
+       "폰(또는 PC) 여러 대를 QR로 직접 연결해요. 인터넷 서버를 거치지 않고 같은 와이파이 안에서 기기끼리 바로 주고받아요. 방장과 처음 들어온 기기가 틱택토를 하고, 나머지는 구경해요. 화면이 꺼지거나 앱을 닫으면 연결이 끊겨요. QR코드는 (주)덴소웨이브의 등록상표예요.",
+       BODY, JS, CSS)

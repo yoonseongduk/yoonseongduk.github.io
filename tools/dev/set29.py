@@ -1,0 +1,284 @@
+import sys
+sys.path.insert(0, ".")
+from mkpage import make
+
+# ───────── 폰 연결 테스트 (QR + WebRTC, 서버 없음) + 틱택토
+# 방 만든 폰(호스트)이 기기마다 QR 한 쌍(초대 → 답장)을 주고받아 직접 연결해요. 호스트가 게임 상태를 정하고 모두에게 보내요.
+# 연결 코드: FGL1~종류~ufrag~pwd~지문(base64url)~setup~참조~후보(주소!포트*...) — SDP에서 꼭 필요한 값만 담아 QR을 작게 만들고, 받는 쪽에서 SDP를 다시 조립해요.
+CSS = '''.qr{display:block;width:100%;max-width:300px;margin:0 auto;image-rendering:pixelated;border-radius:8px;background:#fff}
+.lb{font-size:.88rem;color:var(--muted);font-weight:700}.note{font-size:.85rem;color:var(--muted)}.btn.sm{padding:9px 14px;font-size:1rem}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--muted);margin-right:6px}.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+.ttt{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(100%,300px);margin:0 auto}
+.ttt button{aspect-ratio:1;border-radius:14px;border:1px solid var(--line);background:var(--soft);font-family:var(--font-display);font-size:3rem;line-height:1}
+.ttt button.w{background:color-mix(in srgb,var(--ok) 30%,var(--surface))}
+#scan{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+#scan video{width:100%;max-width:440px;border-radius:12px}#scan p{color:#fff;text-align:center}
+#flash{position:fixed;inset:0;z-index:60;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;text-align:center;padding:16px}
+textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}'''
+
+BODY = '''  <div class="card"><div class="f" style="display:grid;gap:4px"><label class="lb" for="nm">이 기기 이름</label><input type="text" id="nm" maxlength="10"></div></div>
+  <div class="card" id="start">
+    <p>폰 두 대 이상을 <b>같은 와이파이</b>에 연결한 뒤, 한 대에서 <b>방 만들기</b>를 누르세요. 나머지 폰은 그 QR을 찍어 들어와요.</p>
+    <div class="row"><button class="btn" id="bh" type="button">📡 방 만들기</button><button class="btn ghost" id="bg" type="button">🔗 참가하기</button></div>
+  </div>
+  <div class="card" id="hostbox" hidden>
+    <b id="hstep">① 참가할 폰으로 이 QR을 찍어요</b>
+    <canvas class="qr" id="qo" aria-label="초대 QR 코드"></canvas>
+    <p class="note">참가할 폰의 <b>카메라 앱</b>으로 찍거나, 그 폰에서 이 화면을 열고 "참가하기 → 📷 QR 찍기"를 눌러요.</p>
+    <b>② 참가한 폰에 뜬 답장 QR을 찍어요</b>
+    <button class="btn" id="hscan" type="button">📷 답장 QR 찍기</button>
+    <details><summary class="note">QR을 못 찍을 때 (PC 등): 코드로 주고받기</summary><div style="display:grid;gap:8px;margin-top:8px">
+      <label class="lb" for="oc">초대 코드 (복사해서 상대에게 보내기)</label><textarea class="code" id="oc" readonly></textarea><button class="btn ghost sm" id="ocp" type="button">📋 초대 코드 복사</button>
+      <label class="lb" for="ai">상대가 보낸 답장 코드 붙여넣기</label><textarea class="code" id="ai"></textarea><button class="btn ghost sm" id="ago" type="button">연결하기</button></div></details>
+    <p class="note" id="hmsg"></p>
+  </div>
+  <div class="card" id="guestbox" hidden>
+    <div id="gjoin" style="display:grid;gap:10px"><b>방 만든 폰의 QR을 찍어요</b>
+      <button class="btn" id="gscan" type="button">📷 QR 찍기</button>
+      <details><summary class="note">QR을 못 찍을 때 (PC 등): 코드로 주고받기</summary><div style="display:grid;gap:8px;margin-top:8px">
+        <label class="lb" for="oi">받은 초대 코드 붙여넣기</label><textarea class="code" id="oi"></textarea><button class="btn ghost sm" id="ogo" type="button">참가하기</button></div></details></div>
+    <div id="gans" hidden style="display:grid;gap:10px"><b>방 만든 폰에서 이 답장 QR을 찍어 주세요</b>
+      <canvas class="qr" id="qa" aria-label="답장 QR 코드"></canvas>
+      <details><summary class="note">코드로 보내기 (PC 등)</summary><div style="display:grid;gap:8px;margin-top:8px"><textarea class="code" id="ac" readonly></textarea><button class="btn ghost sm" id="acp" type="button">📋 답장 코드 복사</button></div></details></div>
+    <p class="note" id="gmsg"></p>
+  </div>
+  <div class="card" id="room" hidden><b>📶 연결된 기기</b><div id="list"></div>
+    <div class="row"><button class="btn ghost sm" id="buzz" type="button">📳 신호 보내기</button><button class="btn ghost sm" id="more" type="button" hidden>➕ 한 명 더 연결</button></div>
+    <p class="note">신호 보내기를 누르면 연결된 모든 폰이 진동하고 화면이 번쩍여요. 숫자(ms)는 신호가 오가는 데 걸린 시간이에요.</p></div>
+  <div class="card" id="game" hidden><b>⭕❌ 틱택토 (폰 2대 대결)</b><p class="center" id="gst"></p><div class="ttt" id="board"></div>
+    <p class="center note" id="score"></p><button class="btn ghost sm" id="again" type="button">새 판</button></div>
+  <div id="scan" hidden><p>QR 코드를 화면 가운데에 비춰 주세요</p><video id="vid" playsinline muted></video><button class="btn" id="scx" type="button">닫기</button></div>
+  <div id="flash" hidden></div>'''
+
+JS = r'''
+// ───── QR 코드 만들기 (바이트 모드, 오류 정정 M, 1~15버전) ─────
+const QR = (() => {
+  const EC = [null, [10, 1, 16, 0, 0], [16, 1, 28, 0, 0], [26, 1, 44, 0, 0], [18, 2, 32, 0, 0], [24, 2, 43, 0, 0], [16, 4, 27, 0, 0], [18, 4, 31, 0, 0], [22, 2, 38, 2, 39], [22, 3, 36, 2, 37], [26, 4, 43, 1, 44], [30, 1, 50, 4, 51], [22, 6, 36, 2, 37], [22, 8, 37, 1, 38], [24, 4, 40, 5, 41], [24, 5, 41, 5, 42]];
+  const AL = [null, [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34], [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50], [6, 30, 54], [6, 32, 58], [6, 34, 62], [6, 26, 46, 66], [6, 26, 48, 70]];
+  const EXP = new Array(512), LOG = new Array(256);
+  for (let i = 0, x = 1; i < 255; i++) { EXP[i] = x; LOG[x] = i; x <<= 1; if (x & 256) x ^= 0x11d; }
+  for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+  const mul = (a, b) => a && b ? EXP[LOG[a] + LOG[b]] : 0;
+  function rsRem(data, n) {
+    let g = [1]; for (let i = 0; i < n; i++) { const ng = new Array(g.length + 1).fill(0); g.forEach((c, j) => { ng[j] ^= c; ng[j + 1] ^= mul(c, EXP[i]); }); g = ng; }
+    const r = new Array(n).fill(0); for (const d of data) { const f = d ^ r.shift(); r.push(0); if (f) for (let j = 0; j < n; j++) r[j] ^= mul(g[j + 1], f); } return r;
+  }
+  const MASK = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, (x, y) => x % 3 === 0, (x, y) => (x + y) % 3 === 0, (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0, (x, y) => x * y % 2 + x * y % 3 === 0, (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+  function encode(text) {
+    const bytes = [...new TextEncoder().encode(text)]; let v = 1;
+    for (; v <= 15; v++) { const e = EC[v]; if (4 + (v < 10 ? 8 : 16) + bytes.length * 8 <= (e[1] * e[2] + e[3] * e[4]) * 8) break; }
+    if (v > 15) throw new Error("QR에 담기에는 너무 길어요");
+    const e = EC[v], cap = e[1] * e[2] + e[3] * e[4], bits = [], put = (val, n) => { for (let i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+    put(4, 4); put(bytes.length, v < 10 ? 8 : 16); bytes.forEach(b => put(b, 8)); put(0, Math.min(4, cap * 8 - bits.length)); while (bits.length % 8) bits.push(0);
+    const data = []; for (let i = 0; i < bits.length; i += 8) data.push(bits.slice(i, i + 8).reduce((a, b) => a << 1 | b, 0));
+    for (let p = 0; data.length < cap; p++) data.push(p % 2 ? 0x11 : 0xEC);
+    const blocks = [], ecs = []; let k = 0;
+    for (let g = 0; g < 2; g++) for (let i = 0; i < e[1 + g * 2]; i++) { const d = data.slice(k, k + e[2 + g * 2]); k += d.length; blocks.push(d); ecs.push(rsRem(d, e[0])); }
+    const out = [], maxD = Math.max(...blocks.map(b => b.length));
+    for (let i = 0; i < maxD; i++) blocks.forEach(b => { if (i < b.length) out.push(b[i]); });
+    for (let i = 0; i < e[0]; i++) ecs.forEach(c => out.push(c[i]));
+    const N = 17 + 4 * v, M = [...Array(N)].map(() => new Array(N).fill(0)), fn = [...Array(N)].map(() => new Array(N).fill(false));
+    const sx = (x, y, on) => { M[y][x] = on ? 1 : 0; fn[y][x] = true; };
+    const finder = (cx, cy) => { for (let i = -1; i <= 7; i++) for (let j = -1; j <= 7; j++) { const x = cx + j, y = cy + i; if (x < 0 || y < 0 || x >= N || y >= N) continue; sx(x, y, i >= 0 && i <= 6 && j >= 0 && j <= 6 && (i === 0 || i === 6 || j === 0 || j === 6 || (i >= 2 && i <= 4 && j >= 2 && j <= 4))); } };
+    finder(0, 0); finder(N - 7, 0); finder(0, N - 7);
+    for (let i = 8; i < N - 8; i++) { sx(i, 6, i % 2 === 0); sx(6, i, i % 2 === 0); }
+    const al = AL[v]; for (const a of al) for (const b of al) { if ((a === 6 && b === 6) || (a === 6 && b === N - 7) || (a === N - 7 && b === 6)) continue; for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) sx(a + j, b + i, Math.max(Math.abs(i), Math.abs(j)) !== 1); }
+    const fmt = mask => { const d = (0 << 3) | mask; let r = d; for (let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537); const b = ((d << 10) | r) ^ 0x5412, bit = i => (b >>> i) & 1;
+      for (let i = 0; i <= 5; i++) sx(8, i, bit(i)); sx(8, 7, bit(6)); sx(8, 8, bit(7)); sx(7, 8, bit(8)); for (let i = 9; i < 15; i++) sx(14 - i, 8, bit(i));
+      for (let i = 0; i < 8; i++) sx(N - 1 - i, 8, bit(i)); for (let i = 8; i < 15; i++) sx(8, N - 15 + i, bit(i)); sx(8, N - 8, 1); };
+    fmt(0);
+    if (v >= 7) { let r = v; for (let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1F25); const b = (v << 12) | r; for (let i = 0; i < 18; i++) { const on = (b >>> i) & 1, a = N - 11 + i % 3, c = Math.floor(i / 3); sx(a, c, on); sx(c, a, on); } }
+    let i = 0;
+    for (let right = N - 1; right >= 1; right -= 2) { if (right === 6) right = 5;
+      for (let vert = 0; vert < N; vert++) for (let j = 0; j < 2; j++) { const x = right - j, y = ((right + 1) & 2) === 0 ? N - 1 - vert : vert; if (!fn[y][x] && i < out.length * 8) { M[y][x] = (out[i >>> 3] >>> (7 - (i & 7))) & 1; i++; } } }
+    let best = null, bestP = Infinity; const base = M.map(r => r.slice());
+    for (let m = 0; m < 8; m++) {
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) M[y][x] = fn[y][x] ? M[y][x] : base[y][x] ^ (MASK[m](x, y) ? 1 : 0);
+      fmt(m); const p = penalty(M, N); if (p < bestP) { bestP = p; best = M.map(r => r.slice()); }
+    }
+    return best;
+  }
+  function penalty(M, N) {
+    let p = 0, dark = 0; const pat = [1, 0, 1, 1, 1, 0, 1];
+    const line = get => { let run = 1; for (let i = 1; i < N; i++) { if (get(i) === get(i - 1)) { run++; if (run === 5) p += 3; else if (run > 5) p++; } else run = 1; }
+      for (let i = 0; i + 7 <= N; i++) if (pat.every((b, j) => get(i + j) === b)) { const before = i >= 4 && [1, 2, 3, 4].every(k => get(i - k) === 0), after = i + 11 <= N && [7, 8, 9, 10].every(k => get(i + k) === 0); if (before || after) p += 40; } };
+    for (let y = 0; y < N; y++) { line(i => M[y][i]); line(i => M[i][y]); for (let x = 0; x < N; x++) { dark += M[y][x]; if (x < N - 1 && y < N - 1) { const c = M[y][x]; if (c === M[y][x + 1] && c === M[y + 1][x] && c === M[y + 1][x + 1]) p += 3; } } }
+    return p + Math.floor(Math.abs(dark * 20 - N * N * 10) / (N * N)) * 10;
+  }
+  function draw(cv, text) {
+    const M = encode(text), N = M.length, q = 4, sc = Math.max(2, Math.floor(600 / (N + q * 2))), W = (N + q * 2) * sc, c = cv.getContext("2d");
+    cv.width = W; cv.height = W; c.fillStyle = "#fff"; c.fillRect(0, 0, W, W); c.fillStyle = "#000";
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (M[y][x]) c.fillRect((x + q) * sc, (y + q) * sc, sc, sc);
+    cv.dataset.text = text; cv.dataset.ver = (N - 17) / 4;
+  }
+  return { encode, draw };
+})();
+
+// ───── 연결 코드 (SDP 줄이기·다시 만들기) ─────
+const PFX = "FGL1";
+const b64u = a => btoa(String.fromCharCode(...a)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const unb64u = s => [...atob(s.replace(/-/g, "+").replace(/_/g, "/"))].map(c => c.charCodeAt(0));
+function pack(t, sdp, ref) {
+  const g = k => ((sdp.match(new RegExp("^a=" + k + ":(.*)$", "m")) || [])[1] || "").trim();
+  const fp = g("fingerprint").split(" ")[1] || "", cands = [];
+  for (const m of sdp.matchAll(/^a=candidate:\S+ 1 udp \d+ (\S+) (\d+) typ host/gim)) if (!cands.includes(m[1] + "!" + m[2])) cands.push(m[1] + "!" + m[2]);
+  if (!cands.length) throw new Error("이 기기의 네트워크 주소를 찾지 못했어요. 와이파이가 켜져 있는지 확인해 주세요.");
+  return [PFX, t, g("ice-ufrag"), g("ice-pwd"), b64u(fp.split(":").map(h => parseInt(h, 16))), { actpass: "p", active: "a", passive: "s" }[g("setup")] || "a", ref || "", cands.join("*")].join("~");
+}
+function unpack(s) {
+  const f = String(s).trim().split("~"); if (f.length !== 8 || f[0] !== PFX) return null;
+  return { t: f[1], u: f[2], w: f[3], fp: unb64u(f[4]).map(b => b.toString(16).padStart(2, "0").toUpperCase()).join(":"), s: { p: "actpass", a: "active", s: "passive" }[f[5]], ref: f[6], c: f[7].split("*").map(x => x.split("!")) };
+}
+function unsdp(c) {
+  const L = ["v=0", "o=- " + Math.floor(Math.random() * 1e15) + " 2 IN IP4 127.0.0.1", "s=-", "t=0 0", "a=group:BUNDLE 0", "a=msid-semantic: WMS", "m=application 9 UDP/DTLS/SCTP webrtc-datachannel", "c=IN IP4 0.0.0.0"];
+  c.c.forEach(([a, p], i) => L.push(`a=candidate:${i + 1} 1 udp ${2122260223 - i} ${a} ${p} typ host generation 0`));
+  L.push("a=ice-ufrag:" + c.u, "a=ice-pwd:" + c.w, "a=fingerprint:sha-256 " + c.fp, "a=setup:" + c.s, "a=mid:0", "a=sctp-port:5000", "a=max-message-size:262144");
+  return { type: c.t === "o" ? "offer" : "answer", sdp: L.join("\r\n") + "\r\n" };
+}
+const pickCode = t => { try { t = decodeURIComponent(t); } catch (e) {} const m = String(t).match(/FGL1~[^\s#&]+/); return m ? m[0] : null; };
+const linkOf = (k, code) => location.href.split("#")[0] + "#" + k + "=" + encodeURIComponent(code);
+const gathered = pc => new Promise(res => { if (pc.iceGatheringState === "complete") return res(); const t = setTimeout(res, 3000); pc.addEventListener("icegatheringstatechange", () => { if (pc.iceGatheringState === "complete") { clearTimeout(t); res(); } }); });
+const newPc = () => new RTCPeerConnection({ iceServers: [] });
+const mkId = () => Math.random().toString(36).slice(2, 8);
+
+// ───── 상태 ─────
+let S = Object.assign({ name: "" }, ld(KEY) || {});
+if (!S.name) { S.name = "기기" + ri(10, 99); sv(KEY, S); }
+$("nm").value = S.name; $("nm").onchange = () => { S.name = $("nm").value.trim().slice(0, 10) || S.name; $("nm").value = S.name; sv(KEY, S); if (role === "guest") gsend({ t: "name", name: S.name }); else if (role === "host") { roster(); push(); } };
+let role = null, myId = "host", pend = null, upl = null, roomList = [], G = null;
+const peers = [];
+const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("fg-link") : null;
+const note = (id, t) => { $(id).textContent = t; };
+function copy(id) { const el = $(id); el.select(); try { navigator.clipboard.writeText(el.value).catch(() => document.execCommand("copy")); } catch (e) { try { document.execCommand("copy"); } catch (e2) {} } }
+const canScan = () => "BarcodeDetector" in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+async function scanQR(onCode) {
+  if (!canScan()) { alert("이 브라우저는 화면 안에서 QR을 찍을 수 없어요. 폰의 카메라 앱으로 찍거나 아래 '코드로 주고받기'를 써 주세요."); return; }
+  let st; try { st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }); } catch (e) { alert("카메라를 열 수 없어요. 카메라 권한을 허용해 주세요."); return; }
+  const det = new BarcodeDetector({ formats: ["qr_code"] }), v = $("vid"); v.srcObject = st; $("scan").hidden = false; try { await v.play(); } catch (e) {}
+  let done = false; const end = () => { done = true; st.getTracks().forEach(t => t.stop()); v.srcObject = null; $("scan").hidden = true; };
+  $("scx").onclick = end;
+  const loop = async () => { if (done) return; try { const r = await det.detect(v); for (const x of r) { const c = pickCode(x.rawValue); if (c) { end(); try { navigator.vibrate && navigator.vibrate(80); } catch (e) {} onCode(c); return; } } } catch (e) {} setTimeout(loop, 200); };
+  loop();
+}
+function flash(t) { $("flash").textContent = t; $("flash").hidden = false; try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} setTimeout(() => { $("flash").hidden = true; }, 900); }
+
+// ───── 방 만들기 (호스트) ─────
+async function hostStart() {
+  role = "host"; $("start").hidden = true; $("hostbox").hidden = false; $("room").hidden = false; $("game").hidden = false; $("hscan").hidden = !canScan();
+  G = { b: Array(9).fill(""), turn: "O", first: "O", win: null, line: [], x: null, sc: { O: 0, X: 0, D: 0 } };
+  if (bc) bc.onmessage = e => { const c = pickCode(e.data); if (c) takeAnswer(c); };
+  setInterval(() => peers.forEach(p => { if (p.dc.readyState === "open") p.dc.send(JSON.stringify({ t: "ping", ts: performance.now() })); }), 2000);
+  await newOffer(); roster(); renderGame();
+}
+async function newOffer() {
+  $("more").hidden = true; $("hostbox").hidden = false; note("hmsg", "초대 QR을 만드는 중…"); pend = null; $("oc").value = ""; $("qo").hidden = true;
+  const pc = newPc(), dc = pc.createDataChannel("fg"), p = { id: mkId(), name: "연결 중…", pc, dc, rtt: null };
+  try { await pc.setLocalDescription(await pc.createOffer()); await gathered(pc); p.code = pack("o", pc.localDescription.sdp); } catch (e) { note("hmsg", "⚠️ " + e.message); return; }
+  p.ref = p.code.split("~")[2].slice(0, 4); pend = p;
+  dc.onopen = () => { p.open = true; dc.send(JSON.stringify({ t: "hi", id: p.id })); if (!G.x) { G.x = p.id; resetBoard(); } note("hmsg", ""); $("hostbox").hidden = true; $("more").hidden = false; flash("✅ 연결됐어요!"); roster(); push(); };
+  dc.onclose = () => drop(p);
+  dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } hostMsg(p, m); };
+  pc.onconnectionstatechange = () => { const s = pc.connectionState; if (["failed", "closed"].includes(s)) drop(p); else { if (s === "disconnected") setTimeout(() => { if (pc.connectionState === "disconnected") drop(p); }, 6000); roster(); } };
+  QR.draw($("qo"), linkOf("j", p.code)); $("qo").hidden = false; $("oc").value = p.code; $("ai").value = ""; $("hstep").textContent = `① 참가할 폰으로 이 QR을 찍어요 (${peers.filter(x => x.open).length + 1}번째 손님)`;
+  note("hmsg", "");
+}
+async function takeAnswer(code) {
+  const c = unpack(code); if (!c || c.t !== "a") return note("hmsg", "⚠️ 답장 코드가 아니에요. 참가한 폰에 뜬 '답장' QR을 찍어 주세요.");
+  if (!pend) return; if (c.ref !== pend.ref) return note("hmsg", "⚠️ 지금 화면의 초대 QR로 만든 답장이 아니에요. 참가할 폰에서 위 QR을 다시 찍어 주세요.");
+  const p = pend; pend = null; note("hmsg", "연결하는 중…");
+  try { await p.pc.setRemoteDescription(unsdp(c)); } catch (e) { pend = p; return note("hmsg", "⚠️ 코드를 읽지 못했어요: " + e.message); }
+  peers.push(p); roster();
+  setTimeout(() => { if (!p.open) note("hmsg", "⚠️ 연결이 안 돼요. 두 폰이 같은 와이파이인지 확인해 주세요. (손님용·공용 와이파이는 기기끼리 연결을 막기도 해요)"); }, 15000);
+}
+function drop(p) {
+  if (p.gone) return; p.gone = true; p.open = false; const i = peers.indexOf(p); if (i >= 0) peers.splice(i, 1);
+  if (G && G.x === p.id) { const nx = peers.find(x => x.open); G.x = nx ? nx.id : null; resetBoard(); }
+  roster(); push();
+}
+function hostMsg(p, m) {
+  if (m.t === "pong") { p.rtt = Math.round(performance.now() - m.ts); roster(); }
+  else if (m.t === "name") { p.name = String(m.name || "").slice(0, 10) || "손님"; roster(); push(); }
+  else if (m.t === "move" && p.id === G.x) move(+m.i, "X");
+  else if (m.t === "again" && p.id === G.x) again();
+  else if (m.t === "buzz") { flash("📳 " + p.name); bcast({ t: "buzz", from: p.name }, p); }
+  else if (m.t === "bye") { try { p.pc.close(); } catch (e) {} drop(p); }
+}
+addEventListener("pagehide", () => { if (role === "guest") gsend({ t: "bye" }); else if (role === "host") bcast({ t: "bye" }); });
+const bcast = (m, except) => peers.forEach(p => { if (p !== except && p.dc.readyState === "open") p.dc.send(JSON.stringify(m)); });
+function roster() {
+  if (role !== "host") return;
+  roomList = [{ id: "host", name: S.name + " (방장)", rtt: 0, ok: true }, ...peers.map(p => ({ id: p.id, name: p.name, rtt: p.rtt, ok: !!p.open }))];
+  bcast({ t: "room", list: roomList }); renderRoom();
+}
+
+// ───── 참가하기 (손님) ─────
+function guestStart() { role = "guest"; myId = null; $("start").hidden = true; $("guestbox").hidden = false; $("gscan").hidden = !canScan(); }
+async function join(code) {
+  const c = unpack(code); if (!c || c.t !== "o") return note("gmsg", "⚠️ 초대 코드가 아니에요. 방 만든 폰의 '초대' QR을 찍어 주세요.");
+  guestStart(); note("gmsg", "답장 QR을 만드는 중…");
+  const pc = newPc(); upl = { pc, dc: null };
+  pc.ondatachannel = e => { const dc = upl.dc = e.channel;
+    dc.onopen = () => { gsend({ t: "name", name: S.name }); $("guestbox").hidden = true; $("room").hidden = false; $("game").hidden = false; flash("✅ 연결됐어요!"); };
+    dc.onmessage = e2 => { let m; try { m = JSON.parse(e2.data); } catch (x) { return; } guestMsg(m); };
+    dc.onclose = () => { $("guestbox").hidden = false; $("gjoin").hidden = false; $("gans").hidden = true; note("gmsg", "⚠️ 방과 연결이 끊겼어요. 방 만든 폰에서 '한 명 더 연결'을 눌러 다시 들어와 주세요."); roomList = []; renderRoom(); G = null; renderGame(); };
+  };
+  pc.onconnectionstatechange = () => { if (pc.connectionState === "failed") note("gmsg", "⚠️ 연결이 안 돼요. 두 폰이 같은 와이파이인지 확인해 주세요."); };
+  try { await pc.setRemoteDescription(unsdp(c)); await pc.setLocalDescription(await pc.createAnswer()); await gathered(pc); const a = pack("a", pc.localDescription.sdp, c.u.slice(0, 4)); QR.draw($("qa"), linkOf("r", a)); $("ac").value = a; } catch (e) { return note("gmsg", "⚠️ " + e.message); }
+  $("gjoin").hidden = true; $("gans").hidden = false; note("gmsg", "방 만든 폰이 이 QR을 찍으면 자동으로 연결돼요.");
+}
+const gsend = m => { if (upl && upl.dc && upl.dc.readyState === "open") upl.dc.send(JSON.stringify(m)); };
+function guestMsg(m) {
+  if (m.t === "ping") gsend({ t: "pong", ts: m.ts });
+  else if (m.t === "hi") myId = m.id;
+  else if (m.t === "room") { roomList = m.list; renderRoom(); }
+  else if (m.t === "game") { G = m.G; renderGame(); }
+  else if (m.t === "buzz") flash("📳 " + m.from);
+  else if (m.t === "bye") { try { upl.pc.close(); } catch (e) {} if (upl.dc && upl.dc.onclose) upl.dc.onclose(); }
+}
+
+// ───── 틱택토 (방장이 판정) ─────
+const LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+const judge = b => { for (const l of LINES) if (b[l[0]] && b[l[0]] === b[l[1]] && b[l[0]] === b[l[2]]) return { w: b[l[0]], line: l }; return b.every(Boolean) ? { w: "D", line: [] } : null; };
+function resetBoard() { G.b = Array(9).fill(""); G.win = null; G.line = []; G.turn = G.first; }
+function move(i, mk) { if (!G.x || G.win || G.b[i] || G.turn !== mk || !(i >= 0 && i < 9)) return; G.b[i] = mk; const j = judge(G.b); if (j) { G.win = j.w; G.line = j.line; G.sc[j.w]++; } else G.turn = mk === "O" ? "X" : "O"; push(); }
+function again() { if (!G.win && G.b.some(Boolean) && !confirm("지금 판을 그만두고 새 판을 할까요?")) return; G.first = G.first === "O" ? "X" : "O"; resetBoard(); push(); }
+function push() { if (role !== "host" || !G) return; const xp = peers.find(p => p.id === G.x); G.nO = S.name; G.nX = xp ? xp.name : ""; bcast({ t: "game", G }); renderGame(); }
+const myMark = () => role === "host" ? "O" : (G && G.x === myId ? "X" : null);
+function renderGame() {
+  if (!G) { $("game").hidden = true; return; } const me = myMark();
+  $("board").innerHTML = G.b.map((v, i) => `<button type="button" data-i="${i}" class="${G.line.includes(i) ? "w" : ""}" aria-label="${i + 1}번 칸">${v === "O" ? "⭕" : v === "X" ? "❌" : ""}</button>`).join("");
+  $("gst").textContent = !G.x ? "상대가 연결되면 시작해요" : G.win === "D" ? "비겼어요!" : G.win ? `${G.win === "O" ? "⭕ " + G.nO : "❌ " + G.nX} 승리! 🎉` : !me ? `구경 중 · ${G.turn === "O" ? "⭕ " + G.nO : "❌ " + G.nX} 차례` : G.turn === me ? `내 차례예요 (${me === "O" ? "⭕" : "❌"})` : "상대 차례예요…";
+  $("score").textContent = G.x ? `⭕ ${G.nO} ${G.sc.O} : ${G.sc.X} ${G.nX} ❌ · 무승부 ${G.sc.D}` : "";
+  $("again").hidden = !me || !G.x;
+  $("board").querySelectorAll("[data-i]").forEach(b => b.onclick = () => { if (!me || G.turn !== me || G.win) return; if (role === "host") move(+b.dataset.i, "O"); else gsend({ t: "move", i: +b.dataset.i }); });
+}
+$("again").onclick = () => { if (role === "host") again(); else gsend({ t: "again" }); };
+function renderRoom() {
+  $("list").innerHTML = roomList.length ? roomList.map(p => `<div class="li"><span><span class="dot ${p.ok ? "ok" : "bad"}"></span>${esc(p.name)}${p.id === myId && role === "guest" ? " (나)" : ""}${G && p.id === G.x ? " ❌" : p.id === "host" ? " ⭕" : ""}</span><span class="note">${p.id === "host" ? "" : !p.ok ? "연결 중…" : p.rtt == null ? "…" : p.rtt + " ms"}</span></div>`).join("") : '<p class="note">연결된 기기가 없어요.</p>';
+}
+
+$("bh").onclick = hostStart;
+$("bg").onclick = guestStart;
+$("gscan").onclick = () => scanQR(join);
+$("ogo").onclick = () => { const c = pickCode($("oi").value); c ? join(c) : note("gmsg", "⚠️ 초대 코드를 붙여 넣어 주세요."); };
+$("hscan").onclick = () => scanQR(takeAnswer);
+$("ago").onclick = () => { const c = pickCode($("ai").value); c ? takeAnswer(c) : note("hmsg", "⚠️ 답장 코드를 붙여 넣어 주세요."); };
+$("ocp").onclick = () => copy("oc");
+$("acp").onclick = () => copy("ac");
+$("more").onclick = newOffer;
+$("buzz").onclick = () => { if (role === "host") { bcast({ t: "buzz", from: S.name }); flash("📳 보냈어요"); } else { gsend({ t: "buzz" }); flash("📳 보냈어요"); } };
+
+// 카메라 앱으로 QR을 찍어 이 화면이 열렸을 때: #j=초대(참가하기) / #r=답장(방 만든 화면으로 전달)
+(() => {
+  const h = location.hash, k = h.slice(1, 3), c = pickCode(h.slice(3)); if (!c) return;
+  try { history.replaceState(null, "", location.href.split("#")[0]); } catch (e) {}
+  if (k === "j=") join(c);
+  else if (k === "r=") { guestStart(); $("gjoin").hidden = true; if (bc) bc.postMessage(c); note("gmsg", "✅ 답장을 방 만든 화면으로 보냈어요. 이 창을 닫고 방 만든 화면으로 돌아가 주세요. (자동으로 연결되지 않으면 방 만든 화면에서 '📷 답장 QR 찍기'를 써 주세요)"); }
+})();
+if (!("RTCPeerConnection" in window)) { $("start").innerHTML = '<p>⚠️ 이 브라우저는 기기끼리 연결하는 기능(WebRTC)을 지원하지 않아요. 크롬이나 삼성 인터넷 최신 버전에서 열어 주세요.</p>'; }
+'''
+
+make("out/link-test.html", "폰 연결 테스트", "📡", 205, "link-test-v1",
+     "폰(또는 PC) 여러 대를 QR로 직접 연결해요. 인터넷 서버를 거치지 않고 같은 와이파이 안에서 기기끼리 바로 주고받아요. 방장과 처음 들어온 기기가 틱택토를 하고, 나머지는 구경해요. 화면이 꺼지거나 앱을 닫으면 연결이 끊겨요. QR코드는 (주)덴소웨이브의 등록상표예요.",
+     BODY, JS, CSS)

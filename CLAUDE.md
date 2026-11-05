@@ -55,6 +55,7 @@
   | 오답 노트, 한자 쓰기 | `set19.py`, `set20.py` | |
   | 한자 자세히 보기 | `build_hanja_detail.py` | `hd_rows.json`(6급), `hd5.txt`(5급), `hd6.txt`(4급) … 새 급수는 `hd7.txt`처럼 추가(FILES에 이미 hd7, hd8 등록) |
 - 데이터 추가 요령(예: 사자성어): `idiom_more*.txt` 식으로 새 줄을 쓰고 → 중복(한글/한자/뜻) 제거 후 `idiom_data.txt`에 추가 → `py idiom_merge.py` → `py set21.py` → `py ship.py ...` → 검증 → 푸시. **`sed '/.../d'`로 줄 지울 때 `\|`를 쓰면 모든 줄이 지워지니 주의**(파이썬 필터 권장).
+- **작은 퀴즈 문제 늘리기(qmore)**: `tools/dev/qmore/<퀴즈이름>.txt`에 한 줄 한 문제(`문제|정답|오답1|오답2|오답3`, 국기·영어 단어·직업은 `그림(문제)|정답`, 이모지는 `그림|이름|분류`, OX는 `문장|O 또는 X|분류|해설`)를 쓰고 `py qmore.py` → 원본(`qmore/base/*.json`) + 추가 문제로 HTML의 `const D`를 다시 만들어요(여러 번 돌려도 같음, 같은 문제는 자동 제외). `mkquiz.py`로 다시 만들어도 qmore가 합쳐져요. 2026-11-05에 100문제 미만이던 퀴즈 29개를 모두 100문제 이상으로 늘림. 끝나면 `py gamenum.py`(문제 수 표시)·`py set33.py`+ship(퀴즈 버저 문제)도 다시.
 - 검증 도구(Node + Playwright 필요): `qv.js 페이지명...`(퀴즈 보기·정답 검사), `all.js`(모든 페이지 360px 오류·가로 넘침), `gl.js`(전역 이름 충돌), `idx.js`(시작 화면). PC에서 쓰려면 `npm i playwright` + `npx playwright install chromium`.
 
 ## 4. 주요 기능 메모

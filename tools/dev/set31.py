@@ -42,16 +42,30 @@ function lineAt(g, i, W, Hh, k) { const v = g[i], y0 = Math.floor(i / W), x0 = i
 '''
 
 # ── 오목: 15×15, 5개 이상 이으면 승리(시작 화면의 오목과 같은 규칙). 먼저 하는 사람이 흑.
-#   칸이 작아서 한 번 누르면 미리 보기, 같은 곳을 한 번 더 누르거나 "여기 두기"로 놓아요.
+#   3·3 금지(흑·백 모두, 5목이 되는 수는 예외): isDoubleThree. 칸이 작아서 한 번 누르면 미리 보기, 같은 곳을 한 번 더 누르거나 "여기 두기"로 놓아요.
 make("out/net-omok.html", "오목 (같이 하기)", "⚫", 35, "net-omok-v1",
-     "가로, 세로, 대각선으로 내 돌 5개를 먼저 이으면 이겨요. 먼저 하는 사람이 흑이고, 판마다 순서가 바뀌어요. 칸을 한 번 누르면 미리 보기, 같은 곳을 한 번 더 누르거나 '여기 두기'를 누르면 놓아져요.",
+     "가로, 세로, 대각선으로 내 돌 5개를 먼저 이으면 이겨요. 3·3(한 번에 열린 3이 두 개 생기는 수)은 흑·백 모두 둘 수 없어요(✕ 표시, 단 5목이 되면 괜찮아요). 먼저 하는 사람이 흑이고, 판마다 순서가 바뀌어요. 칸을 한 번 누르면 미리 보기, 같은 곳을 한 번 더 누르거나 '여기 두기'를 누르면 놓아져요.",
      '''  <div class="card"><p class="center" id="st"></p><canvas id="cv" style="width:100%;max-width:400px;aspect-ratio:1;margin:0 auto;display:block;border-radius:10px;touch-action:manipulation"></canvas>
     <button class="btn sm" id="put" type="button" hidden>✅ 여기 두기</button>''' + AGAIN + '</div>',
      DUO_JS + LINE_FIND + r'''
-const N = 15, cv = $("cv"), ctx = cv.getContext("2d"); let sel = -1;
+const N = 15, cv = $("cv"), ctx = cv.getContext("2d"); let sel = -1, warn = "";
+// 3·3 금지: (x,y)에 p를 놓았을 때 '열린 3'(한 수만 더 두면 양쪽이 열린 4가 되는 3)이 두 방향 이상 생기면 둘 수 없어요. 그 수로 5목이 되면 괜찮아요.
+function isDoubleThree(at, x, y, p, N) {
+  const D = [[1, 0], [0, 1], [1, 1], [1, -1]], ins = (a, b) => a >= 0 && b >= 0 && a < N && b < N;
+  const v = (a, b, ex) => (a === x && b === y) || (ex && a === ex[0] && b === ex[1]) ? p : ins(a, b) ? at(a, b) : -1;
+  for (const [dx, dy] of D) { let c = 1; for (const s of [1, -1]) { let k = 1; while (v(x + s * dx * k, y + s * dy * k) === p) { c++; k++; } } if (c >= 5) return false; }
+  let threes = 0;
+  for (const [dx, dy] of D) { let three = false;
+    for (let s = -4; s <= 4 && !three; s++) { if (!s) continue; const ex = [x + s * dx, y + s * dy]; if (!ins(ex[0], ex[1]) || at(ex[0], ex[1])) continue;
+      let lo = 0, hi = 0; while (v(x + (lo - 1) * dx, y + (lo - 1) * dy, ex) === p) lo--; while (v(x + (hi + 1) * dx, y + (hi + 1) * dy, ex) === p) hi++;
+      if (hi - lo + 1 === 4 && s >= lo && s <= hi && v(x + (lo - 1) * dx, y + (lo - 1) * dy, ex) === 0 && v(x + (hi + 1) * dx, y + (hi + 1) * dy, ex) === 0) three = true; }
+    if (three) threes++; }
+  return threes >= 2;
+}
+const banned = (i, v) => isDoubleThree((a, b) => P.g[b * N + a], i % N, Math.floor(i / N), v, N);
 function newRound() { return { ph: "play", g: Array(N * N).fill(0), turn: P.first, last: -1, line: [] }; }
 function onAct(from, d) {
-  if (d.t === "put" && P.ph === "play" && from === P.turn) { const i = +d.i; if (!(i >= 0 && i < N * N) || P.g[i]) return; P.g[i] = from === P.first ? 1 : 2; P.last = i;
+  if (d.t === "put" && P.ph === "play" && from === P.turn) { const i = +d.i; if (!(i >= 0 && i < N * N) || P.g[i] || banned(i, from === P.first ? 1 : 2)) return; P.g[i] = from === P.first ? 1 : 2; P.last = i;
     const w = lineAt(P.g, i, N, N, 5); if (w) { P.line = w; finish(from); } else if (P.g.every(Boolean)) finish("D"); else P.turn = oppOf(from); pushS(); }
   else if (d.t === "again" && P.ph === "end") { round(true); pushS(); }
 }
@@ -68,17 +82,18 @@ function draw() {
   const stone = (i, v, a) => { const [x, y] = xy(i); ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(x, y, gap * .45, 0, 7); ctx.fillStyle = v === 1 ? "#111" : "#fafafa"; ctx.fill(); ctx.strokeStyle = "#333"; ctx.stroke(); ctx.globalAlpha = 1; };
   const dot = (i, c) => { const [x, y] = xy(i); ctx.beginPath(); ctx.arc(x, y, gap * .16, 0, 7); ctx.fillStyle = c; ctx.fill(); };
   P.g.forEach((v, i) => { if (v) stone(i, v, 1); });
+  if (canPlay()) { ctx.strokeStyle = "#c62828"; ctx.lineWidth = 2; P.g.forEach((v, i) => { if (!v && banned(i, colorOf(me))) { const [x, y] = xy(i), r = gap * .22; ctx.beginPath(); ctx.moveTo(x - r, y - r); ctx.lineTo(x + r, y + r); ctx.moveTo(x + r, y - r); ctx.lineTo(x - r, y + r); ctx.stroke(); } }); }
   if (sel >= 0 && !P.g[sel] && canPlay()) stone(sel, colorOf(me), .5);
   if (P.last >= 0) dot(P.last, "#e53935"); (P.line || []).forEach(i => dot(i, "#2e7d32"));
 }
 cv.onclick = e => { if (!canPlay()) return; const r = cv.getBoundingClientRect(), { gap } = geo(), x = Math.round((e.clientX - r.left) / gap) - 1, y = Math.round((e.clientY - r.top) / gap) - 1;
-  if (x < 0 || y < 0 || x >= N || y >= N) return; const i = y * N + x; if (P.g[i]) return; if (sel === i) return put(); sel = i; render(); };
+  if (x < 0 || y < 0 || x >= N || y >= N) return; const i = y * N + x; if (P.g[i]) return; if (banned(i, colorOf(me))) { warn = "✕ 3·3 자리라 둘 수 없어요"; sel = -1; render(); return; } warn = ""; if (sel === i) return put(); sel = i; render(); };
 function put() { if (sel < 0 || !canPlay()) return; const i = sel; sel = -1; act({ t: "put", i }); render(); }
 $("put").onclick = put;
 function render() {
   if (!P) { $("st").textContent = "연결을 기다리는 중…"; draw(); return; }
   const pl = amPlayer(), stoneName = id => (id === P.first ? "⚫ " : "⚪ ") + nm(id);
-  $("st").textContent = P.ph === "wait" ? "상대가 들어오면 시작해요" : P.ph === "end" ? endText() : !pl ? `구경 중 · ${stoneName(P.turn)} 차례` : P.turn === me ? `내 차례예요 (${colorOf(me) === 1 ? "⚫ 흑" : "⚪ 백"}) · 놓을 곳을 눌러요` : "상대 차례예요…";
+  $("st").textContent = P.ph === "wait" ? "상대가 들어오면 시작해요" : P.ph === "end" ? endText() : !pl ? `구경 중 · ${stoneName(P.turn)} 차례` : P.turn === me ? (warn || `내 차례예요 (${colorOf(me) === 1 ? "⚫ 흑" : "⚪ 백"}) · 놓을 곳을 눌러요`) : "상대 차례예요…";
   if (!canPlay()) sel = -1; $("put").hidden = !(sel >= 0); common(); draw();
 }
 addEventListener("resize", () => draw());

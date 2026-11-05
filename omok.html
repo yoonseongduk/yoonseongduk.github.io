@@ -39,7 +39,7 @@ canvas{width:100%;display:block;aspect-ratio:1}
   <div class="turn" id="turn" aria-live="polite"></div>
   <div class="wrap"><canvas id="cv" aria-label="오목판"></canvas></div>
   <div class="row"><button class="btn ghost" id="undo" type="button">↶ 무르기</button><button class="btn" id="newGame" type="button">새 판</button></div>
-  <p class="muted">가로, 세로, 대각선으로 내 돌 5개를 먼저 이으면 이겨요. 내가 흑(먼저)이고, 교차점을 터치해서 돌을 놓아요.</p>
+  <p class="muted">가로, 세로, 대각선으로 내 돌 5개를 먼저 이으면 이겨요. 내가 흑(먼저)이고, 교차점을 터치해서 돌을 놓아요. 3·3(한 번에 열린 3이 두 개 생기는 수)은 나와 컴퓨터 모두 둘 수 없어요(✕ 표시). 단, 5목이 되는 수는 괜찮아요.</p>
 </main>
 <script>
 const N = 15, DIRS = [[1, 0], [0, 1], [1, 1], [1, -1]], KEY = "omok-v1";
@@ -47,7 +47,7 @@ const OPPS = { easy: ["쉬움", "컴퓨터 · 약함"], hard: ["어려움", "컴
 const $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-let opp = (ld(KEY) in OPPS) ? ld(KEY) : "easy", b, hist, turn, over, winLine, busy;     // b[y][x]: 0 빈칸, 1 흑, 2 백
+let opp = (ld(KEY) in OPPS) ? ld(KEY) : "easy", b, hist, turn, over, winLine, busy, warn = "";     // b[y][x]: 0 빈칸, 1 흑, 2 백
 
 const inb = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
 function lineOf(x, y, p) {                                  // (x,y)에 p가 놓였을 때 5목 이상이면 그 줄을 돌려준다
@@ -57,6 +57,18 @@ function lineOf(x, y, p) {                                  // (x,y)에 p가 놓
     if (cells.length >= 5) return cells;
   }
   return null;
+}
+// 3·3 금지: (x,y)에 p를 놓았을 때 '열린 3'(한 수만 더 두면 양쪽이 열린 4가 되는 3)이 두 방향 이상 생기면 둘 수 없다. 그 수로 5목이 되면 괜찮다. (흑·백·컴퓨터 모두)
+function isDoubleThree(x, y, p) {
+  const v = (a, c, ex) => (a === x && c === y) || (ex && a === ex[0] && c === ex[1]) ? p : inb(a, c) ? b[c][a] : -1;
+  for (const [dx, dy] of DIRS) { let n = 1; for (const s of [1, -1]) { let k = 1; while (v(x + s * dx * k, y + s * dy * k) === p) { n++; k++; } } if (n >= 5) return false; }
+  let threes = 0;
+  for (const [dx, dy] of DIRS) { let three = false;
+    for (let s = -4; s <= 4 && !three; s++) { if (!s) continue; const ex = [x + s * dx, y + s * dy]; if (!inb(ex[0], ex[1]) || b[ex[1]][ex[0]]) continue;
+      let lo = 0, hi = 0; while (v(x + (lo - 1) * dx, y + (lo - 1) * dy, ex) === p) lo--; while (v(x + (hi + 1) * dx, y + (hi + 1) * dy, ex) === p) hi++;
+      if (hi - lo + 1 === 4 && s >= lo && s <= hi && v(x + (lo - 1) * dx, y + (lo - 1) * dy, ex) === 0 && v(x + (hi + 1) * dx, y + (hi + 1) * dy, ex) === 0) three = true; }
+    if (three) threes++; }
+  return threes >= 2;
 }
 // 한 점의 가치: 네 방향의 연속된 돌 수와 양쪽이 열려 있는지로 점수를 매긴다
 function scoreAt(x, y, p) {
@@ -71,7 +83,7 @@ function scoreAt(x, y, p) {
 function aiMove() {
   const cand = []; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!b[y][x]) {
     let near = false; for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) if (inb(x + dx, y + dy) && b[y + dy][x + dx]) { near = true; break; }
-    if (near) cand.push([x, y]);
+    if (near && !isDoubleThree(x, y, 2)) cand.push([x, y]);   // 컴퓨터도 3·3 자리는 두지 않아요
   }
   if (!cand.length) return [7, 7];
   let best = -1, pick = [];
@@ -83,7 +95,7 @@ function aiMove() {
   }
   return pick[Math.floor(Math.random() * pick.length)];
 }
-function newGame() { b = Array.from({ length: N }, () => Array(N).fill(0)); hist = []; turn = 1; over = false; winLine = null; busy = false; render(); }
+function newGame() { warn = ""; b = Array.from({ length: N }, () => Array(N).fill(0)); hist = []; turn = 1; over = false; winLine = null; busy = false; render(); }
 function place(x, y) {
   b[y][x] = turn; hist.push([x, y, turn]); const l = lineOf(x, y, turn);
   if (l) { over = true; winLine = l; } else if (hist.length === N * N) over = true; else turn = turn === 1 ? 2 : 1;
@@ -92,14 +104,15 @@ function place(x, y) {
 function tap(x, y) {
   if (over || busy || b[y][x]) return;
   if (opp !== "two" && turn !== 1) return;
-  place(x, y);
+  if (isDoubleThree(x, y, turn)) { warn = "✕ 3·3 자리라 둘 수 없어요"; render(); return; }
+  warn = ""; place(x, y);
   if (!over && opp !== "two") { busy = true; render(); setTimeout(() => { if (!hist.length) return; const [ax, ay] = aiMove(); busy = false; place(ax, ay); }, 350); }
 }
 function undo() {
   if (busy || !hist.length) return;
   if (opp === "two") { const [x, y, p] = hist.pop(); b[y][x] = 0; turn = p; }                       // 2명: 마지막 한 수만 되돌린다
   else { while (hist.length) { const [x, y, p] = hist.pop(); b[y][x] = 0; if (p === 1) break; } turn = 1; }   // 컴퓨터: 내 마지막 수까지 되돌린다
-  over = false; winLine = null; render();
+  over = false; winLine = null; warn = ""; render();
 }
 function render() {
   const cv = $("cv"), w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!w) return;
@@ -115,9 +128,10 @@ function render() {
     c.fillStyle = g; c.fill(); if (b[y][x] === 2) { c.strokeStyle = "rgba(0,0,0,.3)"; c.stroke(); }
   }
   if (hist.length) { const [x, y] = hist[hist.length - 1]; c.fillStyle = "#e8453c"; c.beginPath(); c.arc((x + .5) * u, (y + .5) * u, u * .1, 0, 7); c.fill(); }
+  if (!over && !busy && (opp === "two" || turn === 1)) { c.strokeStyle = "#c62828"; c.lineWidth = 2; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!b[y][x] && isDoubleThree(x, y, turn)) { const cx = (x + .5) * u, cy = (y + .5) * u, r = u * .2; c.beginPath(); c.moveTo(cx - r, cy - r); c.lineTo(cx + r, cy + r); c.moveTo(cx + r, cy - r); c.lineTo(cx - r, cy + r); c.stroke(); } }
   if (winLine) { c.strokeStyle = "#e8453c"; c.lineWidth = 3; winLine.forEach(([x, y]) => { c.beginPath(); c.arc((x + .5) * u, (y + .5) * u, u * .47, 0, 7); c.stroke(); }); }
   const two = opp === "two", nm = p => two ? (p === 1 ? "⚫ 흑" : "⚪ 백") : (p === 1 ? "내" : "컴퓨터");
-  $("turn").textContent = over ? (winLine ? (two ? nm(turn) + " 승리! 🎉" : turn === 1 ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요") : "무승부예요 🤝") : busy ? "컴퓨터가 생각 중…" : (two ? nm(turn) + " 차례예요" : "내 차례예요 (⚫)");
+  $("turn").textContent = over ? (winLine ? (two ? nm(turn) + " 승리! 🎉" : turn === 1 ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요") : "무승부예요 🤝") : busy ? "컴퓨터가 생각 중…" : warn || (two ? nm(turn) + " 차례예요" : "내 차례예요 (⚫)");
   $("opp").innerHTML = Object.keys(OPPS).map(k => `<button type="button" class="${k === opp ? "on" : ""}" data-o="${k}" role="radio" aria-checked="${k === opp}">${OPPS[k][0]}<small>${OPPS[k][1]}</small></button>`).join("");
   $("undo").disabled = busy || !hist.length;
 }

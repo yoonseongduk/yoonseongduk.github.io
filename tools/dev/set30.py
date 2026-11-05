@@ -298,7 +298,7 @@ function showPick() {
 }
 function raceList() {
   const q = $("rq").value.trim().toLowerCase();
-  $("rlist").innerHTML = groupsHtml(RACE_GROUPS, k => RACE.filter(r => r[3] === k && findHit(q, r[2], r[4])).map(r => gmBtn(r[0], r[1], r[2], bestSum(r[0]), r[4], "r")), q, "r") || '<p class="note">찾는 게임이 없어요.</p>';
+  $("rlist").innerHTML = groupsHtml(RACE_GROUPS, k => RACE.filter(r => r[3] === k && findHit(q, r[2], r[4])).map(r => gmBtn(r[0], r[1], r[2], [BUZZ_OK.includes(r[0]) ? "🔔 퀴즈 버저 가능" : "", bestSum(r[0])].filter(Boolean).join(" · "), r[4], "r")), q, "r") || '<p class="note">찾는 게임이 없어요.</p>';
   $("rlist").querySelectorAll("[data-r]").forEach(b => b.onclick = () => { const f = b.dataset.r, g = raceGame(f); if (g && g[3] === "quiz") quizMode(f); else raceStart(f); }); bindGroups($("rlist"), () => $("rq").value.trim());
 }
 $("gq").addEventListener("input", showPick);

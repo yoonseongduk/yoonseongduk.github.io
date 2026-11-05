@@ -25,7 +25,9 @@ def ensure():
     json.dump(nums, open(JP, "w", encoding="utf-8"), ensure_ascii=False, indent=0, sort_keys=False)
     p = os.path.join(REPO, "index.html"); s = open(p, encoding="utf-8").read()
     net = [[g[0], g[1], g[2], nums[g[0]]] for g in net_games()]
-    block = "/*NUM*/const NUM = " + json.dumps(nums, ensure_ascii=False, separators=(",", ":")) + ", NETG = " + json.dumps(net, ensure_ascii=False, separators=(",", ":")) + ";/*/NUM*/"
+    # BUZZ: 같이 하기 퀴즈 버저로도 할 수 있는 퀴즈(문제 목록 const D가 들어 있는 퀴즈) — 시작 화면 카드에 🔔 표시
+    buzz = [r[0] for r in index_games() if r[4] == "quiz" and "const D = [" in open(os.path.join(REPO, r[0]), encoding="utf-8").read()]
+    block = "/*NUM*/const NUM = " + json.dumps(nums, ensure_ascii=False, separators=(",", ":")) + ", NETG = " + json.dumps(net, ensure_ascii=False, separators=(",", ":")) + ", BUZZ = " + json.dumps(buzz, ensure_ascii=False, separators=(",", ":")) + ";/*/NUM*/"
     s2 = re.sub(r'/\*NUM\*/.*?/\*/NUM\*/', lambda m: block, s, flags=re.S) if "/*NUM*/" in s else s.replace("const GROUPS = [", block + "\nconst GROUPS = [", 1)
     if s2 != s: open(p, "w", encoding="utf-8").write(s2)
     return nums

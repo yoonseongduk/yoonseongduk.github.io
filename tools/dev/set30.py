@@ -194,7 +194,7 @@ async function newOffer() {
   const pc = newPc(), dc = pc.createDataChannel("fg"), p = { id: mkId(), name: "연결 중…", pc, dc, rtt: null };
   try { await pc.setLocalDescription(await pc.createOffer()); await gathered(pc); p.code = pack("o", pc.localDescription.sdp); } catch (e) { note("hmsg", "⚠️ " + e.message); return; }
   p.ref = p.code.split("~")[2].slice(0, 4); pend = p;
-  dc.onopen = () => { p.open = true; send(p, { t: "hi", id: p.id }); send(p, { t: "load", game }); if (R) send(p, { t: "race", R }); note("hmsg", ""); $("hostbox").hidden = true; $("more").hidden = false; flash("✅ 연결됐어요!"); roster(); };
+  dc.onopen = () => { armBack(); p.open = true; send(p, { t: "hi", id: p.id }); send(p, { t: "load", game }); if (R) send(p, { t: "race", R }); note("hmsg", ""); $("hostbox").hidden = true; $("more").hidden = false; flash("✅ 연결됐어요!"); roster(); };
   dc.onclose = () => drop(p);
   dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } hostMsg(p, m); };
   // 잠깐 끊김(disconnected)은 기다려요. 완전히 끊긴 경우(failed·closed·나가기)만 정리해요.
@@ -247,7 +247,7 @@ async function join(code) {
   guestStart(); note("gmsg", "답장 QR을 만드는 중…");
   const pc = newPc(); upl = { pc, dc: null };
   pc.ondatachannel = e => { const dc = upl.dc = e.channel;
-    dc.onopen = () => { wake(); $("pplb").hidden = asGuest; gsend({ t: "name", name: S.name, gst: asGuest }); $("guestbox").hidden = true; $("room").hidden = false; $("wait").hidden = !!game; flash("✅ 연결됐어요!"); };
+    dc.onopen = () => { armBack(); wake(); $("pplb").hidden = asGuest; gsend({ t: "name", name: S.name, gst: asGuest }); $("guestbox").hidden = true; $("room").hidden = false; $("wait").hidden = !!game; flash("✅ 연결됐어요!"); };
     dc.onmessage = e2 => { let m; try { m = JSON.parse(e2.data); } catch (x) { return; } guestMsg(m); };
     dc.onclose = () => { $("guestbox").hidden = false; $("gjoin").hidden = true; $("gans").hidden = true; $("gre").hidden = false; note("gmsg", "⚠️ 방과 연결이 끊겼어요. '처음부터 다시'를 누르고, 방 만든 폰에서 '➕ 한 명 더 연결'로 다시 들어와 주세요."); roomList = []; renderRoom(); loadGame(null); $("wait").hidden = true; };
   };
@@ -428,10 +428,19 @@ $("home").onclick = () => { if (!confirm("지금 게임을 끝내고 다른 게�
 function leave() {
   if (role === "host") { if (!confirm("방을 닫을까요? 연결된 모든 기기의 연결이 끊겨요.")) return; bcast({ t: "bye" }); }
   else if (role === "guest") { if (!confirm("방에서 나갈까요? (방장 폰과의 연결이 끊겨요)")) return; gsend({ t: "bye" }); }
-  role = null; setTimeout(() => { peers.forEach(p => { try { p.pc.close(); } catch (e) {} }); try { upl && upl.pc.close(); } catch (e) {} location.href = location.href.split("#")[0]; }, 200);
+  leaving = true; role = null; setTimeout(() => { peers.forEach(p => { try { p.pc.close(); } catch (e) {} }); try { upl && upl.pc.close(); } catch (e) {} location.href = location.href.split("#")[0]; }, 200);
 }
 $("leave").onclick = leave;
-window.fgLeaveCheck = () => !role || confirm("처음 화면으로 가면 같이 하기 연결이 끊겨요. 갈까요?");   // 🏠 처음으로 버튼(공용 스크립트)을 누를 때
+// 연결된 동안 나가려 하면(🏠 처음으로, 폰의 뒤로 버튼, 새로 고침·닫기) 먼저 물어봐요. 연결된 사람이 없으면 묻지 않아요.
+let leaving = false, trapped = false;
+const isLinked = () => role === "host" ? openPeers().length > 0 : role === "guest" && !!(upl && upl.dc && upl.dc.readyState === "open");
+const leaveMsg = () => role === "host" ? `지금 연결된 참가자 ${openPeers().length}명이 있어요. 나가면 모두의 연결이 끊겨요. 나갈까요?` : "나가면 방장 폰과의 연결이 끊겨요. 나갈까요?";
+window.fgLeaveCheck = () => { if (!isLinked()) return true; const y = confirm(leaveMsg()); if (y) leaving = true; return y; };   // 🏠 처음으로 버튼(공용 스크립트)을 누를 때
+function armBack() { if (trapped) return; trapped = true; try { history.pushState({ fg: 1 }, ""); } catch (e) {} }   // 뒤로 버튼을 한 번 받아 두는 자리
+addEventListener("popstate", () => { if (!trapped) return;
+  if (!isLinked() || confirm(leaveMsg())) { trapped = false; leaving = true; if (role === "host") bcast({ t: "bye" }); else gsend({ t: "bye" }); setTimeout(() => history.back(), 150); }
+  else { try { history.pushState({ fg: 1 }, ""); } catch (e) {} } });
+addEventListener("beforeunload", e => { if (isLinked() && !leaving) { e.preventDefault(); e.returnValue = ""; } });
 $("buzz").onclick = () => { if (role === "host") bcast({ t: "buzz", from: S.name }); else gsend({ t: "buzz" }); flash("📳 보냈어요"); };
 
 // 카메라 앱으로 QR을 찍어 이 화면이 열렸을 때: #j=초대(참가하기) / #r=답장(방 만든 화면으로 전달)

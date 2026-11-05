@@ -323,7 +323,8 @@ def party(fn, title, emoji, hue, key, help_, body, js, css=""):
 #   문제는 방장이 직접 내도 되고, '🎲 문제 뽑아 주기'로 시작 화면의 퀴즈(43개)에서 뽑을 수 있어요(정답은 방장 화면에만). 퀴즈 파일을 그때 받아서 문제 목록(const D)만 꺼내 써요.
 import json as _j, gamenum as _gn
 _NUMS = _gn.ensure()
-QUIZZES = [[g[0], g[1], g[2], _NUMS[g[0]]] for g in _gn.index_games() if g[4] == "quiz" and "const D = [" in open("../../" + g[0], encoding="utf-8").read()]
+_QC = _gn.quiz_counts()
+QUIZZES = [[g[0], g[1], g[2], _NUMS[g[0]], _QC.get(g[0], "")] for g in _gn.index_games() if g[4] == "quiz" and "const D = [" in open("../../" + g[0], encoding="utf-8").read()]
 party("net-buzzer.html", "퀴즈 버저 (같이 하기)", "🔔", 0, "net-buzzer-v1",
       "TV 퀴즈처럼 '먼저 누르기' 대결이에요. 시작 화면 퀴즈와 같이 10문제가 한 세트예요. 방장(진행자)이 문제를 소리 내어 읽고 '문제 시작'을 누르면, 답을 아는 사람은 자기 폰의 큰 버튼을 눌러요. 가장 먼저 누른 사람이 소리 내어 답하고, 방장이 ⭕(정답 +1점)/❌(오답 → 다음 사람에게 기회)를 눌러요. 문제는 방장이 직접 내도 되고 '🎲 문제 뽑아 주기'로 시작 화면의 퀴즈(한국사·일본어·한자·상식 등)에서 뽑아도 돼요.",
       '<details class="guide" id="guide" open><summary><b>❓ 어떻게 하나요?</b></summary><ol id="steps"></ol></details>'
@@ -378,7 +379,7 @@ function render() {
   $("ord").innerHTML = P.order.length ? '<div class="lb">누른 순서</div>' + P.order.map((id, i) => `<div class="li"><span>${i + 1}. ${esc(pn(id))}</span>${i === 0 ? "<b>답할 차례</b>" : ""}</div>`).join("") : "";
   let rk = 0, prev = null; $("score").innerHTML = `<div class="lb">${P.ph === "over" ? "🏁 최종 순위" : `점수 (${Math.min(P.q, SET)}/${SET}문제)`}</div>` + rankL.map(([id, v], n) => { if (v !== prev) { rk = n + 1; prev = v; } return `<div class="li"><span>${P.ph === "over" && v ? ["🥇", "🥈", "🥉"][rk - 1] || rk + "등" : ""} ${esc(pn(id))}</span><b>${v}점</b></div>`; }).join("");
 }
-$("qcat").innerHTML = '<option value="">🎲 아무 퀴즈</option>' + QUIZZES.map(([f, e, t, n]) => `<option value="${f}">#${n} ${e} ${esc(t)}</option>`).join("");
+$("qcat").innerHTML = '<option value="">🎲 아무 퀴즈</option>' + QUIZZES.map(([f, e, t, n, c]) => `<option value="${f}">#${n} ${e} ${esc(t)}${c ? ` (${c})` : ""}</option>`).join("");
 { const pre = decodeURIComponent((location.hash.match(/quiz=([^&]+)/) || [])[1] || ""), g = QUIZZES.find(x => x[0] === pre); if (g) { $("qcat").value = pre; $("qhost").innerHTML = `<b>${g[1]} ${esc(g[2])}</b> 퀴즈를 골랐어요. '🎲 문제 뽑아 주기'를 눌러 시작해요.`; } }
 async function pickQ() { const f = $("qcat").value || QUIZZES[ri(0, QUIZZES.length - 1)][0], g = QUIZZES.find(x => x[0] === f); $("qhost").textContent = "문제를 가져오는 중…";
   try { const d = await loadQuiz(f), free = d.map((_, k) => k).filter(k => !usedQ.has(f + k)), k = free.length ? free[ri(0, free.length - 1)] : ri(0, d.length - 1), x = d[k], opts = shuf([x[1], ...(x[2] || []).slice(0, 3)]);

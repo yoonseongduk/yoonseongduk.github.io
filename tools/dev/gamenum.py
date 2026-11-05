@@ -17,6 +17,27 @@ def net_games():
     m = re.search(r'^GAMES = (\[.*?\]\])\n', s, re.S | re.M)
     return json.loads(m.group(1))
 
+def quiz_counts():
+    """퀴즈마다 문제 수(시작 화면 카드·같이 하기 목록에 표시). 문제 목록 const D가 있으면 그 개수, 특별한 퀴즈는 따로 세요."""
+    out = {}
+    for r in index_games():
+        if r[4] != "quiz": continue
+        h = open(os.path.join(REPO, r[0]), encoding="utf-8").read()
+        try:
+            if "const D = [" in h:
+                i = h.index("const D = ["); j = i + re.search(r"\];\r?\n", h[i:]).start(); out[r[0]] = f"{len(json.loads(h[i + 10:j + 1])):,}문제"
+            elif r[0] == "capital-quiz.html":
+                i = h.index("const FL = {"); out[r[0]] = f"{h[i:h.index('};', i)].count(':'):,}개 나라"
+            elif r[0] == "chosung-quiz.html":
+                i = h.index("const WORDS = {"); blk = h[i:h.index("};", i)]; out[r[0]] = f"{sum(len(v.split()) for v in re.findall(r':\s*\"([^\"]+)\"', blk)):,}낱말"
+            elif r[0] in ("hanja-write.html", "hanja-today.html"):
+                out[r[0]] = f"한자 {len(json.load(open(os.path.join(REPO, 'data/hanja.json'), encoding='utf-8'))):,}자"
+            elif r[0] == "word-chain.html":
+                n = sum(1 for _ in open(os.path.join(REPO, "data/words-ko.txt"), encoding="utf-8")); out[r[0]] = f"사전 {n // 10000}만 낱말"
+        except Exception as e:
+            print("문제 수 세기 실패", r[0], e)
+    return out
+
 def ensure():
     nums = json.load(open(JP, encoding="utf-8")) if os.path.exists(JP) else {}
     nxt = max(nums.values(), default=0) + 1
@@ -27,7 +48,8 @@ def ensure():
     net = [[g[0], g[1], g[2], nums[g[0]]] for g in net_games()]
     # BUZZ: 같이 하기 퀴즈 버저로도 할 수 있는 퀴즈(문제 목록 const D가 들어 있는 퀴즈) — 시작 화면 카드에 🔔 표시
     buzz = [r[0] for r in index_games() if r[4] == "quiz" and "const D = [" in open(os.path.join(REPO, r[0]), encoding="utf-8").read()]
-    block = "/*NUM*/const NUM = " + json.dumps(nums, ensure_ascii=False, separators=(",", ":")) + ", NETG = " + json.dumps(net, ensure_ascii=False, separators=(",", ":")) + ", BUZZ = " + json.dumps(buzz, ensure_ascii=False, separators=(",", ":")) + ";/*/NUM*/"
+    qc = quiz_counts()
+    block = "/*NUM*/const QCNT = " + json.dumps(qc, ensure_ascii=False, separators=(",", ":")) + ", NUM = " + json.dumps(nums, ensure_ascii=False, separators=(",", ":")) + ", NETG = " + json.dumps(net, ensure_ascii=False, separators=(",", ":")) + ", BUZZ = " + json.dumps(buzz, ensure_ascii=False, separators=(",", ":")) + ";/*/NUM*/"
     s2 = re.sub(r'/\*NUM\*/.*?/\*/NUM\*/', lambda m: block, s, flags=re.S) if "/*NUM*/" in s else s.replace("const GROUPS = [", block + "\nconst GROUPS = [", 1)
     if s2 != s: open(p, "w", encoding="utf-8").write(s2)
     return nums

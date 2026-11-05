@@ -42,6 +42,7 @@ NUMS = gamenum.ensure()
 _IG = re.findall(r'\{ id: "(\w+)", n: "([^"]+)", e: "([^"]+)"', open(gamenum.REPO + "/index.html", encoding="utf-8").read())
 RACE_GROUPS = [[g, e, n] for g, n, e in _IG if g in ("brain", "quiz", "react", "board", "arcade")]
 RACE = [[r[0], r[1], r[2], r[4], NUMS[r[0]]] for r in gamenum.index_games() if r[4] in [g[0] for g in RACE_GROUPS]]
+QCNT = gamenum.quiz_counts()
 BUZZ_OK = [r[0] for r in RACE if r[3] == "quiz" and "const D = [" in open(gamenum.REPO + "/" + r[0], encoding="utf-8").read()]
 HUB_CSS = LINK_CSS + '''
 .gm{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px}
@@ -122,7 +123,7 @@ HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px
 
 HUB_JS = QR_JS + CODEC_JS + r'''
 const GAMES = ''' + _json.dumps(GAMES, ensure_ascii=False) + r''', HUB_GROUPS = ''' + _json.dumps(HUB_GROUPS, ensure_ascii=False) + r''';
-const NUMS = ''' + _json.dumps({k: v for k, v in NUMS.items()}, ensure_ascii=False) + r''', RACE = ''' + _json.dumps(RACE, ensure_ascii=False) + r''', RACE_GROUPS = ''' + _json.dumps(RACE_GROUPS, ensure_ascii=False) + r''', BUZZ_OK = ''' + _json.dumps(BUZZ_OK, ensure_ascii=False) + r''';
+const NUMS = ''' + _json.dumps({k: v for k, v in NUMS.items()}, ensure_ascii=False) + r''', RACE = ''' + _json.dumps(RACE, ensure_ascii=False) + r''', RACE_GROUPS = ''' + _json.dumps(RACE_GROUPS, ensure_ascii=False) + r''', BUZZ_OK = ''' + _json.dumps(BUZZ_OK, ensure_ascii=False) + r''', QCNT = ''' + _json.dumps(QCNT, ensure_ascii=False) + r''';
 // ───── 상태 ─────
 let S = Object.assign({ name: "" }, ld(KEY) || {});
 if (!S.name) { const old = ld("link-test-v1"), mine = window.FAMILY && FAMILY.me ? FAMILY.me.get() : ""; S.name = mine || (old && old.name) || "기기" + ri(100, 999); sv(KEY, S); }
@@ -298,7 +299,7 @@ function showPick() {
 }
 function raceList() {
   const q = $("rq").value.trim().toLowerCase();
-  $("rlist").innerHTML = groupsHtml(RACE_GROUPS, k => RACE.filter(r => r[3] === k && findHit(q, r[2], r[4])).map(r => gmBtn(r[0], r[1], r[2], [BUZZ_OK.includes(r[0]) ? "🔔 퀴즈 버저 가능" : "", bestSum(r[0])].filter(Boolean).join(" · "), r[4], "r")), q, "r") || '<p class="note">찾는 게임이 없어요.</p>';
+  $("rlist").innerHTML = groupsHtml(RACE_GROUPS, k => RACE.filter(r => r[3] === k && findHit(q, r[2], r[4])).map(r => gmBtn(r[0], r[1], r[2], [QCNT[r[0]] ? "📚 " + QCNT[r[0]] : "", BUZZ_OK.includes(r[0]) ? "🔔 퀴즈 버저 가능" : "", bestSum(r[0])].filter(Boolean).join(" · "), r[4], "r")), q, "r") || '<p class="note">찾는 게임이 없어요.</p>';
   $("rlist").querySelectorAll("[data-r]").forEach(b => b.onclick = () => { const f = b.dataset.r, g = raceGame(f); if (g && g[3] === "quiz") quizMode(f); else raceStart(f); }); bindGroups($("rlist"), () => $("rq").value.trim());
 }
 $("gq").addEventListener("input", showPick);

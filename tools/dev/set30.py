@@ -10,7 +10,7 @@ from set29 import QR_JS, CODEC_JS, CSS as LINK_CSS
 #     →게임  {fg:"init", me:{id,name}, isHost, players:[{id,name}]} / {fg:"roster", players} / {fg:"msg", from, d}
 #   기기끼리(데이터 채널): hi·room·ping·pong·name·buzz·bye(연결 관리), load(게임 바꾸기), g(게임 말 전달 {to, from, d})
 # [파일, 이모지, 제목, 설명, 묶음] — 묶음은 HUB_GROUPS. 고유번호는 gamenum.py가 붙여요(game_numbers.json)
-HUB_GROUPS = [["board", "♟️", "판 게임"], ["hide", "🙈", "숨기고 겨루기"], ["dice", "🎲", "주사위·숫자"], ["hand", "✊", "눈치·손"], ["party", "🎉", "여러 명 파티"]]
+HUB_GROUPS = [["board", "♟️", "판 게임"], ["card", "🃏", "카드 게임"], ["hide", "🙈", "숨기고 겨루기"], ["dice", "🎲", "주사위·숫자"], ["hand", "✊", "눈치·손"], ["party", "🎉", "여러 명 파티"]]
 GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지는 구경", "board"],
          ["net-ship-hunt.html", "🚢", "함선 찾기", "2명 · 서로 함선을 숨기고 한 발씩 쏘기", "hide"],
          ["net-omok.html", "⚫⚪", "오목", "2명 · 15×15 판에 5개를 먼저 잇기", "board"],
@@ -25,17 +25,23 @@ GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지
          ["net-pig.html", "🎲", "피그 주사위", "2명 · 굴릴까 저금할까, 먼저 100점", "dice"],
          ["net-memory.html", "🃏", "카드 짝 대결", "2명 · 번갈아 짝 맞추기", "hide"],
          ["net-rps.html", "✊", "가위바위보 대결", "2명 · 몰래 고르고 동시에 공개, 3승 먼저", "hand"],
-         ["net-highcard.html", "🂡", "하이카드 대결", "2명 · 카드 10장으로 몰래 한 장씩", "hide"],
+         ["net-highcard.html", "🂡", "하이카드 대결", "2명 · 카드 10장으로 몰래 한 장씩", "card"],
          ["net-buzzer.html", "🔔", "퀴즈 버저", "여러 명 · 방장이 문제를 내면 먼저 누른 사람이 답해요", "party"],
          ["net-mafia.html", "🕵️", "역할 뽑기 (마피아)", "여러 명 · 각자 폰에 비밀 역할", "party"],
          ["net-react.html", "⚡", "반응 대결", "여러 명 · 초록색이 되면 누구보다 빨리", "hand"],
          ["net-bomb.html", "💣", "폭탄 돌리기", "여러 명 · 폰끼리 폭탄을 넘기다 펑!", "party"],
          ["net-lots.html", "🎟️", "제비뽑기", "여러 명 · 각자 폰에서 한 장씩 뽑기", "party"],
-         ["net-onecard.html", "🃏", "원카드", "2명 · 같은 무늬·숫자 내기, 먼저 다 없애기", "hide"],
+         ["net-onecard.html", "🃏", "원카드", "2명 · 같은 무늬·숫자 내기, 먼저 다 없애기", "card"],
          ["net-checkers.html", "♛", "체커 (서양 장기)", "2명 · 뛰어넘어 잡기, 끝줄에 가면 왕", "board"],
          ["net-yut.html", "🪵", "윷놀이", "2명 · 윷을 던져 말 2개를 먼저 돌리기", "dice"],
          ["net-yacht.html", "🎲", "주사위 족보", "2~6명 · 차례대로 굴려 12개 족보 채우기", "dice"],
-         ["net-wordtrick.html", "🤫", "제시어 추리", "여러 명 · 한 명만 제시어를 몰라요", "party"]]
+         ["net-wordtrick.html", "🤫", "제시어 추리", "여러 명 · 한 명만 제시어를 몰라요", "party"],
+         ["net-hula.html", "🃏", "훌라", "2~5명 · 같은 숫자·이어진 숫자로 등록, 먼저 다 내리기", "card"],
+         ["net-poker.html", "♠️", "포커 (5장 바꾸기)", "2~6명 · 3장까지 바꾸고 족보 겨루기", "card"],
+         ["net-oldmaid.html", "🤡", "도둑잡기", "2~6명 · 옆 사람 카드를 뽑아 짝 맞추기, 조커가 남으면 짐", "card"],
+         ["net-21.html", "🎴", "블랙잭 (21)", "1~6명 · 다 같이 컴퓨터 딜러와 21 겨루기", "card"],
+         ["net-president.html", "👑", "대통령 게임", "2~6명 · 더 센 카드를 내며 먼저 다 내면 대통령", "card"],
+         ["net-sevens.html", "7️⃣", "세븐 (7 늘어놓기)", "2~6명 · 7 옆으로 이어 놓기, 패스는 3번까지", "card"]]
 
 import gamenum, json as _json
 NUMS = gamenum.ensure()

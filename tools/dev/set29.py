@@ -41,7 +41,7 @@ BODY = '''  <div class="card"><div class="f" style="display:grid;gap:4px"><label
     <div id="gans" hidden style="display:grid;gap:10px"><b>방 만든 폰에서 이 답장 QR을 찍어 주세요</b>
       <canvas class="qr" id="qa" aria-label="답장 QR 코드"></canvas>
       <details><summary class="note">코드로 보내기 (PC 등)</summary><div style="display:grid;gap:8px;margin-top:8px"><textarea class="code" id="ac" readonly></textarea><button class="btn ghost sm" id="acp" type="button">📋 답장 코드 복사</button></div></details></div>
-    <p class="note" id="gmsg"></p>
+    <p class="note" id="gmsg"></p><button class="btn ghost sm" id="gre" type="button" hidden>🔄 처음부터 다시</button>
   </div>
   <div class="card" id="room" hidden><b>📶 연결된 기기</b><div id="list"></div>
     <div class="row"><button class="btn ghost sm" id="buzz" type="button">📳 신호 보내기</button><button class="btn ghost sm" id="more" type="button" hidden>➕ 한 명 더 연결</button></div>
@@ -183,17 +183,19 @@ async function newOffer() {
   dc.onclose = () => drop(p);
   dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } hostMsg(p, m); };
   // 잠깐 끊김(disconnected)은 폰 절전 등으로 흔해서 기다려요. 브라우저가 다시 붙이면 그대로 이어져요. 완전히 끊긴 경우(failed·closed·나가기)만 정리해요.
-  pc.onconnectionstatechange = () => { const s = pc.connectionState; p.weak = s === "disconnected"; if (s === "failed" || s === "closed") drop(p); else roster(); };
+  pc.onconnectionstatechange = () => { const s = pc.connectionState; p.weak = s === "disconnected"; if (!p.open && s === "connecting") note("hmsg", "연결하는 중… 상대 기기와 신호를 맞추고 있어요.");
+    if (s === "failed" && !p.open && !p.gone) { drop(p); newOffer().then(() => note("hmsg", "⚠️ 연결에 실패했어요. 새 초대 QR을 만들었어요. 참가할 기기에서 이 QR로 처음부터 다시 해 주세요. (두 기기가 같은 와이파이인지도 확인해 주세요)")); return; }
+    if (s === "failed" || s === "closed") drop(p); else roster(); };
   QR.draw($("qo"), linkOf("j", p.code)); $("qo").hidden = false; $("oc").value = p.code; $("ai").value = ""; $("hstep").textContent = `① 참가할 폰으로 이 QR을 찍어요 (${peers.filter(x => x.open).length + 1}번째 손님)`;
   note("hmsg", "");
 }
 async function takeAnswer(code) {
   const c = unpack(code); if (!c || c.t !== "a") return note("hmsg", "⚠️ 답장 코드가 아니에요. 참가한 폰에 뜬 '답장' QR을 찍어 주세요.");
   if (!pend) return; if (c.ref !== pend.ref) return note("hmsg", "⚠️ 지금 화면의 초대 QR로 만든 답장이 아니에요. 참가할 폰에서 위 QR을 다시 찍어 주세요.");
-  const p = pend; pend = null; note("hmsg", "연결하는 중…");
+  const p = pend; pend = null; note("hmsg", "답장을 받았어요. 연결하는 중…");
   try { await p.pc.setRemoteDescription(unsdp(c)); } catch (e) { pend = p; return note("hmsg", "⚠️ 코드를 읽지 못했어요: " + e.message); }
   peers.push(p); roster();
-  setTimeout(() => { if (!p.open) note("hmsg", "⚠️ 연결이 안 돼요. 두 폰이 같은 와이파이인지 확인해 주세요. (손님용·공용 와이파이는 기기끼리 연결을 막기도 해요)"); }, 15000);
+  setTimeout(() => { if (!p.open && !p.gone) note("hmsg", "⚠️ 아직 연결이 안 돼요. 두 기기가 같은 와이파이인지 확인해 주세요. (손님용·공용 와이파이는 기기끼리 연결을 막기도 해요) 조금 더 기다리거나, 안 되면 참가할 기기에서 '처음부터 다시'를 눌러 주세요."); }, 40000);
 }
 function drop(p) {
   if (p.gone) return; p.gone = true; p.open = false; const i = peers.indexOf(p); if (i >= 0) peers.splice(i, 1);
@@ -227,9 +229,12 @@ async function join(code) {
     dc.onmessage = e2 => { let m; try { m = JSON.parse(e2.data); } catch (x) { return; } guestMsg(m); };
     dc.onclose = () => { $("guestbox").hidden = false; $("gjoin").hidden = false; $("gans").hidden = true; note("gmsg", "⚠️ 방과 연결이 끊겼어요. 방 만든 폰에서 '한 명 더 연결'을 눌러 다시 들어와 주세요."); roomList = []; renderRoom(); G = null; renderGame(); };
   };
-  pc.onconnectionstatechange = () => { const s = pc.connectionState; if (s === "failed") note("gmsg", "⚠️ 연결이 안 돼요. 두 폰이 같은 와이파이인지 확인해 주세요."); note("rmsg", s === "disconnected" ? "⚠️ 방장과 신호가 약해요. 잠시 기다리면 다시 붙어요." : ""); };
-  try { await pc.setRemoteDescription(unsdp(c)); await pc.setLocalDescription(await pc.createAnswer()); await gathered(pc); const a = pack("a", pc.localDescription.sdp, c.u.slice(0, 4)); QR.draw($("qa"), linkOf("r", a)); $("ac").value = a; } catch (e) { return note("gmsg", "⚠️ " + e.message); }
-  $("gjoin").hidden = true; $("gans").hidden = false; note("gmsg", "방 만든 폰이 이 QR을 찍으면 자동으로 연결돼요.");
+  pc.onconnectionstatechange = () => { const s = pc.connectionState; if (s === "failed") { note("gmsg", "⚠️ 연결이 안 돼요. 두 기기가 같은 와이파이인지 확인한 뒤, 방 만든 기기의 새 초대 QR로 처음부터 다시 해 주세요."); $("gre").hidden = false; } note("rmsg", s === "disconnected" ? "⚠️ 방장과 신호가 약해요. 잠시 기다리면 다시 붙어요." : ""); };
+  // 손님은 방장 주소 없이 시작해 방장이 먼저 두드리기를 기다려요. 답장을 코드로 옮기느라 오래 걸려도 손님 쪽이 먼저 "실패"로 포기하지 않게 하려는 것.
+  // 15초가 지나도 안 붙으면 방장 주소로 직접 시도해요 (방장이 손님 주소로 못 들어오는 네트워크 대비).
+  setTimeout(() => { if (!(upl.dc && upl.dc.readyState === "open")) c.c.forEach(([a, p], i) => pc.addIceCandidate({ candidate: `candidate:${i + 1} 1 udp ${2122260223 - i} ${a} ${p} typ host generation 0`, sdpMid: "0", sdpMLineIndex: 0 }).catch(() => {})); }, 15000);
+  try { await pc.setRemoteDescription(unsdp(Object.assign({}, c, { c: [] }))); await pc.setLocalDescription(await pc.createAnswer()); await gathered(pc); const a = pack("a", pc.localDescription.sdp, c.u.slice(0, 4)); QR.draw($("qa"), linkOf("r", a)); $("ac").value = a; } catch (e) { return note("gmsg", "⚠️ " + e.message); }
+  $("gjoin").hidden = true; $("gans").hidden = false; note("gmsg", "방 만든 폰이 이 QR을 찍으면(또는 답장 코드를 붙여 넣으면) 자동으로 연결돼요. 시간이 좀 걸려도 괜찮아요. 이 화면을 켜 둔 채 기다려 주세요.");
 }
 const gsend = m => { if (upl && upl.dc && upl.dc.readyState === "open") upl.dc.send(JSON.stringify(m)); };
 function guestMsg(m) {
@@ -271,6 +276,7 @@ $("ago").onclick = () => { const c = pickCode($("ai").value); c ? takeAnswer(c) 
 $("ocp").onclick = () => copy("oc");
 $("acp").onclick = () => copy("ac");
 $("more").onclick = newOffer;
+$("gre").onclick = () => { location.href = location.href.split("#")[0]; };
 $("buzz").onclick = () => { if (role === "host") { bcast({ t: "buzz", from: S.name }); flash("📳 보냈어요"); } else { gsend({ t: "buzz" }); flash("📳 보냈어요"); } };
 
 // 카메라 앱으로 QR을 찍어 이 화면이 열렸을 때: #j=초대(참가하기) / #r=답장(방 만든 화면으로 전달)

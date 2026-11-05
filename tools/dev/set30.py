@@ -53,6 +53,9 @@ HUB_CSS = LINK_CSS + '''
 #rf{width:100%;border:0;display:block;min-height:300px;background:var(--bg)}.rwrap{position:relative}
 #rcover{position:absolute;inset:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--font-display);font-size:1.4rem;padding:16px;border-radius:12px}
 #rcover.cd{font-size:5rem}.timer{font-family:var(--font-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+/* 동시 도전: 위쪽 막대(게임 이름·시간·결과 버튼·다른 사람 상태)는 스크롤해도 항상 보이고, 내 게임이 가운데 주인공 */
+.rbar{position:sticky;top:0;z-index:8;background:var(--surface);margin:-14px -14px 0;padding:10px 14px 8px;border-bottom:1px solid var(--line);border-radius:16px 16px 0 0;display:grid;gap:6px}
+#rwrap{scroll-margin-top:120px}#rstage{scroll-margin-top:0}
 .mirs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}.mir{flex:none;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);cursor:pointer}
 .mir .mh{font-size:.78rem;font-weight:700;padding:3px 6px;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}.mir .mv{width:150px;height:250px;overflow:hidden;position:relative}
 .mir iframe{width:360px;height:600px;border:0;transform:scale(.4166);transform-origin:0 0;pointer-events:none}.mir.big .mh{max-width:none}.mir.big .mv{width:300px;height:500px}.mir.big iframe{transform:scale(.8333)}
@@ -60,7 +63,7 @@ HUB_CSS = LINK_CSS + '''
 .kick{border:1px solid var(--line);background:var(--surface);color:var(--bad);border-radius:999px;padding:2px 8px;font-size:.75rem;font-weight:700}
 .tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.75rem;font-weight:700;background:var(--soft);margin-left:4px}.mini{display:inline-flex;gap:4px;margin-left:6px}.mini button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 8px;font-size:.78rem}'''
 
-HUB_BODY = '''  <div class="card"><div style="display:grid;gap:4px"><label class="lb" for="nm">이 기기 이름</label><input type="text" id="nm" maxlength="10"><div class="chips" id="nmc"></div></div></div>
+HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px"><label class="lb" for="nm">이 기기 이름</label><input type="text" id="nm" maxlength="10"><div class="chips" id="nmc"></div></div></div>
   <div class="card" id="start">
     <p>QR로 <b>한 번만</b> 연결하면, 방장이 고른 게임이 모든 폰에서 함께 열려요. 게임을 바꿔도 다시 연결할 필요가 없어요.</p>
     <p class="note">폰(또는 PC)을 <b>같은 와이파이</b>나 한 폰의 <b>핫스팟</b>에 연결한 뒤 시작하세요.</p>
@@ -98,12 +101,15 @@ HUB_BODY = '''  <div class="card"><div style="display:grid;gap:4px"><label class
       <p class="note" style="margin:6px 0">모두 각자 폰에서 같은 게임을 동시에 시작해요. 컴퓨터와 하는 게임은 각자 컴퓨터와 겨루고, 퍼즐·퀴즈는 <b>같은 문제</b>로 누가 먼저(또는 잘) 하는지 겨뤄요. 다른 사람 화면이 위에 작게 보여요.</p>
       <input type="search" id="rq" placeholder="게임 이름이나 번호(예: 12)로 찾기" autocomplete="off" aria-label="동시 도전 게임 찾기"><div id="rlist" style="display:grid;gap:8px;margin-top:8px"></div></details></div>
   <div class="card" id="wait" hidden><p class="center">방장이 게임을 고르고 있어요… 🎲</p></div>
-  <div class="card" id="rstage" hidden><div class="bar"><b id="rname"></b><span class="timer" id="rtime">0:00.0</span></div>
-    <div class="mirs" id="mirs"></div>
+  <div class="card" id="rstage" hidden>
+    <div class="rbar"><div class="bar"><b id="rname"></b><span class="timer" id="rtime">0:00.0</span></div>
+      <div class="row" id="rbtn" hidden><button class="btn sm" id="rok" type="button">🏆 성공·이김</button><button class="btn ghost sm" id="rno" type="button">😢 실패·짐</button></div>
+      <div class="note" id="rmini"></div></div>
     <div id="rhost" class="row" hidden><button class="btn sm" id="rgo" type="button">▶ 시작</button><button class="btn ghost sm" id="ragain" type="button">🔁 새 문제로 다시</button></div>
-    <div class="rwrap"><div id="rcover">준비 중…</div><iframe id="rf" title="동시 도전 게임"></iframe></div>
-    <div class="row" id="rbtn"><button class="btn sm" id="rok" type="button">🏆 성공 · 이겼어요</button><button class="btn ghost sm" id="rno" type="button">😢 실패 · 졌어요</button></div>
-    <div id="rres"></div><button class="btn ghost sm" id="rhome" type="button" hidden>🏠 다른 게임 고르기</button></div>
+    <div class="rwrap" id="rwrap"><div id="rcover">준비 중…</div><iframe id="rf" title="동시 도전 게임"></iframe></div>
+    <div id="rres"></div>
+    <details id="mird" open hidden><summary class="note"><b>👀 다른 사람 화면</b> · 참고용 (누르면 크게)</summary><div class="mirs" id="mirs" style="margin-top:6px"></div></details>
+    <button class="btn ghost sm" id="rhome" type="button" hidden>🏠 다른 게임 고르기</button></div>
   <div class="card" id="stage" hidden><div class="bar"><b id="gname"></b><button class="btn ghost sm" id="home" type="button" hidden>🏠 게임 바꾸기</button></div><iframe id="gf" title="게임 화면" scrolling="no"></iframe></div>
   <div id="scan" hidden><p>QR 코드를 화면 가운데에 비춰 주세요</p><video id="vid" playsinline muted></video><button class="btn" id="scx" type="button">닫기</button></div>
   <div id="flash" hidden></div>'''
@@ -267,7 +273,7 @@ function loadGame(f) {
   game = g ? g[0] : null; gameReady = false; gq = [];
   $("stage").hidden = !g; $("gf").style.height = "200px"; $("gf").src = g ? g[0] : "about:blank"; $("gname").textContent = g ? g[1] + " " + g[2] : "";
   $("home").hidden = role !== "host"; if (role === "host") $("pick").hidden = !!g;
-  if (g) { $("room").open = false; $("hostbox").hidden = true; }
+  if (g) { $("room").open = false; $("hostbox").hidden = true; setTimeout(() => $("stage").scrollIntoView({ block: "start" }), 60); }
 }
 const gmBtn = (f, e, t, d, n, kind) => `<button type="button" class="gm" data-${kind}="${f}"><span class="e">${e}</span><span><b>${esc(t)}<span class="no">#${n}</span></b><span class="note">${esc(d)}</span></span></button>`;
 // 묶음은 접어 두고(처음엔 모두 접힘) 누르면 펼쳐요. 찾기 글자가 있으면 맞는 게임이 있는 묶음만 펼쳐서 보여 줘요. 펼친 묶음은 다시 그려도 그대로.
@@ -314,14 +320,14 @@ function pushR() { bcast({ t: "race", R }); onRace(R); }
 function raceParts() { return roomList.filter(p => p.ok || p.weak).map(p => p.id); }
 function raceCheck() { if (R && R.ph === "run" && raceParts().every(id => R.res[id])) R.ph = "done"; }
 function onRace(r) {
-  R = r; clearInterval(rTick); if (!r) { $("rstage").hidden = true; $("rf").srcdoc = ""; clearInterval(rSnap); rLoaded = rRun = 0; cssSent = 0; rT0 = 0; if (role === "host") showPick(); else $("wait").hidden = !!game; return; }
-  $("pick").hidden = true; $("wait").hidden = true; $("rstage").hidden = false; $("room").open = false; $("hostbox").hidden = true;
+  R = r; clearInterval(rTick); if (!r) { $("namecard").hidden = false; $("rstage").hidden = true; $("rf").srcdoc = ""; clearInterval(rSnap); rLoaded = rRun = 0; cssSent = 0; rT0 = 0; if (role === "host") showPick(); else $("wait").hidden = !!game; return; }
+  $("pick").hidden = true; $("wait").hidden = true; $("rstage").hidden = false; $("room").open = false; $("hostbox").hidden = true; $("namecard").hidden = true;
   if (rLoaded !== r.rno) { rLoaded = r.rno; rRun = 0; rT0 = 0; myRes = null; $("rtime").textContent = "0:00.0"; lastSnap = ""; mirrors = {}; $("mirs").innerHTML = ""; const g = raceGame(r.f); $("rname").textContent = g ? `${g[1]} ${g[2]} #${g[4]}` : r.f;
     $("rcover").hidden = false; $("rcover").className = ""; $("rcover").textContent = "게임을 불러오는 중…";
     fetch(r.f).then(x => x.text()).then(t => { if (rLoaded !== r.rno) return; const base = location.href.split("#")[0].replace(/[^/]*$/, "");
-      $("rf").srcdoc = t.replace(/<head>/i, `<head><base href="${base}">` + raceShim(r.seed)); if (!rRun) $("rcover").textContent = role === "host" ? "모두 준비되면 ▶ 시작을 눌러요" : "방장이 시작하면 3초 뒤 시작해요"; })
+      $("rf").srcdoc = t.replace(/<head>/i, `<head><base href="${base}">` + raceShim(r.seed)); setTimeout(() => $("rstage").scrollIntoView({ block: "start" }), 60); if (!rRun) $("rcover").textContent = role === "host" ? "모두 준비되면 ▶ 시작을 눌러요" : "방장이 시작하면 3초 뒤 시작해요"; })
       .catch(() => { $("rcover").textContent = "⚠️ 게임을 불러오지 못했어요"; }); }
-  if (r.ph === "run" && rRun !== r.rno) { rRun = r.rno; let n = 3; $("rcover").hidden = false; $("rcover").className = "cd"; $("rcover").textContent = n;
+  if (r.ph === "run" && rRun !== r.rno) { rRun = r.rno; let n = 3; $("rwrap").scrollIntoView({ behavior: "smooth", block: "start" }); $("rcover").hidden = false; $("rcover").className = "cd"; $("rcover").textContent = n;
     const cd = setInterval(() => { n--; if (n > 0) { $("rcover").textContent = n; return; } clearInterval(cd); $("rcover").hidden = true; rT0 = performance.now(); clearInterval(rTick); rTick = setInterval(() => { if (!myRes) $("rtime").textContent = fmtT(performance.now() - rT0); }, 100); renderRace(); clearInterval(rSnap); rSnap = setInterval(snapMine, 1500); snapMine(); }, 1000); }
   if (r.ph === "run" && rT0 && !myRes) rTick = setInterval(() => { $("rtime").textContent = fmtT(performance.now() - rT0); }, 100);
   renderRace();
@@ -334,6 +340,8 @@ function renderRace() {
   const ids = raceParts(), order = ids.slice().sort((a, b) => { const x = r.res[a], y = r.res[b]; const k = v => !v ? 2 : v.ok ? 0 : 1; return k(x) - k(y) || ((x && x.ms) || 0) - ((y && y.ms) || 0); });
   let rank = 0; $("rres").innerHTML = r.ph === "ready" ? "" : `<div class="lb">${r.ph === "done" ? "🏁 결과" : "진행 상황"}</div>` + order.map(id => { const v = r.res[id]; if (v && v.ok) rank++;
     return `<div class="li"><span>${v && v.ok ? ["🥇", "🥈", "🥉"][rank - 1] || rank + "등" : v ? "😢" : "⏳"} ${esc(nmOf(id))}${id === me2 ? " (나)" : ""}</span><b>${v ? (v.ok ? "성공 " : "실패 ") + fmtT(v.ms) : "하는 중…"}</b></div>`; }).join("");
+  $("rmini").innerHTML = r.ph === "ready" ? "" : ids.filter(id => id !== me2).map(id => { const v = r.res[id]; return `${esc(nmOf(id))} ${v ? (v.ok ? "🏆 " : "😢 ") + fmtT(v.ms) : "⏳"}`; }).join(" · ");
+  $("mird").hidden = !Object.keys(mirrors).length;
   Object.keys(mirrors).forEach(id => { const h = mirrors[id].el.querySelector(".mh"), v = r.res[id]; h.textContent = nmOf(id) + (v ? (v.ok ? " 🏆 " : " 😢 ") + fmtT(v.ms) : ""); });
 }
 function raceResult(ok) { if (!R || R.ph !== "run" || myRes || !rT0) return; myRes = { ok, ms: Math.round(performance.now() - rT0) }; clearInterval(rTick); snapMine();

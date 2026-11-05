@@ -47,7 +47,9 @@ HUB_CSS = LINK_CSS + '''
 .gm .e{font-size:1.8rem}.gm b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.25rem}
 #gf{width:100%;border:0;display:block;min-height:200px;background:transparent}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:8px}.no{font-size:.72rem;color:var(--muted);font-weight:700;margin-left:4px}
-.gh{font-family:var(--font-display);font-size:1.1rem;margin-top:6px}input[type=search]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
+.gh{font-family:var(--font-display);font-size:1.1rem;margin-top:6px}
+.grp{border:1px solid var(--line);border-radius:14px;background:var(--surface)}.grp>summary{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;font-family:var(--font-display);font-size:1.15rem;list-style:none}.grp>summary::-webkit-details-marker{display:none}
+.grp>summary::after{content:"▾";color:var(--muted);font-size:1rem;transition:transform .15s}.grp[open]>summary::after{transform:rotate(180deg)}.grp>summary .note{margin-left:auto}.grp .gl{display:grid;gap:8px;padding:0 10px 10px}input[type=search]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
 #rf{width:100%;border:0;display:block;min-height:300px;background:var(--bg)}.rwrap{position:relative}
 #rcover{position:absolute;inset:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--font-display);font-size:1.4rem;padding:16px;border-radius:12px}
 #rcover.cd{font-size:5rem}.timer{font-family:var(--font-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
@@ -91,7 +93,7 @@ HUB_BODY = '''  <div class="card"><div style="display:grid;gap:4px"><label class
     <div class="row"><button class="btn ghost sm" id="buzz" type="button">📳 신호 보내기</button><button class="btn ghost sm" id="more" type="button" hidden>➕ 한 명 더 연결</button></div>
     <button class="btn ghost sm" id="pplb" type="button">📋 명단 주고받기 (가족·친구 이름)</button><button class="btn ghost sm" id="leave" type="button" style="color:var(--bad)">🔌 연결 끊기</button><div id="ppl"></div>
     <p class="note" id="rmsg" style="color:var(--bad)"></p><p class="note">연결된 동안은 화면이 꺼지지 않게 해요. 앱을 닫거나 화면이 오래 꺼지면 연결이 끊겨요.</p></details>
-  <div class="card" id="pick" hidden><b>🎮 같이 할 게임 고르기</b><div id="glist" style="display:grid;gap:8px"></div>
+  <div class="card" id="pick" hidden><b>🎮 같이 할 게임 고르기</b><p class="note">묶음을 눌러 펼쳐요.</p><input type="search" id="gq" placeholder="게임 이름이나 번호(예: 225)로 찾기" autocomplete="off" aria-label="같이 하기 게임 찾기"><div id="glist" style="display:grid;gap:8px"></div>
     <details id="racebox" class="card" style="border-color:var(--accent)"><summary><b>🏁 동시 도전</b> <span class="note">혼자 하는 게임을 다 같이 동시에</span></summary>
       <p class="note" style="margin:6px 0">모두 각자 폰에서 같은 게임을 동시에 시작해요. 컴퓨터와 하는 게임은 각자 컴퓨터와 겨루고, 퍼즐·퀴즈는 <b>같은 문제</b>로 누가 먼저(또는 잘) 하는지 겨뤄요. 다른 사람 화면이 위에 작게 보여요.</p>
       <input type="search" id="rq" placeholder="게임 이름이나 번호(예: 12)로 찾기" autocomplete="off" aria-label="동시 도전 게임 찾기"><div id="rlist" style="display:grid;gap:8px;margin-top:8px"></div></details></div>
@@ -268,16 +270,26 @@ function loadGame(f) {
   if (g) { $("room").open = false; $("hostbox").hidden = true; }
 }
 const gmBtn = (f, e, t, d, n, kind) => `<button type="button" class="gm" data-${kind}="${f}"><span class="e">${e}</span><span><b>${esc(t)}<span class="no">#${n}</span></b><span class="note">${esc(d)}</span></span></button>`;
+// 묶음은 접어 두고(처음엔 모두 접힘) 누르면 펼쳐요. 찾기 글자가 있으면 맞는 게임이 있는 묶음만 펼쳐서 보여 줘요. 펼친 묶음은 다시 그려도 그대로.
+const openG = new Set();
+const findHit = (q, title, num) => { if (!q) return true; const qn = /^#?\d+$/.test(q) ? +q.replace("#", "") : 0; return qn ? num === qn : title.toLowerCase().includes(q); };
+function groupsHtml(groups, items, q, kind) {
+  return groups.map(([k, e, n]) => { const rs = items(k); if (!rs.length) return ""; const key = kind + k, open = q || openG.has(key);
+    return `<details class="grp" data-key="${key}"${open ? " open" : ""}><summary><span>${e} ${n}</span><span class="note">${rs.length}개</span></summary><div class="gl">${rs.join("")}</div></details>`; }).join("");
+}
+function bindGroups(el, q) { el.querySelectorAll("details.grp").forEach(d => d.addEventListener("toggle", () => { if (q()) return; d.open ? openG.add(d.dataset.key) : openG.delete(d.dataset.key); })); }
 function showPick() {
   $("pick").hidden = !!game || !!R;
-  $("glist").innerHTML = HUB_GROUPS.map(([k, e, n]) => { const gs = GAMES.filter(g => g[4] === k); return gs.length ? `<div class="gh">${e} ${n}</div>` + gs.map(g => gmBtn(g[0], g[1], g[2], g[3], NUMS[g[0]] || "", "g")).join("") : ""; }).join("");
-  $("glist").querySelectorAll("[data-g]").forEach(b => b.onclick = () => pickGame(b.dataset.g)); raceList();
+  const q = $("gq").value.trim().toLowerCase();
+  $("glist").innerHTML = groupsHtml(HUB_GROUPS, k => GAMES.filter(g => g[4] === k && findHit(q, g[2], NUMS[g[0]])).map(g => gmBtn(g[0], g[1], g[2], g[3], NUMS[g[0]] || "", "g")), q, "g") || '<p class="note">찾는 게임이 없어요.</p>';
+  $("glist").querySelectorAll("[data-g]").forEach(b => b.onclick = () => pickGame(b.dataset.g)); bindGroups($("glist"), () => $("gq").value.trim()); raceList();
 }
 function raceList() {
-  const q = $("rq").value.trim().toLowerCase(), qn = /^#?\d+$/.test(q) ? +q.replace("#", "") : 0, hit = r => !q || (qn ? r[4] === qn : r[2].toLowerCase().includes(q));
-  $("rlist").innerHTML = RACE_GROUPS.map(([k, e, n]) => { const rs = RACE.filter(r => r[3] === k && hit(r)); return rs.length ? `<div class="gh">${e} ${n} <span class="note">${rs.length}개</span></div>` + rs.map(r => gmBtn(r[0], r[1], r[2], "", r[4], "r")).join("") : ""; }).join("") || '<p class="note">찾는 게임이 없어요.</p>';
-  $("rlist").querySelectorAll("[data-r]").forEach(b => b.onclick = () => raceStart(b.dataset.r));
+  const q = $("rq").value.trim().toLowerCase();
+  $("rlist").innerHTML = groupsHtml(RACE_GROUPS, k => RACE.filter(r => r[3] === k && findHit(q, r[2], r[4])).map(r => gmBtn(r[0], r[1], r[2], "", r[4], "r")), q, "r") || '<p class="note">찾는 게임이 없어요.</p>';
+  $("rlist").querySelectorAll("[data-r]").forEach(b => b.onclick = () => raceStart(b.dataset.r)); bindGroups($("rlist"), () => $("rq").value.trim());
 }
+$("gq").addEventListener("input", showPick);
 $("rq").addEventListener("input", raceList);
 function pickGame(f) { if (role !== "host") return; if (R) { R = null; bcast({ t: "race", R: null }); onRace(null); } loadGame(f); bcast({ t: "load", game: f }); }
 const postF = m => { try { frameWin().postMessage(m, "*"); } catch (e) {} };

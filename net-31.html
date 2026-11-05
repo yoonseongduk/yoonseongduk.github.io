@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>31 게임 (같이 하기)</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(0 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(0 22% 86%);--accent:hsl(0 65% 46%);--accent-fg:#fff;--soft:hsl(0 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(0 22% 10%);--surface:hsl(0 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(0 16% 25%);--accent:hsl(0 75% 68%);--accent-fg:#10131c;--soft:hsl(0 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.qr{display:block;width:100%;max-width:300px;margin:0 auto;image-rendering:pixelated;border-radius:8px;background:#fff}
+.lb{font-size:.88rem;color:var(--muted);font-weight:700}.note{font-size:.85rem;color:var(--muted)}.btn.sm{padding:9px 14px;font-size:1rem}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--muted);margin-right:6px}.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+.ttt{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(100%,300px);margin:0 auto}
+.ttt button{aspect-ratio:1;border-radius:14px;border:1px solid var(--line);background:var(--soft);font-family:var(--font-display);font-size:3rem;line-height:1}
+.ttt button.w{background:color-mix(in srgb,var(--ok) 30%,var(--surface))}
+#scan{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+#scan video{width:100%;max-width:440px;border-radius:12px}#scan p{color:#fff;text-align:center}
+#flash{position:fixed;inset:0;z-index:60;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;text-align:center;padding:16px}
+textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}.inhub body{padding:4px 0 8px;background:transparent}.inhub h1{display:none}.inhub main{max-width:none}
+.note{font-size:.85rem;color:var(--muted)}.btn.sm{padding:9px 14px;font-size:1rem}
+.grid8{display:grid;gap:3px;width:min(100%,340px);margin:0 auto}.grid8 button{aspect-ratio:1;border-radius:6px;border:0;padding:0;font-size:1.3rem;line-height:1}
+.big{font-family:var(--font-display);font-size:clamp(2rem,12vw,3.4rem);text-align:center;line-height:1.2}
+.choice{display:grid;gap:8px}.choice button{padding:14px 8px;border-radius:14px;border:1px solid var(--line);background:var(--soft);font-family:var(--font-display);font-size:1.3rem}.choice button[disabled]{opacity:.4}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}
+</style>
+</head>
+<body>
+<main>
+  <h1>31 게임 (같이 하기) 🔢</h1>
+  <div class="card"><p class="center" id="st"></p><div class="big" id="num"></div><div class="choice" id="ch" style="grid-template-columns:repeat(3,1fr)"></div><div id="log"></div><p class="center note" id="sc"></p><button class="btn ghost sm" id="again" type="button" hidden>새 판</button></div>
+  <p class="muted">번갈아 가며 숫자를 1부터 순서대로 1개~3개 외쳐요. 31을 말하는 사람이 져요!</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "net-31-v1";
+
+// 같이 하기 화면과 말 주고받기. 혼자 열면 안내만 보여요.
+const NET = (() => {
+  const inHub = window.parent !== window, cb = { init: [], msg: [], roster: [] }; let info = null;
+  const post = m => { try { window.parent.postMessage(m, "*"); } catch (e) {} };
+  addEventListener("message", e => { if (e.source !== window.parent) return; const m = e.data || {};
+    if (m.fg === "init") { info = m; cb.init.forEach(f => f(m)); } else if (m.fg === "roster" && info) { info.players = m.players; cb.roster.forEach(f => f(m.players)); } else if (m.fg === "msg") cb.msg.forEach(f => f(m.from, m.d)); });
+  // 높이는 내용(main) 기준으로 재요. 문서 전체 높이는 화면 칸보다 작아지지 않아서, 짧은 게임으로 바꿔도 줄지 않거든요.
+  const fit = () => { const m = document.querySelector("main"); post({ fg: "h", h: Math.ceil((m ? m.getBoundingClientRect().bottom : document.body.scrollHeight) + 12) }); };
+  if (inHub) { document.documentElement.classList.add("inhub"); try { new ResizeObserver(fit).observe(document.body); } catch (e) { setInterval(fit, 500); } addEventListener("load", () => post({ fg: "ready" })); }
+  return { inHub, get info() { return info; }, on: (k, f) => cb[k].push(f), send: (to, d) => post({ fg: "send", to, d }) };
+})();
+const nameOf = id => { const p = (NET.info && NET.info.players || []).find(x => x.id === id); return p ? p.name : "?"; };
+if (!NET.inHub) document.addEventListener("DOMContentLoaded", () => { document.querySelector("main").insertAdjacentHTML("afterbegin", '<div class="card"><p>이 게임은 <b>👫 같이 하기</b> 화면 안에서 폰 여러 대를 연결해 해요.</p><a class="btn" style="text-align:center;text-decoration:none" href="play-together.html">같이 하기 열기</a></div>'); });
+
+let me = null, isHost = false, P = null;
+const H = {};
+const amPlayer = () => !!P && (me === P.a || me === P.b);
+const oppOf = id => id === P.a ? P.b : P.a;
+const nm = id => id === me ? "나" : id === P.a ? P.na : P.nb;
+function round(keep) {
+  const a = P ? P.a : "host", b = P ? P.b : null, opt = P ? P.opt : {}, sc = keep && P ? P.sc : {}, first = keep && P && b ? (P.first === a ? b : a) : a;
+  Object.keys(H).forEach(k => delete H[k]); P = { a, b, opt, sc, first, win: null, ph: "wait" }; if (b) Object.assign(P, newRound());
+}
+function pickB(ps) { if (P.b && ps.some(p => p.id === P.b)) return false; const nx = ps.find(p => p.id !== "host"); P.b = nx ? nx.id : null; round(false); return true; }
+// afterPush(있으면): 상태를 보낸 뒤 할 일(예: 각자 비밀 패 보내기). privTo: 한 사람에게만 보내는 말(받는 쪽 onPriv)
+function pushS() { if (!isHost) return; P.na = nameOf(P.a); P.nb = P.b ? nameOf(P.b) : ""; NET.send("*", { t: "state", P }); render(); if (typeof afterPush === "function") afterPush(); }
+const privTo = (id, d) => { d.t = "priv"; if (id === me) onPriv(d); else NET.send(id, d); };
+function finish(w) { P.ph = "end"; P.win = w; P.sc[w] = (P.sc[w] || 0) + 1; }
+const act = d => { if (isHost) { if (P && (P.a === "host" || P.b === "host")) onAct("host", d); } else NET.send("host", d); };
+NET.on("init", m => { me = m.me.id; isHost = m.isHost; if (isHost) { round(false); pickB(m.players); pushS(); } else NET.send("host", { t: "hello" }); render(); });
+NET.on("roster", ps => { if (isHost && P) { pickB(ps); pushS(); } else render(); });
+NET.on("msg", (from, d) => { if (isHost) { if (d.t === "hello") pushS(); else if (P && (from === P.a || from === P.b)) onAct(from, d); } else if (d.t === "state") { const was = P && P.ph; P = d.P; changed(was); render(); } else if (d.t === "priv" && typeof onPriv === "function") onPriv(d); });
+const scoreLine = () => P && P.b ? `${P.na} ${P.sc[P.a] || 0} : ${P.sc[P.b] || 0} ${P.nb}${P.sc.D ? " · 무승부 " + P.sc.D : ""}` : "";
+const endText = () => P.win === "D" ? "비겼어요!" : P.win === me ? "🎉 이겼어요!" : amPlayer() ? "😢 졌어요… 다음 판에 다시!" : `🎉 ${nm(P.win)} 승리!`;
+function common() { $("again").hidden = !(amPlayer() && P.ph === "end"); $("sc").textContent = scoreLine(); }
+$("again").onclick = () => act({ t: "again" });
+
+function newRound() { return { ph: "play", n: 0, turn: P.first, log: [] }; }
+function onAct(from, d) {
+  if (d.t === "say" && P.ph === "play" && from === P.turn) { const k = +d.k; if (!(k >= 1 && k <= 3)) return; const nums = []; for (let j = 0; j < k && P.n < 31; j++) { P.n++; nums.push(P.n); }
+    P.log.push([from, nums]); if (P.n >= 31) finish(oppOf(from)); else P.turn = oppOf(from); pushS(); }
+  else if (d.t === "again" && P.ph === "end") { round(true); pushS(); }
+}
+function changed(was) {}
+function render() {
+  if (!P || P.n === undefined) { $("st").textContent = !P ? "연결을 기다리는 중…" : "상대가 들어오면 시작해요"; $("ch").innerHTML = ""; if (P) common(); return; }
+  const can = P.ph === "play" && P.turn === me;
+  $("st").textContent = P.ph === "end" ? endText() + ` (31을 말한 사람: ${nm(oppOf(P.win))})` : !amPlayer() ? `구경 중 · ${nm(P.turn)} 차례` : can ? "내 차례! 몇 개 외칠까요?" : "상대 차례예요…";
+  $("num").textContent = P.n ? P.n : "시작!";
+  $("ch").innerHTML = [1, 2, 3].map(k => { const ns = Array.from({ length: k }, (_, j) => P.n + j + 1).filter(x => x <= 31); return `<button type="button" data-k="${k}"${can && ns.length === k ? "" : " disabled"}>${ns.join(", ") || "-"}</button>`; }).join("");
+  $("ch").querySelectorAll("button:not([disabled])").forEach(b => b.onclick = () => act({ t: "say", k: +b.dataset.k }));
+  $("log").innerHTML = P.log.slice(-6).reverse().map(([id, ns]) => `<div class="li"><span>${esc(nm(id))}</span><b>${ns.join(", ")}</b></div>`).join("");
+  common();
+}
+render();
+
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

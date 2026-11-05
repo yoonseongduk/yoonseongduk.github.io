@@ -18,12 +18,14 @@ function round(keep) {
   Object.keys(H).forEach(k => delete H[k]); P = { a, b, opt, sc, first, win: null, ph: "wait" }; if (b) Object.assign(P, newRound());
 }
 function pickB(ps) { if (P.b && ps.some(p => p.id === P.b)) return false; const nx = ps.find(p => p.id !== "host"); P.b = nx ? nx.id : null; round(false); return true; }
-function pushS() { if (!isHost) return; P.na = nameOf(P.a); P.nb = P.b ? nameOf(P.b) : ""; NET.send("*", { t: "state", P }); render(); }
+// afterPush(있으면): 상태를 보낸 뒤 할 일(예: 각자 비밀 패 보내기). privTo: 한 사람에게만 보내는 말(받는 쪽 onPriv)
+function pushS() { if (!isHost) return; P.na = nameOf(P.a); P.nb = P.b ? nameOf(P.b) : ""; NET.send("*", { t: "state", P }); render(); if (typeof afterPush === "function") afterPush(); }
+const privTo = (id, d) => { d.t = "priv"; if (id === me) onPriv(d); else NET.send(id, d); };
 function finish(w) { P.ph = "end"; P.win = w; P.sc[w] = (P.sc[w] || 0) + 1; }
 const act = d => { if (isHost) { if (P && (P.a === "host" || P.b === "host")) onAct("host", d); } else NET.send("host", d); };
 NET.on("init", m => { me = m.me.id; isHost = m.isHost; if (isHost) { round(false); pickB(m.players); pushS(); } else NET.send("host", { t: "hello" }); render(); });
 NET.on("roster", ps => { if (isHost && P) { pickB(ps); pushS(); } else render(); });
-NET.on("msg", (from, d) => { if (isHost) { if (d.t === "hello") pushS(); else if (P && (from === P.a || from === P.b)) onAct(from, d); } else if (d.t === "state") { const was = P && P.ph; P = d.P; changed(was); render(); } });
+NET.on("msg", (from, d) => { if (isHost) { if (d.t === "hello") pushS(); else if (P && (from === P.a || from === P.b)) onAct(from, d); } else if (d.t === "state") { const was = P && P.ph; P = d.P; changed(was); render(); } else if (d.t === "priv" && typeof onPriv === "function") onPriv(d); });
 const scoreLine = () => P && P.b ? `${P.na} ${P.sc[P.a] || 0} : ${P.sc[P.b] || 0} ${P.nb}${P.sc.D ? " · 무승부 " + P.sc.D : ""}` : "";
 const endText = () => P.win === "D" ? "비겼어요!" : P.win === me ? "🎉 이겼어요!" : amPlayer() ? "😢 졌어요… 다음 판에 다시!" : `🎉 ${nm(P.win)} 승리!`;
 function common() { $("again").hidden = !(amPlayer() && P.ph === "end"); $("sc").textContent = scoreLine(); }

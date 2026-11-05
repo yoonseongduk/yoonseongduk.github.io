@@ -14,7 +14,21 @@ GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지
          ["net-omok.html", "⚫⚪", "오목", "2명 · 15×15 판에 5개를 먼저 잇기"],
          ["net-four.html", "🔴🟡", "사목 (4개 잇기)", "2명 · 위에서 떨어뜨려 4개 잇기"],
          ["net-baseball.html", "⚾", "숫자 야구 대결", "2명 · 서로 비밀 숫자를 정하고 먼저 맞히기"],
-         ["net-bingo.html", "🔢", "빙고 대결", "2명 · 각자 판으로 번갈아 부르고 먼저 5줄"]]
+         ["net-bingo.html", "🔢", "빙고 대결", "2명 · 각자 판으로 번갈아 부르고 먼저 5줄"],
+         ["net-flip.html", "⚫⚪", "뒤집기 보드", "2명 · 끼워서 뒤집고 돌 많은 쪽이 승리"],
+         ["net-dots.html", "🟦", "점 잇기 상자", "2명 · 선을 그어 네모를 더 많이 차지"],
+         ["net-mancala.html", "🫘", "칼라하 (콩 옮기기)", "2명 · 콩을 뿌려 창고에 모으기"],
+         ["net-hex.html", "🔷", "헥스", "2명 · 육각 판에서 두 변을 먼저 잇기"],
+         ["net-31.html", "🔢", "31 게임", "2명 · 1~3개씩 외치고 31을 말하면 짐"],
+         ["net-pig.html", "🎲", "피그 주사위", "2명 · 굴릴까 저금할까, 먼저 100점"],
+         ["net-memory.html", "🃏", "카드 짝 대결", "2명 · 번갈아 짝 맞추기"],
+         ["net-rps.html", "✊", "가위바위보 대결", "2명 · 몰래 고르고 동시에 공개, 3승 먼저"],
+         ["net-highcard.html", "🂡", "하이카드 대결", "2명 · 카드 10장으로 몰래 한 장씩"],
+         ["net-buzzer.html", "🔔", "퀴즈 버저", "여러 명 · 모든 폰이 버저, 방장이 진행"],
+         ["net-mafia.html", "🕵️", "역할 뽑기 (마피아)", "여러 명 · 각자 폰에 비밀 역할"],
+         ["net-react.html", "⚡", "반응 대결", "여러 명 · 초록색이 되면 누구보다 빨리"],
+         ["net-bomb.html", "💣", "폭탄 돌리기", "여러 명 · 폰끼리 폭탄을 넘기다 펑!"],
+         ["net-lots.html", "🎟️", "제비뽑기", "여러 명 · 각자 폰에서 한 장씩 뽑기"]]
 
 HUB_CSS = LINK_CSS + '''
 .gm{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px}
@@ -214,7 +228,7 @@ const frameWin = () => $("gf").contentWindow;
 function loadGame(f) {
   const g = GAMES.find(x => x[0] === f) || null; if (game === (g && g[0])) return;
   game = g ? g[0] : null; gameReady = false; gq = [];
-  $("stage").hidden = !g; $("gf").src = g ? g[0] : "about:blank"; $("gname").textContent = g ? g[1] + " " + g[2] : "";
+  $("stage").hidden = !g; $("gf").style.height = "200px"; $("gf").src = g ? g[0] : "about:blank"; $("gname").textContent = g ? g[1] + " " + g[2] : "";
   $("home").hidden = role !== "host"; if (role === "host") $("pick").hidden = !!g;
   if (g) { $("room").open = false; $("hostbox").hidden = true; }
 }
@@ -270,7 +284,8 @@ const NET = (() => {
   const post = m => { try { window.parent.postMessage(m, "*"); } catch (e) {} };
   addEventListener("message", e => { if (e.source !== window.parent) return; const m = e.data || {};
     if (m.fg === "init") { info = m; cb.init.forEach(f => f(m)); } else if (m.fg === "roster" && info) { info.players = m.players; cb.roster.forEach(f => f(m.players)); } else if (m.fg === "msg") cb.msg.forEach(f => f(m.from, m.d)); });
-  const fit = () => post({ fg: "h", h: Math.ceil(document.documentElement.scrollHeight) });
+  // 높이는 내용(main) 기준으로 재요. 문서 전체 높이는 화면 칸보다 작아지지 않아서, 짧은 게임으로 바꿔도 줄지 않거든요.
+  const fit = () => { const m = document.querySelector("main"); post({ fg: "h", h: Math.ceil((m ? m.getBoundingClientRect().bottom : document.body.scrollHeight) + 12) }); };
   if (inHub) { document.documentElement.classList.add("inhub"); try { new ResizeObserver(fit).observe(document.body); } catch (e) { setInterval(fit, 500); } addEventListener("load", () => post({ fg: "ready" })); }
   return { inHub, get info() { return info; }, on: (k, f) => cb[k].push(f), send: (to, d) => post({ fg: "send", to, d }) };
 })();

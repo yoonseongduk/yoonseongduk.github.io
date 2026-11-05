@@ -67,7 +67,8 @@ const NET = (() => {
   const post = m => { try { window.parent.postMessage(m, "*"); } catch (e) {} };
   addEventListener("message", e => { if (e.source !== window.parent) return; const m = e.data || {};
     if (m.fg === "init") { info = m; cb.init.forEach(f => f(m)); } else if (m.fg === "roster" && info) { info.players = m.players; cb.roster.forEach(f => f(m.players)); } else if (m.fg === "msg") cb.msg.forEach(f => f(m.from, m.d)); });
-  const fit = () => post({ fg: "h", h: Math.ceil(document.documentElement.scrollHeight) });
+  // 높이는 내용(main) 기준으로 재요. 문서 전체 높이는 화면 칸보다 작아지지 않아서, 짧은 게임으로 바꿔도 줄지 않거든요.
+  const fit = () => { const m = document.querySelector("main"); post({ fg: "h", h: Math.ceil((m ? m.getBoundingClientRect().bottom : document.body.scrollHeight) + 12) }); };
   if (inHub) { document.documentElement.classList.add("inhub"); try { new ResizeObserver(fit).observe(document.body); } catch (e) { setInterval(fit, 500); } addEventListener("load", () => post({ fg: "ready" })); }
   return { inHub, get info() { return info; }, on: (k, f) => cb[k].push(f), send: (to, d) => post({ fg: "send", to, d }) };
 })();

@@ -76,7 +76,7 @@ textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}
   </div>
   <div class="card" id="room" hidden><b>📶 연결된 기기</b><div id="list"></div>
     <div class="row"><button class="btn ghost sm" id="buzz" type="button">📳 신호 보내기</button><button class="btn ghost sm" id="more" type="button" hidden>➕ 한 명 더 연결</button></div>
-    <p class="note">신호 보내기를 누르면 연결된 모든 폰이 진동하고 화면이 번쩍여요. 숫자(ms)는 신호가 오가는 데 걸린 시간이에요.</p></div>
+    <p class="note" id="rmsg" style="color:var(--bad)"></p><p class="note">연결된 동안은 화면이 꺼지지 않게 해요. 신호 보내기를 누르면 연결된 모든 폰이 진동하고 화면이 번쩍여요. 숫자(ms)는 신호가 오가는 데 걸린 시간이에요.</p></div>
   <div class="card" id="game" hidden><b>⭕❌ 틱택토 (폰 2대 대결)</b><p class="center" id="gst"></p><div class="ttt" id="board"></div>
     <p class="center note" id="score"></p><button class="btn ghost sm" id="again" type="button">새 판</button></div>
   <div id="scan" hidden><p>QR 코드를 화면 가운데에 비춰 주세요</p><video id="vid" playsinline muted></video><button class="btn" id="scx" type="button">닫기</button></div>
@@ -184,7 +184,7 @@ const mkId = () => Math.random().toString(36).slice(2, 8);
 
 // ───── 상태 ─────
 let S = Object.assign({ name: "" }, ld(KEY) || {});
-if (!S.name) { S.name = "기기" + ri(10, 99); sv(KEY, S); }
+if (!S.name) { S.name = "기기" + ri(100, 999); sv(KEY, S); }
 $("nm").value = S.name; $("nm").onchange = () => { S.name = $("nm").value.trim().slice(0, 10) || S.name; $("nm").value = S.name; sv(KEY, S); if (role === "guest") gsend({ t: "name", name: S.name }); else if (role === "host") { roster(); push(); } };
 let role = null, myId = "host", pend = null, upl = null, roomList = [], G = null;
 const peers = [];
@@ -201,6 +201,9 @@ async function scanQR(onCode) {
   const loop = async () => { if (done) return; try { const r = await det.detect(v); for (const x of r) { const c = pickCode(x.rawValue); if (c) { end(); try { navigator.vibrate && navigator.vibrate(80); } catch (e) {} onCode(c); return; } } } catch (e) {} setTimeout(loop, 200); };
   loop();
 }
+let wakeL = null;
+async function wake() { try { if (role && "wakeLock" in navigator && document.visibilityState === "visible" && !wakeL) { wakeL = await navigator.wakeLock.request("screen"); wakeL.addEventListener("release", () => { wakeL = null; }); } } catch (e) {} }
+document.addEventListener("visibilitychange", wake);
 function flash(t) { $("flash").textContent = t; $("flash").hidden = false; try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} setTimeout(() => { $("flash").hidden = true; }, 900); }
 
 // ───── 방 만들기 (호스트) ─────
@@ -209,7 +212,7 @@ async function hostStart() {
   G = { b: Array(9).fill(""), turn: "O", first: "O", win: null, line: [], x: null, sc: { O: 0, X: 0, D: 0 } };
   if (bc) bc.onmessage = e => { const c = pickCode(e.data); if (c) takeAnswer(c); };
   setInterval(() => peers.forEach(p => { if (p.dc.readyState === "open") p.dc.send(JSON.stringify({ t: "ping", ts: performance.now() })); }), 2000);
-  await newOffer(); roster(); renderGame();
+  await newOffer(); roster(); renderGame(); wake();
 }
 async function newOffer() {
   $("more").hidden = true; $("hostbox").hidden = false; note("hmsg", "초대 QR을 만드는 중…"); pend = null; $("oc").value = ""; $("qo").hidden = true;
@@ -219,7 +222,8 @@ async function newOffer() {
   dc.onopen = () => { p.open = true; dc.send(JSON.stringify({ t: "hi", id: p.id })); if (!G.x) { G.x = p.id; resetBoard(); } note("hmsg", ""); $("hostbox").hidden = true; $("more").hidden = false; flash("✅ 연결됐어요!"); roster(); push(); };
   dc.onclose = () => drop(p);
   dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } hostMsg(p, m); };
-  pc.onconnectionstatechange = () => { const s = pc.connectionState; if (["failed", "closed"].includes(s)) drop(p); else { if (s === "disconnected") setTimeout(() => { if (pc.connectionState === "disconnected") drop(p); }, 6000); roster(); } };
+  // 잠깐 끊김(disconnected)은 폰 절전 등으로 흔해서 기다려요. 브라우저가 다시 붙이면 그대로 이어져요. 완전히 끊긴 경우(failed·closed·나가기)만 정리해요.
+  pc.onconnectionstatechange = () => { const s = pc.connectionState; p.weak = s === "disconnected"; if (s === "failed" || s === "closed") drop(p); else roster(); };
   QR.draw($("qo"), linkOf("j", p.code)); $("qo").hidden = false; $("oc").value = p.code; $("ai").value = ""; $("hstep").textContent = `① 참가할 폰으로 이 QR을 찍어요 (${peers.filter(x => x.open).length + 1}번째 손님)`;
   note("hmsg", "");
 }
@@ -238,7 +242,7 @@ function drop(p) {
 }
 function hostMsg(p, m) {
   if (m.t === "pong") { p.rtt = Math.round(performance.now() - m.ts); roster(); }
-  else if (m.t === "name") { p.name = String(m.name || "").slice(0, 10) || "손님"; roster(); push(); }
+  else if (m.t === "name") { const n0 = String(m.name || "").slice(0, 10) || "손님", used = [S.name, ...peers.filter(x => x !== p).map(x => x.name)]; let n = n0, k = 2; while (used.includes(n)) n = n0 + "-" + k++; p.name = n; roster(); push(); }
   else if (m.t === "move" && p.id === G.x) move(+m.i, "X");
   else if (m.t === "again" && p.id === G.x) again();
   else if (m.t === "buzz") { flash("📳 " + p.name); bcast({ t: "buzz", from: p.name }, p); }
@@ -248,8 +252,8 @@ addEventListener("pagehide", () => { if (role === "guest") gsend({ t: "bye" }); 
 const bcast = (m, except) => peers.forEach(p => { if (p !== except && p.dc.readyState === "open") p.dc.send(JSON.stringify(m)); });
 function roster() {
   if (role !== "host") return;
-  roomList = [{ id: "host", name: S.name + " (방장)", rtt: 0, ok: true }, ...peers.map(p => ({ id: p.id, name: p.name, rtt: p.rtt, ok: !!p.open }))];
-  bcast({ t: "room", list: roomList }); renderRoom();
+  roomList = [{ id: "host", name: S.name + " (방장)", rtt: 0, ok: true }, ...peers.map(p => ({ id: p.id, name: p.name, rtt: p.rtt, ok: !!p.open && !p.weak, weak: !!p.weak }))];
+  bcast({ t: "room", list: roomList }); renderRoom(); note("rmsg", peers.some(p => p.weak) ? "⚠️ 신호가 약해진 기기가 있어요. 그 폰의 화면을 켜 두면 잠시 뒤 다시 붙어요. 1분 넘게 안 붙으면 ➕ 한 명 더 연결로 다시 들어오게 해 주세요." : "");
 }
 
 // ───── 참가하기 (손님) ─────
@@ -259,11 +263,11 @@ async function join(code) {
   guestStart(); note("gmsg", "답장 QR을 만드는 중…");
   const pc = newPc(); upl = { pc, dc: null };
   pc.ondatachannel = e => { const dc = upl.dc = e.channel;
-    dc.onopen = () => { gsend({ t: "name", name: S.name }); $("guestbox").hidden = true; $("room").hidden = false; $("game").hidden = false; flash("✅ 연결됐어요!"); };
+    dc.onopen = () => { wake(); gsend({ t: "name", name: S.name }); $("guestbox").hidden = true; $("room").hidden = false; $("game").hidden = false; flash("✅ 연결됐어요!"); };
     dc.onmessage = e2 => { let m; try { m = JSON.parse(e2.data); } catch (x) { return; } guestMsg(m); };
     dc.onclose = () => { $("guestbox").hidden = false; $("gjoin").hidden = false; $("gans").hidden = true; note("gmsg", "⚠️ 방과 연결이 끊겼어요. 방 만든 폰에서 '한 명 더 연결'을 눌러 다시 들어와 주세요."); roomList = []; renderRoom(); G = null; renderGame(); };
   };
-  pc.onconnectionstatechange = () => { if (pc.connectionState === "failed") note("gmsg", "⚠️ 연결이 안 돼요. 두 폰이 같은 와이파이인지 확인해 주세요."); };
+  pc.onconnectionstatechange = () => { const s = pc.connectionState; if (s === "failed") note("gmsg", "⚠️ 연결이 안 돼요. 두 폰이 같은 와이파이인지 확인해 주세요."); note("rmsg", s === "disconnected" ? "⚠️ 방장과 신호가 약해요. 잠시 기다리면 다시 붙어요." : ""); };
   try { await pc.setRemoteDescription(unsdp(c)); await pc.setLocalDescription(await pc.createAnswer()); await gathered(pc); const a = pack("a", pc.localDescription.sdp, c.u.slice(0, 4)); QR.draw($("qa"), linkOf("r", a)); $("ac").value = a; } catch (e) { return note("gmsg", "⚠️ " + e.message); }
   $("gjoin").hidden = true; $("gans").hidden = false; note("gmsg", "방 만든 폰이 이 QR을 찍으면 자동으로 연결돼요.");
 }
@@ -295,7 +299,7 @@ function renderGame() {
 }
 $("again").onclick = () => { if (role === "host") again(); else gsend({ t: "again" }); };
 function renderRoom() {
-  $("list").innerHTML = roomList.length ? roomList.map(p => `<div class="li"><span><span class="dot ${p.ok ? "ok" : "bad"}"></span>${esc(p.name)}${p.id === myId && role === "guest" ? " (나)" : ""}${G && p.id === G.x ? " ❌" : p.id === "host" ? " ⭕" : ""}</span><span class="note">${p.id === "host" ? "" : !p.ok ? "연결 중…" : p.rtt == null ? "…" : p.rtt + " ms"}</span></div>`).join("") : '<p class="note">연결된 기기가 없어요.</p>';
+  $("list").innerHTML = roomList.length ? roomList.map(p => `<div class="li"><span><span class="dot ${p.ok ? "ok" : "bad"}"></span>${esc(p.name)}${p.id === myId && role === "guest" ? " (나)" : ""}${G && p.id === G.x ? " ❌" : p.id === "host" ? " ⭕" : ""}</span><span class="note">${p.id === "host" ? "" : p.weak ? "⚠️ 신호 약함 · 다시 붙는 중" : !p.ok ? "연결 중…" : p.rtt == null ? "…" : p.rtt + " ms"}</span></div>`).join("") : '<p class="note">연결된 기기가 없어요.</p>';
 }
 
 $("bh").onclick = hostStart;

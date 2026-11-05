@@ -70,6 +70,10 @@
 - **한자 획순 번호**: `data/stroke-6~1.json`(Make Me a Hanzi 파생, `tools/dev/build_stroke.py`로 생성, 라이선스 `data/stroke-LICENSE.txt`). 한자 쓰기 화면의 🔢(번호 켜기/끄기)·✏️(획 시작 위치를 순서대로 눌러 직접 입력/수정). 직접 고친 내용은 폰 localStorage `hanja-write-strokefix-v1`에 저장되고, "📋 내가 고친 획순 복사"로 JSON을 복사해 `tools/dev/merge_stroke_fix.py`로 `data/stroke-fix.json`에 합치면 모든 폰에 반영돼요(형식 `{"한자":[[x,y],...]}`, 좌표는 300×300 쓰기 칸 기준). 자료에 없는 172자(`data/stroke-missing.json`) 중 131자는 `build_stroke_auto.py`(글자 분해로 추정)+`snap_auto.js`(글꼴 모양에 맞춤)가 `data/stroke-auto.json`으로 임시 번호를 채웠고(화면에 '자동 추정' 표시, 우선순위 직접수정>stroke-fix>auto), 나머지 41자는 비어 있어요. 모두 한자 쓰기 급수 버튼 끝의 ✏️ '번호 없는 글자만' 모드로 한 글자씩 순서대로 찍어 채워요.
 - **퀸 놓기(`n-queens.html`)**: 힌트·공격 범위는 HTML에 직접 추가했어요(`set17.py`로 다시 만들면 사라지니 주의).
 - **오늘의 한자**: `hanja-today.html`(`set28.py`) — 급수별 하루 3개 + 퀴즈.
+- **약 복용 체크표(`med-check.html`, `set26.py`)**: 남은 개수 = 적은 개수(`st`) − (그 뒤 체크 횟수 − `base`) × 한 번 개수(`per`)로 계산해서, 다른 화면 알림(`med-notify.js`)에서 체크해도 맞아요. 병원 날짜 `vd`, 가족 `who`. 시작 화면에 하루 한 번 약·병원 안내(`med-notify.js`의 `care`).
+- **폰 연결 테스트(`link-test.html`, `set29.py`)**: 서버 없이 QR로 기기끼리 WebRTC 직접 연결 + 틱택토(방장 판정, 여러 대 연결 가능). QR 생성기는 직접 구현(바이트·M·1~15버전). 연결 코드 `FGL1~종류~ufrag~pwd~지문~setup~참조~후보`(SDP 축소). 폰·PC 실제 연결 확인됨(2026-11-05, 같은 와이파이).
+  - 배운 점: ① 잠깐 끊김(disconnected)은 흔하니 지우지 말고 기다리기 ② 참가자는 방장 주소 없이 시작해 방장이 먼저 두드리게(답장을 메신저로 늦게 옮겨도 참가자가 30초 만에 포기하지 않게), 15초 뒤 직접 시도 ③ PC 크롬은 화면 안 QR 읽기(BarcodeDetector)가 없어 코드 복사·붙여넣기로 대신.
+  - 연결은 페이지 안에서만 살아 있어서 다른 게임 화면으로 가면 끊겨요. 실제 다인용은 "같이 하기" 화면 하나에서 한 번 연결하고 게임을 그 안에 불러오는 방식으로(`TODO.md` 참고). 검사는 PC에서 브라우저 창 여러 개로(QR 읽기 검사용 `jsqr`는 `tools/dev/node_modules`에만 설치, 사이트에는 안 올림).
 
 ## 5. 앞으로 할 만한 일 (사용자가 원하면)
 > **전체 할 일 목록은 `TODO.md`** 에 정리돼 있어요(우선순위 ⭐ 표시). 새 작업을 시작하기 전에 먼저 읽고, 끝낸 항목은 `[x]`로 바꿔 같이 커밋하세요.

@@ -79,6 +79,13 @@ h2 span { font-family: var(--font-body); font-size: .85rem; color: var(--muted);
 .pwa .upd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: .9rem; color: var(--muted); }
 .pwa button { align-self: flex-start; background: var(--fg); color: var(--bg); border: 0; border-radius: 10px; padding: 8px 14px; font: inherit; font-weight: 700; cursor: pointer; }
 footer { color: var(--muted); font-size: .85rem; }
+.together { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 14px 16px; border-radius: 16px; text-decoration: none; color: #fff; background: linear-gradient(135deg, #e8643f, #d9435f); box-shadow: 0 3px 10px rgb(217 67 95 / .25); }
+.together:active { transform: scale(.98); }
+.together .ti { font-size: 2.1rem; line-height: 1; flex: none; }
+.together .tt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.together b { font-family: var(--font-display); font-weight: 400; font-size: 1.35rem; line-height: 1.2; }
+.together small { font-size: .85rem; opacity: .92; overflow-wrap: anywhere; }
+.together .ta { font-size: 1.8rem; line-height: 1; flex: none; opacity: .85; }
 </style>
 </head>
 <body>
@@ -87,6 +94,11 @@ footer { color: var(--muted); font-size: .85rem; }
     <h1>우리 가족 미니 게임</h1>
     <p class="sub" id="count"></p>
   </header>
+  <a class="together" href="play-together.html">
+    <span class="ti" aria-hidden="true">👫</span>
+    <span class="tt"><b>같이 하기</b><small>QR로 폰을 연결해서 가족·친구와 함께 해요</small></span>
+    <span class="ta" aria-hidden="true">›</span>
+  </a>
   <section class="pwa" id="pwa" hidden>
     <b>📲 폰에 설치하면 인터넷 없이도 해요</b>
     <p id="pwaSave"></p>

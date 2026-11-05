@@ -265,6 +265,11 @@ $("list").addEventListener("click", e => { const kb = e.target.closest("[data-ki
   const b = e.target.closest("[data-addf],[data-addr]"); if (!b) return; const n = String(b.dataset.addf || b.dataset.addr).slice(0, 8); if (b.dataset.addf) addPeople([n], []); else addPeople([], [n]); });
 nameChips();
 let role = null, myId = "host", pend = null, upl = null, roomList = [], game = null, gameReady = false, gq = [];
+// 새 버전 자동 확인: 화면을 열 때 사이트에 새 버전이 있는지 보고, 아직 아무와도 연결 전이면 바로 새로고침해요(연결 중이면 끊기지 않게 안내만).
+(() => { if (!("serviceWorker" in navigator)) return; const had = !!navigator.serviceWorker.controller; let busy = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!had || busy) return; busy = true;
+    if (!role) location.reload(); else { const n = document.createElement("p"); n.className = "note center"; n.textContent = "🆕 새 버전이 준비됐어요. 게임이 끝나면 앱을 닫았다가 다시 열어 주세요."; document.querySelector("main").prepend(n); } });
+  navigator.serviceWorker.ready.then(r => r.update()).catch(() => {}); })();
 const peers = [];
 const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("fg-link") : null;
 const note = (id, t) => { $(id).textContent = t; };

@@ -42,12 +42,14 @@ NUMS = gamenum.ensure()
 _IG = re.findall(r'\{ id: "(\w+)", n: "([^"]+)", e: "([^"]+)"', open(gamenum.REPO + "/index.html", encoding="utf-8").read())
 RACE_GROUPS = [[g, e, n] for g, n, e in _IG if g in ("brain", "quiz", "react", "board", "arcade")]
 RACE = [[r[0], r[1], r[2], r[4], NUMS[r[0]]] for r in gamenum.index_games() if r[4] in [g[0] for g in RACE_GROUPS]]
+BUZZ_OK = [r[0] for r in RACE if r[3] == "quiz" and "const D = [" in open(gamenum.REPO + "/" + r[0], encoding="utf-8").read()]
 HUB_CSS = LINK_CSS + '''
 .gm{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px}
 .gm .e{font-size:1.8rem}.gm b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.25rem}
 #gf{width:100%;border:0;display:block;min-height:200px;background:transparent}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:8px}.no{font-size:.72rem;color:var(--muted);font-weight:700;margin-left:4px}
 .gh{font-family:var(--font-display);font-size:1.1rem;margin-top:6px}
+.qmode{display:grid;gap:8px;border:2px solid var(--accent);border-radius:14px;padding:12px;margin:8px 0;background:var(--soft)}.qmode .btn small{display:block;font-family:var(--font-body);font-size:.8rem;opacity:.85;margin-top:2px}
 .grp{border:1px solid var(--line);border-radius:14px;background:var(--surface)}.grp>summary{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;font-family:var(--font-display);font-size:1.15rem;list-style:none}.grp>summary::-webkit-details-marker{display:none}
 .grp>summary::after{content:"▾";color:var(--muted);font-size:1rem;transition:transform .15s}.grp[open]>summary::after{transform:rotate(180deg)}.grp>summary .note{margin-left:auto}.grp .gl{display:grid;gap:8px;padding:0 10px 10px}input[type=search]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
 #rf{width:100%;border:0;display:block;min-height:300px;background:var(--bg)}.rwrap{position:relative}
@@ -98,7 +100,11 @@ HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px
     <p class="note" id="rmsg" style="color:var(--bad)"></p><p class="note">연결된 동안은 화면이 꺼지지 않게 해요. 앱을 닫거나 화면이 오래 꺼지면 연결이 끊겨요.</p></details>
   <div class="card" id="pick" hidden><b>🎮 같이 할 게임 고르기</b><p class="note">묶음을 눌러 펼쳐요.</p><input type="search" id="gq" placeholder="게임 이름이나 번호(예: 225)로 찾기" autocomplete="off" aria-label="같이 하기 게임 찾기"><div id="glist" style="display:grid;gap:8px"></div>
     <details id="racebox" class="card" style="border-color:var(--accent)"><summary><b>🏁 동시 도전</b> <span class="note">혼자 하는 게임을 다 같이 동시에</span></summary>
-      <p class="note" style="margin:6px 0">모두 각자 폰에서 같은 게임을 동시에 시작해요. 컴퓨터와 하는 게임은 각자 컴퓨터와 겨루고, 퍼즐·퀴즈는 <b>같은 문제</b>로 누가 먼저(또는 잘) 하는지 겨뤄요. 다른 사람 화면이 위에 작게 보여요.</p>
+      <p class="note" style="margin:6px 0">모두 각자 폰에서 같은 게임을 동시에 시작해요. 컴퓨터와 하는 게임은 각자 컴퓨터와 겨루고, 퍼즐·퀴즈는 <b>같은 문제</b>로 누가 먼저(또는 잘) 하는지 겨뤄요. 다른 사람 화면은 내 게임 아래에 작게 보여요. 퀴즈는 <b>각자 풀기</b>와 <b>퀴즈 버저</b> 중에서 골라요.</p>
+      <div id="qmode" class="qmode" hidden><b id="qmt"></b><p class="note">어떻게 할까요?</p>
+        <button class="btn" id="qm1" type="button">🏁 각자 풀기<small>같은 10문제를 각자 폰에서 풀고 점수·시간 겨루기</small></button>
+        <button class="btn ghost" id="qm2" type="button">🔔 퀴즈 버저로 하기<small>방장이 문제를 읽고, 먼저 버저를 누른 사람이 답하기</small></button>
+        <button class="btn ghost sm" id="qm0" type="button">취소</button></div>
       <input type="search" id="rq" placeholder="게임 이름이나 번호(예: 12)로 찾기" autocomplete="off" aria-label="동시 도전 게임 찾기"><div id="rlist" style="display:grid;gap:8px;margin-top:8px"></div></details></div>
   <div class="card" id="wait" hidden><p class="center">방장이 게임을 고르고 있어요… 🎲</p></div>
   <div class="card" id="rstage" hidden>
@@ -116,7 +122,7 @@ HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px
 
 HUB_JS = QR_JS + CODEC_JS + r'''
 const GAMES = ''' + _json.dumps(GAMES, ensure_ascii=False) + r''', HUB_GROUPS = ''' + _json.dumps(HUB_GROUPS, ensure_ascii=False) + r''';
-const NUMS = ''' + _json.dumps({k: v for k, v in NUMS.items()}, ensure_ascii=False) + r''', RACE = ''' + _json.dumps(RACE, ensure_ascii=False) + r''', RACE_GROUPS = ''' + _json.dumps(RACE_GROUPS, ensure_ascii=False) + r''';
+const NUMS = ''' + _json.dumps({k: v for k, v in NUMS.items()}, ensure_ascii=False) + r''', RACE = ''' + _json.dumps(RACE, ensure_ascii=False) + r''', RACE_GROUPS = ''' + _json.dumps(RACE_GROUPS, ensure_ascii=False) + r''', BUZZ_OK = ''' + _json.dumps(BUZZ_OK, ensure_ascii=False) + r''';
 // ───── 상태 ─────
 let S = Object.assign({ name: "" }, ld(KEY) || {});
 if (!S.name) { const old = ld("link-test-v1"), mine = window.FAMILY && FAMILY.me ? FAMILY.me.get() : ""; S.name = mine || (old && old.name) || "기기" + ri(100, 999); sv(KEY, S); }
@@ -268,10 +274,10 @@ addEventListener("pagehide", () => { if (role === "guest") gsend({ t: "bye" }); 
 
 // ───── 게임 불러오기 · 게임과 말 주고받기 ─────
 const frameWin = () => $("gf").contentWindow;
-function loadGame(f) {
+function loadGame(f, extra) {
   const g = GAMES.find(x => x[0] === f) || null; if (game === (g && g[0])) return;
   game = g ? g[0] : null; gameReady = false; gq = [];
-  $("stage").hidden = !g; $("gf").style.height = "200px"; $("gf").src = g ? g[0] : "about:blank"; $("gname").textContent = g ? g[1] + " " + g[2] : "";
+  $("stage").hidden = !g; $("gf").style.height = "200px"; $("gf").src = g ? g[0] + (extra || "") : "about:blank"; $("gname").textContent = g ? g[1] + " " + g[2] : "";
   $("home").hidden = role !== "host"; if (role === "host") $("pick").hidden = !!g;
   if (g) { $("room").open = false; $("hostbox").hidden = true; setTimeout(() => $("stage").scrollIntoView({ block: "start" }), 60); }
 }
@@ -293,11 +299,14 @@ function showPick() {
 function raceList() {
   const q = $("rq").value.trim().toLowerCase();
   $("rlist").innerHTML = groupsHtml(RACE_GROUPS, k => RACE.filter(r => r[3] === k && findHit(q, r[2], r[4])).map(r => gmBtn(r[0], r[1], r[2], bestSum(r[0]), r[4], "r")), q, "r") || '<p class="note">찾는 게임이 없어요.</p>';
-  $("rlist").querySelectorAll("[data-r]").forEach(b => b.onclick = () => raceStart(b.dataset.r)); bindGroups($("rlist"), () => $("rq").value.trim());
+  $("rlist").querySelectorAll("[data-r]").forEach(b => b.onclick = () => { const f = b.dataset.r, g = raceGame(f); if (g && g[3] === "quiz") quizMode(f); else raceStart(f); }); bindGroups($("rlist"), () => $("rq").value.trim());
 }
 $("gq").addEventListener("input", showPick);
+// 퀴즈는 '각자 풀기(동시 도전)'와 '퀴즈 버저(방장이 읽고 먼저 누르기)' 중에서 골라요. 버저는 고른 퀴즈가 방장 화면에 미리 선택돼요.
+function quizMode(f) { const g = raceGame(f); $("qmt").textContent = `${g[1]} ${g[2]} #${g[4]}`; $("qm2").hidden = !BUZZ_OK.includes(f); $("qmode").hidden = false; $("qmode").scrollIntoView({ block: "center", behavior: "smooth" });
+  $("qm1").onclick = () => { $("qmode").hidden = true; raceStart(f); }; $("qm2").onclick = () => { $("qmode").hidden = true; pickGame("net-buzzer.html", "#quiz=" + encodeURIComponent(f)); }; $("qm0").onclick = () => { $("qmode").hidden = true; }; }
 $("rq").addEventListener("input", raceList);
-function pickGame(f) { if (role !== "host") return; if (R) { R = null; bcast({ t: "race", R: null }); onRace(null); } loadGame(f); bcast({ t: "load", game: f }); }
+function pickGame(f, extra) { if (role !== "host") return; if (game && extra) { loadGame(null); } if (R) { R = null; bcast({ t: "race", R: null }); onRace(null); } loadGame(f, extra); bcast({ t: "load", game: f }); }
 const postF = m => { try { frameWin().postMessage(m, "*"); } catch (e) {} };
 function toFrame(from, d) { const m = { fg: "msg", from, d }; if (gameReady) postF(m); else gq.push(m); }
 function toFrameRoster() { if (gameReady) postF({ fg: "roster", players: players() }); }

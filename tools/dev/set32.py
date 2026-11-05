@@ -372,6 +372,7 @@ function render() {
   $("score").innerHTML = '<div class="lb">점수</div>' + ps.map(p => `<div class="li"><span>${esc(pn(p.id))}</span><b>${P.pts[p.id] || 0}점</b></div>`).join("");
 }
 $("qcat").innerHTML = '<option value="">🎲 아무 퀴즈</option>' + QUIZZES.map(([f, e, t, n]) => `<option value="${f}">#${n} ${e} ${esc(t)}</option>`).join("");
+{ const pre = decodeURIComponent((location.hash.match(/quiz=([^&]+)/) || [])[1] || ""), g = QUIZZES.find(x => x[0] === pre); if (g) { $("qcat").value = pre; $("qhost").innerHTML = `<b>${g[1]} ${esc(g[2])}</b> 퀴즈를 골랐어요. '🎲 문제 뽑아 주기'를 눌러 시작해요.`; } }
 $("qpick").onclick = async () => { const f = $("qcat").value || QUIZZES[ri(0, QUIZZES.length - 1)][0], g = QUIZZES.find(x => x[0] === f); $("qhost").textContent = "문제를 가져오는 중…";
   try { const d = await loadQuiz(f), x = d[ri(0, d.length - 1)], opts = shuf([x[1], ...(x[2] || []).slice(0, 3)]);
     curQ = { q: x[0], a: x[1], c: g ? g[2] : "", o: opts.length > 1 ? opts : [] };

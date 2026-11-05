@@ -64,6 +64,8 @@
 - **음양력·시간 도구(`calendar-tools.html`)**: 오늘/음양력 변환+음력 명절/24절기/12시진/날짜 계산.
 - **한자 급수 퀴즈**: 정답 후 "📖 이 한자 자세히 보기" → `data/hanja-detail.json`(6·5·4급 1,000자는 유래·한자어 예 직접 작성, 나머지는 사자성어 속 쓰임·같은 부수 한자만).
 
+- **🏠 처음으로 버튼**: 공용 `home.js`가 모든 화면 맨 위에 넣어요(시작 화면·화면 속 화면 제외). `ship.py`가 새 페이지에 자동으로 넣어요(net-*·index 제외). 화면에 `window.fgLeaveCheck`를 두면 누를 때 확인(같이 하기는 "연결이 끊겨요"). **주의**: 생성기 코드나 주석에 `home.js`·`family.js`·`med-notify.js` 같은 파일 이름 글자가 있으면 `ship.py`가 "이미 있음"으로 보고 안 넣어요(실제로 두 번 겪음).
+- **같이 하기 연결 끊기**: 방장 "🔌 방 닫기"(모두 끊김)·목록의 "끊기"(한 명 내보내기), 참가자 "🔌 연결 끊기(방에서 나가기)".
 - **공용 스크립트**: `family.js`(가족 명단 `family-members-v1`·친구 명단 `FRIENDS` `friend-members-v1`·이 폰 주인 `FAMILY.me` `family-me-v1` + 시작 화면 백업 알림. 화면은 `family-members.html` "가족·친구 명단", `set27.py`), `med-notify.js`(약 알림, 모든 화면), `wrong-hook.js`(오답 노트). 새 페이지에서 가족 명단을 쓰려면 JS에 `FAMILY.get()`을 쓰면 `ship.py`가 `family.js`를 넣어요.
 - **기록 백업·복원(`backup.html`)**: 모든 localStorage를 JSON 파일로 저장/복원(`tools/dev/keymap.json`에 키→화면 이름, 새 도구가 생기면 `set27.py` 앞부분의 keymap 생성 코드를 다시 실행). 가족 명단은 `family-members.html`.
 

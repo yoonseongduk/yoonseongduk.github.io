@@ -52,7 +52,7 @@ HUB_CSS = LINK_CSS + '''
 .grp>summary::after{content:"▾";color:var(--muted);font-size:1rem;transition:transform .15s}.grp[open]>summary::after{transform:rotate(180deg)}.grp>summary .note{margin-left:auto}.grp .gl{display:grid;gap:8px;padding:0 10px 10px}input[type=search]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
 #rf{width:100%;border:0;display:block;min-height:300px;background:var(--bg)}.rwrap{position:relative}
 #rcover{position:absolute;inset:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--font-display);font-size:1.4rem;padding:16px;border-radius:12px}
-#rcover.cd{font-size:5rem}.timer{font-family:var(--font-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+#rcover.cd{font-size:5rem}#rcover.done{font-size:1.8rem;cursor:pointer;line-height:1.5}.timer{font-family:var(--font-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
 /* 동시 도전: 위쪽 막대(게임 이름·시간·결과 버튼·다른 사람 상태)는 스크롤해도 항상 보이고, 내 게임이 가운데 주인공 */
 .rbar{position:sticky;top:0;z-index:8;background:var(--surface);margin:-14px -14px 0;padding:10px 14px 8px;border-bottom:1px solid var(--line);border-radius:16px 16px 0 0;display:grid;gap:6px}
 #rwrap{scroll-margin-top:120px}#rstage{scroll-margin-top:0}
@@ -207,7 +207,7 @@ async function takeAnswer(code) {
   setTimeout(() => { if (!p.open && !p.gone) note("hmsg", "⚠️ 아직 연결이 안 돼요. 두 기기가 같은 와이파이인지 확인해 주세요. 조금 더 기다리거나, 안 되면 참가할 기기에서 '처음부터 다시'를 눌러 주세요."); }, 40000);
 }
 function drop(p) { if (p.gone) return; p.gone = true; p.open = false; const i = peers.indexOf(p); if (i >= 0) peers.splice(i, 1); roster(); }
-const send = (p, m) => { if (p.dc.readyState === "open") p.dc.send(JSON.stringify(m)); };
+const send = (p, m) => { try { if (p.dc.readyState === "open") p.dc.send(JSON.stringify(m)); } catch (e) {} };
 const bcast = (m, except) => peers.forEach(p => { if (p !== except) send(p, m); });
 function hostMsg(p, m) {
   if (m.t === "pong") { p.rtt = Math.round(performance.now() - m.ts); renderRoom(); }
@@ -215,7 +215,7 @@ function hostMsg(p, m) {
   else if (m.t === "buzz") { flash("📳 " + p.name); bcast({ t: "buzz", from: p.name }, p); }
   else if (m.t === "bye") { try { p.pc.close(); } catch (e) {} drop(p); }
   else if (m.t === "g") route(p.id, m.to, m.d);
-  else if (m.t === "rres" && R && m.rno === R.rno && R.ph === "run" && !R.res[p.id]) { R.res[p.id] = { ok: !!m.ok, ms: Math.max(0, +m.ms || 0) }; raceCheck(); pushR(); }
+  else if (m.t === "rres" && R && m.rno === R.rno && R.ph === "run" && !R.res[p.id]) { R.res[p.id] = { ok: !!m.ok, ms: Math.max(0, +m.ms || 0) }; if (m.sc !== undefined) { R.res[p.id].sc = +m.sc || 0; R.res[p.id].n = +m.n || 0; } raceCheck(); pushR(); }
   else if (m.t === "snap") { gotSnap(p.id, m); const f = Object.assign({}, m, { from: p.id }); peers.forEach(x => { if (x !== p) send(x, f); }); }
   else if (m.t === "ppl" && !p.gst) { const f = { t: "ppl", from: p.name, fam: m.fam, fr: m.fr }; gotPpl(f); peers.forEach(x => { if (x !== p && !x.gst) send(x, f); }); }
 }
@@ -251,7 +251,7 @@ async function join(code) {
   try { await pc.setRemoteDescription(unsdp(Object.assign({}, c, { c: [] }))); await pc.setLocalDescription(await pc.createAnswer()); await gathered(pc); const a = pack("a", pc.localDescription.sdp, c.u.slice(0, 4)); QR.draw($("qa"), linkOf("r", a)); $("ac").value = a; } catch (e) { return note("gmsg", "⚠️ " + e.message); }
   $("gjoin").hidden = true; $("gans").hidden = false; note("gmsg", "방 만든 폰이 이 QR을 찍으면(또는 답장 코드를 붙여 넣으면) 자동으로 연결돼요. 시간이 좀 걸려도 괜찮아요. 이 화면을 켜 둔 채 기다려 주세요.");
 }
-const gsend = m => { if (upl && upl.dc && upl.dc.readyState === "open") upl.dc.send(JSON.stringify(m)); };
+const gsend = m => { try { if (upl && upl.dc && upl.dc.readyState === "open") upl.dc.send(JSON.stringify(m)); } catch (e) {} };
 function guestMsg(m) {
   if (m.t === "ping") gsend({ t: "pong", ts: m.ts });
   else if (m.t === "hi") myId = m.id;
@@ -292,7 +292,7 @@ function showPick() {
 }
 function raceList() {
   const q = $("rq").value.trim().toLowerCase();
-  $("rlist").innerHTML = groupsHtml(RACE_GROUPS, k => RACE.filter(r => r[3] === k && findHit(q, r[2], r[4])).map(r => gmBtn(r[0], r[1], r[2], "", r[4], "r")), q, "r") || '<p class="note">찾는 게임이 없어요.</p>';
+  $("rlist").innerHTML = groupsHtml(RACE_GROUPS, k => RACE.filter(r => r[3] === k && findHit(q, r[2], r[4])).map(r => gmBtn(r[0], r[1], r[2], bestSum(r[0]), r[4], "r")), q, "r") || '<p class="note">찾는 게임이 없어요.</p>';
   $("rlist").querySelectorAll("[data-r]").forEach(b => b.onclick = () => raceStart(b.dataset.r)); bindGroups($("rlist"), () => $("rq").value.trim());
 }
 $("gq").addEventListener("input", showPick);
@@ -310,60 +310,89 @@ addEventListener("message", e => {
 // ───── 🏁 동시 도전: 기존 게임 페이지를 그대로 불러와 모두 동시에 시작 ─────
 // 같은 문제가 나오게 모든 폰에 같은 씨앗(seed)의 Math.random을 넣고, 저장 기록은 이 판에서만 쓰는 임시 저장소로 바꿔요(평소 기록·오답 노트가 섞이지 않게).
 // 1.5초마다 내 화면(main)을 찍어 다른 기기에 보내고, 받은 화면은 작은 창(mirror)에 보여 줘요. 그림판(canvas)은 작은 사진으로 바꿔 보내요.
+let rDone = 0, rWatch = null, rBase = null;
 let R = null, rCount = 0, rLoaded = 0, rRun = 0, rT0 = 0, rTick = null, rSnap = null, lastSnap = "", cssSent = 0, myRes = null, mirrors = {};
 const fmtT = ms => { const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), x = (t % 60).toFixed(1); return m + ":" + (x < 10 ? "0" : "") + x; };
 const raceGame = f => RACE.find(r => r[0] === f);
 const raceShim = seed => `<script>(function(){var s=${seed}>>>0;Math.random=function(){s=(s+0x6D2B79F5)>>>0;var t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};var m={},P=Storage.prototype,own=Object.prototype.hasOwnProperty;P.getItem=function(k){k=String(k);return own.call(m,k)?m[k]:null};P.setItem=function(k,v){m[String(k)]=String(v)};P.removeItem=function(k){delete m[String(k)]};P.clear=function(){m={}};P.key=function(i){return Object.keys(m)[i]||null};try{Object.defineProperty(P,"length",{get:function(){return Object.keys(m).length},configurable:true})}catch(e){}window.__RACE=1})();<\/script>`;
-function raceStart(f) { if (role !== "host") return; loadGame(null); bcast({ t: "load", game: null }); R = { rno: ++rCount, f,   // 판 번호는 계속 늘어나요(게임을 바꿔도 1로 돌아가지 않게: 예전 판의 화면·결과가 섞이지 않도록)
+function raceStart(f) { if (role !== "host") return; loadGame(null); bcast({ t: "load", game: null }); R = { best: bestAll()[f] || [], rno: ++rCount, f,   // 판 번호는 계속 늘어나요(게임을 바꿔도 1로 돌아가지 않게: 예전 판의 화면·결과가 섞이지 않도록)
      seed: Math.floor(Math.random() * 2147483647), ph: "ready", res: {} }; pushR(); }
 function pushR() { bcast({ t: "race", R }); onRace(R); }
 function raceParts() { return roomList.filter(p => p.ok || p.weak).map(p => p.id); }
-function raceCheck() { if (R && R.ph === "run" && raceParts().every(id => R.res[id])) R.ph = "done"; }
+// 한 명이라도 성공하면 그 순간 승부 끝(가장 빠른 성공이 1등). 모두 실패해도 끝.
+const isQuiz = () => { const g = R && raceGame(R.f); return !!g && g[3] === "quiz"; };
+const better = (a, b) => isQuiz() ? (b.sc || 0) - (a.sc || 0) || a.ms - b.ms : a.ms - b.ms;   // 퀴즈: 많이 맞힌 순, 같으면 빠른 순 / 나머지: 빠른 순
+function raceCheck() { if (!R || R.ph !== "run") return; const oks = Object.entries(R.res).filter(([, v]) => v.ok).sort((a, b) => better(a[1], b[1])), all = raceParts().every(id => R.res[id]);
+  if ((oks.length && !isQuiz()) || all) { R.ph = "done"; R.win = oks.length ? oks[0][0] : null; if (role === "host" && R.win) addBest(R.win, R.res[R.win]); } }
+// ───── 게임별 최고 기록(1~5등): 누가·언제·시간(퀴즈는 점수). 방장 폰에 저장하고, 끝날 때 모든 폰에도 같이 저장돼요.
+const BEST_KEY = "play-together-best-v1", bestAll = () => ld(BEST_KEY) || {};
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+function mergeBest(f, list) { const B = bestAll(), seen = new Set(), q = raceGame(f) && raceGame(f)[3] === "quiz"; const all = [...(B[f] || []), ...(list || [])].filter(x => { const k = x.nm + x.ms + x.d + (x.sc || ""); if (seen.has(k)) return false; seen.add(k); return true; });
+  all.sort((a, b) => q ? (b.sc || 0) - (a.sc || 0) || a.ms - b.ms : a.ms - b.ms); B[f] = all.slice(0, 5); sv(BEST_KEY, B); return B[f]; }
+function addBest(id, v) { const rec = { nm: raceName(id), ms: v.ms, d: today() }; if (v.sc !== undefined) { rec.sc = v.sc; rec.n = v.n; } const prev = (bestAll()[R.f] || [])[0], list = mergeBest(R.f, [rec]);
+  R.best = list; R.newRec = list[0].nm === rec.nm && list[0].ms === rec.ms && (!prev || better(rec, prev) < 0); }
+const recTxt = x => (x.sc !== undefined ? `${x.sc}/${x.n}개 · ` : "") + fmtT(x.ms);
+const bestSum = f => { const b = (bestAll()[f] || [])[0]; return b ? `🏆 최고 ${recTxt(b)} ${b.nm}` : ""; };
+const raceName = id => (roomList.find(p => p.id === id) || {}).nm || (mirrors[id] && mirrors[id].nm) || "?";
+// 완료 자동 알아채기: 시작할 때 게임 글자를 기억해 두고, 새로 생긴 줄에 '완성·성공·클리어·이겼어요…'가 나오면 🏆, '컴퓨터가 이겼어요·게임 오버…'면 😢로 기록해요.
+const OK_RE = /완성했|성공했|성공!|클리어|다 맞혔|모두 맞혔|모두 찾았|모두 맞췄|해냈어요|축하해요|축하합니다|이겼어요|탈출했|탈출 성공/, NG_RE = /컴퓨터가 이겼|컴퓨터 승리|졌어요|게임 ?오버|실패했/;
+const raceLines = () => { try { const d = $("rf").contentDocument, m = d && (d.querySelector("main") || d.body); return m ? m.innerText.split(/\r?\n/).map(x => x.trim()).filter(Boolean) : []; } catch (e) { return []; } };
+function startWatch() { rBase = new Set(raceLines()); clearInterval(rWatch); rWatch = setInterval(() => { if (!R || R.ph !== "run" || myRes || !rT0) return; const nl = raceLines().filter(l => !rBase.has(l));
+  if (isQuiz()) { for (const l of nl) { const m = l.match(/(\d+)문제 중 (\d+)개 정답/); if (m) return raceResult(true, { sc: +m[2], n: +m[1] }); } return; }
+  if (nl.some(l => NG_RE.test(l))) raceResult(false); else if (nl.some(l => (OK_RE.test(l) || l.startsWith("🎉")) && !/컴퓨터/.test(l))) raceResult(true); }, 400); }
 function onRace(r) {
   R = r; clearInterval(rTick); if (!r) { $("namecard").hidden = false; $("rstage").hidden = true; $("rf").srcdoc = ""; clearInterval(rSnap); rLoaded = rRun = 0; cssSent = 0; rT0 = 0; if (role === "host") showPick(); else $("wait").hidden = !!game; return; }
   $("pick").hidden = true; $("wait").hidden = true; $("rstage").hidden = false; $("room").open = false; $("hostbox").hidden = true; $("namecard").hidden = true;
   if (rLoaded !== r.rno) { rLoaded = r.rno; rRun = 0; rT0 = 0; myRes = null; $("rtime").textContent = "0:00.0"; lastSnap = ""; mirrors = {}; $("mirs").innerHTML = ""; const g = raceGame(r.f); $("rname").textContent = g ? `${g[1]} ${g[2]} #${g[4]}` : r.f;
-    $("rcover").hidden = false; $("rcover").className = ""; $("rcover").textContent = "게임을 불러오는 중…";
+    $("rcover").hidden = false; $("rcover").className = ""; $("rcover").onclick = null; $("rcover").textContent = "게임을 불러오는 중…";
     fetch(r.f).then(x => x.text()).then(t => { if (rLoaded !== r.rno) return; const base = location.href.split("#")[0].replace(/[^/]*$/, "");
       $("rf").srcdoc = t.replace(/<head>/i, `<head><base href="${base}">` + raceShim(r.seed)); setTimeout(() => $("rstage").scrollIntoView({ block: "start" }), 60); if (!rRun) $("rcover").textContent = role === "host" ? "모두 준비되면 ▶ 시작을 눌러요" : "방장이 시작하면 3초 뒤 시작해요"; })
       .catch(() => { $("rcover").textContent = "⚠️ 게임을 불러오지 못했어요"; }); }
   if (r.ph === "run" && rRun !== r.rno) { rRun = r.rno; let n = 3; $("rwrap").scrollIntoView({ behavior: "smooth", block: "start" }); $("rcover").hidden = false; $("rcover").className = "cd"; $("rcover").textContent = n;
-    const cd = setInterval(() => { n--; if (n > 0) { $("rcover").textContent = n; return; } clearInterval(cd); $("rcover").hidden = true; rT0 = performance.now(); clearInterval(rTick); rTick = setInterval(() => { if (!myRes) $("rtime").textContent = fmtT(performance.now() - rT0); }, 100); renderRace(); clearInterval(rSnap); rSnap = setInterval(snapMine, 1500); snapMine(); }, 1000); }
+    const cd = setInterval(() => { n--; if (n > 0) { $("rcover").textContent = n; return; } clearInterval(cd); $("rcover").hidden = true; rT0 = performance.now(); startWatch(); clearInterval(rTick); rTick = setInterval(() => { if (!myRes) $("rtime").textContent = fmtT(performance.now() - rT0); }, 100); renderRace(); clearInterval(rSnap); rSnap = setInterval(snapMine, 1500); snapMine(); }, 1000); }
   if (r.ph === "run" && rT0 && !myRes) rTick = setInterval(() => { $("rtime").textContent = fmtT(performance.now() - rT0); }, 100);
+  if (r.ph === "done" && rDone !== r.rno) { rDone = r.rno; if (role !== "host" && r.best) mergeBest(r.f, r.best); clearInterval(rTick); clearInterval(rWatch); if (rT0 && !myRes) $("rtime").textContent = fmtT(performance.now() - rT0) + " ⏹"; snapMine(); clearInterval(rSnap);
+    const w = r.win; $("rcover").hidden = false; $("rcover").className = "done"; $("rcover").innerHTML = `🏁 끝!<br>${w ? `🥇 ${esc(raceName(w))} ${recTxt(r.res[w])}` : "모두 실패했어요"}${r.newRec ? "<div>🎉 새 최고 기록!</div>" : ""}<div class="note">눌러서 닫기</div>`; $("rcover").onclick = () => { $("rcover").hidden = true; };
+    try { navigator.vibrate && navigator.vibrate(w === (role === "host" ? "host" : myId) ? [100, 60, 100, 60, 300] : 200); } catch (e) {} }
   renderRace();
 }
 function renderRace() {
-  const r = R; if (!r) return; const host = role === "host", me2 = host ? "host" : myId, nmOf = id => (roomList.find(p => p.id === id) || {}).nm || "?";
+  const r = R; if (!r) return; const host = role === "host", me2 = host ? "host" : myId, nmOf = raceName;
   $("rhost").hidden = !host; $("rgo").hidden = r.ph !== "ready"; $("ragain").hidden = r.ph === "ready"; $("rhome").hidden = !host;
   $("rbtn").hidden = r.ph !== "run" || !!r.res[me2] || !rT0;
   if (r.res[me2]) $("rtime").textContent = fmtT(r.res[me2].ms);
-  const ids = raceParts(), order = ids.slice().sort((a, b) => { const x = r.res[a], y = r.res[b]; const k = v => !v ? 2 : v.ok ? 0 : 1; return k(x) - k(y) || ((x && x.ms) || 0) - ((y && y.ms) || 0); });
+  const ids = raceParts(), order = ids.slice().sort((a, b) => { const x = r.res[a], y = r.res[b]; const k = v => !v ? 2 : v.ok ? 0 : 1; return k(x) - k(y) || (x && y && x.ok && y.ok ? better(x, y) : ((x && x.ms) || 0) - ((y && y.ms) || 0)); });
   let rank = 0; $("rres").innerHTML = r.ph === "ready" ? "" : `<div class="lb">${r.ph === "done" ? "🏁 결과" : "진행 상황"}</div>` + order.map(id => { const v = r.res[id]; if (v && v.ok) rank++;
-    return `<div class="li"><span>${v && v.ok ? ["🥇", "🥈", "🥉"][rank - 1] || rank + "등" : v ? "😢" : "⏳"} ${esc(nmOf(id))}${id === me2 ? " (나)" : ""}</span><b>${v ? (v.ok ? "성공 " : "실패 ") + fmtT(v.ms) : "하는 중…"}</b></div>`; }).join("");
+    return `<div class="li"><span>${v && v.ok ? ["🥇", "🥈", "🥉"][rank - 1] || rank + "등" : v ? "😢" : r.ph === "done" ? "⏹" : "⏳"} ${esc(nmOf(id))}${id === me2 ? " (나)" : ""}</span><b>${v ? (v.ok ? (v.sc !== undefined ? "" : "성공 ") + recTxt(v) : "실패 " + fmtT(v.ms)) : r.ph === "done" ? "미완료" : "하는 중…"}</b></div>`; }).join("")
+    + ((r.best || []).length ? `<div class="lb" style="margin-top:8px">🏆 이 게임 최고 기록${r.newRec ? " · 🎉 새 기록!" : ""}</div>` + r.best.map((x, i) => `<div class="li"><span>${i + 1}. ${esc(x.nm)} <span class="note">${x.d}</span></span><b>${recTxt(x)}</b></div>`).join("") : "");
   $("rmini").innerHTML = r.ph === "ready" ? "" : ids.filter(id => id !== me2).map(id => { const v = r.res[id]; return `${esc(nmOf(id))} ${v ? (v.ok ? "🏆 " : "😢 ") + fmtT(v.ms) : "⏳"}`; }).join(" · ");
   $("mird").hidden = !Object.keys(mirrors).length;
-  Object.keys(mirrors).forEach(id => { const h = mirrors[id].el.querySelector(".mh"), v = r.res[id]; h.textContent = nmOf(id) + (v ? (v.ok ? " 🏆 " : " 😢 ") + fmtT(v.ms) : ""); });
+  Object.keys(mirrors).forEach(id => { const h = mirrors[id].el.querySelector(".mh"), v = r.res[id]; const age = Math.round((Date.now() - (mirrors[id].at || Date.now())) / 1000); h.textContent = nmOf(id) + (v ? (v.ok ? " 🏆 " : " 😢 ") + recTxt(v) : r.ph === "run" ? (age > 10 ? " ⚠️ 소식 없음" : ` · ${age}초 전`) : ""); });
 }
-function raceResult(ok) { if (!R || R.ph !== "run" || myRes || !rT0) return; myRes = { ok, ms: Math.round(performance.now() - rT0) }; clearInterval(rTick); snapMine();
-  if (role === "host") { R.res.host = myRes; raceCheck(); pushR(); } else gsend({ t: "rres", rno: R.rno, ok, ms: myRes.ms }); renderRace(); }
-function snapMine() {
+function raceResult(ok, x) { if (!R || R.ph !== "run" || myRes || !rT0) return; myRes = Object.assign({ ok, ms: Math.round(performance.now() - rT0) }, x || {}); clearInterval(rTick); snapMine(true);
+  if (role === "host") { R.res.host = myRes; raceCheck(); pushR(); } else gsend(Object.assign({ t: "rres", rno: R.rno }, myRes)); renderRace(); }
+let lastSentAt = 0;
+function snapMine(force) {
   if (!R) return; let d; try { d = $("rf").contentDocument; } catch (e) { return; } if (!d || !d.body) return;
   const m = d.querySelector("main") || d.body, c = m.cloneNode(true); c.querySelectorAll("script").forEach(x => x.remove());
   const src = m.querySelectorAll("canvas"); c.querySelectorAll("canvas").forEach((cv, i) => { try { const s0 = src[i], w = Math.min(240, s0.width || 240), h = Math.round((s0.height || 1) * w / (s0.width || 1)), t = document.createElement("canvas"); t.width = w; t.height = h; t.getContext("2d").drawImage(s0, 0, 0, w, h); const img = d.createElement("img"); img.src = t.toDataURL("image/jpeg", .6); img.style.cssText = "width:100%;display:block"; cv.replaceWith(img); } catch (e) {} });
-  let html = c.innerHTML; if (html.length > 150000) html = html.replace(/<img[^>]*>/g, ""); if (html === lastSnap) return; lastSnap = html;
-  const msg = { t: "snap", rno: R.rno, html, css: cssSent === R.rno ? null : [...d.querySelectorAll("style,link[rel=stylesheet]")].map(x => x.outerHTML).join("") }; cssSent = R.rno;
+  // 한 번에 보내는 크기는 60KB 아래로(너무 크면 연결이 불안정해질 수 있어요): 넘으면 사진을 빼고, 그래도 크면 이번엔 안 보내요
+  const big = x => new Blob([x]).size > 60000; let html = c.innerHTML; if (big(html)) html = html.replace(/<img[^>]*>/g, ""); if (big(html) || (html === lastSnap && !force && performance.now() - lastSentAt < 5000)) return; lastSnap = html; lastSentAt = performance.now();
+  let css = cssSent === R.rno ? null : [...d.querySelectorAll("style,link[rel=stylesheet]")].map(x => x.outerHTML).join(""); if (css && big(css + html)) css = css.slice(0, 50000 - html.length);
+  const msg = { t: "snap", rno: R.rno, html, css }; cssSent = R.rno;
   if (role === "host") bcast(Object.assign({ from: "host" }, msg)); else gsend(msg);
 }
 // 작은 화면 문서의 body 닫는 태그는 <\/ 로 써요. 그대로 쓰면 ship.py가 그 자리에 등록 코드를 끼워 넣어서 코드가 깨져요.
 function gotSnap(from, m) {
   if (!R || m.rno !== R.rno || from === (role === "host" ? "host" : myId)) return; let mr = mirrors[from];
-  if (!mr) { const el = document.createElement("div"); el.className = "mir"; el.innerHTML = '<div class="mh"></div><div class="mv"><iframe title="다른 사람 화면" tabindex="-1"></iframe></div>'; el.onclick = () => el.classList.toggle("big"); $("mirs").appendChild(el); mr = mirrors[from] = { el, css: "", html: "", ready: false }; }
-  if (m.css) mr.css = m.css; mr.html = m.html; const fr = mr.el.querySelector("iframe");
+  if (!mr) { const el = document.createElement("div"); el.className = "mir"; el.innerHTML = '<div class="mh"></div><div class="mv"><iframe title="다른 사람 화면" tabindex="-1"></iframe></div>'; el.onclick = () => el.classList.toggle("big"); $("mirs").appendChild(el); mr = mirrors[from] = { el, css: "", html: "", ready: false, nm: raceName(from) }; }
+  if (m.css) mr.css = m.css; mr.html = m.html; mr.at = Date.now(); const fr = mr.el.querySelector("iframe");
   if (!mr.ready) { if (!mr.css) return; const base = location.href.split("#")[0].replace(/[^/]*$/, ""); fr.onload = () => { mr.ready = true; try { fr.contentDocument.querySelector("main").innerHTML = mr.html; } catch (e) {} }; fr.srcdoc = `<!doctype html><html><head><base href="${base}">${mr.css}<style>html,body{overflow:hidden}</style></head><body><main></main><\/body><\/html>`; }
   else { try { fr.contentDocument.querySelector("main").innerHTML = mr.html; } catch (e) {} }
   renderRace();
 }
 setInterval(() => { if (!R) return; try { const d = $("rf").contentDocument, m = d && (d.querySelector("main") || d.body); if (m) $("rf").style.height = Math.max(300, Math.ceil(m.getBoundingClientRect().bottom + 16)) + "px"; } catch (e) {} }, 600);
+setInterval(() => { if (R && R.ph === "run") renderRace(); }, 1000);   // 상대 화면 '몇 초 전' 갱신
 $("rok").onclick = () => raceResult(true); $("rno").onclick = () => raceResult(false);
 $("rgo").onclick = () => { if (R && R.ph === "ready") { R.ph = "run"; pushR(); } };
 $("ragain").onclick = () => { if (R && (R.ph === "done" || confirm("지금 판을 그만두고 새 문제로 다시 할까요?"))) raceStart(R.f); };

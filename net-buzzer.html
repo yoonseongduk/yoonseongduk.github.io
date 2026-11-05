@@ -59,7 +59,7 @@ select{width:100%;background:var(--surface);color:var(--fg);border:1px solid var
 <body>
 <main>
   <h1>퀴즈 버저 (같이 하기) 🔔</h1>
-  <div class="card"><details class="guide" id="guide" open><summary><b>❓ 어떻게 하나요?</b></summary><ol id="steps"></ol></details><p class="center" id="st"></p><div id="qshow" class="qbox" hidden></div><div id="host" hidden style="display:grid;gap:8px"><div class="qbox host"><div class="row" style="grid-template-columns:1fr auto"><select id="qcat" aria-label="퀴즈 고르기"></select><button class="btn ghost sm" id="qpick" type="button">🎲 문제 뽑아 주기</button></div><div id="qhost" class="note">직접 문제를 내도 되고, 버튼을 눌러 문제를 뽑아도 돼요. (정답은 방장 화면에만 보여요)</div><label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="qall" checked> 문제를 모두의 화면에도 보여 주기 (정답은 빼고)</label><label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="qopt" checked> 보기 4개도 함께 보여 주기</label></div><label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mc" checked> 방장은 진행만 해요 (버저 안 누름)</label><button class="btn" id="go" type="button">▶ 문제 시작 (버저 켜기)</button><div class="row"><button class="btn ghost" id="okb" type="button">⭕ 정답 (+1점)</button><button class="btn ghost" id="nob" type="button">❌ 오답</button></div></div><button type="button" id="bz" class="buzz">누르기!</button><div id="ord"></div><div id="score"></div><button class="btn ghost sm" id="rst" type="button" hidden>점수 초기화</button></div>
+  <div class="card"><details class="guide" id="guide" open><summary><b>❓ 어떻게 하나요?</b></summary><ol id="steps"></ol></details><p class="center" id="st"></p><div id="qshow" class="qbox" hidden></div><div id="host" hidden style="display:grid;gap:8px"><div class="qbox host"><div class="row" style="grid-template-columns:1fr auto"><select id="qcat" aria-label="퀴즈 고르기"></select><button class="btn ghost sm" id="qpick" type="button">🎲 문제 뽑아 주기</button></div><div id="qhost" class="note">직접 문제를 내도 되고, 버튼을 눌러 문제를 뽑아도 돼요. (정답은 방장 화면에만 보여요)</div><label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="qall" checked> 문제를 모두의 화면에도 보여 주기 (정답은 빼고)</label><label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="qopt" checked> 보기 4개도 함께 보여 주기</label></div><label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mc" checked> 방장은 진행만 해요 (버저 안 누름)</label><button class="btn" id="go" type="button">▶ 문제 시작 (버저 켜기)</button><div class="row"><button class="btn ghost" id="okb" type="button">⭕ 정답 (+1점)</button><button class="btn ghost" id="nob" type="button">❌ 오답</button></div><button class="btn ghost sm" id="endb" type="button">⏭ 문제 끝내기 (정답 공개)</button></div><button type="button" id="bz" class="buzz">누르기!</button><div id="ord"></div><div id="score"></div><button class="btn ghost sm" id="rst" type="button" hidden>점수 초기화</button></div>
   <p class="muted">TV 퀴즈처럼 '먼저 누르기' 대결이에요. 방장(진행자)이 문제를 소리 내어 읽고 '문제 시작'을 누르면, 답을 아는 사람은 자기 폰의 큰 버튼을 눌러요. 가장 먼저 누른 사람이 소리 내어 답하고, 방장이 ⭕(정답 +1점)/❌(오답 → 다음 사람에게 기회)를 눌러요. 문제는 방장이 직접 내도 되고 '🎲 문제 뽑아 주기'로 시작 화면의 퀴즈(한국사·일본어·한자·상식 등)에서 뽑아도 돼요.</p>
 </main>
 <script>
@@ -107,14 +107,18 @@ const canBuzz = id => !(P.mc && id === "host");
 function onAct(from, d) {
   if (d.t === "buzz") { if (P.ph === "idle" || !canBuzz(from) || P.order.includes(from) || P.out.includes(from)) return; P.order.push(from); if (P.ph === "open") P.ph = "locked"; buzzV(150); }
   else if (from !== "host") return;
-  else if (d.t === "go") { P.ph = "open"; P.order = []; P.out = []; P.q++; P.qtext = d.q || ""; P.opts = Array.isArray(d.o) ? d.o.slice(0, 4) : []; P.ans = ""; }
-  else if (d.t === "ok" && P.order.length) { const w = P.order[0]; P.pts[w] = (P.pts[w] || 0) + 1; P.ph = "idle"; P.order = []; P.out = []; P.ans = d.a || ""; P.lastWin = w; }
-  else if (d.t === "no" && P.order.length) { P.out.push(P.order.shift()); P.ph = P.order.length ? "locked" : "open"; }
+  else if (d.t === "go") { P.ph = "open"; P.order = []; P.out = []; P.q++; P.qtext = d.q || ""; P.opts = Array.isArray(d.o) ? d.o.slice(0, 4) : []; P.ans = ""; P.why = ""; }
+  else if (d.t === "ok" && P.order.length) { const w = P.order[0]; P.pts[w] = (P.pts[w] || 0) + 1; endQ(d.a, `⭕ ${(players.find(p => p.id === w) || {}).name || "?"} 정답! +1점`); P.lastWin = w; }
+  else if (d.t === "no" && P.order.length) { P.out.push(P.order.shift()); P.ph = P.order.length ? "locked" : "open";
+    if (!P.order.length && players.filter(p => canBuzz(p.id)).every(p => P.out.includes(p.id))) endQ(d.a, "😅 아무도 못 맞혔어요"); }
+  else if (d.t === "end" && P.ph !== "idle") endQ(d.a, P.order.length || P.out.length ? "" : "⏭ 아무도 안 눌렀어요");
   else if (d.t === "mc") { P.mc = !!d.v; }
   else if (d.t === "rst") { P.pts = {}; }
   else return;
   pushS();
 }
+// 문제 끝내기: 버저를 끄고 정답을 모두에게 보여 줘요(다음 문제를 시작할 수 있게)
+function endQ(a, why) { P.ph = "idle"; P.order = []; P.out = []; P.ans = a || ""; P.why = why || ""; P.lastWin = null; }
 function onPriv() {}
 function changed(was) { if (P.order[0] === me && (!was || was.order[0] !== me)) buzzV([200, 80, 200]); }
 function render() {
@@ -123,8 +127,9 @@ function render() {
   $("steps").innerHTML = host ? "<li>문제를 직접 생각하거나 <b>🎲 문제 뽑아 주기</b>를 눌러요.</li><li>문제를 소리 내어 읽고 <b>▶ 문제 시작</b>을 눌러요. 그때부터 모두의 버저가 켜져요.</li><li>가장 먼저 누른 사람이 소리 내어 답하면 <b>⭕ 정답</b>(+1점) 또는 <b>❌ 오답</b>(다음으로 누른 사람에게 기회)을 눌러요.</li>"
     : "<li>방장(진행자)이 문제를 소리 내어 읽어요.</li><li>방장이 문제를 시작하면 아래 <b>큰 빨간 버튼</b>이 켜져요. 답을 알면 누구보다 먼저 눌러요!</li><li>1등으로 누르면 소리 내어 답해요. 맞으면 +1점, 틀리면 다음으로 누른 사람에게 기회가 가요.</li>";
   $("host").hidden = !host; $("rst").hidden = !host; $("mc").checked = P.mc;
-  $("okb").disabled = $("nob").disabled = !P.order.length; $("go").disabled = P.ph !== "idle";
-  $("st").textContent = P.ph === "idle" ? (host ? (P.q ? `${P.q}번 문제 끝! 다음 문제를 내 주세요` : "문제를 정하고 '▶ 문제 시작'을 눌러요") : `${P.q ? P.q + "번 문제 끝! " : ""}방장이 다음 문제를 시작하면 버저를 눌러요`) : P.order.length ? `🙋 ${pn(P.order[0])} 답하세요!` : "🔔 지금 누르세요!";
+  $("okb").disabled = $("nob").disabled = !P.order.length; $("go").disabled = P.ph !== "idle"; $("endb").hidden = P.ph === "idle";
+  $("go").textContent = P.q ? "▶ 다음 문제 시작 (버저 켜기)" : "▶ 문제 시작 (버저 켜기)";
+  $("st").textContent = P.ph === "idle" ? (P.why ? P.why + " · " : "") + (host ? (P.q ? `${P.q}번 문제 끝! 다음 문제를 내 주세요` : "문제를 정하고 '▶ 문제 시작'을 눌러요") : `${P.q ? P.q + "번 문제 끝! " : ""}방장이 다음 문제를 시작하면 버저를 눌러요`) : P.order.length ? `🙋 ${pn(P.order[0])} 답하세요!` : "🔔 지금 누르세요!";
   $("qshow").hidden = !(P.qtext || P.ans) || host; $("qshow").innerHTML = (P.qtext ? `<b>Q${P.q}.</b> ${esc(P.qtext)}` : "") + ((P.opts || []).length ? `<ol class="opts">${P.opts.map(o => `<li>${esc(o)}</li>`).join("")}</ol>` : "") + (P.ans ? `<div class="ok">정답: ${esc(P.ans)}</div>` : "");
   $("bz").hidden = !eligible; $("bz").disabled = P.ph === "idle" || rank >= 0 || P.out.includes(me);
   $("bz").textContent = rank === 0 ? "1등! 답하세요 🙋" : rank > 0 ? `${rank + 1}번째로 눌렀어요` : P.out.includes(me) ? "이번 문제는 끝 ❌" : P.ph === "idle" ? "기다려요…" : "누르기!";
@@ -143,7 +148,8 @@ $("qpick").onclick = async () => { const f = $("qcat").value || QUIZZES[ri(0, QU
 $("bz").onclick = () => act({ t: "buzz" });
 $("go").onclick = () => { const sh = curQ && $("qall").checked; act({ t: "go", q: sh ? curQ.q : "", o: sh && $("qopt").checked ? curQ.o : [] }); if (P && P.q > 0) $("guide").open = false; };
 $("okb").onclick = () => { act({ t: "ok", a: curQ ? curQ.a : "" }); curQ = null; $("qhost").textContent = "다음 문제를 직접 내거나 뽑아 주세요."; };
-$("nob").onclick = () => act({ t: "no" });
+$("nob").onclick = () => { act({ t: "no", a: curQ ? curQ.a : "" }); if (P && P.ph === "idle") { curQ = null; $("qhost").textContent = "다음 문제를 직접 내거나 뽑아 주세요."; } };
+$("endb").onclick = () => { act({ t: "end", a: curQ ? curQ.a : "" }); curQ = null; $("qhost").textContent = "다음 문제를 직접 내거나 뽑아 주세요."; };
 $("mc").onchange = () => act({ t: "mc", v: $("mc").checked }); $("rst").onclick = () => { if (confirm("점수를 모두 0으로 할까요?")) act({ t: "rst" }); };
 render();
 

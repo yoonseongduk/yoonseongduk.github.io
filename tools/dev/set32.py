@@ -320,35 +320,32 @@ def party(fn, title, emoji, hue, key, help_, body, js, css=""):
     make("out/" + fn, title, emoji, hue, key, help_, '  <div class="card">' + body + '</div>', PARTY_JS + js, CSS + css)
 
 # ── 퀴즈 버저: 방장(진행자)이 문제를 내고 읽으면, 모든 폰이 각자 버저. 먼저 누른 순서대로 답할 기회. 방장이 ⭕(+1점)/❌(다음 사람에게).
-#   문제는 방장이 직접 내도 되고, '🎲 문제 뽑아 주기'로 한국사·사자성어·순우리말 퀴즈에서 뽑을 수 있어요(정답은 방장 화면에만).
-import json as _j, random as _r
-_rng = _r.Random(236)
-_kh = [[q[0], q[1]] for q in _j.load(open("kh_all5.json", encoding="utf-8"))]
-_id = [l.strip().split("|") for l in open("idiom_data.txt", encoding="utf-8") if l.count("|") >= 2]
-_pk = [l.strip().split("|") for f in ["pk1.txt", "pk2.txt", "pk3.txt"] for l in open(f, encoding="utf-8") if l.count("|") >= 2]
-QB = {"한국사": _rng.sample(_kh, 200),
-      "사자성어": [[f"'{x[2]}'라는 뜻의 사자성어는?", f"{x[0]} ({x[1]})"] for x in _rng.sample(_id, 150)],
-      "순우리말": [[f"'{x[2]}'을(를) 뜻하는 순우리말은?", x[0]] for x in _rng.sample(_pk, 150)]}
+#   문제는 방장이 직접 내도 되고, '🎲 문제 뽑아 주기'로 시작 화면의 퀴즈(43개)에서 뽑을 수 있어요(정답은 방장 화면에만). 퀴즈 파일을 그때 받아서 문제 목록(const D)만 꺼내 써요.
+import json as _j, gamenum as _gn
+_NUMS = _gn.ensure()
+QUIZZES = [[g[0], g[1], g[2], _NUMS[g[0]]] for g in _gn.index_games() if g[4] == "quiz" and "const D = [" in open("../../" + g[0], encoding="utf-8").read()]
 party("net-buzzer.html", "퀴즈 버저 (같이 하기)", "🔔", 0, "net-buzzer-v1",
-      "TV 퀴즈처럼 '먼저 누르기' 대결이에요. 방장(진행자)이 문제를 소리 내어 읽고 '문제 시작'을 누르면, 답을 아는 사람은 자기 폰의 큰 버튼을 눌러요. 가장 먼저 누른 사람이 소리 내어 답하고, 방장이 ⭕(정답 +1점)/❌(오답 → 다음 사람에게 기회)를 눌러요. 문제는 방장이 직접 내도 되고 '🎲 문제 뽑아 주기'로 뽑아도 돼요.",
+      "TV 퀴즈처럼 '먼저 누르기' 대결이에요. 방장(진행자)이 문제를 소리 내어 읽고 '문제 시작'을 누르면, 답을 아는 사람은 자기 폰의 큰 버튼을 눌러요. 가장 먼저 누른 사람이 소리 내어 답하고, 방장이 ⭕(정답 +1점)/❌(오답 → 다음 사람에게 기회)를 눌러요. 문제는 방장이 직접 내도 되고 '🎲 문제 뽑아 주기'로 시작 화면의 퀴즈(한국사·일본어·한자·상식 등)에서 뽑아도 돼요.",
       '<details class="guide" id="guide" open><summary><b>❓ 어떻게 하나요?</b></summary><ol id="steps"></ol></details>'
       '<p class="center" id="st"></p><div id="qshow" class="qbox" hidden></div>'
       '<div id="host" hidden style="display:grid;gap:8px">'
-      '<div class="qbox host"><div class="row" style="grid-template-columns:1fr auto"><select id="qcat" aria-label="문제 종류"></select><button class="btn ghost sm" id="qpick" type="button">🎲 문제 뽑아 주기</button></div><div id="qhost" class="note">직접 문제를 내도 되고, 버튼을 눌러 문제를 뽑아도 돼요. (정답은 방장 화면에만 보여요)</div>'
-      '<label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="qall" checked> 문제를 모두의 화면에도 보여 주기 (정답은 빼고)</label></div>'
+      '<div class="qbox host"><div class="row" style="grid-template-columns:1fr auto"><select id="qcat" aria-label="퀴즈 고르기"></select><button class="btn ghost sm" id="qpick" type="button">🎲 문제 뽑아 주기</button></div><div id="qhost" class="note">직접 문제를 내도 되고, 버튼을 눌러 문제를 뽑아도 돼요. (정답은 방장 화면에만 보여요)</div>'
+      '<label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="qall" checked> 문제를 모두의 화면에도 보여 주기 (정답은 빼고)</label><label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="qopt" checked> 보기 4개도 함께 보여 주기</label></div>'
       '<label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mc" checked> 방장은 진행만 해요 (버저 안 누름)</label>'
       '<button class="btn" id="go" type="button">▶ 문제 시작 (버저 켜기)</button><div class="row"><button class="btn ghost" id="okb" type="button">⭕ 정답 (+1점)</button><button class="btn ghost" id="nob" type="button">❌ 오답</button></div></div>'
       '<button type="button" id="bz" class="buzz">누르기!</button><div id="ord"></div><div id="score"></div><button class="btn ghost sm" id="rst" type="button" hidden>점수 초기화</button>',
       r'''
-const QB = ''' + _j.dumps(QB, ensure_ascii=False) + r''';
-let curQ = null;
+const QUIZZES = ''' + _j.dumps(QUIZZES, ensure_ascii=False) + r''';
+let curQ = null; const qCache = {};
+// 퀴즈 파일에서 문제 목록(const D = [[문제, 정답, [오답…]], …])만 꺼내요
+async function loadQuiz(f) { if (qCache[f]) return qCache[f]; const t = await (await fetch(f)).text(), i = t.indexOf("const D = ["), j = i + t.slice(i).search(/\];\r?\n/); const d = JSON.parse(t.slice(i + 10, j + 1)).filter(x => x && x[0] && x[1]); qCache[f] = d; return d; }
 function initState() { return { ph: "idle", order: [], out: [], pts: {}, mc: true, q: 0, qtext: "", ans: "" }; }
 function onRoster() { P.order = P.order.filter(id => ids().includes(id)); }
 const canBuzz = id => !(P.mc && id === "host");
 function onAct(from, d) {
   if (d.t === "buzz") { if (P.ph === "idle" || !canBuzz(from) || P.order.includes(from) || P.out.includes(from)) return; P.order.push(from); if (P.ph === "open") P.ph = "locked"; buzzV(150); }
   else if (from !== "host") return;
-  else if (d.t === "go") { P.ph = "open"; P.order = []; P.out = []; P.q++; P.qtext = d.q || ""; P.ans = ""; }
+  else if (d.t === "go") { P.ph = "open"; P.order = []; P.out = []; P.q++; P.qtext = d.q || ""; P.opts = Array.isArray(d.o) ? d.o.slice(0, 4) : []; P.ans = ""; }
   else if (d.t === "ok" && P.order.length) { const w = P.order[0]; P.pts[w] = (P.pts[w] || 0) + 1; P.ph = "idle"; P.order = []; P.out = []; P.ans = d.a || ""; P.lastWin = w; }
   else if (d.t === "no" && P.order.length) { P.out.push(P.order.shift()); P.ph = P.order.length ? "locked" : "open"; }
   else if (d.t === "mc") { P.mc = !!d.v; }
@@ -366,7 +363,7 @@ function render() {
   $("host").hidden = !host; $("rst").hidden = !host; $("mc").checked = P.mc;
   $("okb").disabled = $("nob").disabled = !P.order.length; $("go").disabled = P.ph !== "idle";
   $("st").textContent = P.ph === "idle" ? (host ? (P.q ? `${P.q}번 문제 끝! 다음 문제를 내 주세요` : "문제를 정하고 '▶ 문제 시작'을 눌러요") : `${P.q ? P.q + "번 문제 끝! " : ""}방장이 다음 문제를 시작하면 버저를 눌러요`) : P.order.length ? `🙋 ${pn(P.order[0])} 답하세요!` : "🔔 지금 누르세요!";
-  $("qshow").hidden = !(P.qtext || P.ans) || host; $("qshow").innerHTML = (P.qtext ? `<b>Q${P.q}.</b> ${esc(P.qtext)}` : "") + (P.ans ? `<div class="ok">정답: ${esc(P.ans)}</div>` : "");
+  $("qshow").hidden = !(P.qtext || P.ans) || host; $("qshow").innerHTML = (P.qtext ? `<b>Q${P.q}.</b> ${esc(P.qtext)}` : "") + ((P.opts || []).length ? `<ol class="opts">${P.opts.map(o => `<li>${esc(o)}</li>`).join("")}</ol>` : "") + (P.ans ? `<div class="ok">정답: ${esc(P.ans)}</div>` : "");
   $("bz").hidden = !eligible; $("bz").disabled = P.ph === "idle" || rank >= 0 || P.out.includes(me);
   $("bz").textContent = rank === 0 ? "1등! 답하세요 🙋" : rank > 0 ? `${rank + 1}번째로 눌렀어요` : P.out.includes(me) ? "이번 문제는 끝 ❌" : P.ph === "idle" ? "기다려요…" : "누르기!";
   $("bz").classList.toggle("on", rank === 0);
@@ -374,11 +371,14 @@ function render() {
   const ps = players.filter(p => canBuzz(p.id));
   $("score").innerHTML = '<div class="lb">점수</div>' + ps.map(p => `<div class="li"><span>${esc(pn(p.id))}</span><b>${P.pts[p.id] || 0}점</b></div>`).join("");
 }
-$("qcat").innerHTML = ["전체", ...Object.keys(QB)].map(k => `<option>${k}</option>`).join("");
-$("qpick").onclick = () => { const c = $("qcat").value, pool = c === "전체" ? Object.entries(QB).flatMap(([k, a]) => a.map(x => [...x, k])) : QB[c].map(x => [...x, c]); const x = pool[ri(0, pool.length - 1)];
-  curQ = { q: x[0], a: x[1], c: x[2] }; $("qhost").innerHTML = `<b>[${esc(curQ.c)}]</b> ${esc(curQ.q)}<div class="ok">정답: ${esc(curQ.a)}</div>`; };
+$("qcat").innerHTML = '<option value="">🎲 아무 퀴즈</option>' + QUIZZES.map(([f, e, t, n]) => `<option value="${f}">#${n} ${e} ${esc(t)}</option>`).join("");
+$("qpick").onclick = async () => { const f = $("qcat").value || QUIZZES[ri(0, QUIZZES.length - 1)][0], g = QUIZZES.find(x => x[0] === f); $("qhost").textContent = "문제를 가져오는 중…";
+  try { const d = await loadQuiz(f), x = d[ri(0, d.length - 1)], opts = shuf([x[1], ...(x[2] || []).slice(0, 3)]);
+    curQ = { q: x[0], a: x[1], c: g ? g[2] : "", o: opts.length > 1 ? opts : [] };
+    $("qhost").innerHTML = `<b>[${esc(curQ.c)}]</b> ${esc(curQ.q)}` + (curQ.o.length ? `<ol class="opts">${curQ.o.map(o => `<li${o === curQ.a ? ' class="ok"' : ""}>${esc(o)}</li>`).join("")}</ol>` : "") + `<div class="ok">정답: ${esc(curQ.a)}</div>`;
+  } catch (e) { curQ = null; $("qhost").textContent = "⚠️ 문제를 가져오지 못했어요. 다시 눌러 주세요."; } };
 $("bz").onclick = () => act({ t: "buzz" });
-$("go").onclick = () => { act({ t: "go", q: curQ && $("qall").checked ? curQ.q : "" }); if (P && P.q > 0) $("guide").open = false; };
+$("go").onclick = () => { const sh = curQ && $("qall").checked; act({ t: "go", q: sh ? curQ.q : "", o: sh && $("qopt").checked ? curQ.o : [] }); if (P && P.q > 0) $("guide").open = false; };
 $("okb").onclick = () => { act({ t: "ok", a: curQ ? curQ.a : "" }); curQ = null; $("qhost").textContent = "다음 문제를 직접 내거나 뽑아 주세요."; };
 $("nob").onclick = () => act({ t: "no" });
 $("mc").onchange = () => act({ t: "mc", v: $("mc").checked }); $("rst").onclick = () => { if (confirm("점수를 모두 0으로 할까요?")) act({ t: "rst" }); };
@@ -387,6 +387,7 @@ render();
 .buzz{width:min(100%,260px);aspect-ratio:1;margin:8px auto;display:block;border-radius:50%;border:0;background:#e4572e;color:#fff;font-family:var(--font-display);font-size:1.8rem;box-shadow:0 8px 0 #a33a1c}
 .buzz:active:not([disabled]){transform:translateY(4px);box-shadow:0 4px 0 #a33a1c}.buzz[disabled]{background:#9aa3b5;box-shadow:0 8px 0 #6b7385}.buzz.on{background:#1f9d62;box-shadow:0 8px 0 #146b42}
 .guide{background:var(--soft);border-radius:12px;padding:10px 12px}.guide ol{margin:6px 0 0;padding-left:20px;display:grid;gap:4px;font-size:.92rem}
+.opts{margin:4px 0 0;padding-left:22px;display:grid;gap:2px}.opts li.ok{color:var(--ok);font-weight:700}
 .qbox{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:6px}.qbox .ok{color:var(--ok);font-weight:700}
 select{width:100%;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit}''')
 

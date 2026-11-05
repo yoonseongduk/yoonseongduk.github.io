@@ -1,9 +1,17 @@
-/* 가족 명단(공용)과 백업 알림. 가족 명단은 localStorage "family-members-v1"에 이름 배열로 저장돼요. */
+/* 가족·친구 명단(공용)과 백업 알림. 가족 명단은 localStorage "family-members-v1", 친구 명단은 "friend-members-v1"에 이름 배열로,
+   이 폰 주인(나)은 "family-me-v1"에 이름 하나로 저장돼요. */
 (function () {
-  var K = "family-members-v1";
-  function get() { try { var a = JSON.parse(localStorage.getItem(K)); return Array.isArray(a) ? a.filter(function (x) { return typeof x === "string" && x; }) : []; } catch (e) { return []; } }
-  function set(a) { try { localStorage.setItem(K, JSON.stringify(a)); } catch (e) {} }
-  window.FAMILY = { key: K, get: get, set: set };
+  var K = "family-members-v1", KF = "friend-members-v1", KME = "family-me-v1";
+  function getK(k) { try { var a = JSON.parse(localStorage.getItem(k)); return Array.isArray(a) ? a.filter(function (x) { return typeof x === "string" && x; }) : []; } catch (e) { return []; } }
+  function setK(k, a) { try { localStorage.setItem(k, JSON.stringify(a)); } catch (e) {} }
+  function get() { return getK(K); }
+  function set(a) { setK(K, a); }
+  var me = {
+    get: function () { try { var v = JSON.parse(localStorage.getItem(KME)); return typeof v === "string" ? v : ""; } catch (e) { return ""; } },
+    set: function (v) { try { if (v) localStorage.setItem(KME, JSON.stringify(v)); else localStorage.removeItem(KME); } catch (e) {} }
+  };
+  window.FAMILY = { key: K, get: get, set: set, me: me };
+  window.FRIENDS = { key: KF, get: function () { return getK(KF); }, set: function (a) { setK(KF, a); } };
 
   // 시작 화면에서만: 백업한 지 오래됐으면 부드럽게 알려 줘요
   if (!/\/(index\.html)?$/.test(location.pathname)) return;

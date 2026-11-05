@@ -47,16 +47,19 @@ textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}
 .gm .e{font-size:1.8rem}.gm b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.25rem}
 #gf{width:100%;border:0;display:block;min-height:200px;background:transparent}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-weight:700;font-size:.88rem}.chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.75rem;font-weight:700;background:var(--soft);margin-left:4px}.mini{display:inline-flex;gap:4px;margin-left:6px}.mini button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 8px;font-size:.78rem}
 </style>
 </head>
 <body>
 <main>
   <h1>같이 하기 👫</h1>
-  <div class="card"><div style="display:grid;gap:4px"><label class="lb" for="nm">이 기기 이름</label><input type="text" id="nm" maxlength="10"></div></div>
+  <div class="card"><div style="display:grid;gap:4px"><label class="lb" for="nm">이 기기 이름</label><input type="text" id="nm" maxlength="10"><div class="chips" id="nmc"></div></div></div>
   <div class="card" id="start">
     <p>QR로 <b>한 번만</b> 연결하면, 방장이 고른 게임이 모든 폰에서 함께 열려요. 게임을 바꿔도 다시 연결할 필요가 없어요.</p>
     <p class="note">폰(또는 PC)을 <b>같은 와이파이</b>나 한 폰의 <b>핫스팟</b>에 연결한 뒤 시작하세요.</p>
     <div class="row"><button class="btn" id="bh" type="button">📡 방 만들기</button><button class="btn ghost" id="bg" type="button">🔗 참가하기</button></div>
+    <label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="gst"> 🙋 손님으로 참가 (게임만 하고, 가족·친구 명단은 주고받지 않아요)</label>
   </div>
   <div class="card" id="hostbox" hidden>
     <b id="hstep">① 참가할 폰으로 이 QR을 찍어요</b>
@@ -82,6 +85,7 @@ textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}
   </div>
   <details class="card" id="room" hidden open><summary class="bar"><b id="rsum">📶 연결된 기기</b></summary><div id="list" style="margin-top:6px"></div>
     <div class="row"><button class="btn ghost sm" id="buzz" type="button">📳 신호 보내기</button><button class="btn ghost sm" id="more" type="button" hidden>➕ 한 명 더 연결</button></div>
+    <button class="btn ghost sm" id="pplb" type="button">📋 명단 주고받기 (가족·친구 이름)</button><div id="ppl"></div>
     <p class="note" id="rmsg" style="color:var(--bad)"></p><p class="note">연결된 동안은 화면이 꺼지지 않게 해요. 앱을 닫거나 화면이 오래 꺼지면 연결이 끊겨요.</p></details>
   <div class="card" id="pick" hidden><b>🎮 같이 할 게임 고르기</b><div id="glist" style="display:grid;gap:8px"></div></div>
   <div class="card" id="wait" hidden><p class="center">방장이 게임을 고르고 있어요… 🎲</p></div>
@@ -90,6 +94,7 @@ textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}
   <div id="flash" hidden></div>
   <p class="muted">폰(또는 PC) 여러 대를 QR로 한 번만 연결하면, 방장이 고른 게임이 모든 기기에서 함께 열려요. 인터넷 서버를 거치지 않고 같은 와이파이(또는 핫스팟) 안에서 기기끼리 바로 주고받아요. 화면이 꺼지거나 앱을 닫으면 연결이 끊겨요. QR코드는 (주)덴소웨이브의 등록상표예요.</p>
 </main>
+<script src="family.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
@@ -189,12 +194,44 @@ const gathered = pc => new Promise(res => { if (pc.iceGatheringState === "comple
 const newPc = () => new RTCPeerConnection({ iceServers: [] });
 const mkId = () => Math.random().toString(36).slice(2, 8);
 
-const GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지는 구경"], ["net-ship-hunt.html", "🚢", "함선 찾기", "2명 · 서로 함선을 숨기고 한 발씩 쏘기"]];
+const GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지는 구경"], ["net-ship-hunt.html", "🚢", "함선 찾기", "2명 · 서로 함선을 숨기고 한 발씩 쏘기"], ["net-omok.html", "⚫⚪", "오목", "2명 · 15×15 판에 5개를 먼저 잇기"], ["net-four.html", "🔴🟡", "사목 (4개 잇기)", "2명 · 위에서 떨어뜨려 4개 잇기"], ["net-baseball.html", "⚾", "숫자 야구 대결", "2명 · 서로 비밀 숫자를 정하고 먼저 맞히기"], ["net-bingo.html", "🔢", "빙고 대결", "2명 · 각자 판으로 번갈아 부르고 먼저 5줄"]];
 // ───── 상태 ─────
 let S = Object.assign({ name: "" }, ld(KEY) || {});
-if (!S.name) { const old = ld("link-test-v1"); S.name = (old && old.name) || "기기" + ri(100, 999); sv(KEY, S); }
+if (!S.name) { const old = ld("link-test-v1"), mine = window.FAMILY && FAMILY.me ? FAMILY.me.get() : ""; S.name = mine || (old && old.name) || "기기" + ri(100, 999); sv(KEY, S); }
 $("nm").value = S.name;
-$("nm").onchange = () => { S.name = $("nm").value.trim().slice(0, 10) || S.name; $("nm").value = S.name; sv(KEY, S); if (role === "guest") gsend({ t: "name", name: S.name }); else if (role === "host") roster(); };
+// 손님: 게임만 함께 하고 명단은 주고받지 않아요(이번 연결에서만, 저장 안 함)
+let asGuest = false;
+$("gst").onchange = () => { asGuest = $("gst").checked; };
+function setName(v) { S.name = String(v || "").trim().slice(0, 10) || S.name; $("nm").value = S.name; sv(KEY, S); if (role === "guest") gsend({ t: "name", name: S.name, gst: asGuest }); else if (role === "host") roster(); nameChips(); }
+$("nm").onchange = () => setName($("nm").value);
+// ───── 가족·친구 명단 (공용 FAMILY·FRIENDS): 이름만 주고받고, 받은 쪽이 "추가"를 눌러야 저장돼요
+const famL = () => window.FAMILY ? FAMILY.get() : [], frL = () => window.FRIENDS ? FRIENDS.get() : [];
+const groupOf = n => famL().includes(n) ? "가족" : frL().includes(n) ? "친구" : "";
+function nameChips() { const ns = [...famL(), ...frL()]; $("nmc").innerHTML = ns.slice(0, 20).map(n => `<button type="button" class="chip${n === S.name ? " on" : ""}" data-n="${esc(n)}">${esc(n)}</button>`).join(""); $("nmc").querySelectorAll("[data-n]").forEach(b => b.onclick = () => setName(b.dataset.n)); }
+function addPeople(fam, fr) { if (!window.FAMILY) return; const F = famL(), R = frL(); fam.forEach(n => { if (!F.includes(n) && !R.includes(n) && F.length < 12) F.push(n); }); fr.forEach(n => { if (!F.includes(n) && !R.includes(n) && R.length < 30) R.push(n); }); FAMILY.set(F); FRIENDS.set(R); nameChips(); renderRoom(); }
+const cleanNames = a => Array.isArray(a) ? [...new Set(a.filter(x => typeof x === "string").map(x => x.trim().slice(0, 8)).filter(Boolean))].slice(0, 30) : [];
+let pplIn = { from: [], fam: [], fr: [] };
+function gotPpl(m) {
+  if (asGuest) return;
+  const known = new Set([...famL(), ...frL()]), fam = cleanNames(m.fam).filter(n => !known.has(n)), fr = cleanNames(m.fr).filter(n => !known.has(n) && !fam.includes(n));
+  if (!pplIn.from.includes(m.from)) pplIn.from.push(String(m.from || "").slice(0, 10));
+  fam.forEach(n => { if (!pplIn.fam.includes(n)) pplIn.fam.push(n); }); fr.forEach(n => { if (!pplIn.fr.includes(n) && !pplIn.fam.includes(n)) pplIn.fr.push(n); });
+  renderPpl();
+}
+function renderPpl() {
+  const p = pplIn; if (!p.from.length) { $("ppl").innerHTML = ""; return; }
+  $("ppl").innerHTML = `<div class="card" style="border-color:var(--accent);margin-top:8px"><b>📋 ${p.from.map(esc).join(", ")} 님이 명단을 보냈어요</b>`
+    + (p.fam.length || p.fr.length ? `${p.fam.length ? `<div>👨‍👩‍👧 가족: ${p.fam.map(esc).join(", ")}</div>` : ""}${p.fr.length ? `<div>🧑‍🤝‍🧑 친구: ${p.fr.map(esc).join(", ")}</div>` : ""}<div class="row"><button class="btn sm" id="pplok" type="button">✅ 내 명단에 추가</button><button class="btn ghost sm" id="pplno" type="button">건너뛰기</button></div>`
+      : '<div class="note">내 명단에 이미 다 있어요. 새로 추가할 이름이 없어요.</div><button class="btn ghost sm" id="pplno" type="button">닫기</button>') + "</div>";
+  if ($("pplok")) $("pplok").onclick = () => { addPeople(p.fam, p.fr); pplIn = { from: [], fam: [], fr: [] }; renderPpl(); flash("✅ 명단에 추가했어요"); };
+  $("pplno").onclick = () => { pplIn = { from: [], fam: [], fr: [] }; renderPpl(); };
+}
+$("pplb").onclick = () => { if (asGuest) return; const m = { t: "ppl", from: S.name, fam: famL(), fr: frL() }; if (!m.fam.length && !m.fr.length) { alert("보낼 가족·친구 명단이 아직 없어요. 시작 화면의 '가족 명단'에서 이름을 추가하거나, 아래 연결된 기기 옆의 가족/친구 버튼을 눌러 등록해 주세요."); return; }
+  if (!confirm(`연결된 모든 기기에 내 가족 ${m.fam.length}명 · 친구 ${m.fr.length}명의 이름을 보낼까요? (이름만 보내요. 받는 쪽이 '추가'를 눌러야 저장돼요)`)) return;
+  if (role === "host") peers.forEach(x => { if (!x.gst) send(x, m); }); else gsend(m); flash("📋 보냈어요"); };
+$("list").addEventListener("click", e => { const g = e.target.closest("[data-gstp]"); if (g && role === "host") { const p = peers.find(x => x.id === g.dataset.gstp); if (p) { p.gst = true; roster(); } return; }
+  const b = e.target.closest("[data-addf],[data-addr]"); if (!b) return; const n = String(b.dataset.addf || b.dataset.addr).slice(0, 8); if (b.dataset.addf) addPeople([n], []); else addPeople([], [n]); });
+nameChips();
 let role = null, myId = "host", pend = null, upl = null, roomList = [], game = null, gameReady = false, gq = [];
 const peers = [];
 const bc = ("BroadcastChannel" in window) ? new BroadcastChannel("fg-link") : null;
@@ -251,10 +288,11 @@ const send = (p, m) => { if (p.dc.readyState === "open") p.dc.send(JSON.stringif
 const bcast = (m, except) => peers.forEach(p => { if (p !== except) send(p, m); });
 function hostMsg(p, m) {
   if (m.t === "pong") { p.rtt = Math.round(performance.now() - m.ts); renderRoom(); }
-  else if (m.t === "name") { const n0 = String(m.name || "").slice(0, 10) || "손님", used = [S.name, ...peers.filter(x => x !== p).map(x => x.name)]; let n = n0, k = 2; while (used.includes(n)) n = n0 + "-" + k++; p.name = n; roster(); }
+  else if (m.t === "name") { if (m.gst) p.gst = true; const n0 = String(m.name || "").slice(0, 10) || "손님", used = [S.name, ...peers.filter(x => x !== p).map(x => x.name)]; let n = n0, k = 2; while (used.includes(n)) n = n0 + "-" + k++; p.name = n; roster(); }
   else if (m.t === "buzz") { flash("📳 " + p.name); bcast({ t: "buzz", from: p.name }, p); }
   else if (m.t === "bye") { try { p.pc.close(); } catch (e) {} drop(p); }
   else if (m.t === "g") route(p.id, m.to, m.d);
+  else if (m.t === "ppl" && !p.gst) { const f = { t: "ppl", from: p.name, fam: m.fam, fr: m.fr }; gotPpl(f); peers.forEach(x => { if (x !== p && !x.gst) send(x, f); }); }
 }
 // 게임 말 나눠 주기: to = "host"(방장 게임) / "*"(보낸 사람 빼고 모두) / 기기 id
 function route(from, to, d) {
@@ -266,7 +304,7 @@ function route(from, to, d) {
 const players = () => roomList.filter(p => p.ok || p.weak).map(p => ({ id: p.id, name: p.nm }));
 function roster() {
   if (role !== "host") return;
-  roomList = [{ id: "host", nm: S.name, name: S.name + " (방장)", rtt: 0, ok: true }, ...peers.map(p => ({ id: p.id, nm: p.name, name: p.name, rtt: p.rtt, ok: !!p.open && !p.weak, weak: !!p.weak }))];
+  roomList = [{ id: "host", nm: S.name, name: S.name + " (방장)", rtt: 0, ok: true }, ...peers.map(p => ({ id: p.id, nm: p.name, name: p.name, rtt: p.rtt, ok: !!p.open && !p.weak, weak: !!p.weak, gst: !!p.gst }))];
   bcast({ t: "room", list: roomList }); renderRoom(); toFrameRoster();
   note("rmsg", peers.some(p => p.weak) ? "⚠️ 신호가 약해진 기기가 있어요. 그 폰의 화면을 켜 두면 잠시 뒤 다시 붙어요. 1분 넘게 안 붙으면 ➕ 한 명 더 연결로 다시 들어오게 해 주세요." : "");
 }
@@ -278,7 +316,7 @@ async function join(code) {
   guestStart(); note("gmsg", "답장 QR을 만드는 중…");
   const pc = newPc(); upl = { pc, dc: null };
   pc.ondatachannel = e => { const dc = upl.dc = e.channel;
-    dc.onopen = () => { wake(); gsend({ t: "name", name: S.name }); $("guestbox").hidden = true; $("room").hidden = false; $("wait").hidden = !!game; flash("✅ 연결됐어요!"); };
+    dc.onopen = () => { wake(); $("pplb").hidden = asGuest; gsend({ t: "name", name: S.name, gst: asGuest }); $("guestbox").hidden = true; $("room").hidden = false; $("wait").hidden = !!game; flash("✅ 연결됐어요!"); };
     dc.onmessage = e2 => { let m; try { m = JSON.parse(e2.data); } catch (x) { return; } guestMsg(m); };
     dc.onclose = () => { $("guestbox").hidden = false; $("gjoin").hidden = true; $("gans").hidden = true; $("gre").hidden = false; note("gmsg", "⚠️ 방과 연결이 끊겼어요. '처음부터 다시'를 누르고, 방 만든 폰에서 '➕ 한 명 더 연결'로 다시 들어와 주세요."); roomList = []; renderRoom(); loadGame(null); $("wait").hidden = true; };
   };
@@ -296,6 +334,7 @@ function guestMsg(m) {
   else if (m.t === "buzz") flash("📳 " + m.from);
   else if (m.t === "load") { loadGame(m.game); $("wait").hidden = !!m.game; }
   else if (m.t === "g") toFrame(m.from, m.d);
+  else if (m.t === "ppl") gotPpl(m);
   else if (m.t === "bye") { try { upl.pc.close(); } catch (e) {} if (upl.dc && upl.dc.onclose) upl.dc.onclose(); }
 }
 addEventListener("pagehide", () => { if (role === "guest") gsend({ t: "bye" }); else if (role === "host") bcast({ t: "bye" }); });
@@ -322,7 +361,7 @@ addEventListener("message", e => {
 });
 function renderRoom() {
   const n = roomList.filter(p => p.ok || p.weak).length; $("rsum").textContent = `📶 연결된 기기 ${n}대`;
-  $("list").innerHTML = roomList.length ? roomList.map(p => `<div class="li"><span><span class="dot ${p.ok ? "ok" : "bad"}"></span>${esc(p.name)}${p.id === myId && role === "guest" ? " (나)" : ""}</span><span class="note">${p.id === "host" ? "" : p.weak ? "⚠️ 신호 약함 · 다시 붙는 중" : !p.ok ? "연결 중…" : p.rtt == null ? "…" : p.rtt + " ms"}</span></div>`).join("") : '<p class="note">연결된 기기가 없어요.</p>';
+  $("list").innerHTML = roomList.length ? roomList.map(p => `<div class="li"><span><span class="dot ${p.ok ? "ok" : "bad"}"></span>${esc(p.name)}${(p.id === myId && role === "guest") || (p.id === "host" && role === "host") ? " (나)" : p.gst ? '<span class="tag">🙋 손님</span>' : groupOf(p.nm) ? `<span class="tag">${groupOf(p.nm)}</span>` : window.FAMILY && p.ok && p.nm && !asGuest ? `<span class="mini"><button type="button" data-addf="${esc(p.nm)}">+가족</button><button type="button" data-addr="${esc(p.nm)}">+친구</button>${role === "host" ? `<button type="button" data-gstp="${p.id}">손님</button>` : ""}</span>` : ""}</span><span class="note">${p.id === "host" ? "" : p.weak ? "⚠️ 신호 약함 · 다시 붙는 중" : !p.ok ? "연결 중…" : p.rtt == null ? "…" : p.rtt + " ms"}</span></div>`).join("") : '<p class="note">연결된 기기가 없어요.</p>';
 }
 
 $("bh").onclick = hostStart;

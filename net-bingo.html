@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>빙고 대결 (같이 하기)</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(280 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(280 22% 86%);--accent:hsl(280 65% 46%);--accent-fg:#fff;--soft:hsl(280 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(280 22% 10%);--surface:hsl(280 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(280 16% 25%);--accent:hsl(280 75% 68%);--accent-fg:#10131c;--soft:hsl(280 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.qr{display:block;width:100%;max-width:300px;margin:0 auto;image-rendering:pixelated;border-radius:8px;background:#fff}
+.lb{font-size:.88rem;color:var(--muted);font-weight:700}.note{font-size:.85rem;color:var(--muted)}.btn.sm{padding:9px 14px;font-size:1rem}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--muted);margin-right:6px}.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+.ttt{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(100%,300px);margin:0 auto}
+.ttt button{aspect-ratio:1;border-radius:14px;border:1px solid var(--line);background:var(--soft);font-family:var(--font-display);font-size:3rem;line-height:1}
+.ttt button.w{background:color-mix(in srgb,var(--ok) 30%,var(--surface))}
+#scan{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+#scan video{width:100%;max-width:440px;border-radius:12px}#scan p{color:#fff;text-align:center}
+#flash{position:fixed;inset:0;z-index:60;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2rem;text-align:center;padding:16px}
+textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}.inhub body{padding:4px 0 8px;background:transparent}.inhub h1{display:none}.inhub main{max-width:none}
+.note{font-size:.85rem;color:var(--muted)}.btn.sm{padding:9px 14px;font-size:1rem}
+.bg{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;width:min(100%,320px);margin:0 auto}.bg.small{width:min(100%,220px)}
+.bg button{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:var(--soft);font-family:var(--font-display);font-size:1.3rem;padding:0}.bg.small button{font-size:.95rem;border-radius:7px}
+.bg button.on{background:color-mix(in srgb,var(--accent) 35%,var(--surface))}.bg button.ln{background:color-mix(in srgb,var(--ok) 40%,var(--surface))}.bg button.last{outline:3px solid var(--bad)}.bg button[disabled]{cursor:default}
+.stats .stat b{font-size:1.2rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>빙고 대결 (같이 하기) 🔢</h1>
+  <div class="card"><p class="center" id="st"></p><p class="center big" id="lastc" hidden></p>
+    <div class="stats" id="lines"></div><div class="bg" id="bd"></div>
+    <div class="row" id="place"><button class="btn ghost sm" id="shuf" type="button">🔀 다시 섞기</button><button class="btn sm" id="rdy" type="button">✅ 이 판으로 하기</button></div>
+    <div id="oppw" hidden><div class="lb" id="oppl"></div><div class="bg small" id="obd"></div></div><p class="center note" id="sc"></p><button class="btn ghost sm" id="again" type="button" hidden>새 판</button></div>
+  <p class="muted">1~25가 섞인 내 판을 정하고, 번갈아 내 판에서 숫자를 하나씩 불러요. 불린 숫자는 두 사람 판에 모두 표시돼요. 가로, 세로, 대각선 한 줄이 다 차면 1줄! 먼저 5줄을 만들면 이기고, 같은 숫자로 둘 다 5줄이 되면 무승부예요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "net-bingo-v1";
+
+// 같이 하기 화면과 말 주고받기. 혼자 열면 안내만 보여요.
+const NET = (() => {
+  const inHub = window.parent !== window, cb = { init: [], msg: [], roster: [] }; let info = null;
+  const post = m => { try { window.parent.postMessage(m, "*"); } catch (e) {} };
+  addEventListener("message", e => { if (e.source !== window.parent) return; const m = e.data || {};
+    if (m.fg === "init") { info = m; cb.init.forEach(f => f(m)); } else if (m.fg === "roster" && info) { info.players = m.players; cb.roster.forEach(f => f(m.players)); } else if (m.fg === "msg") cb.msg.forEach(f => f(m.from, m.d)); });
+  const fit = () => post({ fg: "h", h: Math.ceil(document.documentElement.scrollHeight) });
+  if (inHub) { document.documentElement.classList.add("inhub"); try { new ResizeObserver(fit).observe(document.body); } catch (e) { setInterval(fit, 500); } addEventListener("load", () => post({ fg: "ready" })); }
+  return { inHub, get info() { return info; }, on: (k, f) => cb[k].push(f), send: (to, d) => post({ fg: "send", to, d }) };
+})();
+const nameOf = id => { const p = (NET.info && NET.info.players || []).find(x => x.id === id); return p ? p.name : "?"; };
+if (!NET.inHub) document.addEventListener("DOMContentLoaded", () => { document.querySelector("main").insertAdjacentHTML("afterbegin", '<div class="card"><p>이 게임은 <b>👫 같이 하기</b> 화면 안에서 폰 여러 대를 연결해 해요.</p><a class="btn" style="text-align:center;text-decoration:none" href="play-together.html">같이 하기 열기</a></div>'); });
+
+let me = null, isHost = false, P = null;
+const H = {};
+const amPlayer = () => !!P && (me === P.a || me === P.b);
+const oppOf = id => id === P.a ? P.b : P.a;
+const nm = id => id === me ? "나" : id === P.a ? P.na : P.nb;
+function round(keep) {
+  const a = P ? P.a : "host", b = P ? P.b : null, opt = P ? P.opt : {}, sc = keep && P ? P.sc : {}, first = keep && P && b ? (P.first === a ? b : a) : a;
+  Object.keys(H).forEach(k => delete H[k]); P = { a, b, opt, sc, first, win: null, ph: "wait" }; if (b) Object.assign(P, newRound());
+}
+function pickB(ps) { if (P.b && ps.some(p => p.id === P.b)) return false; const nx = ps.find(p => p.id !== "host"); P.b = nx ? nx.id : null; round(false); return true; }
+function pushS() { if (!isHost) return; P.na = nameOf(P.a); P.nb = P.b ? nameOf(P.b) : ""; NET.send("*", { t: "state", P }); render(); }
+function finish(w) { P.ph = "end"; P.win = w; P.sc[w] = (P.sc[w] || 0) + 1; }
+const act = d => { if (isHost) { if (P && (P.a === "host" || P.b === "host")) onAct("host", d); } else NET.send("host", d); };
+NET.on("init", m => { me = m.me.id; isHost = m.isHost; if (isHost) { round(false); pickB(m.players); pushS(); } else NET.send("host", { t: "hello" }); render(); });
+NET.on("roster", ps => { if (isHost && P) { pickB(ps); pushS(); } else render(); });
+NET.on("msg", (from, d) => { if (isHost) { if (d.t === "hello") pushS(); else if (P && (from === P.a || from === P.b)) onAct(from, d); } else if (d.t === "state") { const was = P && P.ph; P = d.P; changed(was); render(); } });
+const scoreLine = () => P && P.b ? `${P.na} ${P.sc[P.a] || 0} : ${P.sc[P.b] || 0} ${P.nb}${P.sc.D ? " · 무승부 " + P.sc.D : ""}` : "";
+const endText = () => P.win === "D" ? "비겼어요!" : P.win === me ? "🎉 이겼어요!" : amPlayer() ? "😢 졌어요… 다음 판에 다시!" : `🎉 ${nm(P.win)} 승리!`;
+function common() { $("again").hidden = !(amPlayer() && P.ph === "end"); $("sc").textContent = scoreLine(); }
+$("again").onclick = () => act({ t: "again" });
+
+const okBoard = b => Array.isArray(b) && b.length === 25 && [...b].sort((x, y) => x - y).every((v, i) => v === i + 1);
+const LN = []; for (let i = 0; i < 5; i++) { LN.push([0, 1, 2, 3, 4].map(j => i * 5 + j), [0, 1, 2, 3, 4].map(j => j * 5 + i)); } LN.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
+const linesOf = (b, called) => LN.filter(l => l.every(i => called.includes(b[i]))).length;
+const fresh = () => shuf(Array.from({ length: 25 }, (_, i) => i + 1));
+let board = fresh();
+function newRound() { return { ph: "set", ready: {}, called: [], turn: null, lines: {}, last: null, reveal: null }; }
+function onAct(from, d) {
+  if (d.t === "board" && P.ph === "set" && okBoard(d.b)) { H[from] = d.b; P.ready[from] = 1; if (P.ready[P.a] && P.ready[P.b]) { P.ph = "play"; P.turn = P.first; P.lines = { [P.a]: 0, [P.b]: 0 }; } }
+  else if (d.t === "unready" && P.ph === "set") { delete P.ready[from]; delete H[from]; }
+  else if (d.t === "call" && P.ph === "play" && from === P.turn) { const n = +d.n; if (!(n >= 1 && n <= 25) || P.called.includes(n)) return; P.called.push(n); P.last = n;
+    const la = linesOf(H[P.a], P.called), lb = linesOf(H[P.b], P.called); P.lines = { [P.a]: la, [P.b]: lb };
+    if (la >= 5 || lb >= 5) { finish(la >= 5 && lb >= 5 ? "D" : la >= 5 ? P.a : P.b); P.reveal = { [P.a]: H[P.a], [P.b]: H[P.b] }; } else P.turn = oppOf(from); }
+  else if (d.t === "again" && P.ph === "end") round(true);
+  else return;
+  pushS();
+}
+function changed(was) { if (P.ph === "set" && was !== "set") board = fresh(); }
+function grid(el, b, click) {
+  const called = P.called || [], done = new Set(LN.filter(l => l.every(i => called.includes(b[i]))).flat());
+  el.innerHTML = b.map((v, i) => { const on = called.includes(v); return `<button type="button" data-n="${v}" class="${on ? "on" : ""}${done.has(i) ? " ln" : ""}${v === P.last ? " last" : ""}"${click && !on ? "" : " disabled"}>${v}</button>`; }).join("");
+  if (click) el.querySelectorAll("[data-n]:not([disabled])").forEach(x => x.onclick = () => act({ t: "call", n: +x.dataset.n }));
+}
+function render() {
+  if (!P) { $("st").textContent = "연결을 기다리는 중…"; $("place").hidden = true; return; }
+  const pl = amPlayer(), opp = pl ? oppOf(me) : null, called = P.called || [], rd = P.ready || {};
+  $("place").hidden = !(pl && P.ph === "set"); $("rdy").textContent = rd[me] ? "↩ 다시 고르기" : "✅ 이 판으로 하기"; $("shuf").disabled = !!rd[me];
+  $("lastc").hidden = !P.last; $("lastc").textContent = P.last ? `📣 ${P.last}` : "";
+  if (P.ph === "wait") $("st").textContent = "상대가 들어오면 시작해요";
+  else if (P.ph === "set") $("st").textContent = !pl ? `${P.na}·${P.nb} 님이 판을 고르는 중…` : rd[me] ? (rd[opp] ? "곧 시작해요!" : "준비 완료! 상대를 기다려요…") : `내 빙고 판이에요. 마음에 들면 시작!${rd[opp] ? " (상대는 준비됐어요)" : ""}`;
+  else if (P.ph === "play") $("st").textContent = !pl ? `구경 중 · ${nm(P.turn)} 차례 · 부른 숫자 ${called.length}개` : P.turn === me ? "📣 내 차례! 내 판에서 부를 숫자를 눌러요" : "상대가 숫자를 고르는 중…";
+  else $("st").textContent = endText();
+  const ls = P.lines || {}; $("lines").innerHTML = P.ph === "play" || P.ph === "end" ? [P.a, P.b].map(id => `<div class="stat"><small>${esc(nm(id))}</small><b>${ls[id] || 0}줄</b></div>`).join("") + `<div class="stat"><small>부른 숫자</small><b>${called.length}</b></div>` : "";
+  const rv = P.reveal || {};
+  if (pl) grid($("bd"), P.ph === "end" && rv[me] ? rv[me] : board, P.ph === "play" && P.turn === me);
+  else if (P.ph === "end") grid($("bd"), rv[P.a], false);
+  else $("bd").innerHTML = called.length ? `<p class="note center" style="grid-column:1/-1">부른 숫자: ${called.join(", ")}</p>` : "";
+  $("oppw").hidden = P.ph !== "end"; if (P.ph === "end") { const o = pl ? opp : P.b; $("oppl").textContent = `${nm(o)}의 판`; grid($("obd"), rv[o], false); }
+  common();
+}
+$("shuf").onclick = () => { if (P && P.ready && P.ready[me]) return; board = fresh(); render(); };
+$("rdy").onclick = () => { if (!amPlayer() || P.ph !== "set") return; act(P.ready[me] ? { t: "unready" } : { t: "board", b: board }); };
+render();
+
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>

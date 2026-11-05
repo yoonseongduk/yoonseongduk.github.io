@@ -64,7 +64,7 @@
 - **음양력·시간 도구(`calendar-tools.html`)**: 오늘/음양력 변환+음력 명절/24절기/12시진/날짜 계산.
 - **한자 급수 퀴즈**: 정답 후 "📖 이 한자 자세히 보기" → `data/hanja-detail.json`(6·5·4급 1,000자는 유래·한자어 예 직접 작성, 나머지는 사자성어 속 쓰임·같은 부수 한자만).
 
-- **공용 스크립트**: `family.js`(가족 명단 `family-members-v1` + 시작 화면 백업 알림), `med-notify.js`(약 알림, 모든 화면), `wrong-hook.js`(오답 노트). 새 페이지에서 가족 명단을 쓰려면 JS에 `FAMILY.get()`을 쓰면 `ship.py`가 `family.js`를 넣어요.
+- **공용 스크립트**: `family.js`(가족 명단 `family-members-v1`·친구 명단 `FRIENDS` `friend-members-v1`·이 폰 주인 `FAMILY.me` `family-me-v1` + 시작 화면 백업 알림. 화면은 `family-members.html` "가족·친구 명단", `set27.py`), `med-notify.js`(약 알림, 모든 화면), `wrong-hook.js`(오답 노트). 새 페이지에서 가족 명단을 쓰려면 JS에 `FAMILY.get()`을 쓰면 `ship.py`가 `family.js`를 넣어요.
 - **기록 백업·복원(`backup.html`)**: 모든 localStorage를 JSON 파일로 저장/복원(`tools/dev/keymap.json`에 키→화면 이름, 새 도구가 생기면 `set27.py` 앞부분의 keymap 생성 코드를 다시 실행). 가족 명단은 `family-members.html`.
 
 - **한자 획순 번호**: `data/stroke-6~1.json`(Make Me a Hanzi 파생, `tools/dev/build_stroke.py`로 생성, 라이선스 `data/stroke-LICENSE.txt`). 한자 쓰기 화면의 🔢(번호 켜기/끄기)·✏️(획 시작 위치를 순서대로 눌러 직접 입력/수정). 직접 고친 내용은 폰 localStorage `hanja-write-strokefix-v1`에 저장되고, "📋 내가 고친 획순 복사"로 JSON을 복사해 `tools/dev/merge_stroke_fix.py`로 `data/stroke-fix.json`에 합치면 모든 폰에 반영돼요(형식 `{"한자":[[x,y],...]}`, 좌표는 300×300 쓰기 칸 기준). 자료에 없는 172자(`data/stroke-missing.json`) 중 131자는 `build_stroke_auto.py`(글자 분해로 추정)+`snap_auto.js`(글꼴 모양에 맞춤)가 `data/stroke-auto.json`으로 임시 번호를 채웠고(화면에 '자동 추정' 표시, 우선순위 직접수정>stroke-fix>auto), 나머지 41자는 비어 있어요. 모두 한자 쓰기 급수 버튼 끝의 ✏️ '번호 없는 글자만' 모드로 한 글자씩 순서대로 찍어 채워요.
@@ -75,7 +75,9 @@
   - 배운 점: ① 잠깐 끊김(disconnected)은 흔하니 지우지 말고 기다리기 ② 참가자는 방장 주소 없이 시작해 방장이 먼저 두드리게(답장을 메신저로 늦게 옮겨도 참가자가 30초 만에 포기하지 않게), 15초 뒤 직접 시도 ③ PC 크롬은 화면 안 QR 읽기(BarcodeDetector)가 없어 코드 복사·붙여넣기로 대신.
   - 연결은 페이지 안에서만 살아 있어서 다른 게임 화면으로 가면 끊겨요 → 그래서 아래 "같이 하기"를 만들었어요.
 - **같이 하기(`play-together.html`, `set30.py`)**: QR로 한 번 연결하고, 방장이 고른 게임을 화면 안(iframe)에 불러와 모든 기기가 함께 해요. 게임을 바꿔도 연결 유지. QR·연결 코드는 `set29.py`의 `QR_JS`·`CODEC_JS`를 가져다 써요.
-  - 게임 파일은 `net-*.html`(지금 `net-tictactoe`, `net-ship-hunt`). 시작 화면에는 안 보이게 `ship.py`에 분류 `"-"`로 등록(파일만 복사, 카드 없음, 약 알림 스크립트도 안 넣음). 새 게임을 추가하려면 `set30.py`의 `GAMES`에 한 줄 + `NET_JS`를 넣은 페이지를 만들면 돼요.
+  - 게임 파일은 `net-*.html`(틱택토·함선 찾기는 `set30.py`, 오목·사목·숫자 야구·빙고는 `set31.py`의 두 사람 대결 공통 `DUO_JS`: `newRound`·`onAct`·`render`만 만들면 됨).
+  - 가족·친구·손님: 기기 이름 기본값 = 이 폰 주인(`FAMILY.me`). 목록에서 +가족/+친구로 등록, "📋 명단 주고받기"는 이름만 보내고 받는 쪽이 "추가"를 눌러야 저장. "🙋 손님으로 참가"한 기기(또는 방장이 손님으로 정한 기기)는 명단을 주고받지 않음.
+  - 게임 파일은 `net-*.html`. 시작 화면에는 안 보이게 `ship.py`에 분류 `"-"`로 등록(파일만 복사, 카드 없음, 약 알림 스크립트도 안 넣음). 새 게임을 추가하려면 `set30.py`의 `GAMES`에 한 줄 + `NET_JS`를 넣은 페이지를 만들면 돼요.
   - 게임 쪽 약속(`NET`): `NET.on("init", m => …)`(m.me.id, m.isHost, m.players), `NET.on("roster", ps => …)`, `NET.on("msg", (from, d) => …)`, `NET.send("host"|"*"|기기id, d)`. 방장 기기 id는 `"host"`. 판정은 방장 게임이 하고 상태를 `"*"`로 나눠 주는 방식(숨겨야 하는 정보는 방장만 들고, 화면에는 내 것만 그리기).
   - 검사: PC에서 브라우저 창 3개로 연결 → 틱택토 → 게임 바꾸기 → 함선 찾기(숨김·판정·공개·새 판·선수 교체)까지 자동 확인. 검사는 PC에서 브라우저 창 여러 개로(QR 읽기 검사용 `jsqr`는 `tools/dev/node_modules`에만 설치, 사이트에는 안 올림).
 

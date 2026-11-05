@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>가족 명단</title>
+<title>가족·친구 명단</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#c4552b">
@@ -32,15 +32,17 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 .res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
 .big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.x{background:none;border:0;color:var(--muted);font-size:1.1rem;padding:4px 8px}.btn.sm{padding:8px 14px;font-size:1rem}.lb{font-size:.88rem;color:var(--muted);font-weight:700}.note{font-size:.85rem;color:var(--muted)}.nm{flex:1;min-width:0}.nm input{background:transparent;border:1px solid transparent;font-weight:700;padding:8px 6px}.nm input:focus{border-color:var(--line);background:var(--soft)}.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}input[type=file]{width:100%;font:inherit}.opt{display:flex;gap:8px;align-items:flex-start;font-size:.95rem}.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:4px 2px;border-bottom:1px solid var(--line)}.tbl td:last-child{text-align:right;color:var(--muted)}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.x{background:none;border:0;color:var(--muted);font-size:1.1rem;padding:4px 8px}.btn.sm{padding:8px 14px;font-size:1rem}.lb{font-size:.88rem;color:var(--muted);font-weight:700}.note{font-size:.85rem;color:var(--muted)}.nm{flex:1;min-width:0}.nm input{background:transparent;border:1px solid transparent;font-weight:700;padding:8px 6px}.nm input:focus{border-color:var(--line);background:var(--soft)}.g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}input[type=file]{width:100%;font:inherit}.opt{display:flex;gap:8px;align-items:flex-start;font-size:.95rem}.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:4px 2px;border-bottom:1px solid var(--line)}.tbl td:last-child{text-align:right;color:var(--muted)}select{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
 </style>
 </head>
 <body>
 <main>
-  <h1>가족 명단 👨‍👩‍👧</h1>
+  <h1>가족·친구 명단 👨‍👩‍👧</h1>
+  <div class="card"><b>📱 이 폰 주인 (나)</b><select id="me" aria-label="이 폰 주인"></select><div class="note">같이 하기에서 이 이름이 기기 이름으로 먼저 들어가요.</div></div>
   <div class="card"><b>👨‍👩‍👧 우리 가족</b><div id="list"></div><div class="g2" style="grid-template-columns:1fr auto"><input type="text" id="nn" maxlength="8" placeholder="이름 추가 (예: 엄마)"><button class="btn sm" id="add" type="button">추가</button></div><div class="note" id="cnt"></div></div>
-  <div class="card"><b>📌 어디에서 쓰나요?</b><div class="note">집안일 당번표 · 가족 점수판 · 혈압·혈당 기록장 · 팀 나누기 · 순서·벌칙 정하기 · 성격 유형 테스트(이름 자동 완성)<br>각 화면의 <b>"👨‍👩‍👧 가족 명단 불러오기"</b> 버튼을 누르면 이 명단이 들어가요.</div></div>
-  <p class="muted">가족 이름을 한 번만 적어 두면, 당번표·점수판·혈압 기록·팀 나누기·순서 정하기에서 '가족 명단 불러오기' 버튼으로 한 번에 쓸 수 있어요. 이 폰에만 저장돼요.</p>
+  <div class="card"><b>🧑‍🤝‍🧑 친구</b><div id="flist"></div><div class="g2" style="grid-template-columns:1fr auto"><input type="text" id="fn" maxlength="8" placeholder="이름 추가 (예: 민지)"><button class="btn sm" id="fadd" type="button">추가</button></div><div class="note" id="fcnt"></div></div>
+  <div class="card"><b>📌 어디에서 쓰나요?</b><div class="note">집안일 당번표 · 가족 점수판 · 혈압·혈당 기록장 · 팀 나누기 · 순서·벌칙 정하기 · 성격 유형 테스트(이름 자동 완성)<br>각 화면의 <b>"👨‍👩‍👧 가족 명단 불러오기"</b> 버튼을 누르면 가족 명단이 들어가요.<br>👫 <b>같이 하기</b>: 연결된 기기를 가족·친구로 등록하거나, "📋 명단 주고받기"로 서로의 명단을 합칠 수 있어요.</div></div>
+  <p class="muted">가족과 친구 이름을 한 번만 적어 두면, 당번표·점수판·혈압 기록·팀 나누기·순서 정하기에서 '가족 명단 불러오기' 버튼으로 한 번에 쓸 수 있어요. 같이 하기에서 폰을 연결하면 서로의 명단을 주고받을 수도 있어요. 이 폰에만 저장돼요.</p>
 </main>
 <script src="family.js"></script>
 <script>
@@ -52,19 +54,39 @@ const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j
 const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const KEY = "family-members-v1";
 
-const MAX = 12;
-let L = (window.FAMILY ? FAMILY.get() : (ld("family-members-v1") || []));
-const save = () => { if (window.FAMILY) FAMILY.set(L); else sv("family-members-v1", L); };
-function render() {
-  $("list").innerHTML = L.length ? L.map((n, i) => `<div class="li"><span class="nm"><input type="text" value="${esc(n)}" maxlength="8" data-i="${i}" aria-label="이름"></span><span style="display:flex"><button class="x" data-up="${i}" type="button" aria-label="위로"${i ? "" : " disabled"}>▲</button><button class="x" data-dn="${i}" type="button" aria-label="아래로"${i < L.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-del="${i}" type="button" aria-label="삭제">✕</button></span></div>`).join("") : '<p class="muted">아직 등록된 가족이 없어요. 아래에 이름을 적어 추가해 주세요.</p>';
-  $("cnt").textContent = `${L.length}명 / 최대 ${MAX}명`;
+// 가족(fam)과 친구(fr) 두 명단을 같은 방식으로 다뤄요. 한 이름은 한쪽 명단에만 있어요.
+const LISTS = {
+  fam: { el: "list", nn: "nn", add: "add", cnt: "cnt", max: 12, word: "가족", api: window.FAMILY, key: "family-members-v1", empty: "아직 등록된 가족이 없어요. 아래에 이름을 적어 추가해 주세요." },
+  fr: { el: "flist", nn: "fn", add: "fadd", cnt: "fcnt", max: 30, word: "친구", api: window.FRIENDS, key: "friend-members-v1", empty: "아직 등록된 친구가 없어요." }
+};
+const data = {}; Object.entries(LISTS).forEach(([k, o]) => { data[k] = o.api ? o.api.get() : (ld(o.key) || []); });
+const save = k => { const o = LISTS[k]; if (o.api) o.api.set(data[k]); else sv(o.key, data[k]); renderMe(); };
+const other = k => k === "fam" ? "fr" : "fam";
+function renderMe() {
+  const cur = window.FAMILY && FAMILY.me ? FAMILY.me.get() : "", names = [...data.fam, ...data.fr];
+  $("me").innerHTML = '<option value="">선택 안 함</option>' + names.map(n => `<option${n === cur ? " selected" : ""}>${esc(n)}</option>`).join("");
 }
-function addName() { const v = $("nn").value.trim().slice(0, 8); if (!v) { $("nn").focus(); return; } if (L.includes(v)) { $("cnt").innerHTML = '<span class="bad">같은 이름이 이미 있어요</span>'; return; } if (L.length >= MAX) { $("cnt").innerHTML = '<span class="bad">최대 12명까지예요</span>'; return; } L.push(v); save(); $("nn").value = ""; render(); $("nn").focus(); }
-$("add").onclick = addName; $("nn").addEventListener("keydown", e => { if (e.key === "Enter") addName(); });
-$("list").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const g = k => b.dataset[k] !== undefined ? +b.dataset[k] : null;
-  if (g("del") !== null) { L.splice(g("del"), 1); } else if (g("up") !== null && g("up") > 0) { const i = g("up"); [L[i - 1], L[i]] = [L[i], L[i - 1]]; } else if (g("dn") !== null && g("dn") < L.length - 1) { const i = g("dn"); [L[i + 1], L[i]] = [L[i], L[i + 1]]; } else return; save(); render(); });
-$("list").addEventListener("change", e => { const i = +e.target.dataset.i, v = e.target.value.trim().slice(0, 8); if (!v || (L.includes(v) && L[i] !== v)) { e.target.value = L[i]; return; } L[i] = v; save(); render(); });
-render();
+$("me").onchange = () => { if (window.FAMILY && FAMILY.me) FAMILY.me.set($("me").value); };
+function render(k) {
+  const o = LISTS[k], L = data[k];
+  $(o.el).innerHTML = L.length ? L.map((n, i) => `<div class="li"><span class="nm"><input type="text" value="${esc(n)}" maxlength="8" data-i="${i}" aria-label="이름"></span><span style="display:flex"><button class="x" data-up="${i}" type="button" aria-label="위로"${i ? "" : " disabled"}>▲</button><button class="x" data-dn="${i}" type="button" aria-label="아래로"${i < L.length - 1 ? "" : " disabled"}>▼</button><button class="x" data-del="${i}" type="button" aria-label="삭제">✕</button></span></div>`).join("") : `<p class="muted">${o.empty}</p>`;
+  $(o.cnt).textContent = `${L.length}명 / 최대 ${o.max}명`;
+}
+Object.entries(LISTS).forEach(([k, o]) => {
+  const L = () => data[k];
+  const addName = () => { const v = $(o.nn).value.trim().slice(0, 8); if (!v) { $(o.nn).focus(); return; }
+    if (L().includes(v)) { $(o.cnt).innerHTML = '<span class="bad">같은 이름이 이미 있어요</span>'; return; }
+    if (data[other(k)].includes(v)) { $(o.cnt).innerHTML = `<span class="bad">이미 ${LISTS[other(k)].word} 명단에 있어요</span>`; return; }
+    if (L().length >= o.max) { $(o.cnt).innerHTML = `<span class="bad">최대 ${o.max}명까지예요</span>`; return; }
+    L().push(v); save(k); $(o.nn).value = ""; render(k); $(o.nn).focus(); };
+  $(o.add).onclick = addName; $(o.nn).addEventListener("keydown", e => { if (e.key === "Enter") addName(); });
+  $(o.el).addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const g = x => b.dataset[x] !== undefined ? +b.dataset[x] : null, A = L();
+    if (g("del") !== null) { A.splice(g("del"), 1); } else if (g("up") !== null && g("up") > 0) { const i = g("up"); [A[i - 1], A[i]] = [A[i], A[i - 1]]; } else if (g("dn") !== null && g("dn") < A.length - 1) { const i = g("dn"); [A[i + 1], A[i]] = [A[i], A[i + 1]]; } else return; save(k); render(k); });
+  $(o.el).addEventListener("change", e => { const i = +e.target.dataset.i, v = e.target.value.trim().slice(0, 8), A = L(); if (!v || (A.includes(v) && A[i] !== v) || data[other(k)].includes(v)) { e.target.value = A[i]; return; }
+    if (window.FAMILY && FAMILY.me && FAMILY.me.get() === A[i]) FAMILY.me.set(v); A[i] = v; save(k); render(k); });
+  render(k);
+});
+renderMe();
 
 
 </script>

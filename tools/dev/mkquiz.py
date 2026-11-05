@@ -97,6 +97,9 @@ function _unused(d) {''')
 
 
 def make(path, title, emoji, hue, key, help_, data, label="", kind="choice", qsize="clamp(1.5rem,7vw,2.1rem)"):
+    try:                                   # 추가 문제(qmore/<이름>.txt)가 있으면 합쳐요
+        import qmore; data = qmore.merge(path, data)
+    except ImportError: pass
     tpl = OX if kind == "ox" else CHOICE
     s = (tpl.replace("@@TITLE@@", title).replace("@@EMOJI@@", emoji).replace("@@H@@", str(hue)).replace("@@KEY@@", key)
          .replace("@@QSIZE@@", qsize).replace("@@HELP@@", help_).replace("@@LABEL@@", json.dumps(label, ensure_ascii=False)).replace("@@DATA@@", json.dumps(data, ensure_ascii=False)))

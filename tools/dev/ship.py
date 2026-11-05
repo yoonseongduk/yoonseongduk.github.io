@@ -22,4 +22,5 @@ for f, *_ in games:
     assert "googleapis" not in s and 'rel="manifest"' in s and 'register("sw.js")' in s, f
     open(R + f, "w", encoding="utf-8").write(s)
 subprocess.run([sys.executable, "addgames.py", json.dumps([g for g in games if g[4] != "-"], ensure_ascii=False)], check=True)  # 분류 "-"는 시작 화면에 등록하지 않음(같이 하기 안에서만 여는 게임 등)
+subprocess.run([sys.executable, "gamenum.py"], check=True)  # 새 게임에 고유번호 붙이기(시작 화면 검색용)
 subprocess.run([sys.executable, R + "tools/make-sw.py"], check=True)

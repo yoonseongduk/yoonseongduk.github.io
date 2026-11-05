@@ -1,4 +1,4 @@
-import sys
+import sys, re
 sys.path.insert(0, ".")
 from mkpage import make
 from set29 import QR_JS, CODEC_JS, CSS as LINK_CSS
@@ -9,32 +9,51 @@ from set29 import QR_JS, CODEC_JS, CSS as LINK_CSS
 #     게임→  {fg:"ready"} 준비됐어요 / {fg:"send", to:"host"|"*"|기기id, d} 보내기 / {fg:"h", h} 화면 높이
 #     →게임  {fg:"init", me:{id,name}, isHost, players:[{id,name}]} / {fg:"roster", players} / {fg:"msg", from, d}
 #   기기끼리(데이터 채널): hi·room·ping·pong·name·buzz·bye(연결 관리), load(게임 바꾸기), g(게임 말 전달 {to, from, d})
-GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지는 구경"],
-         ["net-ship-hunt.html", "🚢", "함선 찾기", "2명 · 서로 함선을 숨기고 한 발씩 쏘기"],
-         ["net-omok.html", "⚫⚪", "오목", "2명 · 15×15 판에 5개를 먼저 잇기"],
-         ["net-four.html", "🔴🟡", "사목 (4개 잇기)", "2명 · 위에서 떨어뜨려 4개 잇기"],
-         ["net-baseball.html", "⚾", "숫자 야구 대결", "2명 · 서로 비밀 숫자를 정하고 먼저 맞히기"],
-         ["net-bingo.html", "🔢", "빙고 대결", "2명 · 각자 판으로 번갈아 부르고 먼저 5줄"],
-         ["net-flip.html", "⚫⚪", "뒤집기 보드", "2명 · 끼워서 뒤집고 돌 많은 쪽이 승리"],
-         ["net-dots.html", "🟦", "점 잇기 상자", "2명 · 선을 그어 네모를 더 많이 차지"],
-         ["net-mancala.html", "🫘", "칼라하 (콩 옮기기)", "2명 · 콩을 뿌려 창고에 모으기"],
-         ["net-hex.html", "🔷", "헥스", "2명 · 육각 판에서 두 변을 먼저 잇기"],
-         ["net-31.html", "🔢", "31 게임", "2명 · 1~3개씩 외치고 31을 말하면 짐"],
-         ["net-pig.html", "🎲", "피그 주사위", "2명 · 굴릴까 저금할까, 먼저 100점"],
-         ["net-memory.html", "🃏", "카드 짝 대결", "2명 · 번갈아 짝 맞추기"],
-         ["net-rps.html", "✊", "가위바위보 대결", "2명 · 몰래 고르고 동시에 공개, 3승 먼저"],
-         ["net-highcard.html", "🂡", "하이카드 대결", "2명 · 카드 10장으로 몰래 한 장씩"],
-         ["net-buzzer.html", "🔔", "퀴즈 버저", "여러 명 · 모든 폰이 버저, 방장이 진행"],
-         ["net-mafia.html", "🕵️", "역할 뽑기 (마피아)", "여러 명 · 각자 폰에 비밀 역할"],
-         ["net-react.html", "⚡", "반응 대결", "여러 명 · 초록색이 되면 누구보다 빨리"],
-         ["net-bomb.html", "💣", "폭탄 돌리기", "여러 명 · 폰끼리 폭탄을 넘기다 펑!"],
-         ["net-lots.html", "🎟️", "제비뽑기", "여러 명 · 각자 폰에서 한 장씩 뽑기"]]
+# [파일, 이모지, 제목, 설명, 묶음] — 묶음은 HUB_GROUPS. 고유번호는 gamenum.py가 붙여요(game_numbers.json)
+HUB_GROUPS = [["board", "♟️", "판 게임"], ["hide", "🙈", "숨기고 겨루기"], ["dice", "🎲", "주사위·숫자"], ["hand", "✊", "눈치·손"], ["party", "🎉", "여러 명 파티"]]
+GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지는 구경", "board"],
+         ["net-ship-hunt.html", "🚢", "함선 찾기", "2명 · 서로 함선을 숨기고 한 발씩 쏘기", "hide"],
+         ["net-omok.html", "⚫⚪", "오목", "2명 · 15×15 판에 5개를 먼저 잇기", "board"],
+         ["net-four.html", "🔴🟡", "사목 (4개 잇기)", "2명 · 위에서 떨어뜨려 4개 잇기", "board"],
+         ["net-baseball.html", "⚾", "숫자 야구 대결", "2명 · 서로 비밀 숫자를 정하고 먼저 맞히기", "hide"],
+         ["net-bingo.html", "🔢", "빙고 대결", "2명 · 각자 판으로 번갈아 부르고 먼저 5줄", "hide"],
+         ["net-flip.html", "⚫⚪", "뒤집기 보드", "2명 · 끼워서 뒤집고 돌 많은 쪽이 승리", "board"],
+         ["net-dots.html", "🟦", "점 잇기 상자", "2명 · 선을 그어 네모를 더 많이 차지", "board"],
+         ["net-mancala.html", "🫘", "칼라하 (콩 옮기기)", "2명 · 콩을 뿌려 창고에 모으기", "board"],
+         ["net-hex.html", "🔷", "헥스", "2명 · 육각 판에서 두 변을 먼저 잇기", "board"],
+         ["net-31.html", "🔢", "31 게임", "2명 · 1~3개씩 외치고 31을 말하면 짐", "dice"],
+         ["net-pig.html", "🎲", "피그 주사위", "2명 · 굴릴까 저금할까, 먼저 100점", "dice"],
+         ["net-memory.html", "🃏", "카드 짝 대결", "2명 · 번갈아 짝 맞추기", "hide"],
+         ["net-rps.html", "✊", "가위바위보 대결", "2명 · 몰래 고르고 동시에 공개, 3승 먼저", "hand"],
+         ["net-highcard.html", "🂡", "하이카드 대결", "2명 · 카드 10장으로 몰래 한 장씩", "hide"],
+         ["net-buzzer.html", "🔔", "퀴즈 버저", "여러 명 · 모든 폰이 버저, 방장이 진행", "party"],
+         ["net-mafia.html", "🕵️", "역할 뽑기 (마피아)", "여러 명 · 각자 폰에 비밀 역할", "party"],
+         ["net-react.html", "⚡", "반응 대결", "여러 명 · 초록색이 되면 누구보다 빨리", "hand"],
+         ["net-bomb.html", "💣", "폭탄 돌리기", "여러 명 · 폰끼리 폭탄을 넘기다 펑!", "party"],
+         ["net-lots.html", "🎟️", "제비뽑기", "여러 명 · 각자 폰에서 한 장씩 뽑기", "party"],
+         ["net-onecard.html", "🃏", "원카드", "2명 · 같은 무늬·숫자 내기, 먼저 다 없애기", "hide"],
+         ["net-checkers.html", "♛", "체커 (서양 장기)", "2명 · 뛰어넘어 잡기, 끝줄에 가면 왕", "board"],
+         ["net-yut.html", "🪵", "윷놀이", "2명 · 윷을 던져 말 2개를 먼저 돌리기", "dice"],
+         ["net-yacht.html", "🎲", "주사위 족보", "2~6명 · 차례대로 굴려 12개 족보 채우기", "dice"],
+         ["net-wordtrick.html", "🤫", "제시어 추리", "여러 명 · 한 명만 제시어를 몰라요", "party"]]
 
+import gamenum, json as _json
+NUMS = gamenum.ensure()
+_IG = re.findall(r'\{ id: "(\w+)", n: "([^"]+)", e: "([^"]+)"', open(gamenum.REPO + "/index.html", encoding="utf-8").read())
+RACE_GROUPS = [[g, e, n] for g, n, e in _IG if g in ("brain", "quiz", "react", "board", "arcade")]
+RACE = [[r[0], r[1], r[2], r[4], NUMS[r[0]]] for r in gamenum.index_games() if r[4] in [g[0] for g in RACE_GROUPS]]
 HUB_CSS = LINK_CSS + '''
 .gm{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px}
 .gm .e{font-size:1.8rem}.gm b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.25rem}
 #gf{width:100%;border:0;display:block;min-height:200px;background:transparent}
-.bar{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px}.no{font-size:.72rem;color:var(--muted);font-weight:700;margin-left:4px}
+.gh{font-family:var(--font-display);font-size:1.1rem;margin-top:6px}input[type=search]{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
+#rf{width:100%;border:0;display:block;min-height:300px;background:var(--bg)}.rwrap{position:relative}
+#rcover{position:absolute;inset:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--font-display);font-size:1.4rem;padding:16px;border-radius:12px}
+#rcover.cd{font-size:5rem}.timer{font-family:var(--font-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.mirs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}.mir{flex:none;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);cursor:pointer}
+.mir .mh{font-size:.78rem;font-weight:700;padding:3px 6px;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}.mir .mv{width:150px;height:250px;overflow:hidden;position:relative}
+.mir iframe{width:360px;height:600px;border:0;transform:scale(.4166);transform-origin:0 0;pointer-events:none}.mir.big .mh{max-width:none}.mir.big .mv{width:300px;height:500px}.mir.big iframe{transform:scale(.8333)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-weight:700;font-size:.88rem}.chip.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.75rem;font-weight:700;background:var(--soft);margin-left:4px}.mini{display:inline-flex;gap:4px;margin-left:6px}.mini button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 8px;font-size:.78rem}'''
 
@@ -71,14 +90,24 @@ HUB_BODY = '''  <div class="card"><div style="display:grid;gap:4px"><label class
     <div class="row"><button class="btn ghost sm" id="buzz" type="button">📳 신호 보내기</button><button class="btn ghost sm" id="more" type="button" hidden>➕ 한 명 더 연결</button></div>
     <button class="btn ghost sm" id="pplb" type="button">📋 명단 주고받기 (가족·친구 이름)</button><div id="ppl"></div>
     <p class="note" id="rmsg" style="color:var(--bad)"></p><p class="note">연결된 동안은 화면이 꺼지지 않게 해요. 앱을 닫거나 화면이 오래 꺼지면 연결이 끊겨요.</p></details>
-  <div class="card" id="pick" hidden><b>🎮 같이 할 게임 고르기</b><div id="glist" style="display:grid;gap:8px"></div></div>
+  <div class="card" id="pick" hidden><b>🎮 같이 할 게임 고르기</b><div id="glist" style="display:grid;gap:8px"></div>
+    <details id="racebox" class="card" style="border-color:var(--accent)"><summary><b>🏁 동시 도전</b> <span class="note">혼자 하는 게임을 다 같이 동시에</span></summary>
+      <p class="note" style="margin:6px 0">모두 각자 폰에서 같은 게임을 동시에 시작해요. 컴퓨터와 하는 게임은 각자 컴퓨터와 겨루고, 퍼즐·퀴즈는 <b>같은 문제</b>로 누가 먼저(또는 잘) 하는지 겨뤄요. 다른 사람 화면이 위에 작게 보여요.</p>
+      <input type="search" id="rq" placeholder="게임 이름이나 번호(예: 12)로 찾기" autocomplete="off" aria-label="동시 도전 게임 찾기"><div id="rlist" style="display:grid;gap:8px;margin-top:8px"></div></details></div>
   <div class="card" id="wait" hidden><p class="center">방장이 게임을 고르고 있어요… 🎲</p></div>
+  <div class="card" id="rstage" hidden><div class="bar"><b id="rname"></b><span class="timer" id="rtime">0:00.0</span></div>
+    <div class="mirs" id="mirs"></div>
+    <div id="rhost" class="row" hidden><button class="btn sm" id="rgo" type="button">▶ 시작</button><button class="btn ghost sm" id="ragain" type="button">🔁 새 문제로 다시</button></div>
+    <div class="rwrap"><div id="rcover">준비 중…</div><iframe id="rf" title="동시 도전 게임"></iframe></div>
+    <div class="row" id="rbtn"><button class="btn sm" id="rok" type="button">🏆 성공 · 이겼어요</button><button class="btn ghost sm" id="rno" type="button">😢 실패 · 졌어요</button></div>
+    <div id="rres"></div><button class="btn ghost sm" id="rhome" type="button" hidden>🏠 다른 게임 고르기</button></div>
   <div class="card" id="stage" hidden><div class="bar"><b id="gname"></b><button class="btn ghost sm" id="home" type="button" hidden>🏠 게임 바꾸기</button></div><iframe id="gf" title="게임 화면" scrolling="no"></iframe></div>
   <div id="scan" hidden><p>QR 코드를 화면 가운데에 비춰 주세요</p><video id="vid" playsinline muted></video><button class="btn" id="scx" type="button">닫기</button></div>
   <div id="flash" hidden></div>'''
 
 HUB_JS = QR_JS + CODEC_JS + r'''
-const GAMES = ''' + __import__("json").dumps(GAMES, ensure_ascii=False) + r''';
+const GAMES = ''' + _json.dumps(GAMES, ensure_ascii=False) + r''', HUB_GROUPS = ''' + _json.dumps(HUB_GROUPS, ensure_ascii=False) + r''';
+const NUMS = ''' + _json.dumps({k: v for k, v in NUMS.items()}, ensure_ascii=False) + r''', RACE = ''' + _json.dumps(RACE, ensure_ascii=False) + r''', RACE_GROUPS = ''' + _json.dumps(RACE_GROUPS, ensure_ascii=False) + r''';
 // ───── 상태 ─────
 let S = Object.assign({ name: "" }, ld(KEY) || {});
 if (!S.name) { const old = ld("link-test-v1"), mine = window.FAMILY && FAMILY.me ? FAMILY.me.get() : ""; S.name = mine || (old && old.name) || "기기" + ri(100, 999); sv(KEY, S); }
@@ -149,7 +178,7 @@ async function newOffer() {
   const pc = newPc(), dc = pc.createDataChannel("fg"), p = { id: mkId(), name: "연결 중…", pc, dc, rtt: null };
   try { await pc.setLocalDescription(await pc.createOffer()); await gathered(pc); p.code = pack("o", pc.localDescription.sdp); } catch (e) { note("hmsg", "⚠️ " + e.message); return; }
   p.ref = p.code.split("~")[2].slice(0, 4); pend = p;
-  dc.onopen = () => { p.open = true; send(p, { t: "hi", id: p.id }); send(p, { t: "load", game }); note("hmsg", ""); $("hostbox").hidden = true; $("more").hidden = false; flash("✅ 연결됐어요!"); roster(); };
+  dc.onopen = () => { p.open = true; send(p, { t: "hi", id: p.id }); send(p, { t: "load", game }); if (R) send(p, { t: "race", R }); note("hmsg", ""); $("hostbox").hidden = true; $("more").hidden = false; flash("✅ 연결됐어요!"); roster(); };
   dc.onclose = () => drop(p);
   dc.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } hostMsg(p, m); };
   // 잠깐 끊김(disconnected)은 기다려요. 완전히 끊긴 경우(failed·closed·나가기)만 정리해요.
@@ -176,6 +205,8 @@ function hostMsg(p, m) {
   else if (m.t === "buzz") { flash("📳 " + p.name); bcast({ t: "buzz", from: p.name }, p); }
   else if (m.t === "bye") { try { p.pc.close(); } catch (e) {} drop(p); }
   else if (m.t === "g") route(p.id, m.to, m.d);
+  else if (m.t === "rres" && R && m.rno === R.rno && R.ph === "run" && !R.res[p.id]) { R.res[p.id] = { ok: !!m.ok, ms: Math.max(0, +m.ms || 0) }; raceCheck(); pushR(); }
+  else if (m.t === "snap") { gotSnap(p.id, m); const f = Object.assign({}, m, { from: p.id }); peers.forEach(x => { if (x !== p) send(x, f); }); }
   else if (m.t === "ppl" && !p.gst) { const f = { t: "ppl", from: p.name, fam: m.fam, fr: m.fr }; gotPpl(f); peers.forEach(x => { if (x !== p && !x.gst) send(x, f); }); }
 }
 // 게임 말 나눠 주기: to = "host"(방장 게임) / "*"(보낸 사람 빼고 모두) / 기기 id
@@ -189,7 +220,7 @@ const players = () => roomList.filter(p => p.ok || p.weak).map(p => ({ id: p.id,
 function roster() {
   if (role !== "host") return;
   roomList = [{ id: "host", nm: S.name, name: S.name + " (방장)", rtt: 0, ok: true }, ...peers.map(p => ({ id: p.id, nm: p.name, name: p.name, rtt: p.rtt, ok: !!p.open && !p.weak, weak: !!p.weak, gst: !!p.gst }))];
-  bcast({ t: "room", list: roomList }); renderRoom(); toFrameRoster();
+  bcast({ t: "room", list: roomList }); renderRoom(); toFrameRoster(); if (R) { const was = R.ph; raceCheck(); if (R.ph !== was) pushR(); else renderRace(); }
   note("rmsg", peers.some(p => p.weak) ? "⚠️ 신호가 약해진 기기가 있어요. 그 폰의 화면을 켜 두면 잠시 뒤 다시 붙어요. 1분 넘게 안 붙으면 ➕ 한 명 더 연결로 다시 들어오게 해 주세요." : "");
 }
 
@@ -214,10 +245,12 @@ const gsend = m => { if (upl && upl.dc && upl.dc.readyState === "open") upl.dc.s
 function guestMsg(m) {
   if (m.t === "ping") gsend({ t: "pong", ts: m.ts });
   else if (m.t === "hi") myId = m.id;
-  else if (m.t === "room") { roomList = m.list; renderRoom(); toFrameRoster(); }
+  else if (m.t === "room") { roomList = m.list; renderRoom(); toFrameRoster(); renderRace(); }
   else if (m.t === "buzz") flash("📳 " + m.from);
   else if (m.t === "load") { loadGame(m.game); $("wait").hidden = !!m.game; }
   else if (m.t === "g") toFrame(m.from, m.d);
+  else if (m.t === "race") onRace(m.R);
+  else if (m.t === "snap") gotSnap(m.from, m);
   else if (m.t === "ppl") gotPpl(m);
   else if (m.t === "bye") { try { upl.pc.close(); } catch (e) {} if (upl.dc && upl.dc.onclose) upl.dc.onclose(); }
 }
@@ -232,8 +265,19 @@ function loadGame(f) {
   $("home").hidden = role !== "host"; if (role === "host") $("pick").hidden = !!g;
   if (g) { $("room").open = false; $("hostbox").hidden = true; }
 }
-function showPick() { $("pick").hidden = !!game; $("glist").innerHTML = GAMES.map(([f, e, t, d]) => `<button type="button" class="gm" data-g="${f}"><span class="e">${e}</span><span><b>${t}</b><span class="note">${d}</span></span></button>`).join(""); $("glist").querySelectorAll("[data-g]").forEach(b => b.onclick = () => pickGame(b.dataset.g)); }
-function pickGame(f) { if (role !== "host") return; loadGame(f); bcast({ t: "load", game: f }); }
+const gmBtn = (f, e, t, d, n, kind) => `<button type="button" class="gm" data-${kind}="${f}"><span class="e">${e}</span><span><b>${esc(t)}<span class="no">#${n}</span></b><span class="note">${esc(d)}</span></span></button>`;
+function showPick() {
+  $("pick").hidden = !!game || !!R;
+  $("glist").innerHTML = HUB_GROUPS.map(([k, e, n]) => { const gs = GAMES.filter(g => g[4] === k); return gs.length ? `<div class="gh">${e} ${n}</div>` + gs.map(g => gmBtn(g[0], g[1], g[2], g[3], NUMS[g[0]] || "", "g")).join("") : ""; }).join("");
+  $("glist").querySelectorAll("[data-g]").forEach(b => b.onclick = () => pickGame(b.dataset.g)); raceList();
+}
+function raceList() {
+  const q = $("rq").value.trim().toLowerCase(), qn = /^#?\d+$/.test(q) ? +q.replace("#", "") : 0, hit = r => !q || (qn ? r[4] === qn : r[2].toLowerCase().includes(q));
+  $("rlist").innerHTML = RACE_GROUPS.map(([k, e, n]) => { const rs = RACE.filter(r => r[3] === k && hit(r)); return rs.length ? `<div class="gh">${e} ${n} <span class="note">${rs.length}개</span></div>` + rs.map(r => gmBtn(r[0], r[1], r[2], "", r[4], "r")).join("") : ""; }).join("") || '<p class="note">찾는 게임이 없어요.</p>';
+  $("rlist").querySelectorAll("[data-r]").forEach(b => b.onclick = () => raceStart(b.dataset.r));
+}
+$("rq").addEventListener("input", raceList);
+function pickGame(f) { if (role !== "host") return; if (R) { R = null; bcast({ t: "race", R: null }); onRace(null); } loadGame(f); bcast({ t: "load", game: f }); }
 const postF = m => { try { frameWin().postMessage(m, "*"); } catch (e) {} };
 function toFrame(from, d) { const m = { fg: "msg", from, d }; if (gameReady) postF(m); else gq.push(m); }
 function toFrameRoster() { if (gameReady) postF({ fg: "roster", players: players() }); }
@@ -243,6 +287,65 @@ addEventListener("message", e => {
   else if (m.fg === "h") $("gf").style.height = Math.max(200, +m.h || 0) + "px";
   else if (m.fg === "send") { if (role === "host") route("host", m.to, m.d); else if (m.to === "host") gsend({ t: "g", to: "host", d: m.d }); else gsend({ t: "g", to: m.to, d: m.d }); }
 });
+// ───── 🏁 동시 도전: 기존 게임 페이지를 그대로 불러와 모두 동시에 시작 ─────
+// 같은 문제가 나오게 모든 폰에 같은 씨앗(seed)의 Math.random을 넣고, 저장 기록은 이 판에서만 쓰는 임시 저장소로 바꿔요(평소 기록·오답 노트가 섞이지 않게).
+// 1.5초마다 내 화면(main)을 찍어 다른 기기에 보내고, 받은 화면은 작은 창(mirror)에 보여 줘요. 그림판(canvas)은 작은 사진으로 바꿔 보내요.
+let R = null, rCount = 0, rLoaded = 0, rRun = 0, rT0 = 0, rTick = null, rSnap = null, lastSnap = "", cssSent = 0, myRes = null, mirrors = {};
+const fmtT = ms => { const t = Math.max(0, ms) / 1000, m = Math.floor(t / 60), x = (t % 60).toFixed(1); return m + ":" + (x < 10 ? "0" : "") + x; };
+const raceGame = f => RACE.find(r => r[0] === f);
+const raceShim = seed => `<script>(function(){var s=${seed}>>>0;Math.random=function(){s=(s+0x6D2B79F5)>>>0;var t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296};var m={},P=Storage.prototype,own=Object.prototype.hasOwnProperty;P.getItem=function(k){k=String(k);return own.call(m,k)?m[k]:null};P.setItem=function(k,v){m[String(k)]=String(v)};P.removeItem=function(k){delete m[String(k)]};P.clear=function(){m={}};P.key=function(i){return Object.keys(m)[i]||null};try{Object.defineProperty(P,"length",{get:function(){return Object.keys(m).length},configurable:true})}catch(e){}window.__RACE=1})();<\/script>`;
+function raceStart(f) { if (role !== "host") return; loadGame(null); bcast({ t: "load", game: null }); R = { rno: ++rCount, f,   // 판 번호는 계속 늘어나요(게임을 바꿔도 1로 돌아가지 않게: 예전 판의 화면·결과가 섞이지 않도록)
+     seed: Math.floor(Math.random() * 2147483647), ph: "ready", res: {} }; pushR(); }
+function pushR() { bcast({ t: "race", R }); onRace(R); }
+function raceParts() { return roomList.filter(p => p.ok || p.weak).map(p => p.id); }
+function raceCheck() { if (R && R.ph === "run" && raceParts().every(id => R.res[id])) R.ph = "done"; }
+function onRace(r) {
+  R = r; clearInterval(rTick); if (!r) { $("rstage").hidden = true; $("rf").srcdoc = ""; clearInterval(rSnap); rLoaded = rRun = 0; cssSent = 0; rT0 = 0; if (role === "host") showPick(); else $("wait").hidden = !!game; return; }
+  $("pick").hidden = true; $("wait").hidden = true; $("rstage").hidden = false; $("room").open = false; $("hostbox").hidden = true;
+  if (rLoaded !== r.rno) { rLoaded = r.rno; rRun = 0; rT0 = 0; myRes = null; $("rtime").textContent = "0:00.0"; lastSnap = ""; mirrors = {}; $("mirs").innerHTML = ""; const g = raceGame(r.f); $("rname").textContent = g ? `${g[1]} ${g[2]} #${g[4]}` : r.f;
+    $("rcover").hidden = false; $("rcover").className = ""; $("rcover").textContent = "게임을 불러오는 중…";
+    fetch(r.f).then(x => x.text()).then(t => { if (rLoaded !== r.rno) return; const base = location.href.split("#")[0].replace(/[^/]*$/, "");
+      $("rf").srcdoc = t.replace(/<head>/i, `<head><base href="${base}">` + raceShim(r.seed)); if (!rRun) $("rcover").textContent = role === "host" ? "모두 준비되면 ▶ 시작을 눌러요" : "방장이 시작하면 3초 뒤 시작해요"; })
+      .catch(() => { $("rcover").textContent = "⚠️ 게임을 불러오지 못했어요"; }); }
+  if (r.ph === "run" && rRun !== r.rno) { rRun = r.rno; let n = 3; $("rcover").hidden = false; $("rcover").className = "cd"; $("rcover").textContent = n;
+    const cd = setInterval(() => { n--; if (n > 0) { $("rcover").textContent = n; return; } clearInterval(cd); $("rcover").hidden = true; rT0 = performance.now(); clearInterval(rTick); rTick = setInterval(() => { if (!myRes) $("rtime").textContent = fmtT(performance.now() - rT0); }, 100); renderRace(); clearInterval(rSnap); rSnap = setInterval(snapMine, 1500); snapMine(); }, 1000); }
+  if (r.ph === "run" && rT0 && !myRes) rTick = setInterval(() => { $("rtime").textContent = fmtT(performance.now() - rT0); }, 100);
+  renderRace();
+}
+function renderRace() {
+  const r = R; if (!r) return; const host = role === "host", me2 = host ? "host" : myId, nmOf = id => (roomList.find(p => p.id === id) || {}).nm || "?";
+  $("rhost").hidden = !host; $("rgo").hidden = r.ph !== "ready"; $("ragain").hidden = r.ph === "ready"; $("rhome").hidden = !host;
+  $("rbtn").hidden = r.ph !== "run" || !!r.res[me2] || !rT0;
+  if (r.res[me2]) $("rtime").textContent = fmtT(r.res[me2].ms);
+  const ids = raceParts(), order = ids.slice().sort((a, b) => { const x = r.res[a], y = r.res[b]; const k = v => !v ? 2 : v.ok ? 0 : 1; return k(x) - k(y) || ((x && x.ms) || 0) - ((y && y.ms) || 0); });
+  let rank = 0; $("rres").innerHTML = r.ph === "ready" ? "" : `<div class="lb">${r.ph === "done" ? "🏁 결과" : "진행 상황"}</div>` + order.map(id => { const v = r.res[id]; if (v && v.ok) rank++;
+    return `<div class="li"><span>${v && v.ok ? ["🥇", "🥈", "🥉"][rank - 1] || rank + "등" : v ? "😢" : "⏳"} ${esc(nmOf(id))}${id === me2 ? " (나)" : ""}</span><b>${v ? (v.ok ? "성공 " : "실패 ") + fmtT(v.ms) : "하는 중…"}</b></div>`; }).join("");
+  Object.keys(mirrors).forEach(id => { const h = mirrors[id].el.querySelector(".mh"), v = r.res[id]; h.textContent = nmOf(id) + (v ? (v.ok ? " 🏆 " : " 😢 ") + fmtT(v.ms) : ""); });
+}
+function raceResult(ok) { if (!R || R.ph !== "run" || myRes || !rT0) return; myRes = { ok, ms: Math.round(performance.now() - rT0) }; clearInterval(rTick); snapMine();
+  if (role === "host") { R.res.host = myRes; raceCheck(); pushR(); } else gsend({ t: "rres", rno: R.rno, ok, ms: myRes.ms }); renderRace(); }
+function snapMine() {
+  if (!R) return; let d; try { d = $("rf").contentDocument; } catch (e) { return; } if (!d || !d.body) return;
+  const m = d.querySelector("main") || d.body, c = m.cloneNode(true); c.querySelectorAll("script").forEach(x => x.remove());
+  const src = m.querySelectorAll("canvas"); c.querySelectorAll("canvas").forEach((cv, i) => { try { const s0 = src[i], w = Math.min(240, s0.width || 240), h = Math.round((s0.height || 1) * w / (s0.width || 1)), t = document.createElement("canvas"); t.width = w; t.height = h; t.getContext("2d").drawImage(s0, 0, 0, w, h); const img = d.createElement("img"); img.src = t.toDataURL("image/jpeg", .6); img.style.cssText = "width:100%;display:block"; cv.replaceWith(img); } catch (e) {} });
+  let html = c.innerHTML; if (html.length > 150000) html = html.replace(/<img[^>]*>/g, ""); if (html === lastSnap) return; lastSnap = html;
+  const msg = { t: "snap", rno: R.rno, html, css: cssSent === R.rno ? null : [...d.querySelectorAll("style,link[rel=stylesheet]")].map(x => x.outerHTML).join("") }; cssSent = R.rno;
+  if (role === "host") bcast(Object.assign({ from: "host" }, msg)); else gsend(msg);
+}
+// 작은 화면 문서의 body 닫는 태그는 <\/ 로 써요. 그대로 쓰면 ship.py가 그 자리에 등록 코드를 끼워 넣어서 코드가 깨져요.
+function gotSnap(from, m) {
+  if (!R || m.rno !== R.rno || from === (role === "host" ? "host" : myId)) return; let mr = mirrors[from];
+  if (!mr) { const el = document.createElement("div"); el.className = "mir"; el.innerHTML = '<div class="mh"></div><div class="mv"><iframe title="다른 사람 화면" tabindex="-1"></iframe></div>'; el.onclick = () => el.classList.toggle("big"); $("mirs").appendChild(el); mr = mirrors[from] = { el, css: "", html: "", ready: false }; }
+  if (m.css) mr.css = m.css; mr.html = m.html; const fr = mr.el.querySelector("iframe");
+  if (!mr.ready) { if (!mr.css) return; const base = location.href.split("#")[0].replace(/[^/]*$/, ""); fr.onload = () => { mr.ready = true; try { fr.contentDocument.querySelector("main").innerHTML = mr.html; } catch (e) {} }; fr.srcdoc = `<!doctype html><html><head><base href="${base}">${mr.css}<style>html,body{overflow:hidden}</style></head><body><main></main><\/body><\/html>`; }
+  else { try { fr.contentDocument.querySelector("main").innerHTML = mr.html; } catch (e) {} }
+  renderRace();
+}
+setInterval(() => { if (!R) return; try { const d = $("rf").contentDocument, m = d && (d.querySelector("main") || d.body); if (m) $("rf").style.height = Math.max(300, Math.ceil(m.getBoundingClientRect().bottom + 16)) + "px"; } catch (e) {} }, 600);
+$("rok").onclick = () => raceResult(true); $("rno").onclick = () => raceResult(false);
+$("rgo").onclick = () => { if (R && R.ph === "ready") { R.ph = "run"; pushR(); } };
+$("ragain").onclick = () => { if (R && (R.ph === "done" || confirm("지금 판을 그만두고 새 문제로 다시 할까요?"))) raceStart(R.f); };
+$("rhome").onclick = () => { if (R && R.ph === "run" && !confirm("동시 도전을 끝내고 다른 게임을 고를까요?")) return; R = null; bcast({ t: "race", R: null }); onRace(null); };
 function renderRoom() {
   const n = roomList.filter(p => p.ok || p.weak).length; $("rsum").textContent = `📶 연결된 기기 ${n}대`;
   $("list").innerHTML = roomList.length ? roomList.map(p => `<div class="li"><span><span class="dot ${p.ok ? "ok" : "bad"}"></span>${esc(p.name)}${(p.id === myId && role === "guest") || (p.id === "host" && role === "host") ? " (나)" : p.gst ? '<span class="tag">🙋 손님</span>' : groupOf(p.nm) ? `<span class="tag">${groupOf(p.nm)}</span>` : window.FAMILY && p.ok && p.nm && !asGuest ? `<span class="mini"><button type="button" data-addf="${esc(p.nm)}">+가족</button><button type="button" data-addr="${esc(p.nm)}">+친구</button>${role === "host" ? `<button type="button" data-gstp="${p.id}">손님</button>` : ""}</span>` : ""}</span><span class="note">${p.id === "host" ? "" : p.weak ? "⚠️ 신호 약함 · 다시 붙는 중" : !p.ok ? "연결 중…" : p.rtt == null ? "…" : p.rtt + " ms"}</span></div>`).join("") : '<p class="note">연결된 기기가 없어요.</p>';

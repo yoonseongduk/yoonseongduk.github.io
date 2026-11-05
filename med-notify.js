@@ -1,7 +1,7 @@
 /* 약 복용 알림 (모든 화면 공용). 약 복용 체크표에서 알림을 켜 두면, 다른 게임 화면에서도 시간이 될 때 알려 줘요.
    앱(브라우저 화면)이 열려 있을 때만 동작해요. 데이터는 약 복용 체크표와 같은 localStorage("med-check-v1")를 읽어요. */
 (function () {
-  if (/med-check\.html/.test(location.pathname)) return;
+  if (/med-check\.html/.test(location.pathname) || window.parent !== window) return;   // 같이 하기 안(화면 속 화면)에서는 바깥 화면이 알려 줘요
   var KEY = "med-check-v1", SL = [["m", "아침"], ["n", "점심"], ["e", "저녁"], ["b", "자기 전"]];
   function pad(n) { return String(n).padStart(2, "0"); }
   function today() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }

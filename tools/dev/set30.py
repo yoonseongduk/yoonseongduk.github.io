@@ -78,6 +78,8 @@ HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px
     <p class="note">폰(또는 PC)을 <b>같은 와이파이</b>나 한 폰의 <b>핫스팟</b>에 연결한 뒤 시작하세요.</p>
     <div class="row"><button class="btn" id="bh" type="button">📡 방 만들기</button><button class="btn ghost" id="bg" type="button">🔗 참가하기</button></div>
     <label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="gst"> 🙋 손님으로 참가 (게임만 하고, 가족·친구 명단은 주고받지 않아요)</label>
+    <button class="btn ghost" id="bsolo" type="button">🤖 컴퓨터와 연습 (혼자)</button>
+    <p class="note" style="margin:0">혼자일 때 같은 게임 화면 그대로 컴퓨터와 미리 해 볼 수 있어요. 연결은 필요 없어요.</p>
   </div>
   <div class="card" id="hostbox" hidden>
     <b id="hstep">① 참가할 폰으로 이 QR을 찍어요</b>
@@ -105,7 +107,9 @@ HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px
     <div class="row"><button class="btn ghost sm" id="buzz" type="button">📳 신호 보내기</button><button class="btn ghost sm" id="more" type="button" hidden>➕ 한 명 더 연결</button></div>
     <button class="btn ghost sm" id="pplb" type="button">📋 명단 주고받기 (가족·친구 이름)</button><button class="btn ghost sm" id="leave" type="button" style="color:var(--bad)">🔌 연결 끊기</button><div id="ppl"></div>
     <p class="note" id="rmsg" style="color:var(--bad)"></p><p class="note">연결된 동안은 화면이 꺼지지 않게 해요. 앱을 닫거나 화면이 오래 꺼지면 연결이 끊겨요.</p></details>
-  <div class="card" id="pick" hidden><b>🎮 같이 할 게임 고르기</b><p class="note">묶음을 눌러 펼쳐요.</p><input type="search" id="gq" placeholder="게임 이름이나 번호(예: 225)로 찾기" autocomplete="off" aria-label="같이 하기 게임 찾기"><div id="glist" style="display:grid;gap:8px"></div>
+  <div class="card" id="pick" hidden><b>🎮 같이 할 게임 고르기</b>
+    <div id="solobar" hidden style="display:grid;gap:6px;border:1px dashed var(--accent);border-radius:12px;padding:10px"><b>🤖 컴퓨터와 연습 중</b><p class="note" style="margin:0">함께 할 컴퓨터 수를 고르세요. 두 사람 게임은 컴퓨터 1명과 해요. 말로 하는 게임(퀴즈 버저·마피아·제시어 추리·제비뽑기·반응 대결)은 연습 목록에 없어요.</p><div class="chips" id="botn"></div><button class="btn ghost sm" id="soloend" type="button">연습 끝내기</button></div>
+    <p class="note">묶음을 눌러 펼쳐요.</p><input type="search" id="gq" placeholder="게임 이름이나 번호(예: 225)로 찾기" autocomplete="off" aria-label="같이 하기 게임 찾기"><div id="glist" style="display:grid;gap:8px"></div>
     <details id="racebox" class="card" style="border-color:var(--accent)"><summary><b>🏁 동시 도전</b> <span class="note">혼자 하는 게임을 다 같이 동시에</span></summary>
       <p class="note" style="margin:6px 0">모두 각자 폰에서 같은 게임을 동시에 시작해요. 컴퓨터와 하는 게임은 각자 컴퓨터와 겨루고, 퍼즐·퀴즈는 <b>같은 문제</b>로 누가 먼저(또는 잘) 하는지 겨뤄요. 다른 사람 화면은 내 게임 아래에 작게 보여요. 퀴즈는 <b>각자 풀기</b>와 <b>퀴즈 버저</b> 중에서 골라요.</p>
       <div id="qmode" class="qmode" hidden><b id="qmt"></b><p class="note">어떻게 할까요?</p>
@@ -124,10 +128,69 @@ HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px
     <details id="mird" open hidden><summary class="note"><b>👀 다른 사람 화면</b> · 참고용 (누르면 크게)</summary><div class="mirs" id="mirs" style="margin-top:6px"></div></details>
     <button class="btn ghost sm" id="rhome" type="button" hidden>🏠 다른 게임 고르기</button></div>
   <div class="card" id="stage" hidden><div class="bar"><b id="gname"></b><button class="btn ghost sm" id="home" type="button" hidden>🏠 게임 바꾸기</button></div><iframe id="gf" title="게임 화면" scrolling="no"></iframe></div>
+  <div id="bots" aria-hidden="true" style="position:fixed;left:-10000px;top:0;width:360px;height:900px;overflow:hidden;opacity:0;pointer-events:none"></div>
   <div id="scan" hidden><p>QR 코드를 화면 가운데에 비춰 주세요</p><video id="vid" playsinline muted></video><button class="btn" id="scx" type="button">닫기</button></div>
   <div id="flash" hidden></div>'''
 
+# ───── 🤖 컴퓨터와 연습: 컴퓨터 한 명 = 보이지 않는 화면 속 화면(같은 게임 파일, 참가자 역할). 같이 하기가 말을 중계해요(진짜 연결과 같은 방식).
+#   컴퓨터는 1초쯤마다 자기 화면에서 '누를 수 있는 버튼'을 하나 골라 눌러요(기본). 카드 게임 6개는 아래처럼 조금 더 똑똑하게 골라요.
+#   코드는 그 컴퓨터 화면 안에서 실행돼요(같은 사이트라 가능). mine = 지금 그 컴퓨터 차례인지. 무언가 했으면 1, 아니면 0을 돌려줘요.
+SOLO_NO = ["net-buzzer.html", "net-mafia.html", "net-wordtrick.html", "net-lots.html", "net-react.html"]   # 사람끼리 말로 하거나 진행자가 필요한 게임
+SOLO_GENERIC = r'''const ex = /다시|새 판|새 게임|새 세트|시작|나가|끊기|방 닫|🔁|공개|투표|기다/;
+  const bs = [...document.querySelectorAll("main button")].filter(b => !b.disabled && b.offsetParent !== null && !b.closest("[hidden]") && b.id !== "again" && b.id !== "go" && !ex.test(b.textContent));
+  if (!bs.length) return 0; bs[Math.floor(Math.random() * bs.length)].click(); return 1;'''
+SOLO_BOTS = {
+  # 틱택토: 이길 수 있으면 두고, 막아야 하면 막고, 가운데 → 모서리 → 아무 곳
+  "net-tictactoe.html": r'''if (!G || G.win || G.turn !== "X" || myMark() !== "X") return 0; const em = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(i => !G.b[i]);
+    const wins = mk => em.find(i => { const b = G.b.slice(); b[i] = mk; const j = judge(b); return j && j.w === mk; });
+    let i = wins("X"); if (i === undefined) i = wins("O"); if (i === undefined && !G.b[4]) i = 4; if (i === undefined) { const cs_ = [0, 2, 6, 8].filter(k => !G.b[k]); i = cs_.length && Math.random() < .7 ? cs_[Math.floor(Math.random() * cs_.length)] : em[Math.floor(Math.random() * em.length)]; }
+    NET.send("host", { t: "move", i }); return 1;''',
+  # 사목: 이기는 열 → 막는 열 → 가운데에 가까운 열(상대가 바로 이기게 되는 열은 피함)
+  "net-four.html": r'''if (!P || !P.g || P.ph !== "play" || P.turn !== me) return 0; const my = P.first === me ? 1 : 2, op = 3 - my;
+    const drop = (g, c) => { for (let r = R - 1; r >= 0; r--) if (!g[r * C + c]) return r * C + c; return -1; }, cols = [0, 1, 2, 3, 4, 5, 6].filter(c => drop(P.g, c) >= 0);
+    const winAt = (g, c, v) => { const i = drop(g, c); if (i < 0) return false; const h = g.slice(); h[i] = v; return !!lineAt(h, i, C, R, 4); };
+    let c = cols.find(k => winAt(P.g, k, my)); if (c === undefined) c = cols.find(k => winAt(P.g, k, op));
+    if (c === undefined) { const safe = cols.filter(k => { const h = P.g.slice(); h[drop(h, k)] = my; return !cols.some(q => winAt(h, q, op)); }), pool = safe.length ? safe : cols;
+      c = pool.slice().sort((a, b) => Math.abs(a - 3) - Math.abs(b - 3) + (Math.random() - .5) * 2)[0]; }
+    act({ t: "drop", c }); return 1;''',
+  # 오목: 빈칸마다 '내 줄 만들기 + 상대 줄 막기' 점수를 매겨 가장 높은 곳(3·3 금지 자리는 빼요)
+  "net-omok.html": r'''if (!P || !P.g || P.ph !== "play" || P.turn !== me) return 0; const my = colorOf(me), op = 3 - my, g = P.g, D = [[1, 0], [0, 1], [1, 1], [1, -1]];
+    const at = (x, y) => x < 0 || y < 0 || x >= N || y >= N ? -1 : g[y * N + x];
+    const val = (x, y, v) => { let s = 0; for (const [dx, dy] of D) { let c = 1, open = 0; for (const k of [1, -1]) { let t = 1; while (at(x + k * dx * t, y + k * dy * t) === v) { c++; t++; } if (at(x + k * dx * t, y + k * dy * t) === 0) open++; }
+        s += c >= 5 ? 1e6 : c === 4 ? (open === 2 ? 5e4 : open ? 4e3 : 0) : c === 3 ? (open === 2 ? 3e3 : open ? 150 : 0) : c === 2 ? (open === 2 ? 120 : open ? 15 : 0) : open; } return s; };
+    let best = -1, bi = -1; const any = g.some(Boolean);
+    for (let i = 0; i < N * N; i++) { if (g[i]) continue; const x = i % N, y = Math.floor(i / N);
+      if (any) { let near = false; for (let dy = -2; dy <= 2 && !near; dy++) for (let dx = -2; dx <= 2; dx++) if (at(x + dx, y + dy) > 0) { near = true; break; } if (!near) continue; } else if (i !== 112) continue;
+      if (banned(i, my)) continue; const s = val(x, y, my) * 1.15 + val(x, y, op) + Math.random() * 5; if (s > best) { best = s; bi = i; } }
+    if (bi < 0) return 0; act({ t: "put", i: bi }); return 1;''',
+  # 숫자 야구: 비밀 숫자는 아무거나, 맞힐 때는 지금까지 결과와 맞는 숫자 중에서 골라요
+  "net-baseball.html": r'''if (!P || !amPlayer()) return 0; const n = L();
+    if (P.ph === "set" && !P.ready[me]) { const s = shuf("0123456789".split("")).slice(0, n).join(""); secret = s; act({ t: "secret", s }); return 1; }
+    if (P.ph !== "play" || P.turn !== me) return 0; const all = []; const rec = (p) => { if (p.length === n) { all.push(p); return; } for (const d of "0123456789") if (!p.includes(d)) rec(p + d); }; rec("");
+    const ok = all.filter(c => P.hist[me].every(([g, S, B]) => { const r = sb(g, c); return r[0] === S && r[1] === B; })); const pool = ok.length ? ok : all;
+    act({ t: "guess", g: pool[Math.floor(Math.random() * pool.length)] }); return 1;''',
+  "net-oldmaid.html": r'''if (mine) { const b = document.querySelector("#tbl [data-k]"); if (b) { b.click(); return 1; } } return 0;''',
+  "net-21.html": r'''if (mine) { document.getElementById(val(P.hs[me]) < 16 ? "hit" : "sty").click(); return 1; } return 0;''',
+  "net-president.html": r'''if (mine) { const h = myHand(), by = {}; h.forEach(c => (by[cr(c)] = by[cr(c)] || []).push(c));
+    const gs = Object.values(by).sort((a, b) => pw(a[0]) - pw(b[0])); let pick = null;
+    if (!P.tb.length) pick = gs[0]; else { const g = gs.find(g => g.length >= P.tb.length && pw(g[0]) > pw(P.tb[0])); if (g) pick = g.slice(0, P.tb.length); }
+    if (pick) { sel = pick; render(); document.getElementById("pl").click(); } else document.getElementById("ps").click(); return 1; } return 0;''',
+  "net-sevens.html": r'''if (mine) { const b = document.querySelector("#hand button:not([disabled])"); if (b) b.click(); else document.getElementById("ps").click(); return 1; } return 0;''',
+  "net-poker.html": r'''if (P && P.ph === "play" && P.ord.includes(me) && !P.done.includes(me) && myHand().length === 5) { const h = myHand(), cnt = {}; h.forEach(c => cnt[cr(c)] = (cnt[cr(c)] || 0) + 1);
+    const lone = h.filter(c => cnt[cr(c)] === 1).sort((a, b) => (cr(a) + 12) % 13 - (cr(b) + 12) % 13), r = evalH(h)[0]; sel = r >= 4 ? [] : lone.slice(0, 3); render(); document.getElementById("sw").click(); return 1; } return 0;''',
+  "net-hula.html": r'''if (mine) { if (P.step === "draw") { const t = P.top, h0 = myHand(); const useful = t !== null && (h0.filter(c => cr(c) === cr(t)).length >= 2 || cr(t) === 6 || P.melds.some(m => okMeld([...m.cs, t], m.s7)));
+      document.getElementById(useful ? "dp" : "dd").click(); return 1; }
+    const h = myHand(), by = {}, su = [[], [], [], []]; h.forEach(c => { (by[cr(c)] = by[cr(c)] || []).push(c); su[cs(c)].push(c); });
+    let pick = Object.values(by).find(g => g.length >= 3);
+    if (!pick) for (const s of su) { const r = s.slice().sort((a, b) => a - b); for (let i = 0; i + 2 < r.length && !pick; i++) if (r[i + 1] === r[i] + 1 && r[i + 2] === r[i] + 2) pick = [r[i], r[i + 1], r[i + 2]]; }
+    if (!pick) { const s7 = h.find(c => cr(c) === 6); if (s7 !== undefined) pick = [s7]; }
+    if (pick) { sel = pick; render(); document.getElementById("rg").click(); return 1; }
+    for (const c of h) for (let i = 0; i < P.melds.length; i++) if (okMeld([...P.melds[i].cs, c], P.melds[i].s7)) { sel = [c]; render(); document.querySelector('[data-m="' + i + '"]').click(); return 1; }
+    const hi = h.slice().sort((a, b) => pt(b) - pt(a)); sel = [hi[0]]; render(); document.getElementById("dc").click(); return 1; } return 0;''',
+}
+
 HUB_JS = QR_JS + CODEC_JS + r'''
+const SOLO_NO = ''' + _json.dumps(SOLO_NO) + r''', SOLO_BOTS = ''' + _json.dumps(SOLO_BOTS, ensure_ascii=False) + r''', SOLO_GENERIC = ''' + _json.dumps(SOLO_GENERIC, ensure_ascii=False) + r''';
 const GAMES = ''' + _json.dumps(GAMES, ensure_ascii=False) + r''', HUB_GROUPS = ''' + _json.dumps(HUB_GROUPS, ensure_ascii=False) + r''';
 const NUMS = ''' + _json.dumps({k: v for k, v in NUMS.items()}, ensure_ascii=False) + r''', RACE = ''' + _json.dumps(RACE, ensure_ascii=False) + r''', RACE_GROUPS = ''' + _json.dumps(RACE_GROUPS, ensure_ascii=False) + r''', BUZZ_OK = ''' + _json.dumps(BUZZ_OK, ensure_ascii=False) + r''', QCNT = ''' + _json.dumps(QCNT, ensure_ascii=False) + r''';
 // ───── 상태 ─────
@@ -169,6 +232,7 @@ $("list").addEventListener("click", e => { const kb = e.target.closest("[data-ki
   const b = e.target.closest("[data-addf],[data-addr]"); if (!b) return; const n = String(b.dataset.addf || b.dataset.addr).slice(0, 8); if (b.dataset.addf) addPeople([n], []); else addPeople([], [n]); });
 nameChips();
 let role = null, myId = "host", pend = null, upl = null, roomList = [], game = null, gameReady = false, gq = [];
+let solo = false, botN = 1; const bots = [];   // 🤖 컴퓨터와 연습 (아래 soloStart)
 // 새 버전 자동 확인: 화면을 열 때 사이트에 새 버전이 있는지 보고, 아직 아무와도 연결 전이면 바로 새로고침해요(연결 중이면 끊기지 않게 안내만).
 (() => { if (!("serviceWorker" in navigator)) return; const had = !!navigator.serviceWorker.controller; let busy = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => { if (!had || busy) return; busy = true;
@@ -242,12 +306,13 @@ function route(from, to, d) {
   if ((to === "host" || to === "*") && from !== "host") toFrame(from, d);
   if (to === "*") peers.forEach(p => { if (p.id !== from) send(p, { t: "g", from, d }); });
   else if (to !== "host") { const p = peers.find(x => x.id === to); if (p) send(p, { t: "g", from, d }); }
+  if (solo) bots.forEach(b => { if (b.id !== from && (to === "*" || to === b.id)) toBot(b, { fg: "msg", from, d }); });
 }
 // 게임에 넘길 참가자 목록: 연결된 기기만(신호 약한 기기도 포함해 판이 깨지지 않게)
 const players = () => roomList.filter(p => p.ok || p.weak).map(p => ({ id: p.id, name: p.nm }));
 function roster() {
   if (role !== "host") return;
-  roomList = [{ id: "host", nm: S.name, name: S.name + " (방장)", rtt: 0, ok: true }, ...peers.map(p => ({ id: p.id, nm: p.name, name: p.name, rtt: p.rtt, ok: !!p.open && !p.weak, weak: !!p.weak, gst: !!p.gst }))];
+  roomList = [{ id: "host", nm: S.name, name: S.name + " (방장)", rtt: 0, ok: true }, ...peers.map(p => ({ id: p.id, nm: p.name, name: p.name, rtt: p.rtt, ok: !!p.open && !p.weak, weak: !!p.weak, gst: !!p.gst })), ...(solo ? bots.map(b => ({ id: b.id, nm: b.name, name: b.name, rtt: 0, ok: true, bot: true })) : [])];
   bcast({ t: "room", list: roomList }); renderRoom(); toFrameRoster(); if (R) { const was = R.ph; raceCheck(); if (R.ph !== was) pushR(); else renderRace(); }
   note("rmsg", peers.some(p => p.weak) ? "⚠️ 신호가 약해진 기기가 있어요. 그 폰의 화면을 켜 두면 잠시 뒤 다시 붙어요. 1분 넘게 안 붙으면 ➕ 한 명 더 연결로 다시 들어오게 해 주세요." : "");
 }
@@ -288,8 +353,8 @@ addEventListener("pagehide", () => { if (role === "guest") gsend({ t: "bye" }); 
 const frameWin = () => $("gf").contentWindow;
 function loadGame(f, extra) {
   const g = GAMES.find(x => x[0] === f) || null; if (game === (g && g[0])) return;
-  game = g ? g[0] : null; gameReady = false; gq = [];
-  $("stage").hidden = !g; $("gf").style.height = "200px"; $("gf").src = g ? g[0] + (extra || "") : "about:blank"; $("gname").textContent = g ? g[1] + " " + g[2] : "";
+  game = g ? g[0] : null; gameReady = false; gq = []; if (solo) bots.forEach(botLoad);
+  $("stage").hidden = !g; $("gf").style.height = "200px"; $("gf").src = g ? g[0] + (extra || "") : "about:blank"; $("gname").textContent = g ? g[1] + " " + g[2] + (solo ? " · 🤖 연습" : "") : "";
   $("home").hidden = role !== "host"; if (role === "host") $("pick").hidden = !!g;
   if (g) { $("room").open = false; $("hostbox").hidden = true; setTimeout(() => $("stage").scrollIntoView({ block: "start" }), 60); }
 }
@@ -305,7 +370,7 @@ function bindGroups(el, q) { el.querySelectorAll("details.grp").forEach(d => d.a
 function showPick() {
   $("pick").hidden = !!game || !!R;
   const q = $("gq").value.trim().toLowerCase();
-  $("glist").innerHTML = groupsHtml(HUB_GROUPS, k => GAMES.filter(g => g[4] === k && findHit(q, g[2], NUMS[g[0]])).map(g => gmBtn(g[0], g[1], g[2], g[3], NUMS[g[0]] || "", "g")), q, "g") || '<p class="note">찾는 게임이 없어요.</p>';
+  $("glist").innerHTML = groupsHtml(HUB_GROUPS, k => GAMES.filter(g => g[4] === k && !(solo && SOLO_NO.includes(g[0])) && findHit(q, g[2], NUMS[g[0]])).map(g => gmBtn(g[0], g[1], g[2], g[3], NUMS[g[0]] || "", "g")), q, "g") || '<p class="note">찾는 게임이 없어요.</p>';
   $("glist").querySelectorAll("[data-g]").forEach(b => b.onclick = () => pickGame(b.dataset.g)); bindGroups($("glist"), () => $("gq").value.trim()); raceList();
 }
 function raceList() {
@@ -321,9 +386,10 @@ $("rq").addEventListener("input", raceList);
 function pickGame(f, extra) { if (role !== "host") return; if (game && extra) { loadGame(null); } if (R) { R = null; bcast({ t: "race", R: null }); onRace(null); } loadGame(f, extra); bcast({ t: "load", game: f }); }
 const postF = m => { try { frameWin().postMessage(m, "*"); } catch (e) {} };
 function toFrame(from, d) { const m = { fg: "msg", from, d }; if (gameReady) postF(m); else gq.push(m); }
-function toFrameRoster() { if (gameReady) postF({ fg: "roster", players: players() }); }
+function toFrameRoster() { if (gameReady) postF({ fg: "roster", players: players() }); if (solo) bots.forEach(b => { if (b.ready) toBot(b, { fg: "roster", players: players() }); }); }
 addEventListener("message", e => {
-  if (!game || e.source !== frameWin()) return; const m = e.data || {};
+  if (!game) return; const bb = solo && bots.find(x => x.f.contentWindow === e.source); if (bb) { botMsg(bb, e.data || {}); return; }
+  if (e.source !== frameWin()) return; const m = e.data || {};
   if (m.fg === "ready") { gameReady = true; postF({ fg: "init", me: { id: role === "host" ? "host" : myId, name: S.name }, isHost: role === "host", players: players() }); gq.forEach(postF); gq = []; }
   else if (m.fg === "h") $("gf").style.height = Math.max(200, +m.h || 0) + "px";
   else if (m.fg === "send") { if (role === "host") route("host", m.to, m.d); else if (m.to === "host") gsend({ t: "g", to: "host", d: m.d }); else gsend({ t: "g", to: m.to, d: m.d }); }
@@ -425,6 +491,26 @@ function renderRoom() {
 }
 
 $("bh").onclick = hostStart;
+// ───── 🤖 컴퓨터와 연습 (혼자): 방장처럼 시작하되, 진짜 폰 대신 보이지 않는 컴퓨터 화면을 참가자로 붙여요.
+function soloStart() { solo = true; role = "host"; $("start").hidden = true; $("racebox").hidden = true; $("solobar").hidden = false; setBots(botN); showPick(); }
+function setBots(n) { botN = n;
+  while (bots.length > n) { const b = bots.pop(); b.f.remove(); }
+  while (bots.length < n) { const k = bots.length + 1, f = document.createElement("iframe"); f.title = "컴퓨터 " + k; f.tabIndex = -1; f.style.cssText = "width:360px;height:900px;border:0"; $("bots").appendChild(f);
+    const b = { id: "bot" + k, name: "🤖 컴퓨터" + k, f, ready: false, q: [], next: 0 }; bots.push(b); if (game) botLoad(b); }
+  $("botn").innerHTML = [1, 2, 3, 4, 5].map(k => `<button type="button" class="chip${k === botN ? " on" : ""}" data-bn="${k}">🤖 ${k}명</button>`).join("");
+  $("botn").querySelectorAll("[data-bn]").forEach(x => x.onclick = () => setBots(+x.dataset.bn)); roster(); }
+function botLoad(b) { b.ready = false; b.q = []; b.next = 0; b.f.src = game || "about:blank"; }
+function toBot(b, m) { if (!b.ready) { b.q.push(m); return; } try { b.f.contentWindow.postMessage(m, "*"); } catch (e) {} }
+function botMsg(b, m) {
+  if (m.fg === "ready") { try { const w = b.f.contentWindow; w.alert = () => {}; w.confirm = () => true; } catch (e) {}   // 컴퓨터 화면의 알림 창은 조용히 넘겨요
+    b.ready = true; b.f.contentWindow.postMessage({ fg: "init", me: { id: b.id, name: b.name }, isHost: false, players: players() }, "*"); const q = b.q; b.q = []; q.forEach(x => toBot(b, x)); }
+  else if (m.fg === "send") route(b.id, m.to, m.d);
+}
+// 컴퓨터 차례 진행: 0.15초마다 살펴보고, 무언가 했으면 0.7~1.6초 쉬었다가(사람이 볼 수 있게) 다음 행동을 해요.
+setInterval(() => { if (!solo || !game) return; const now = Date.now(), code = "(() => { const mine = typeof P !== 'undefined' && P && P.ph === 'play' && P.turn === me; " + (SOLO_BOTS[game] || SOLO_GENERIC) + " })()";
+  bots.forEach(b => { if (!b.ready || now < b.next) return; let did = 0; try { did = b.f.contentWindow.eval(code); } catch (e) {} b.next = now + (window.__botFast ? 10 : did ? 700 + Math.random() * 900 : 300); }); }, 150);   // __botFast: 자동 검사용(빠르게)
+$("bsolo").onclick = soloStart;
+$("soloend").onclick = () => { loadGame(null); setBots(0); solo = false; role = null; $("solobar").hidden = true; $("pick").hidden = true; $("racebox").hidden = false; $("start").hidden = false; };
 $("bg").onclick = guestStart;
 $("gscan").onclick = () => scanQR(join);
 $("ogo").onclick = () => { const c = pickCode($("oi").value); c ? join(c) : note("gmsg", "⚠️ 초대 코드를 붙여 넣어 주세요."); };

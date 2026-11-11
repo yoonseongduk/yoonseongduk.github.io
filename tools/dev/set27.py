@@ -68,7 +68,7 @@ const META = window.FGBACKUP ? FGBACKUP.META : ["fg-first-seen", "fg-backup-last
 const isGame = k => /-best-|-wins-|-stats-/.test(k);
 function allKeys() { const o = []; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!META.includes(k)) o.push(k); } } catch (e) {} return o.sort(); }
 function snapshot() { const d = {}; allKeys().forEach(k => { try { d[k] = localStorage.getItem(k); } catch (e) {} }); return { app: "family-games", v: 1, saved: new Date().toISOString(), data: d }; }
-const nameOf = k => KM[k] || (k.replace(/-v\d+$/, "") + " (기타)");
+const nameOf = k => { const q = k.split("::"), b = KM[q[0]] || (q[0].replace(/-v\d+$/, "") + " (기타)"); return q[1] ? b + " · " + q[1] : b; };
 function groups(d) { const life = [], game = []; Object.keys(d).forEach(k => (isGame(k) ? game : life).push(k)); return { life, game }; }
 function renderSum() {
   const g = groups(snapshot().data), rows = g.life.map(k => { let n = ""; try { const v = JSON.parse(localStorage.getItem(k)); n = Array.isArray(v) ? v.length + "개" : v && typeof v === "object" ? Object.keys(v).length + "항목" : ""; } catch (e) {} return `<tr><td>${esc(nameOf(k))}</td><td>${n}</td></tr>`; }).join("");

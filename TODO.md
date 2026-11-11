@@ -27,7 +27,10 @@
 ## B. 새로 제안하는 기능 (코드를 훑어 보고 정리한 후보)
 
 ### 가족이 함께 쓰는 기능
-- [ ] ⭐ **가족 명단 연동 확대**: 현재 `family.js`를 쓰는 화면은 9개뿐(chore-rota, family-members, health-log, med-check, order-picker, personality-16, scoreboard, team-split, index). 아래 게임에 "가족 중 누가 하는지" 선택을 붙이면 좋아요.
+- [x] **지금 하는 사람 선택 + 사람별 게임 기록 + 가족 포인트** (2026-11-11, `person.js`·`family-points.html`)
+- [ ] 🔹 **가족 순위표(게임별 사람 기록 비교)**: 게임마다 기록 모양·좋은 방향이 달라 대표 약 10개(반응속도·타자·암산·구구단·클릭 속도·숫자 기억 등)부터
+- [ ] 🔹 **고스톱(맞고 2인 + 컴퓨터) 만들기**: 판돈 없이 이긴 점수만큼 포인트를 얻는 방식(D6). 1단계 맞고 → 2단계 3인 → 3단계 같이 하기
+- [ ] 🔹 (참고) 가족 명단 연동 확대(위 항목으로 대체): 현재 `family.js`를 쓰는 화면은 9개뿐(chore-rota, family-members, health-log, med-check, order-picker, personality-16, scoreboard, team-split, index). 아래 게임에 "가족 중 누가 하는지" 선택을 붙이면 좋아요.
   - 점수·기록이 있는 게임(반응속도, 타자, 암산, 구구단 등) → 사람별 최고 기록
   - `scoreboard.html`과 연결해 가족 순위표
 - [ ] 🔹 **가족 대결 순위표**: 게임별 가족 최고 기록을 한 화면에 모아 보기 (localStorage 기반, 서버 없이)

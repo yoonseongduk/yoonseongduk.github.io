@@ -13,6 +13,8 @@ for f, *_ in games:
     s = re.sub(r'<link rel="stylesheet" href="https://fonts\.googleapis\.com/[^"]*">', '<link rel="stylesheet" href="fonts/fonts.css">', s)
     if 'rel="manifest"' not in s:
         s = s.replace('<link rel="stylesheet" href="fonts/fonts.css">', '<link rel="stylesheet" href="fonts/fonts.css">\n' + HEAD, 1)
+    # 사람별 기록·포인트(공용 스크립트)는 게임 코드보다 먼저 읽혀야 해서 머리말에 넣어요(net-* 제외)
+    if 'src="person.js"' not in s and not f.startswith("net-"): s = re.sub(r'(<meta charset="utf-8">)', lambda m: m.group(1) + '\n<script src="person.js"></script>', s, count=1, flags=re.I)
     if 'register("sw.js")' not in s:
         s = s.replace("</body>", REG + "</body>", 1)
     if ("class=\"opt\"" in s or "WrongNotes" in s) and "wrong-hook.js" not in s: s = s.replace("</body>", '<script src="wrong-hook.js"></script>\n</body>', 1)
@@ -24,5 +26,6 @@ for f, *_ in games:
     assert "googleapis" not in s and 'rel="manifest"' in s and 'register("sw.js")' in s, f
     open(R + f, "w", encoding="utf-8").write(s)
 subprocess.run([sys.executable, "addgames.py", json.dumps([g for g in games if g[4] != "-"], ensure_ascii=False)], check=True)  # 분류 "-"는 시작 화면에 등록하지 않음(같이 하기 안에서만 여는 게임 등)
+subprocess.run([sys.executable, "person_gen.py"], check=True)  # 포인트 주는 게임 목록 갱신
 subprocess.run([sys.executable, "gamenum.py"], check=True)  # 새 게임에 고유번호 붙이기(시작 화면 검색용)
 subprocess.run([sys.executable, R + "tools/make-sw.py"], check=True)

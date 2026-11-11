@@ -54,14 +54,17 @@ s = s.replace("<script>\nconst $ = id", '<script src="family.js"></script>\n<scr
 open(p, "w", encoding="utf-8").write(s)
 
 # ───── 백업·복원
-BODY = '''  <div class="card"><b>💾 백업 파일 만들기</b><div class="note">이 폰에 저장된 모든 기록(약 복용, 혈압·혈당, 용돈, 일기, 점수판, 게임 최고 기록, 오답 노트 등)을 파일 하나로 저장해요.</div><div id="sum"></div>
+BODY = '''  <div class="card" id="stat"></div>
+  <div class="card"><b>💾 백업 파일 만들기</b><div class="note">이 폰에 저장된 모든 기록(약 복용, 혈압·혈당, 용돈, 일기, 점수판, 게임 최고 기록, 오답 노트 등)을 파일 하나로 저장해요.</div><div id="sum"></div>
     <div class="g2"><button class="btn" id="dl" type="button">⬇️ 파일로 저장</button><button class="btn ghost" id="sh" type="button">📤 공유·보내기</button></div><div class="note" id="msg1"></div></div>
   <div class="card"><b>📥 백업에서 복원하기</b><div class="note">새 폰이나 앱을 지운 뒤에 백업 파일을 골라 기록을 되돌려요. 먼저 파일을 고르면 내용을 보여 드려요.</div>
     <input type="file" id="file" accept=".json,application/json"><div id="prev"></div></div>
+  <div class="card"><b>🔔 백업 알림 주기</b><div class="note">시작 화면에서 백업을 권하는 간격이에요. 백업한 뒤 바뀐 기록이 없으면 알리지 않아요.</div>
+    <div class="seg" id="every" style="--n:4"><button type="button" data-d="0">끄기</button><button type="button" data-d="14">2주</button><button type="button" data-d="30">한 달</button><button type="button" data-d="90">석 달</button></div></div>
   <div class="card"><b>❓ 잘 쓰는 방법</b><div class="note">• 한 달에 한 번, 또는 약·혈압처럼 소중한 기록을 많이 쌓았을 때 백업해 두세요.<br>• 저장한 파일은 카카오톡 "나에게 보내기"나 구글 드라이브에 올려 두면 폰을 바꿔도 안전해요.<br>• 백업 파일에는 약 이름·혈압 같은 개인 기록이 들어 있어요. 아무에게나 보내지 마세요.<br>• 앱이 다른 주소(다른 사이트)에서 열리면 기록은 따로 저장돼요. 같은 주소에서 복원하세요.</div></div>'''
 JS = r'''
 const KM = ''' + KM + r''';
-const META = ["fg-first-seen", "fg-backup-last", "fg-backup-snooze"];
+const META = window.FGBACKUP ? FGBACKUP.META : ["fg-first-seen", "fg-backup-last", "fg-backup-snooze", "fg-backup-every", "fg-backup-sig"];
 const isGame = k => /-best-|-wins-|-stats-/.test(k);
 function allKeys() { const o = []; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!META.includes(k)) o.push(k); } } catch (e) {} return o.sort(); }
 function snapshot() { const d = {}; allKeys().forEach(k => { try { d[k] = localStorage.getItem(k); } catch (e) {} }); return { app: "family-games", v: 1, saved: new Date().toISOString(), data: d }; }
@@ -72,9 +75,20 @@ function renderSum() {
   $("sum").innerHTML = `<table class="tbl"><tbody>${rows || '<tr><td colspan="2" class="muted">저장된 기록이 아직 없어요</td></tr>'}${g.game.length ? `<tr><td>게임 최고 기록</td><td>${g.game.length}개</td></tr>` : ""}</tbody></table>`;
   let last = 0; try { last = +localStorage.getItem("fg-backup-last") || 0; } catch (e) {}
   $("msg1").textContent = last ? "마지막 백업: " + new Date(last).toLocaleDateString("ko-KR") : "아직 백업한 적이 없어요.";
+  renderStat();
 }
+function renderStat() {
+  if (!window.FGBACKUP) return;
+  const s = FGBACKUP.status(), on = s.every > 0;
+  const ic = s.level === "none" ? "❗" : s.level === "late" ? "⚠️" : "✅";
+  const head = s.level === "none" ? "아직 백업한 적이 없어요" : "마지막 백업: " + new Date(s.last).toLocaleDateString("ko-KR") + " (" + (s.days === 0 ? "오늘" : s.days + "일 전") + ")";
+  const ch = s.level === "none" ? "" : s.changed === null ? "백업 뒤 바뀐 기록은 다음 백업부터 알 수 있어요." : s.changed === 0 ? "백업 뒤 바뀐 기록이 없어요." : "백업 뒤 바뀐 기록: " + s.changed + "종";
+  $("stat").innerHTML = `<b id="stat-h">${ic} ${esc(head)}</b><div class="note" id="stat-c">${esc(ch)}</div><div class="note">알림 주기: ${on ? s.every + "일" : "꺼짐"}</div>`;
+  document.querySelectorAll("#every button").forEach(b => b.classList.toggle("on", +b.dataset.d === s.every));
+}
+document.querySelectorAll("#every button").forEach(b => b.onclick = () => { if (window.FGBACKUP) { FGBACKUP.setEvery(+b.dataset.d); renderStat(); } });
 function fileObj() { const s = JSON.stringify(snapshot()), d = new Date(), n = `family-games-backup-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}.json`; return { s, n, blob: new Blob([s], { type: "application/json" }) }; }
-function done() { try { localStorage.setItem("fg-backup-last", String(Date.now())); } catch (e) {} renderSum(); }
+function done() { if (window.FGBACKUP) FGBACKUP.markDone(); else { try { localStorage.setItem("fg-backup-last", String(Date.now())); } catch (e) {} } renderSum(); }
 $("dl").onclick = () => { const f = fileObj(), a = document.createElement("a"); a.href = URL.createObjectURL(f.blob); a.download = f.n; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); done(); $("msg1").innerHTML = '<span class="ok">✅ 파일을 저장했어요.</span> 다운로드 폴더를 확인하세요.'; };
 $("sh").onclick = async () => { const f = fileObj(); try { const file = new File([f.blob], f.n, { type: "application/json" }); if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "가족 게임 백업" }); done(); $("msg1").innerHTML = '<span class="ok">✅ 보냈어요.</span>'; return; } } catch (e) { if (e && e.name === "AbortError") return; } $("msg1").innerHTML = '<span class="bad">이 폰에서는 공유가 안 돼요.</span> "파일로 저장"을 써 주세요.'; };
 let loaded = null;
@@ -95,3 +109,5 @@ renderSum();
 make("out/backup.html", "기록 백업·복원", "💾", 160, "backup-v1",
  "폰에 저장된 모든 기록을 파일 하나로 백업하고, 새 폰이나 앱을 지운 뒤에 복원해요. 파일은 이 폰 밖으로 자동 전송되지 않아요.",
  BODY, JS, CSS)
+# family.js(백업 상태 함수)를 쪽 스크립트보다 먼저 읽는다
+p = "out/backup.html"; s2 = open(p, encoding="utf-8").read(); s2 = s2.replace("<script>\nconst $ = id", '<script src="family.js"></script>\n<script>\nconst $ = id', 1); open(p, "w", encoding="utf-8").write(s2)

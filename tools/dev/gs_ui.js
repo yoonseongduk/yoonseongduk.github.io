@@ -9,14 +9,14 @@ const ok = (c, m) => { console.log((c ? '[통과] ' : '[실패] ') + m); if (!c)
   ok((await p.$$('#hand .gc')).length === 10, '손패 10장이 보인다');
   ok((await p.$$eval('#field .gc', e => e.length)) === 8, '바닥 8장이 보인다');
   ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '360px 가로 넘침 없음(시작)');
-  await p.screenshot({ path: 'gs_shot1.png', fullPage: true });
+  await p.screenshot({ path: 'gs_shot1.png', fullPage: false });
   let turns = 0, shot = false;
   for (let i = 0; i < 600; i++) {
     const end = await p.$eval('#result', e => !e.hidden); if (end) break;
     if (await p.$('#bstop')) { await p.click(i % 2 ? '#bstop' : '#bgo').catch(() => {}); await p.waitForTimeout(300); continue; }
     const pick = await p.$('#field .gc.pick'); if (pick) { await pick.click(); await p.waitForTimeout(300); continue; }
     const can = await p.$('#hand .gc.can');
-    if (can) { await can.click(); turns++; await p.waitForTimeout(250); if (turns === 3 && !shot) { shot = true; await p.screenshot({ path: 'gs_shot2.png', fullPage: true }); } continue; }
+    if (can) { await can.click(); turns++; await p.waitForTimeout(250); if (turns === 3 && !shot) { shot = true; await p.screenshot({ path: 'gs_shot2.png', fullPage: false }); } continue; }
     await p.waitForTimeout(300);
   }
   ok(await p.$eval('#result', e => !e.hidden), '한 판이 끝까지 진행되어 결과가 나온다 (내가 낸 횟수 ' + turns + ')');

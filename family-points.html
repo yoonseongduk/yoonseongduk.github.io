@@ -73,7 +73,7 @@ function render() {
 }
 (function rules() {
   const c = P.cfg;
-  const r = [["게임 한 판 (기본)", "+" + c.base + "p"], ["같은 게임 하루 최대", c.perDay + "판"], ["이겼어요·클리어", "+" + c.win + "p"], ["최고 기록 세우기", "+" + c.best + "p"], ["처음 해 보는 게임", "+" + c.first + "p"], ["어려운 게임", "×" + c.hard], ["연속 출석(하루마다)", "+" + c.streakStep + "p씩, 최대 " + c.streakMax + "p"]];
+  const r = [["게임 한 판 (기본)", "+" + c.base + "p"], ["같은 게임 하루 최대", c.perDay + "판"], ["이겼어요·클리어", "+" + c.win + "p"], ["최고 기록 세우기", "+" + c.best + "p"], ["처음 해 보는 게임", "+" + c.first + "p"], ["어려운 게임", "×" + c.hard], ["게임이 정해 주는 점수(맞고 승리)", "한 판 최대 " + c.grantMax + "p"], ["연속 출석(하루마다)", "+" + c.streakStep + "p씩, 최대 " + c.streakMax + "p"]];
   $("rules").innerHTML = r.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join("");
 })();
 render();

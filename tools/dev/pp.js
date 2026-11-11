@@ -31,7 +31,7 @@ const ok = (c, m) => { console.log((c ? '[통과] ' : '[실패] ') + m); if (!c)
   ok(pt && pt.p['아빠'] && pt.p['아빠'].total === 65, '기본 10 + 처음 20 + 연속 5 + (클릭 속도 게임이 첫 기록을 직접 저장해) 최고 기록 30 = 65 (' + (pt && pt.p['아빠'] && pt.p['아빠'].total) + ')');
   await p.evaluate(() => localStorage.setItem('clickspeed-best-v1', '{"10":99}')); await p.waitForTimeout(500);
   pt = await p.evaluate(() => JSON.parse(localStorage.getItem('fg-points-v1')));
-  ok(pt.p['아빠'].total === 65, '한 번 연 화면에서 최고 기록 가산은 한 번만 (') + pt.p['아빠'].total + ')');
+  ok(pt.p['아빠'].total === 65, '한 번 연 화면에서 최고 기록 가산은 한 번만 (' + pt.p['아빠'].total + ')');
   await p.evaluate(() => { const d = document.createElement('div'); d.textContent = '🎉 성공했어요!'; document.body.appendChild(d); }); await p.waitForTimeout(500);
   pt = await p.evaluate(() => JSON.parse(localStorage.getItem('fg-points-v1')));
   ok(pt.p['아빠'].total === 85, '이겼어요 글귀가 나오면 +20 (' + pt.p['아빠'].total + ')');

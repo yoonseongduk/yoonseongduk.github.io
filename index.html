@@ -77,6 +77,7 @@ h2 span { font-family: var(--font-body); font-size: .85rem; color: var(--muted);
 .pwa { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: .92rem; }
 .pwa b { font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; }
 .pwa p { margin: 0; color: var(--muted); }
+.pwa .rel { font-size: .88rem; color: var(--muted); } .pwa .rel summary { cursor: pointer; font-weight: 700; color: var(--fg); } .pwa .rel .rv { margin: 8px 0 0; } .pwa .rel ul { margin: 2px 0 0; padding-left: 1.2em; }
 .pwa .upd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: .9rem; color: var(--muted); }
 .pwa button { align-self: flex-start; background: var(--fg); color: var(--bg); border: 0; border-radius: 10px; padding: 8px 14px; font: inherit; font-weight: 700; cursor: pointer; }
 footer { color: var(--muted); font-size: .85rem; }
@@ -104,6 +105,7 @@ footer { color: var(--muted); font-size: .85rem; }
     <b>📲 폰에 설치하면 인터넷 없이도 해요</b>
     <p id="pwaSave"></p>
     <p id="pwaVer"></p>
+    <details class="rel" id="pwaRel" hidden><summary>📋 업데이트 내용 (릴리스 노트)</summary><div id="pwaRelBody"></div></details>
     <div class="upd"><button type="button" id="pwaUpd">🔄 새 버전 확인</button><span id="pwaUpdMsg"></span></div>
     <p id="pwaHow"></p>
     <button type="button" id="pwaBtn" hidden>앱으로 설치하기</button>
@@ -406,7 +408,15 @@ render();
   const verEl = document.getElementById("pwaVer"), updBtn = document.getElementById("pwaUpd"), updMsg = document.getElementById("pwaUpdMsg");
   const askW = w => new Promise(res => { if (!w) return res(null); const ch = new MessageChannel(); ch.port1.onmessage = e => res(e.data); try { w.postMessage({ type: "status" }, [ch.port2]); } catch (e) { return res(null); } setTimeout(() => res(null), 2500); });
   let lastCheck = 0, checking = false, reloading = false; const wasControlled = !!navigator.serviceWorker.controller;
-  const showVer = async reg => { const st = await askW(reg.active); verEl.textContent = st ? `설치된 버전: ${st.build || "이전 버전"}${st.games ? " · 게임 " + st.games + "개" : ""}` : ""; };
+  // 릴리스 노트(data/release-notes.json, tools/release.py 로 추가): 현재 릴리스 번호를 버전 줄에 붙이고 최근 내용을 펼쳐 보여요
+  let REL = null;
+  const loadRel = async () => { if (REL) return REL; try { const r = await fetch("data/release-notes.json"); const j = await r.json(); REL = Array.isArray(j) ? j : []; } catch (e) { REL = []; } return REL; };
+  const showRel = async () => {
+    const rel = await loadRel(), box = document.getElementById("pwaRel"), body = document.getElementById("pwaRelBody"); if (!rel.length) return;
+    body.textContent = ""; rel.slice(0, 6).forEach(x => { const d = document.createElement("div"); d.className = "rv"; const h = document.createElement("b"); h.textContent = `${x.ver} · ${x.title}`; const s = document.createElement("small"); s.textContent = ` (${x.date})`; d.append(h, s); const ul = document.createElement("ul"); (x.items || []).forEach(i => { const li = document.createElement("li"); li.textContent = i; ul.appendChild(li); }); d.appendChild(ul); body.appendChild(d); });
+    box.hidden = false;
+  };
+  const showVer = async reg => { const st = await askW(reg.active), rel = await loadRel(); verEl.textContent = st ? `설치된 버전: ${st.build || "이전 버전"}${rel.length ? " · 릴리스 " + rel[0].ver : ""}${st.games ? " · 게임 " + st.games + "개" : ""}` : ""; showRel(); };
   const now = () => new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
   function follow(w) { return new Promise(res => { updMsg.textContent = "⬇️ 새 버전을 받는 중이에요…"; const t = setInterval(async () => { const st = await askW(w); if (st) updMsg.textContent = `⬇️ 새 버전을 받는 중이에요… (${st.count}/${st.total})`; }, 700);
     w.addEventListener("statechange", () => { if (w.state === "activated") { clearInterval(t); updMsg.textContent = "🎉 새 버전을 받았어요! 곧 새로고침해요"; res(); } else if (w.state === "redundant") { clearInterval(t); updMsg.textContent = "업데이트를 끝내지 못했어요. 다시 눌러 주세요"; res(); } }); }); }

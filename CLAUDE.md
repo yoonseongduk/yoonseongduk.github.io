@@ -75,6 +75,8 @@
 
 - **맞고(2인 고스톱, `go-stop.html`)**(2026-11-11): 규칙 엔진은 화면과 무관한 순수 함수 `gostop-core.js`(node 시험 `tools/dev/gs_test.js`), 화면 생성기는 `tools/dev/set36.py`(화면 검사 `gs_ui.js`). 화투 48장은 번호 0~47(월=(번호>>2)+1)로만 다루고 그림은 Wikimedia Commons의 공개 그림(CC BY-SA 4.0, 저작자 Louie Mantia·すけじょ) 48장을 `cards/`에 **고치지 않고 그대로** 두고 `gostop-art.js`가 번호→파일로 연결해요(결정 D11). 우리 11월(오동)은 Commons의 December, 12월(비)은 November 그림이에요. 그림을 고치면 같은 CC BY-SA로 공개해야 하고, 출처는 `cards/LICENSE.txt`·`licenses.html`에 있어요. 48장 모아 보기는 `tools/dev/art_gallery.js`. 컴퓨터는 `aiStep`. 이기면 `fgPerson.grant(점수)`로 포인트(최대 50p), 전적은 `go-stop-stats-v1`. 규칙은 결정 D8(일반적인 맞고를 단순화), 3인 고스톱·흔들기·폭탄·같이 하기는 아직. 화면 글에 `이겼어요`·`성공` 같은 완료 글귀를 쓰면 `person.js`가 승리 가산을 또 줘요.
 
+- **릴리스 노트**(2026-11-11): 시작 화면 "새 버전 확인" 카드가 현재 릴리스 번호(`YYYY.MM.DD-N`)와 업데이트 내용을 보여 줘요. 내용은 `data/release-notes.json`이고 **기능을 올릴 때마다 `py toolselease.py "제목" "바뀐 점 1" "바뀐 점 2"`를 한 번 실행**해 추가해요(그 뒤 `tools\make-sw.py`/올리기.bat). 검사는 `tools/dev/rel.js`.
+
 - **한자 획순 번호**: `data/stroke-6~1.json`(Make Me a Hanzi 파생, `tools/dev/build_stroke.py`로 생성, 라이선스 `data/stroke-LICENSE.txt`). 한자 쓰기 화면의 🔢(번호 켜기/끄기)·✏️(획 시작 위치를 순서대로 눌러 직접 입력/수정). 직접 고친 내용은 폰 localStorage `hanja-write-strokefix-v1`에 저장되고, "📋 내가 고친 획순 복사"로 JSON을 복사해 `tools/dev/merge_stroke_fix.py`로 `data/stroke-fix.json`에 합치면 모든 폰에 반영돼요(형식 `{"한자":[[x,y],...]}`, 좌표는 300×300 쓰기 칸 기준). 자료에 없는 172자(`data/stroke-missing.json`) 중 131자는 `build_stroke_auto.py`(글자 분해로 추정)+`snap_auto.js`(글꼴 모양에 맞춤)가 `data/stroke-auto.json`으로 임시 번호를 채웠고(화면에 '자동 추정' 표시, 우선순위 직접수정>stroke-fix>auto), 나머지 41자는 비어 있어요. 모두 한자 쓰기 급수 버튼 끝의 ✏️ '번호 없는 글자만' 모드로 한 글자씩 순서대로 찍어 채워요.
 - **퀸 놓기(`n-queens.html`)**: 힌트·공격 범위는 HTML에 직접 추가했어요(`set17.py`로 다시 만들면 사라지니 주의).
 - **오늘의 한자**: `hanja-today.html`(`set28.py`) — 급수별 하루 3개 + 퀴즈.

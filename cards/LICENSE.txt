@@ -1,0 +1,16 @@
+맞고(고스톱) 화투 그림 48장 — 출처와 이용 조건 / Hanafuda card images — attribution and license
+
+이 폴더의 Hanafuda_*_Alt.svg 파일은 Wikimedia Commons 에 공개된 그림이에요. 내용은 바꾸지 않고 그대로 담았어요.
+These Hanafuda_*_Alt.svg files are taken unmodified from Wikimedia Commons.
+
+- 저작자 / Author: Louie Mantia (Commons 사용자 Louiemantia), すけじょ (Sukejo)
+  원본 "Hanafuda <Month> <Type>.svg" 를 바탕으로 만든 "Alt" 판이에요. / "Alt" versions derived from the original "Hanafuda <Month> <Type>.svg" files.
+- 라이선스 / License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+  https://creativecommons.org/licenses/by-sa/4.0/
+- 출처 / Source: https://commons.wikimedia.org/wiki/Category:Hanafuda  (각 파일의 Commons 파일 설명 쪽: File:Hanafuda_<Month>_<Type>_Alt.svg)
+- 확인일 / Checked: 2026-11-11 (Commons API 로 48개 파일 모두 라이선스 "CC BY-SA 4.0", 저작자 표시 필요 로 확인)
+- 변경 사항 / Changes: 없음(파일을 그대로 사용). 이 그림들을 고치거나 다른 그림을 섞어 만든 결과물도 같은 CC BY-SA 4.0 으로 공개해야 해요.
+  No changes were made to these files. Adaptations of them must also be shared under CC BY-SA 4.0.
+
+이 라이선스는 이 폴더의 그림 파일에만 적용돼요. 사이트의 나머지 코드와 글에는 적용되지 않아요.
+This license applies only to the image files in this folder.

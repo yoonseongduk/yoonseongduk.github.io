@@ -5,3 +5,10 @@ __pycache__/
 node_modules/
 tools/dev/package.json
 tools/dev/package-lock.json
+# 작업 문서·점검 도구 (사이트로 공개하지 않음, design/공개제외목록.md)
+design/
+tests/
+작업상태.md
+.claude/
+.env
+*.key

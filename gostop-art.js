@@ -1,4 +1,5 @@
-/* 맞고 화투 48장 그림 — Wikimedia Commons 의 공개 그림(CC BY-SA 4.0, 저작자 Louie Mantia·すけじょ)을 그대로 써요.
+/* 맞고 화투 48장 그림 — 기본은 직접 그린 한국 민화풍 그림(cards-minhwa/, tools/dev/minhwa.py 로 생성, 결정 D14). GoStopArt.mode("old") 로 아래 옛 그림을 고를 수 있어요.
+   (옛 그림) Wikimedia Commons 의 공개 그림(CC BY-SA 4.0, 저작자 Louie Mantia·すけじょ)을 그대로 써요.
    파일은 cards/ 폴더에 있고, 출처·라이선스 안내는 cards/LICENSE.txt 와 licenses.html 에 적어 뒀어요. 파일 내용은 고치지 않아요(고치면 같은 라이선스로 공개해야 해요).
    GoStopArt.url(번호) → 그림 파일 주소, GoStopArt.img(번호) → <img> 글자. 번호는 gostop-core.js 와 같아요(월 = (번호>>2)+1, 월 안 순서 = 번호&3).
    주의: 우리 11월(오동)은 Commons 의 December, 우리 12월(비·버들)은 Commons 의 November 그림이에요(일본과 한국의 월 순서가 달라요). */
@@ -14,8 +15,10 @@
     for (i = m * 4 - 4; i < id; i++) if (type(i) === "pi") n++; // 그 달의 첫 피 → Kasu_1, 둘째 피 → Kasu_2
     return "Hanafuda_" + MON[m] + "_Kasu_" + (n + 1) + "_Alt.svg";
   }
-  function url(id) { return "cards/" + name(id); }
+  var mode = "minhwa"; // "minhwa" = 직접 그린 민화풍(기본), "old" = Commons 공개 그림(CC BY-SA)
+  function url(id) { return mode === "old" ? "cards/" + name(id) : "cards-minhwa/" + (id < 10 ? "0" : "") + id + ".svg"; }
   function img(id) { return '<img src="' + url(id) + '" alt="" draggable="false">'; }
   function all() { var a = [], i; for (i = 0; i < 48; i++) a.push(url(i)); return a; }
-  root.GoStopArt = { url: url, img: img, all: all };
+  function setMode(m) { mode = m === "old" ? "old" : "minhwa"; }
+  root.GoStopArt = { url: url, img: img, all: all, mode: function (m) { if (m) setMode(m); return mode; } };
 })(typeof window !== "undefined" ? window : globalThis);

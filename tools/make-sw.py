@@ -12,6 +12,7 @@ files += ["manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-i
 files += ["fonts/" + os.path.basename(f) for f in sorted(glob.glob(R + "fonts/*.woff2"))]
 files += ["data/" + os.path.basename(f) for f in sorted(glob.glob(R + "data/*"))]
 files += ["cards/" + os.path.basename(f) for f in sorted(glob.glob(R + "cards/*.svg"))]   # 맞고 화투 그림(CC BY-SA, cards/LICENSE.txt)
+files += ["cards-minhwa/" + os.path.basename(f) for f in sorted(glob.glob(R + "cards-minhwa/*.svg"))]   # 맞고 화투 그림(직접 그린 민화풍)
 files += [os.path.basename(f) for f in sorted(glob.glob(R + "*.js")) if os.path.basename(f) != "sw.js"]
 h = hashlib.md5()
 TEXT = (".html", ".css", ".webmanifest", ".js", ".txt", ".json", ".svg")   # Windows가 줄 끝 표시(CRLF)를 바꿔도 같은 버전이 되도록 맞춘다

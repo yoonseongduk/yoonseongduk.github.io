@@ -36,7 +36,7 @@ button.gc{cursor:pointer}button.gc:disabled{cursor:default}
 .bs{border:2px solid var(--line);border-radius:14px;padding:6px 10px;background:var(--surface);display:grid;grid-template-columns:1fr auto;align-items:baseline}.bs.on{border-color:var(--accent)}
 .bs .bn{font-weight:700}.bs .bp{font-family:var(--font-display);font-size:1.6rem}.bs .bm{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
 .msg{min-height:2.4em;font-weight:700;font-size:.92rem}.acts{display:flex;gap:8px;flex-wrap:wrap}.acts .btn{flex:1}
-.hint{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.8rem;color:var(--muted)}.hint label{display:flex;gap:4px;align-items:center;cursor:pointer;font-weight:700}
+.hint{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.8rem;color:var(--muted)}.hint label{display:flex;gap:4px;align-items:center;cursor:pointer;font-weight:700}.hint label{white-space:nowrap}.hint{flex-wrap:wrap}
 .res h2{margin-bottom:4px}.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:3px 2px;border-bottom:1px solid var(--line)}.tbl td:last-child{text-align:right}
 details summary{cursor:pointer;font-weight:700}
 @media(prefers-reduced-motion:reduce){.gc.new,.field .gc.pick{animation:none}}
@@ -48,7 +48,7 @@ BODY = '''  <div class="bar" id="bar"></div>
   <div class="msg" id="msg" role="status" aria-live="polite"></div>
   <div class="acts" id="acts"></div>
   <div class="hand" id="hand" aria-label="내 손패"></div>
-  <div class="hint"><span>🟢 짝이 맞는 패 · ⭐ 추천 패 · 점선은 바닥의 짝</span><label><input type="checkbox" id="hintOn"> 힌트</label></div>
+  <div class="hint"><span>🟢 짝이 맞는 패 · ⭐ 추천 패 · 점선은 바닥의 짝</span><span style="display:flex;gap:10px;align-items:center"><label>그림 <select id="artSel"><option value="minhwa">🎎 민화풍</option><option value="old">🎴 옛 화투</option></select></label><label><input type="checkbox" id="hintOn"> 힌트</label></span></div>
   <div class="card res" id="result" hidden></div>
   <div class="card"><details><summary>📘 규칙 보기</summary><div class="note" style="margin-top:6px">
     • 손패 1장을 내면 같은 달 패가 바닥에 있을 때 짝으로 가져가요. 이어서 더미에서 한 장 뒤집어 같은 방식으로 해요.<br>
@@ -56,7 +56,7 @@ BODY = '''  <div class="bar" id="bar"></div>
     • 점수: 광 3장 3점(비광 포함 2점)·4장 4점·5장 15점, 고도리 5점, 홍단·청단·초단 각 3점, 열끗·띠 5장부터 1점씩, 피 10장부터 1점씩(쌍피는 2장).<br>
     • 7점 이상이면 <b>고</b>(더 하기) 또는 <b>스톱</b>. 고는 1번 +1점, 2번 +2점, 3번부터 2배씩. 광박·피박이면 2배.<br>
     • 방금 가져온 패는 주황 테두리로 반짝여요. 힌트를 켜면 짝이 맞는 패(초록)와 추천 패(⭐)를 알려 줘요. 포인트는 놀이용이에요. 이기면 점수만큼(최대 50p) 받고, 지면 잃지 않아요.<br>
-    • 화투 그림: Louie Mantia·すけじょ, CC BY-SA 4.0 (Wikimedia Commons). 자세한 출처는 licenses.html 에 있어요.</div></details></div>'''
+    • 화투 그림: 기본(🎎 민화풍)은 이 앱에서 직접 그린 그림이에요. '그림'에서 🎴 옛 화투를 고르면 Louie Mantia·すけじょ의 그림(CC BY-SA 4.0, Wikimedia Commons)이 나와요. 자세한 출처는 licenses.html 에 있어요.</div></details></div>'''
 
 JS = r'''
 const GS = window.GoStop, ME = 0, CPU = 1;
@@ -64,6 +64,8 @@ const TAG = { gwang: "광", yeol: "열", pi: "피" };
 let S = null, lastWinner = -1, lastTurnNo = 0, msg = "", done = false, timer = 0;
 let stats = ld(KEY) || { w: 0, l: 0, d: 0, best: 0 };
 if (typeof stats.hint !== "boolean") stats.hint = true;
+if (stats.art !== "old") stats.art = "minhwa";
+GoStopArt.mode(stats.art);
 function face(id) { const i = GS.info(id); return { i, tag: i.type === "ddi" ? "띠" : i.pi === 2 ? "쌍피" : TAG[i.type] }; }
 const lab = id => { const i = GS.info(id), f = face(id); return i.month + "월 " + (i.type === "gwang" ? "光" : i.type === "ddi" ? ({ red: "홍단", blue: "청단", cho: "초단", plain: "띠" })[i.sub] : f.tag); };
 function card(id, o) {
@@ -105,6 +107,8 @@ function render() {
   if ($("bgo")) { $("bgo").onclick = () => step({ t: "go" }); $("bstop").onclick = () => step({ t: "stop" }); }
   $("hintOn").checked = stats.hint;
 }
+$("artSel").value = stats.art;
+$("artSel").onchange = e => { stats.art = e.target.value; GoStopArt.mode(stats.art); sv(KEY, stats); render(); };
 $("hintOn").onchange = e => { stats.hint = e.target.checked; sv(KEY, stats); render(); };
 function describe(l) {
   const who = l.who === ME ? "나" : "컴퓨터";
@@ -146,7 +150,7 @@ start();
 '''
 
 make("out/go-stop.html", "맞고 (고스톱)", "🎴", 12, "go-stop-stats-v1",
-     "컴퓨터와 둘이서 하는 화투 놀이예요. 이기면 점수만큼 포인트를 받고, 져도 잃지 않아요. 화투 그림은 공개된 그림(CC BY-SA 4.0)을 썼어요.", BODY, JS, CSS)
+     "컴퓨터와 둘이서 하는 화투 놀이예요. 이기면 점수만큼 포인트를 받고, 져도 잃지 않아요. 화투 그림은 직접 그린 한국 민화풍이고, 옛 화투 그림으로 바꿀 수도 있어요.", BODY, JS, CSS)
 # 규칙 엔진(gostop-core.js)과 그림(gostop-art.js)을 화면 스크립트보다 먼저 읽는다
 p = "out/go-stop.html"; s = open(p, encoding="utf-8").read()
 s = s.replace("<script>\nconst $ = id", '<script src="gostop-core.js"></script>\n<script src="gostop-art.js"></script>\n<script>\nconst $ = id', 1)

@@ -40,8 +40,8 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 <main>
   <h1>가족 포인트 ⭐</h1>
   <div class="card"><b>🏆 가족 포인트 순위</b><div id="rank"></div><div class="note" id="rnote"></div></div>
-  <div class="card"><b id="whot">👤 내 포인트</b><div class="g3"><div class="stat"><small>합계</small><b id="s-total">0</b></div><div class="stat"><small>오늘</small><b id="s-today">0</b></div><div class="stat"><small>연속 출석</small><b id="s-streak">0일</b></div></div><div id="log"></div></div>
-  <div class="card"><b>📘 포인트는 이렇게 얻어요</b><table class="tbl"><tbody id="rules"></tbody></table><div class="note">게임을 10초 이상 하면 한 판으로 쳐요. 끝나고 다시 시작하면 새 판으로 또 받아요. 같은 게임은 하루에 몇 번까지만 받아요(맞고는 제한이 없어요). 게임 화면 위의 「🎮 오늘 이 게임」 칸에서 오늘 받은 포인트와 하루 최대를 볼 수 있어요. 포인트는 이 폰에만 저장되고, 놀이용 숫자라 다른 것으로 바꿀 수 없어요.</div></div>
+  <div class="card"><b id="whot">👤 내 포인트</b><div class="g3"><div class="stat"><small>합계</small><b id="s-total">0</b></div><div class="stat"><small>오늘</small><b id="s-today">0</b></div><div class="stat"><small>연속 출석</small><b id="s-streak">0일</b></div></div><div class="note" style="margin:12px 0 2px"><b>📅 오늘 게임별로 받은 포인트</b></div><div id="log"></div></div>
+  <div class="card"><b>📘 포인트는 이렇게 얻어요</b><table class="tbl"><tbody id="rules"></tbody></table><div class="note">판이 끝나면(이겨도 져도) 3초 이상 한 판으로 쳐요. 끝났다는 글귀가 없는 게임은 10초 이상 하면 한 판이에요. 다시 시작하면 새 판으로 또 받아요. 같은 게임은 하루에 몇 번까지만 받아요(맞고는 제한이 없어요). 게임 화면 위의 「🎮 오늘 이 게임」 칸에서 오늘 받은 포인트와 하루 최대를 볼 수 있어요. 포인트는 이 폰에만 저장되고, 놀이용 숫자라 다른 것으로 바꿀 수 없어요.</div></div>
   <p class="muted">게임을 하면 기본 점수와 가산 점수가 쌓여요. 위쪽 칩에서 누가 하는지 고르면 그 사람의 포인트로 쌓여요.</p>
 </main>
 <script>
@@ -69,7 +69,14 @@ function render() {
   $("whot").textContent = "👤 " + cur + "의 포인트";
   const td = day(Date.now()), todayPts = (u.log || []).filter(l => day(l.t) === td).reduce((s, l) => s + l.p, 0);
   $("s-total").textContent = u.total + "p"; $("s-today").textContent = todayPts + "p"; $("s-streak").textContent = (u.day === td || u.lastDay === day(Date.now() - 86400000) ? u.streak : 0) + "일";
-  $("log").innerHTML = (u.log || []).slice(-12).reverse().map(l => `<div class="li"><span>${esc(tname(l.f))}<br><span class="note">${esc(l.w)} · ${new Date(l.t).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" })}</span></span><span class="pt">+${l.p}</span></div>`).join("") || '<div class="note">아직 받은 포인트가 없어요.</div>';
+  // 오늘 받은 포인트를 게임별로 합산한다(받은 순서 기록이 아니라 게임별 누적). 종류별 횟수도 같이 보여 준다.
+  const agg = {};
+  (u.log || []).filter(l => day(l.t) === td).forEach(l => {
+    const a = agg[l.f] || (agg[l.f] = { p: 0, k: {}, last: 0 }); a.p += l.p; a.last = Math.max(a.last, l.t);
+    const k = /맞고 승리|게임 점수/.test(l.w) ? "승리" : /이겼/.test(l.w) ? "이김" : /최고/.test(l.w) ? "최고 기록" : "플레이"; a.k[k] = (a.k[k] || 0) + 1;
+  });
+  const list = Object.keys(agg).sort((x, y) => agg[y].p - agg[x].p || agg[y].last - agg[x].last);
+  $("log").innerHTML = list.map((f, i) => `<div class="li"><span>${i === 0 && list.length > 1 ? "🥇 " : ""}${esc(tname(f))}<br><span class="note">${Object.keys(agg[f].k).map(k => k + " " + agg[f].k[k] + "번").join(" · ")}</span></span><span class="pt">${agg[f].p}p</span></div>`).join("") + (list.length > 1 ? `<div class="li"><span class="note">오늘 합계 (${list.length}개 게임)</span><span class="pt">${todayPts}p</span></div>` : "") || '<div class="note">오늘은 아직 받은 포인트가 없어요. 게임을 해 보세요!</div>';
 }
 (function rules() {
   const c = P.cfg;

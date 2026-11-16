@@ -180,6 +180,7 @@ function nextGuide() {
     : ["👉 낸 패와 같은 달 패가 2장이에요. 가져갈 패를 하나 골라요", "반짝이는 바닥 패 중 하나를 눌러요 → 그다음 더미에서 한 장이 뒤집혀요", ""];
   if (S.phase === "gostop") return ["👉 " + S.pend.score + "점이에요! 「고」(계속)나 「스톱」(끝내기)을 골라요", "스톱: 지금 점수로 이겨요 · 고: 더 노리고 점수 보너스가 붙어요", ""];
   if (handEmpty()) return ["👉 손패가 없어요. 「더미 뒤집기」를 눌러요", "폭탄을 낸 뒤라 패 없이 더미만 뒤집어요 → 짝이 맞으면 가져가요", ""];
+  if (S.btok && S.btok[ME] > 0) return ["👉 내 차례예요. 손패를 내거나, 「더미 뒤집기」로 패 없이 더미만 뒤집을 수 있어요 (폭탄 보너스 " + S.btok[ME] + "번 남음)", "먹을 패가 없으면 손패를 아끼고 뒤집기를 써요 → 짝이 맞으면 가져가요", ""];
   return ["👉 내 차례예요. 손패에서 한 장을 골라 내요", "그다음 → 더미에서 한 장이 뒤집혀요 → 같은 달 패가 있으면 짝으로 가져가요" + (stats.hint ? " (⭐ 추천 패를 눌러도 좋아요)" : ""), ""];
 }
 // 한 번의 내 차례에 거치는 단계: 어디까지 했고(✔), 지금 어디이며(강조), 앞으로 무엇이 남았는지(흐림)를 칩으로 보여 준다
@@ -217,7 +218,7 @@ function render() {
     else if (S.phase === "shake") a = `<button class="btn" id="bq1" type="button">🎲 흔들기 (점수 ×2)</button><button class="btn ghost" id="bq0" type="button">그냥 내기</button>`;
     else if (S.phase === "bomb") a = `<button class="btn" id="bq1" type="button">💣 폭탄! (3장 한꺼번에)</button><button class="btn ghost" id="bq0" type="button">한 장만 내기</button>`;
     else if (S.phase === "gukjin") a = `<button class="btn" id="bq1" type="button">🍶 쌍피로 쓰기 (피 2장)</button><button class="btn ghost" id="bq0" type="button">열끗으로 쓰기</button>`;
-    else if (handEmpty()) a = `<button class="btn" id="bflip" type="button">🃏 더미 뒤집기</button>`;
+    else if (handEmpty() || (S.phase === "hand" && S.btok && S.btok[ME] > 0)) a = `<button class="btn" id="bflip" type="button">🃏 더미 뒤집기${S.btok && S.btok[ME] > 0 ? " (폭탄 보너스 " + S.btok[ME] + "번 남음)" : ""}</button>`;
   }
   $("acts").innerHTML = a;
   if ($("bgo")) { $("bgo").onclick = () => step({ t: "go" }); $("bstop").onclick = () => step({ t: "stop" }); }
@@ -231,7 +232,7 @@ $("hintOn").onchange = e => { stats.hint = e.target.checked; sv(KEY, stats); ren
 $("modeSel").onchange = e => { stats.mode = +e.target.value === 3 ? 3 : 2; lastWinner = -1; sv(KEY, stats); start(); };
 function describe(l) {
   const who = pname(l.who), bomb = l.sp.includes("폭탄");
-  let t = l.hand === null ? `${who}: 손패가 없어 더미만 뒤집어` : bomb ? `${who}: 💣 ${GS.month(l.hand)}월 패 3장을 한꺼번에 내고` : `${who}: ${lab(l.hand)}를 내고`;
+  let t = l.hand === null ? `${who}: 패를 내지 않고 더미만 뒤집어` : bomb ? `${who}: 💣 ${GS.month(l.hand)}월 패 3장을 한꺼번에 내고` : `${who}: ${lab(l.hand)}를 내고`;
   t += (l.flip != null ? ` ${lab(l.flip)}를 뒤집어` : "") + (l.got.length ? ` → ${l.got.map(lab).join(", ")} 가져감` : " → 가져온 패 없음");
   if (l.steal.length) t += ` · 상대 피 ${l.steal.length}장 빼앗음`; if (l.sp.length) t += " ✨" + l.sp.join("·");
   return t;

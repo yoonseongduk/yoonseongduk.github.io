@@ -65,10 +65,13 @@ ok(sk3.shake[0] === 0 && sk3.declined[0].includes(1), '흔들기를 안 하면 �
 let sw = mkn({ hands: [[16, 40], [47], [46]], cap: [[0, 8, 28, 40, 1, 5, 9], [2], [3]], f: [], d: [26] }); sw.shake = [1, 0, 0]; sw.bomb = [0, 0, 0]; G.act(sw, { t: 'play', id: 16 }); G.act(sw, { t: 'stop' });
 ok(sw.result.common.includes('흔들기'), '정산에 흔들기 표시'); eq(sw.result.points, 7 * 2 * 2 * 2, '흔들기 ×2, 광박 ×2씩 두 사람(3점 기준 3인) 몫 합산: 7점 ×2(흔들기) ×2(광박) × 진 사람 2명 = 56');
 // 폭탄: 손패 3장 + 바닥 1장 → 4장 한 번에, 상대 피 1장씩, ×2
-let bm = mkn({ hands: [[0, 1, 2, 40], [47], [46]], f: [3, 8], d: [9], cap: [[], [10], [14]] }); G.act(bm, { t: 'play', id: 0 });
+let bm = mkn({ hands: [[0, 1, 2, 40], [47], [46]], f: [3, 8], d: [9, 20, 21, 22], cap: [[], [10], [14]] }); G.act(bm, { t: 'play', id: 0 });
 eq(bm.phase, 'bomb', '손패 같은 달 3장 + 바닥 1장이면 폭탄을 묻는다'); G.act(bm, { t: 'bomb', yes: true });
 ok([0, 1, 2, 3].every(id => bm.cap[0].includes(id)) && bm.hands[0].join() === '40' && bm.bomb[0] === 1 && bm.last.sp.includes('폭탄'), '폭탄: 4장을 가져오고 손패에서 3장이 한꺼번에 나간다');
 ok(bm.cap[0].includes(10) && bm.cap[0].includes(14) && bm.cap[1].length === 0 && bm.cap[2].length === 0, '폭탄: 상대 두 사람에게서 피 1장씩');
+ok(bm.btok[0] === 2, '폭탄을 내면 패 없이 뒤집기만 하는 차례(btok)를 2번 받는다');
+{ const d0 = bm.deck.length, h0 = bm.hands[0].length; bm.turn = 0; bm.phase = 'hand'; bm.pend = null; bm.ctx = null; G.act(bm, { t: 'flip' }); ok(bm.btok[0] === 1 && bm.hands[0].length === h0 && bm.deck.length < d0, '손패가 남아 있어도 폭탄 보너스로 패를 내지 않고 더미만 뒤집을 수 있다'); }
+let bm3 = mkn({ hands: [[40], [47], [46]], f: [8], d: [9, 10] }); let thr3 = false; try { G.act(bm3, { t: "flip" }); } catch (e) { thr3 = true; } ok(thr3, '폭탄 보너스가 없고 손패가 있으면 뒤집기만은 안 된다');
 let bm2 = mkn({ hands: [[0, 1, 2, 40], [47], [46]], f: [3, 8], d: [9] }); G.act(bm2, { t: 'play', id: 0 }); G.act(bm2, { t: 'bomb', yes: false }); ok(bm2.bomb[0] === 0 && bm2.hands[0].length === 3, '폭탄을 안 하면 한 장만 낸다');
 // 손패 없는 차례
 let fo = mkn({ hands: [[], [47], [46]], f: [8], d: [16] }); G.act(fo, { t: 'flip' }); ok(fo.last.hand === null && fo.field.length === 2 && fo.turn === 1, '손패가 없으면 더미만 뒤집고 차례가 넘어간다');

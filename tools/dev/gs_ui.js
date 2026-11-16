@@ -85,7 +85,7 @@ const ok = (c, m) => { console.log((c ? '[통과] ' : '[실패] ') + m); if (!c)
   ok((await p.$$('#hand .gc')).length === 0 && !!(await p.$('#bflip')) && /더미 뒤집기/.test(await p.$eval('#next', e => e.innerText)), '손패가 없으면 「더미 뒤집기」 버튼과 안내가 뜬다');
   ok((await p.$eval('#next .steps .on', e => e.innerText)).includes('더미 뒤집기'), '손패 없는 차례에는 ③ 더미 뒤집기 단계가 강조된다');
   await p.click('#bflip'); await p.waitForTimeout(250);
-  ok(await p.evaluate(() => S.last && S.last.hand === null && S.deck.length < 14) && /손패가 없어 더미만 뒤집어/.test(await p.$eval('#msg', e => e.textContent)), '「더미 뒤집기」를 누르면 더미만 뒤집고 메시지가 나온다');
+  ok(await p.evaluate(() => S.last && S.last.hand === null && S.deck.length < 14) && /더미만 뒤집어/.test(await p.$eval('#msg', e => e.textContent)), '「더미 뒤집기」를 누르면 더미만 뒤집고 메시지가 나온다');
   await p.evaluate(() => clearTimeout(timer));
   await p.selectOption('#modeSel', '2'); await p.waitForTimeout(500); ok((await p.$$('#hand .gc')).length === 10, '2인으로 되돌리면 손패 10장으로 시작한다');
   ok(errs.length === 0, '오류 없음 ' + errs.join(' | ').slice(0, 200));

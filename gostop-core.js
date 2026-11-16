@@ -36,11 +36,12 @@
   function nextP(state, p) { return (p + 1) % np(state); }
   function thr(state) { return (RULES[np(state)] || RULES[2]).threshold; }
   function others(state, p) { var o = [], i; for (i = 1; i < np(state); i++) o.push((p + i) % np(state)); return o; } // p 다음 차례부터 순서대로
-  function allEmpty(state) { return state.hands.every(function (h) { return h.length === 0; }); }
+  function allEmpty(state) { init(state); return state.hands.every(function (h, i) { return h.length === 0 && !state.btok[i]; }); } // 폭탄으로 받은 「뒤집기만」 차례(btok)가 남아 있으면 아직 안 끝남
   function zeros(n) { var a = [], i; for (i = 0; i < n; i++) a.push(0); return a; }
   function init(state) { // 시험용으로 손으로 만든 판에도 새 칸이 있도록 채운다
     var n = np(state), i;
     if (!state.shake) state.shake = zeros(n); if (!state.bomb) state.bomb = zeros(n);
+    if (!state.btok) state.btok = zeros(n);
     if (!state.shaken) { state.shaken = []; for (i = 0; i < n; i++) state.shaken.push([]); }
     if (!state.declined) { state.declined = []; for (i = 0; i < n; i++) state.declined.push([]); }
     if (!state.gukjin) { state.gukjin = []; for (i = 0; i < n; i++) state.gukjin.push(null); }
@@ -203,12 +204,13 @@
       var bid = state.pend.id, bmm = state.pend.month; state.pend = null; state.phase = "hand";
       if (!a.yes) { state.declined[me].push(bmm); return doPlay(state, bid, []); }
       var three = state.hands[me].filter(function (x) { return month(x) === bmm; }), fcard = sameMonth(state, bid)[0];
-      state.bomb[me]++; three.forEach(function (x) { remove(state.hands[me], x); });
+      state.bomb[me]++; state.btok[me] += 2; three.forEach(function (x) { remove(state.hands[me], x); });
       c = state.ctx = { hand: bid, hk: "bomb", hm: fcard, flip: null, got: [], sp: [], steal: [], bombCards: three.slice() };
       take(state, three.concat([fcard])); steal(state, "폭탄"); return doFlip(state);
     }
-    if (a.t === "flip") { // 손패가 없는 차례: 더미만 뒤집는다
-      if (state.phase !== "hand" || state.hands[me].length > 0) throw new Error("손패가 남아 있으면 패를 내야 함");
+    if (a.t === "flip") { // 더미만 뒤집는 차례: 손패가 없거나, 폭탄으로 받은 뒤집기 차례(btok)가 남아 있을 때
+      if (state.phase !== "hand" || (state.hands[me].length > 0 && !state.btok[me])) throw new Error("손패가 남아 있으면 패를 내야 함");
+      if (state.btok[me] > 0) state.btok[me]--;
       state.ctx = { hand: null, hk: "flip", hm: -1, flip: null, got: [], sp: [], steal: [] }; return doFlip(state);
     }
     if (a.t === "pick") {

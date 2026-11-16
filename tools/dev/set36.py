@@ -40,7 +40,8 @@ button.gc{cursor:pointer}button.gc:disabled{cursor:default}
 .bar{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0;background:var(--bg)}
 .bs{border:2px solid var(--line);border-radius:14px;padding:6px 10px;background:var(--surface);display:grid;grid-template-columns:1fr auto;align-items:baseline}.bs.on{border-color:var(--accent)}
 .bs .bn{font-weight:700}.bs .bp{font-family:var(--font-display);font-size:1.6rem}.bs .bm{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
-.next{border-left:4px solid var(--accent);background:var(--soft);border-radius:10px;padding:7px 10px;font-weight:700;font-size:.92rem;line-height:1.45}.next small{display:block;font-weight:500;font-size:.8rem;color:var(--muted)}.next.cpu{border-left-color:var(--muted);opacity:.9}
+.next{border-left:4px solid var(--accent);background:var(--soft);border-radius:10px;padding:7px 10px;font-weight:700;font-size:.92rem;line-height:1.45}.next .steps{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.next .steps span{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}.next .steps .on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}.next .steps .done{opacity:.55}
+.next small{display:block;font-weight:500;font-size:.8rem;color:var(--muted)}.next.cpu{border-left-color:var(--muted);opacity:.9}
 .msg{min-height:2.4em;font-weight:700;font-size:.92rem}.acts{display:flex;gap:8px;flex-wrap:wrap}.acts .btn{flex:1}
 .hint{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.8rem;color:var(--muted)}.hint label{display:flex;gap:4px;align-items:center;cursor:pointer;font-weight:700}.hint label{white-space:nowrap}.hint{flex-wrap:wrap}
 .res h2{margin-bottom:4px}.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:3px 2px;border-bottom:1px solid var(--line)}.tbl td:last-child{text-align:right}
@@ -109,6 +110,20 @@ function nextGuide() {
   if (S.phase === "gostop") return ["👉 " + S.pend.score + "점이에요! 「고」(계속)나 「스톱」(끝내기)을 골라요", "스톱: 지금 점수로 이겨요 · 고: 더 노리고 점수 보너스가 붙어요", ""];
   return ["👉 내 차례예요. 손패에서 한 장을 골라 내요", "그다음 → 더미에서 한 장이 뒤집혀요 → 같은 달 패가 있으면 짝으로 가져가요" + (stats.hint ? " (⭐ 추천 패를 눌러도 좋아요)" : ""), ""];
 }
+// 한 번의 내 차례에 거치는 단계: 어디까지 했고(✔), 지금 어디이며(강조), 앞으로 무엇이 남았는지(흐림)를 칩으로 보여 준다
+const STEPS = ["① 손패 내기", "② 짝 고르기(2장일 때)", "③ 더미 뒤집기(자동)", "④ 짝 고르기(2장일 때)", "⑤ 고·스톱(7점 이상)", "⑥ 컴퓨터 차례"];
+function stepNo() {
+  if (S.phase === "end") return 6;
+  if (S.turn === CPU) return 5;
+  if (S.phase === "pick") return S.pend.stage === "flip" ? 3 : 1;
+  if (S.phase === "gostop") return 4;
+  return 0;
+}
+function stepsHtml() {
+  const k = stepNo();
+  return '<div class="steps" aria-label="이번 차례의 진행 순서">' + STEPS.map((t, i) => `<span class="${i < k ? "done" : i === k ? "on" : ""}">${i < k ? "✔ " : ""}${t}</span>`).join("") + "</div>"
+    + (S.phase === "end" ? "" : `<small>앞으로 내 차례 ${S.hands[ME].length}번 남음 · 더미 ${S.deck.length}장 · 손패가 모두 없어지면 판이 끝나요 (7점 이상이면 중간에 고·스톱을 고를 수 있어요)</small>`);
+}
 function render() {
   const pick = S.phase === "pick" && S.turn === ME ? S.pend.ids : [];
   const my = S.turn === ME && S.phase === "hand", hint = my && stats.hint;
@@ -120,7 +135,7 @@ function render() {
   $("pile").innerHTML = `<div class="stk" aria-hidden="true">${"<i></i>".repeat(Math.max(nl, S.deck.length ? 1 : 0))}</div><b>${S.deck.length}</b>더미`;
   $("hand").innerHTML = mine.slice().sort((a, b) => a - b).map(id => { const m = hint && S.field.some(x => GS.month(x) === GS.month(id)); return card(id, { on: my, cls: (my ? "can" : "") + (id === best ? " best" : m ? " match" : "") }); }).join("");
   $("msg").textContent = pick.length ? "👆 가져올 패를 골라요 (반짝이는 패)" : msg;
-  const ng = nextGuide(); $("next").className = "next" + (ng[2] ? " " + ng[2] : ""); $("next").innerHTML = esc(ng[0]) + (ng[1] ? "<small>" + esc(ng[1]) + "</small>" : "");
+  const ng = nextGuide(); $("next").className = "next" + (ng[2] ? " " + ng[2] : ""); $("next").innerHTML = esc(ng[0]) + (ng[1] ? "<small>" + esc(ng[1]) + "</small>" : "") + stepsHtml();
   let a = "";
   if (S.phase === "gostop" && S.turn === ME) a = `<button class="btn" id="bgo" type="button">🔥 고! (지금 ${S.pend.score}점)</button><button class="btn ghost" id="bstop" type="button">✋ 스톱</button>`;
   $("acts").innerHTML = a;

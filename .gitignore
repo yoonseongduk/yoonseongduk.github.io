@@ -12,3 +12,4 @@ tests/
 .claude/
 .env
 *.key
+tools/dev/gemini_src/

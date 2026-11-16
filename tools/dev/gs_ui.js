@@ -14,11 +14,12 @@ const ok = (c, m) => { console.log((c ? '[통과] ' : '[실패] ') + m); if (!c)
   ok((await p.$$eval('#hand .gc.match, #hand .gc.best', e => e.length)) >= 1, '짝이 맞는 패 표시가 있다');
   ok(await p.evaluate(async () => { const r = await Promise.all(GoStopArt.all().map(u => fetch(u).then(x => x.ok))); return r.length === 48 && r.every(Boolean); }), '화투 그림 48장이 모두 불러와진다');
   await p.click('#hintOn'); ok((await p.$$eval('#hand .gc.best, #hand .gc.match', e => e.length)) === 0, '힌트를 끄면 표시가 사라진다'); await p.click('#hintOn');
-  let sawNew = false;
+  let sawNew = false; const sawGuide = new Set();
   let turns = 0, shot = false;
   for (let i = 0; i < 600; i++) {
     const end = await p.$eval('#result', e => !e.hidden); if (end) break;
     if (!sawNew && await p.$('#cap .gc.new')) sawNew = true;
+    sawGuide.add(await p.$eval('#next', e => e.innerText));
     if (await p.$('#bstop')) { await p.click(i % 2 ? '#bstop' : '#bgo').catch(() => {}); await p.waitForTimeout(300); continue; }
     const pick = await p.$('#field .gc.pick'); if (pick) { await pick.click(); await p.waitForTimeout(300); continue; }
     const can = await p.$('#hand .gc.can');
@@ -26,6 +27,7 @@ const ok = (c, m) => { console.log((c ? '[통과] ' : '[실패] ') + m); if (!c)
     await p.waitForTimeout(300);
   }
   ok(sawNew, '방금 가져온 패가 주황 테두리(new)로 표시된다');
+  ok(sawGuide.size >= 3 && [...sawGuide].some(t => /내 차례예요/.test(t)) && [...sawGuide].some(t => /컴퓨터 차례예요/.test(t)), '다음에 할 일 안내가 상황마다 바뀐다: ' + [...sawGuide].map(t => t.split('\n')[0].slice(0, 22)).join(' / '));
   ok(await p.$eval('#result', e => !e.hidden), '한 판이 끝까지 진행되어 결과가 나온다 (내가 낸 횟수 ' + turns + ')');
   const txt = await p.$eval('#result', e => e.innerText); ok(/승리|아쉬워요|나가리/.test(txt), '결과 문구가 보인다: ' + txt.split('\n')[0]);
   await p.screenshot({ path: 'gs_shot3.png', fullPage: true });

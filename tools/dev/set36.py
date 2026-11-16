@@ -40,6 +40,7 @@ button.gc{cursor:pointer}button.gc:disabled{cursor:default}
 .bar{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0;background:var(--bg)}
 .bs{border:2px solid var(--line);border-radius:14px;padding:6px 10px;background:var(--surface);display:grid;grid-template-columns:1fr auto;align-items:baseline}.bs.on{border-color:var(--accent)}
 .bs .bn{font-weight:700}.bs .bp{font-family:var(--font-display);font-size:1.6rem}.bs .bm{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
+.next{border-left:4px solid var(--accent);background:var(--soft);border-radius:10px;padding:7px 10px;font-weight:700;font-size:.92rem;line-height:1.45}.next small{display:block;font-weight:500;font-size:.8rem;color:var(--muted)}.next.cpu{border-left-color:var(--muted);opacity:.9}
 .msg{min-height:2.4em;font-weight:700;font-size:.92rem}.acts{display:flex;gap:8px;flex-wrap:wrap}.acts .btn{flex:1}
 .hint{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.8rem;color:var(--muted)}.hint label{display:flex;gap:4px;align-items:center;cursor:pointer;font-weight:700}.hint label{white-space:nowrap}.hint{flex-wrap:wrap}
 .res h2{margin-bottom:4px}.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:3px 2px;border-bottom:1px solid var(--line)}.tbl td:last-child{text-align:right}
@@ -51,6 +52,7 @@ BODY = '''  <div class="bar" id="bar"></div>
   <div class="card tight"><div class="cap" id="cap"></div></div>
   <div class="card tight"><div class="board"><div class="field" id="field" aria-label="바닥"></div><div class="pile" id="pile"></div></div></div>
   <div class="msg" id="msg" role="status" aria-live="polite"></div>
+  <div class="next" id="next" aria-live="polite"></div>
   <div class="acts" id="acts"></div>
   <div class="hand" id="hand" aria-label="내 손패"></div>
   <div class="hint"><span>🟢 짝이 맞는 패 · ⭐ 추천 패 · 점선은 바닥의 짝</span><span style="display:flex;gap:10px;align-items:center"><label>그림 <select id="artSel"><option value="gemini">🖼️ 새 민화</option><option value="minhwa">🎎 단순 민화</option><option value="old">🎴 옛 화투</option></select></label><label><input type="checkbox" id="hintOn"> 힌트</label></span></div>
@@ -97,6 +99,16 @@ function bar() {
   return `<div class="bs${on === CPU ? " on" : ""}"><span class="bn">🤖 컴퓨터</span><span class="bp">${a}점</span><span class="bm">손패 ${S.hands[CPU].length}장${S.goCount[CPU] ? " · 고 " + S.goCount[CPU] + "번" : ""}</span></div>` +
     `<div class="bs${on === ME ? " on" : ""}"><span class="bn">🙂 ${esc(nm)}</span><span class="bp">${b}점</span><span class="bm">손패 ${S.hands[ME].length}장${S.goCount[ME] ? " · 고 " + S.goCount[ME] + "번" : ""} · 더미 ${S.deck.length}</span></div>`;
 }
+// 다음에 할 일 안내: 지금 누가 무엇을 해야 하는지와, 그다음 단계를 보여 준다
+function nextGuide() {
+  if (S.phase === "end") return ["🏁 한 판이 끝났어요", "아래 결과를 보고 「한 판 더」를 눌러요", ""];
+  if (S.turn === CPU) return S.phase === "gostop" ? ["🤖 컴퓨터가 고·스톱을 정하는 중이에요", "잠깐 기다려요 → 그다음은 내 차례 또는 한 판 끝", "cpu"] : ["🤖 컴퓨터 차례예요", "컴퓨터가 패를 내고 가져가요. 잠깐 기다려요 → 그다음은 내 차례", "cpu"];
+  if (S.phase === "pick") return S.pend.stage === "flip"
+    ? ["👉 뒤집힌 패와 같은 달 패가 2장이에요. 가져갈 패를 하나 골라요", "반짝이는 바닥 패 중 하나를 눌러요 → 그다음은 컴퓨터 차례", ""]
+    : ["👉 낸 패와 같은 달 패가 2장이에요. 가져갈 패를 하나 골라요", "반짝이는 바닥 패 중 하나를 눌러요 → 그다음 더미에서 한 장이 뒤집혀요", ""];
+  if (S.phase === "gostop") return ["👉 " + S.pend.score + "점이에요! 「고」(계속)나 「스톱」(끝내기)을 골라요", "스톱: 지금 점수로 이겨요 · 고: 더 노리고 점수 보너스가 붙어요", ""];
+  return ["👉 내 차례예요. 손패에서 한 장을 골라 내요", "그다음 → 더미에서 한 장이 뒤집혀요 → 같은 달 패가 있으면 짝으로 가져가요" + (stats.hint ? " (⭐ 추천 패를 눌러도 좋아요)" : ""), ""];
+}
 function render() {
   const pick = S.phase === "pick" && S.turn === ME ? S.pend.ids : [];
   const my = S.turn === ME && S.phase === "hand", hint = my && stats.hint;
@@ -108,6 +120,7 @@ function render() {
   $("pile").innerHTML = `<div class="stk" aria-hidden="true">${"<i></i>".repeat(Math.max(nl, S.deck.length ? 1 : 0))}</div><b>${S.deck.length}</b>더미`;
   $("hand").innerHTML = mine.slice().sort((a, b) => a - b).map(id => { const m = hint && S.field.some(x => GS.month(x) === GS.month(id)); return card(id, { on: my, cls: (my ? "can" : "") + (id === best ? " best" : m ? " match" : "") }); }).join("");
   $("msg").textContent = pick.length ? "👆 가져올 패를 골라요 (반짝이는 패)" : msg;
+  const ng = nextGuide(); $("next").className = "next" + (ng[2] ? " " + ng[2] : ""); $("next").innerHTML = esc(ng[0]) + (ng[1] ? "<small>" + esc(ng[1]) + "</small>" : "");
   let a = "";
   if (S.phase === "gostop" && S.turn === ME) a = `<button class="btn" id="bgo" type="button">🔥 고! (지금 ${S.pend.score}점)</button><button class="btn ghost" id="bstop" type="button">✋ 스톱</button>`;
   $("acts").innerHTML = a;

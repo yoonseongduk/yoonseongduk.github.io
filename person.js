@@ -44,7 +44,7 @@
   function award(kind, extra) {
     if (!GAMES[file]) return null;
     var s = load(), n = me(), u = s.p[n] || (s.p[n] = { total: 0, day: "", lastDay: "", streak: 0, today: {}, bonus: {}, seen: [], log: [] }), now = Date.now(), td = ymd(now), pts = 0, why = [];
-    if (u.day !== td) { u.streakNew = true; u.day = td; u.today = {}; u.bonus = {}; u.earn = {}; }
+    if (u.day !== td) { u.streakNew = true; u.day = td; u.today = {}; u.bonus = {}; }
     var mult = HARD[file] ? CFG.hard : 1, core = 0;
     if (kind === "grant") { // 게임이 직접 정해 주는 점수(예: 맞고 승리). 한 판 최대 grantMax, 하루 상한은 가산과 같이 쓴다
       if ((!UNL[file] && (u.bonus[file] || 0) >= CFG.perDay) || !(extra.pts > 0)) return null;
@@ -58,8 +58,7 @@
       if (!UNL[file] && (u.bonus[file] || 0) >= CFG.perDay) return null;
       u.bonus[file] = (u.bonus[file] || 0) + 1; core = Math.round((kind === "win" ? CFG.win : CFG.best) * mult); pts += core; why.push(kind === "win" ? "이겼어요" : "최고 기록");
     }
-    delete u.streakNew; u.total += pts; u.earn = u.earn || {}; u.earn[file] = (u.earn[file] || 0) + core; // 게임별 오늘 획득(처음 해 본 보너스·연속 출석은 뺀 값)
-     u.log.push({ t: now, f: file, p: pts, w: why.join("·") }); if (u.log.length > CFG.keepLog) u.log.splice(0, u.log.length - CFG.keepLog);
+    delete u.streakNew; u.total += pts;  u.log.push({ t: now, f: file, p: pts, w: why.join("·") }); if (u.log.length > CFG.keepLog) u.log.splice(0, u.log.length - CFG.keepLog);
     rs(PK, JSON.stringify(s)); toast("+" + pts + "p  " + why.join("·")); try { dispatchEvent(new Event("fgpoints")); } catch (e) {} return pts;
   }
   var tq = [], tt = 0;
@@ -78,10 +77,13 @@
     player: player, owner: owner,
     grant: function (pts, why) { return award("grant", { pts: pts, why: why }); },
     setPlayer: function (n) { rs(PLAYER, n || ""); },
-    // 이 화면의 오늘 포인트 현황: {listed, unlimited, earned, max}. max = 하루 한도(플레이 perDay번 + 이김·최고 기록·게임 점수 perDay번), 처음 해 본 보너스·연속 출석은 별도
+    // 이 화면의 오늘 포인트 현황: {listed, unlimited, per, plays, bonus, earned, max}.
+    // earned = 오늘 이 게임에서 실제로 받은 모든 점수의 합(이력·가족 포인트 화면과 같은 숫자, 처음 해 본 보너스·연속 출석 포함).
+    // max = 하루 기본 한도(플레이 perDay번 + 이김·최고 기록·게임 점수 perDay번) + 오늘 이미 받은 처음 해 본·연속 출석 보너스.
     game: function () {
-      var u = load().p[me()], mult = HARD[file] ? CFG.hard : 1, today = u && u.day === ymd(Date.now());
-      return { listed: !!GAMES[file], unlimited: !!UNL[file], per: CFG.perDay, plays: today && u.today ? (u.today[file] || 0) : 0, bonus: today && u.bonus ? (u.bonus[file] || 0) : 0, earned: today && u.earn ? (u.earn[file] || 0) : 0, max: CFG.perDay * (Math.round(CFG.base * mult) + Math.round(Math.max(CFG.win, CFG.best) * mult)) };
+      var u = load().p[me()], mult = HARD[file] ? CFG.hard : 1, td = ymd(Date.now()), today = u && u.day === td, sum = 0, extra = 0;
+      ((u && u.log) || []).forEach(function (x) { if (x.f !== file || ymd(x.t) !== td) return; sum += x.p; if (/처음 해 본 게임/.test(x.w)) extra += CFG.first; var m = /(\d+)일 연속/.exec(x.w); if (m) extra += Math.min(CFG.streakMax, CFG.streakStep * (+m[1])); });
+      return { listed: !!GAMES[file], unlimited: !!UNL[file], per: CFG.perDay, plays: today && u.today ? (u.today[file] || 0) : 0, bonus: today && u.bonus ? (u.bonus[file] || 0) : 0, earned: sum, max: CFG.perDay * (Math.round(CFG.base * mult) + Math.round(Math.max(CFG.win, CFG.best) * mult)) + extra };
     },
     history: function () { var u = load().p[me()], td = ymd(Date.now()); return u && u.log ? u.log.filter(function (x) { return x.f === file && ymd(x.t) === td; }).map(function (x) { return { t: x.t, p: x.p, w: x.w }; }) : []; }, // 오늘 이 게임에서 받은 포인트 이력 [{t,p,w}] (전체 로그에서 골라 낸다)
     points: function (n) { var u = load().p[n || me()]; return u ? u.total : 0; },

@@ -47,13 +47,13 @@
     t.style.cssText = "width:100%;border-collapse:collapse";
     h.slice().reverse().forEach(function (x) { tot += x.p; var tr = document.createElement("tr"), d = new Date(x.t); [pad(d.getHours()) + ":" + pad(d.getMinutes()), "+" + x.p + "p", x.w].forEach(function (c, i) { var td = document.createElement("td"); td.textContent = c; td.style.cssText = "padding:3px 4px;border-bottom:1px solid var(--line,#e6e1ea)" + (i === 1 ? ";font-weight:800;text-align:right;white-space:nowrap" : ""); tr.appendChild(td); }); t.appendChild(tr); });
     head.textContent = "📜 오늘 이 게임에서 받은 포인트 · 합계 " + tot + "p" + (g.unlimited ? " (제한 없음)" : "");
-    if (!g.unlimited) { var nt = document.createElement("div"); nt.textContent = "오늘 받은 횟수: 플레이 " + g.plays + "/" + g.per + "번 · 이김·최고 기록 " + g.bonus + "/" + g.per + "번 (넘으면 더 안 올라요). 위쪽 「오늘 이 게임 " + g.earned + " / " + g.max + "p」는 처음 해 본 보너스·연속 출석 보너스를 뺀 값이에요."; nt.style.cssText = "font-weight:600;font-size:.76rem;color:var(--muted,#5b6275);margin-bottom:4px"; p.appendChild(nt); }
+    if (!g.unlimited) { var nt = document.createElement("div"); nt.textContent = "오늘 받은 횟수: 플레이 " + g.plays + "/" + g.per + "번 · 이김·최고 기록 " + g.bonus + "/" + g.per + "번 (넘으면 더 안 올라요). 하루 최대 " + g.max + "p는 기본 한도에 처음 해 본·연속 출석 보너스를 받은 만큼을 더한 값이에요."; nt.style.cssText = "font-weight:600;font-size:.76rem;color:var(--muted,#5b6275);margin-bottom:4px"; p.appendChild(nt); }
     if (!h.length) { var n = document.createElement("div"); n.textContent = "아직 받은 포인트가 없어요. 게임을 10초 이상 하거나 이기면 쌓여요."; n.style.cssText = "color:var(--muted,#5b6275)"; p.appendChild(n); } else p.appendChild(t);
   }
   function gamePill() {
     var P = window.fgPerson; if (!P || !P.game || !P.game().listed) return null;
     var s = document.createElement("button"); s.type = "button"; s.id = "fg-gpt"; s.textContent = gameText();
-    s.title = "이 게임에서 오늘 받은 포인트와 하루 최대 포인트예요. 누르면 오늘 받은 이력을 볼 수 있어요. 처음 해 본 보너스와 연속 출석 보너스는 따로 받아요.";
+    s.title = "이 게임에서 오늘 받은 포인트(보너스 포함)와 하루 최대 포인트예요. 누르면 오늘 받은 이력을 볼 수 있어요.";
     s.style.cssText = "display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;border:1px dashed var(--line,#ccd);background:var(--soft,#f4f1f6);color:var(--muted,#5b6275);font:700 .8rem/1.2 system-ui,sans-serif;cursor:pointer";
     s.onclick = function () { var o = document.getElementById("fg-ghist"); if (o) { o.remove(); return; } var p = document.createElement("div"); p.id = "fg-ghist"; p.style.cssText = "flex-basis:100%;background:var(--surface,#fff);color:var(--fg,#1c2233);border:1px solid var(--line,#ccd);border-radius:14px;padding:10px 12px;font:600 .85rem/1.5 system-ui,sans-serif"; s.parentNode.insertBefore(p, s.nextSibling); fillHist(); };
     return s;

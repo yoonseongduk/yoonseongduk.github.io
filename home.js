@@ -38,17 +38,18 @@
     return b;
   }
   // 이 게임에서 오늘 받은 포인트 / 하루 최대 (포인트를 주는 게임에서만)
-  function gameText() { var g = window.fgPerson.game(); return g.unlimited ? "🎮 오늘 이 게임 " + g.earned + "p · 제한 없음" : "🎮 오늘 이 게임 " + g.earned + " / " + g.max + "p"; }
+  function gameText() { var g = window.fgPerson.game(); if (g.bet) return "🎮 오늘 이 게임 손익 " + (g.earned > 0 ? "+" : "") + g.earned + "p · 판돈은 내 포인트"; return g.unlimited ? "🎮 오늘 이 게임 " + g.earned + "p · 제한 없음" : "🎮 오늘 이 게임 " + g.earned + " / " + g.max + "p"; }
   // 오늘 이 게임의 포인트 이력 패널(칸을 누르면 열린다)
   function fillHist() {
     var p = document.getElementById("fg-ghist"), P = window.fgPerson; if (!p || !P) return;
     var h = P.history(), g = P.game(), tot = 0, t = document.createElement("table"), pad = function (n) { return (n < 10 ? "0" : "") + n; };
     p.textContent = ""; var head = document.createElement("div"); head.style.cssText = "font-weight:800;margin-bottom:4px"; p.appendChild(head);
     t.style.cssText = "width:100%;border-collapse:collapse";
-    h.slice().reverse().forEach(function (x) { tot += x.p; var tr = document.createElement("tr"), d = new Date(x.t); [pad(d.getHours()) + ":" + pad(d.getMinutes()), "+" + x.p + "p", x.w].forEach(function (c, i) { var td = document.createElement("td"); td.textContent = c; td.style.cssText = "padding:3px 4px;border-bottom:1px solid var(--line,#e6e1ea)" + (i === 1 ? ";font-weight:800;text-align:right;white-space:nowrap" : ""); tr.appendChild(td); }); t.appendChild(tr); });
-    head.textContent = "📜 오늘 이 게임에서 받은 포인트 · 합계 " + tot + "p" + (g.unlimited ? " (제한 없음)" : "");
-    if (!g.unlimited) { var nt = document.createElement("div"); nt.textContent = "오늘 받은 횟수: 플레이 " + g.plays + "/" + g.per + "번 · 이김·최고 기록 " + g.bonus + "/" + g.per + "번 (넘으면 더 안 올라요). 하루 최대 " + g.max + "p는 기본 한도에 처음 해 본·연속 출석 보너스를 받은 만큼을 더한 값이에요."; nt.style.cssText = "font-weight:600;font-size:.76rem;color:var(--muted,#5b6275);margin-bottom:4px"; p.appendChild(nt); }
-    if (!h.length) { var n = document.createElement("div"); n.textContent = "아직 받은 포인트가 없어요. 게임을 10초 이상 하거나 이기면 쌓여요."; n.style.cssText = "color:var(--muted,#5b6275)"; p.appendChild(n); } else p.appendChild(t);
+    h.slice().reverse().forEach(function (x) { tot += x.p; var tr = document.createElement("tr"), d = new Date(x.t); [pad(d.getHours()) + ":" + pad(d.getMinutes()), (x.p > 0 ? "+" : "") + x.p + "p", x.w].forEach(function (c, i) { var td = document.createElement("td"); td.textContent = c; td.style.cssText = "padding:3px 4px;border-bottom:1px solid var(--line,#e6e1ea)" + (i === 1 ? ";font-weight:800;text-align:right;white-space:nowrap" : ""); tr.appendChild(td); }); t.appendChild(tr); });
+    head.textContent = g.bet ? "📜 오늘 이 게임 판돈·정산 기록 · 손익 " + (tot > 0 ? "+" : "") + tot + "p" : "📜 오늘 이 게임에서 받은 포인트 · 합계 " + tot + "p" + (g.unlimited ? " (제한 없음)" : "");
+    if (g.bet) { var bt = document.createElement("div"); bt.textContent = "판돈은 내 포인트로 내고, 이기면 돌려받아요. 횟수·금액 제한은 없고 포인트가 없으면 할 수 없어요."; bt.style.cssText = "font-weight:600;font-size:.76rem;color:var(--muted,#5b6275);margin-bottom:4px"; p.appendChild(bt); }
+    else if (!g.unlimited) { var nt = document.createElement("div"); nt.textContent = "오늘 받은 횟수: 플레이 " + g.plays + "/" + g.per + "번 · 이김·최고 기록 " + g.bonus + "/" + g.per + "번 (넘으면 더 안 올라요). 하루 최대 " + g.max + "p는 기본 한도에 처음 해 본·연속 출석 보너스를 받은 만큼을 더한 값이에요."; nt.style.cssText = "font-weight:600;font-size:.76rem;color:var(--muted,#5b6275);margin-bottom:4px"; p.appendChild(nt); }
+    if (!h.length) { var n = document.createElement("div"); n.textContent = g.bet ? "아직 판돈 기록이 없어요. 딜을 눌러 시작해요." : "아직 받은 포인트가 없어요. 게임을 10초 이상 하거나 이기면 쌓여요."; n.style.cssText = "color:var(--muted,#5b6275)"; p.appendChild(n); } else p.appendChild(t);
   }
   function gamePill() {
     var P = window.fgPerson; if (!P || !P.game || !P.game().listed) return null;

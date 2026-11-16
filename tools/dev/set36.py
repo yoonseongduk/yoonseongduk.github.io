@@ -39,7 +39,7 @@ button.gc{cursor:pointer}button.gc:disabled{cursor:default}
 .tight{padding:8px 10px;gap:6px}
 .bar{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0;background:var(--bg)}
 .bs{border:2px solid var(--line);border-radius:14px;padding:6px 10px;background:var(--surface);display:grid;grid-template-columns:1fr auto;align-items:baseline}.bs.on{border-color:var(--accent)}
-.bs .bn{font-weight:700}.bs .bp{font-family:var(--font-display);font-size:1.6rem}.bs .bm{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
+.bar.b3 .bs{grid-template-columns:1fr;padding:5px 8px}.bar.b3 .bp{font-size:1.3rem}.bar.b3 .bm{font-size:.7rem}.bs .bn{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bs .bp{font-family:var(--font-display);font-size:1.6rem}.bs .bm{grid-column:1/-1;font-size:.78rem;color:var(--muted)}
 .next{border-left:4px solid var(--accent);background:var(--soft);border-radius:10px;padding:7px 10px;font-weight:700;font-size:.92rem;line-height:1.45}.next .steps{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.next .steps span{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}.next .steps .on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}.next .steps .done{opacity:.55}
 .next small{display:block;font-weight:500;font-size:.8rem;color:var(--muted)}.next.cpu{border-left-color:var(--muted);opacity:.9}
 .msg{min-height:2.4em;font-weight:700;font-size:.92rem}.acts{display:flex;gap:8px;flex-wrap:wrap}.acts .btn{flex:1}
@@ -56,25 +56,33 @@ BODY = '''  <div class="bar" id="bar"></div>
   <div class="next" id="next" aria-live="polite"></div>
   <div class="acts" id="acts"></div>
   <div class="hand" id="hand" aria-label="내 손패"></div>
-  <div class="hint"><span>🟢 짝이 맞는 패 · ⭐ 추천 패 · 점선은 바닥의 짝</span><span style="display:flex;gap:10px;align-items:center"><label>그림 <select id="artSel"><option value="gemini">🖼️ 새 민화</option><option value="minhwa">🎎 단순 민화</option><option value="old">🎴 옛 화투</option></select></label><label><input type="checkbox" id="hintOn"> 힌트</label></span></div>
+  <div class="hint"><span>🟢 짝이 맞는 패 · ⭐ 추천 패 · 점선은 바닥의 짝</span><span style="display:flex;gap:10px;align-items:center"><label>인원 <select id="modeSel"><option value="2">맞고 (2인)</option><option value="3">고스톱 (3인)</option></select></label><label>그림 <select id="artSel"><option value="gemini">🖼️ 새 민화</option><option value="minhwa">🎎 단순 민화</option><option value="old">🎴 옛 화투</option></select></label><label><input type="checkbox" id="hintOn"> 힌트</label></span></div>
   <div class="card res" id="result" hidden></div>
   <div class="card"><details><summary>📘 규칙 보기</summary><div class="note" style="margin-top:6px">
     • 손패 1장을 내면 같은 달 패가 바닥에 있을 때 짝으로 가져가요. 이어서 더미에서 한 장 뒤집어 같은 방식으로 해요.<br>
     • <b>쪽</b>(낸 패와 뒤집은 패가 같은 달) · <b>따닥</b> · <b>싹쓸이</b> · <b>뻑 먹기</b>는 상대 피를 1장 가져와요. 3장이 묶이는 <b>뻑</b>은 나중에 누가 4장을 가져가요.<br>
     • 점수: 광 3장 3점(비광 포함 2점)·4장 4점·5장 15점, 고도리 5점, 홍단·청단·초단 각 3점, 열끗·띠 5장부터 1점씩, 피 10장부터 1점씩(쌍피는 2장).<br>
-    • 7점 이상이면 <b>고</b>(더 하기) 또는 <b>스톱</b>. 고는 1번 +1점, 2번 +2점, 3번부터 2배씩. 광박·피박이면 2배.<br>
+    • 기준 점수(<b>맞고 2인은 7점, 고스톱 3인은 3점</b>) 이상이면 <b>고</b>(더 하기) 또는 <b>스톱</b>. 고는 1번 +1점, 2번 +2점, 3번부터 2배씩. 3인은 손패 7장·바닥 6장이고, 가져오는 피는 상대 두 사람에게서 1장씩이에요.<br>
+    • <b>흔들기</b>: 같은 달 패 3장을 들고 있고 바닥에 그 달 패가 없을 때 선택하면 이기는 점수 ×2. <b>폭탄</b>: 같은 달 3장을 들고 바닥에 1장 있으면 3장을 한꺼번에 내 4장을 가져오고 상대 피 1장씩, 점수 ×2 (그 뒤 손패가 모자라는 차례는 더미만 뒤집어요).<br>
+    • <b>쌍피 선택</b>: 9월 열끗(국화 술잔)을 얻으면 열끗이나 쌍피(피 2장) 중에 골라요(고르면 바꿀 수 없어요).<br>
+    • 진 사람마다 <b>광박</b>(내 광이 0장)·<b>피박</b>(피 5장 이하)·<b>멍박</b>(이긴 사람 열끗 7장 이상)이면 ×2예요. <b>고박</b>: 고를 부른 사람이 지면 2인은 ×2, 3인은 고박한 사람이 진 사람들 몫을 모두 내요. 이긴 사람이 받는 점수는 진 사람들이 낼 점수의 합이에요.<br>
     • 방금 가져온 패는 주황 테두리로 반짝여요. 힌트를 켜면 짝이 맞는 패(초록)와 추천 패(⭐)를 알려 줘요. 포인트는 놀이용이에요. 이기면 점수만큼(상한 없음) 받고, 하루 횟수 제한도 없고, 지면 잃지 않아요.<br>
-    • 화투 그림: 기본(🖼️ 새 민화)은 AI(Gemini)로 만든 그림이고, 🎎 단순 민화는 이 앱에서 직접 그린 그림이에요. '그림'에서 🎴 옛 화투를 고르면 Louie Mantia·すけじょ의 그림(CC BY-SA 4.0, Wikimedia Commons)이 나와요. 자세한 출처는 licenses.html 에 있어요.</div></details></div>'''
+    • 화투 그림: '그림'에서 고를 수 있어요. 🎴 옛 화투(기본)는 Louie Mantia·すけじょ의 그림(CC BY-SA 4.0, Wikimedia Commons), 🖼️ 새 민화는 AI(Gemini)로 만든 그림, 🎎 단순 민화는 이 앱에서 직접 그린 그림이에요. 자세한 출처는 licenses.html 에 있어요.</div></details></div>'''
 
 JS = r'''
-const GS = window.GoStop, ME = 0, CPU = 1;
+const GS = window.GoStop, ME = 0;
 const TAG = { gwang: "광", yeol: "열", pi: "피" };
 let S = null, lastWinner = -1, lastTurnNo = 0, msg = "", done = false, timer = 0;
 let stats = ld(KEY) || { w: 0, l: 0, d: 0, best: 0 };
 if (typeof stats.hint !== "boolean") stats.hint = true;
+if (stats.mode !== 3) stats.mode = 2; // 2 = 맞고(2인), 3 = 고스톱(3인)
 if (!stats.artSet || (stats.art !== "gemini" && stats.art !== "minhwa")) stats.art = "old"; // 기본은 옛 화투, 사용자가 고른 뒤에는 그 선택을 따른다
 GoStopArt.mode(stats.art);
 document.body.classList.toggle("art-gm", stats.art === "gemini");
+const N = () => S.hands.length, THR = () => GS.threshold(S);
+const pname = p => p === ME ? ((window.fgPerson && fgPerson.player()) || "나") : (N() === 3 ? "컴퓨터" + p : "컴퓨터");
+const nextOf = p => (p + 1) % N();
+const seatOrder = () => { const o = []; for (let p = 1; p < N(); p++) o.push(p); o.push(ME); return o; }; // 화면 순서: 컴퓨터들 → 나
 function face(id) { const i = GS.info(id); return { i, tag: i.type === "ddi" ? "띠" : i.pi === 2 ? "쌍피" : TAG[i.type] }; }
 const lab = id => { const i = GS.info(id), f = face(id); return i.month + "월 " + (i.type === "gwang" ? "光" : i.type === "ddi" ? ({ red: "홍단", blue: "청단", cho: "초단", plain: "띠" })[i.sub] : f.tag); };
 function card(id, o) {
@@ -83,50 +91,69 @@ function card(id, o) {
 }
 function newSet() { return new Set(S.last ? S.last.got.concat(S.last.steal) : []); }
 function capTable() {
-  const nw = newSet(), L = S.last, cell = (cap, k) => {
-    const ids = cap.filter(id => GS.info(id).type === k).sort((a, b) => a - b), n = k === "pi" ? ids.reduce((s, x) => s + GS.info(x).pi, 0) : ids.length;
-    return `<span class="n">${n}</span>` + ids.map(id => card(id, { cls: nw.has(id) ? "new" : "" })).join("");
+  const nw = newSet(), L = S.last, n = N(), order = seatOrder();
+  const cell = (p, k) => {
+    const ids = S.cap[p].filter(id => GS.info(id).type === k).sort((a, b) => a - b);
+    let c = ids.length; if (k === "pi") { c = ids.reduce((s, x) => s + GS.info(x).pi, 0); if (S.gukjin && S.gukjin[p] === "pi" && S.cap[p].includes(GS.RULES.gukjin)) c += 2; } // 쌍피로 쓴 국진은 피 2장
+    return `<span class="n">${c}</span>` + ids.map(id => card(id, { cls: nw.has(id) ? "new" : "" })).join("");
   };
-  const sc = p => GS.score(S.cap[p]).parts.map(x => x.n + " " + x.p + "점").join(" · ") || "&nbsp;";
+  const sc = p => GS.scoreOf(S, p).parts.map(x => x.n + " " + x.p + "점").join(" · ") || "&nbsp;";
   const fresh = p => L && L.who === p && (L.got.length + L.steal.length) ? `<em>방금 +${L.got.length + L.steal.length}</em>` : "";
-  const fresh2 = p => (L && L.who !== p && L.steal.length) ? `<em>피 -${L.steal.length}</em>` : "";
-  let h = `<div></div><div class="ch">🤖 컴퓨터 ${fresh(CPU)}${fresh2(CPU)}</div><div class="ch">🙂 ${esc((window.fgPerson && fgPerson.player()) || "나")} ${fresh(ME)}${fresh2(ME)}</div>`;
-  [["光", "gwang"], ["열끗", "yeol"], ["띠", "ddi"], ["피", "pi"]].forEach(r => { h += `<div class="cl">${r[0]}</div><div class="cc">${cell(S.cap[CPU], r[1])}</div><div class="cc">${cell(S.cap[ME], r[1])}</div>`; });
-  return h + `<div></div><div class="pt">${sc(CPU)}</div><div class="pt">${sc(ME)}</div>`;
+  const fresh2 = p => L && L.stealFrom && L.stealFrom[p] ? `<em>피 -${L.stealFrom[p]}</em>` : "";
+  $("cap").style.gridTemplateColumns = "2.1em repeat(" + n + ",minmax(0,1fr))";
+  let h = `<div></div>` + order.map(p => `<div class="ch">${p === ME ? "🙂" : "🤖"} ${esc(pname(p))} ${fresh(p)}${fresh2(p)}</div>`).join("");
+  [["光", "gwang"], ["열끗", "yeol"], ["띠", "ddi"], ["피", "pi"]].forEach(r => { h += `<div class="cl">${r[0]}</div>` + order.map(p => `<div class="cc">${cell(p, r[1])}</div>`).join(""); });
+  return h + `<div></div>` + order.map(p => `<div class="pt">${sc(p)}</div>`).join("");
 }
 function bar() {
-  const a = GS.score(S.cap[CPU]).total, b = GS.score(S.cap[ME]).total, on = S.phase !== "end" ? S.turn : -1;
-  const nm = (window.fgPerson && fgPerson.player()) || "나";
-  return `<div class="bs${on === CPU ? " on" : ""}"><span class="bn">🤖 컴퓨터</span><span class="bp">${a}점</span><span class="bm">손패 ${S.hands[CPU].length}장${S.goCount[CPU] ? " · 고 " + S.goCount[CPU] + "번" : ""}</span></div>` +
-    `<div class="bs${on === ME ? " on" : ""}"><span class="bn">🙂 ${esc(nm)}</span><span class="bp">${b}점</span><span class="bm">손패 ${S.hands[ME].length}장${S.goCount[ME] ? " · 고 " + S.goCount[ME] + "번" : ""} · 더미 ${S.deck.length}</span></div>`;
+  const n = N(), on = S.phase !== "end" ? S.turn : -1;
+  $("bar").style.gridTemplateColumns = "repeat(" + n + ",1fr)"; $("bar").className = "bar" + (n === 3 ? " b3" : "");
+  return seatOrder().map(p => {
+    const sp = (S.shake[p] ? " · 🎲×" + S.shake[p] : "") + (S.bomb[p] ? " · 💣×" + S.bomb[p] : "");
+    return `<div class="bs${on === p ? " on" : ""}"><span class="bn">${p === ME ? "🙂" : "🤖"} ${esc(pname(p))}</span><span class="bp">${GS.scoreOf(S, p).total}점</span><span class="bm">손패 ${S.hands[p].length}장${S.goCount[p] ? " · 고 " + S.goCount[p] + "번" : ""}${sp}${p === ME && n === 2 ? " · 더미 " + S.deck.length : ""}</span></div>`;
+  }).join("");
 }
+const handEmpty = () => S.turn === ME && S.phase === "hand" && S.hands[ME].length === 0;
 // 다음에 할 일 안내: 지금 누가 무엇을 해야 하는지와, 그다음 단계를 보여 준다
 function nextGuide() {
   if (S.phase === "end") return ["🏁 한 판이 끝났어요", "아래 결과를 보고 「한 판 더」를 눌러요", ""];
-  if (S.turn === CPU) return S.phase === "gostop" ? ["🤖 컴퓨터가 고·스톱을 정하는 중이에요", "잠깐 기다려요 → 그다음은 내 차례 또는 한 판 끝", "cpu"] : ["🤖 컴퓨터 차례예요", "컴퓨터가 패를 내고 가져가요. 잠깐 기다려요 → 그다음은 내 차례", "cpu"];
+  if (S.turn !== ME) {
+    const w = pname(S.turn), nx = nextOf(S.turn), after = nx === ME ? "내 차례" : pname(nx) + " 차례";
+    if (S.phase === "gostop") return ["🤖 " + w + ": 고·스톱을 정하는 중이에요", "잠깐 기다려요 → 그다음은 " + after + " 또는 한 판 끝", "cpu"];
+    if (S.phase === "shake" || S.phase === "bomb" || S.phase === "gukjin") return ["🤖 " + w + ": 선택하는 중이에요", "잠깐 기다려요 → 그다음은 " + after, "cpu"];
+    if (S.hands[S.turn].length === 0) return ["🤖 " + w + " 차례예요 (손패가 없어 더미만 뒤집어요)", "잠깐 기다려요 → 그다음은 " + after, "cpu"];
+    return ["🤖 " + w + " 차례예요", (N() === 3 ? "컴퓨터가 차례대로 패를 내고 가져가요. " : "컴퓨터가 패를 내고 가져가요. ") + "잠깐 기다려요 → 그다음은 " + after, "cpu"];
+  }
+  if (S.phase === "shake") return ["👉 흔들기를 할까요? " + S.pend.month + "월 패를 3장 들고 있어요", "흔들기: 이기면 점수 ×2 (고르면 이 패를 바로 내요) → 그다음 더미에서 한 장이 뒤집혀요", ""];
+  if (S.phase === "bomb") return ["👉 폭탄을 낼까요? " + S.pend.month + "월 패 3장 + 바닥 1장", "폭탄: 3장을 한꺼번에 내 바닥 1장과 4장을 가져오고 상대 피를 1장씩 받아요(점수 ×2) → 그다음 더미를 뒤집어요", ""];
+  if (S.phase === "gukjin") return ["👉 9월 열끗(국진)을 얻었어요. 열끗과 쌍피 중 어떻게 쓸까요?", "쌍피로 쓰면 피 2장으로 계산돼요. 한 번 고르면 바꿀 수 없어요 → 그다음 고·스톱 확인", ""];
   if (S.phase === "pick") return S.pend.stage === "flip"
     ? ["👉 뒤집힌 패와 같은 달 패가 2장이에요. 가져갈 패를 하나 골라요", "반짝이는 바닥 패 중 하나를 눌러요 → 그다음은 컴퓨터 차례", ""]
     : ["👉 낸 패와 같은 달 패가 2장이에요. 가져갈 패를 하나 골라요", "반짝이는 바닥 패 중 하나를 눌러요 → 그다음 더미에서 한 장이 뒤집혀요", ""];
   if (S.phase === "gostop") return ["👉 " + S.pend.score + "점이에요! 「고」(계속)나 「스톱」(끝내기)을 골라요", "스톱: 지금 점수로 이겨요 · 고: 더 노리고 점수 보너스가 붙어요", ""];
+  if (handEmpty()) return ["👉 손패가 없어요. 「더미 뒤집기」를 눌러요", "폭탄을 낸 뒤라 패 없이 더미만 뒤집어요 → 짝이 맞으면 가져가요", ""];
   return ["👉 내 차례예요. 손패에서 한 장을 골라 내요", "그다음 → 더미에서 한 장이 뒤집혀요 → 같은 달 패가 있으면 짝으로 가져가요" + (stats.hint ? " (⭐ 추천 패를 눌러도 좋아요)" : ""), ""];
 }
 // 한 번의 내 차례에 거치는 단계: 어디까지 했고(✔), 지금 어디이며(강조), 앞으로 무엇이 남았는지(흐림)를 칩으로 보여 준다
-const STEPS = ["① 손패 내기", "② 짝 고르기(2장일 때)", "③ 더미 뒤집기(자동)", "④ 짝 고르기(2장일 때)", "⑤ 고·스톱(7점 이상)", "⑥ 컴퓨터 차례"];
+const stepsList = () => ["① 손패 내기(흔들기·폭탄은 고를 수 있어요)", "② 짝 고르기(2장일 때)", "③ 더미 뒤집기(자동)", "④ 짝 고르기(2장일 때)", "⑤ 9월 열끗을 얻으면 열끗·쌍피 고르기", "⑥ 고·스톱(" + THR() + "점 이상)", N() === 3 ? "⑦ 컴퓨터 둘 차례" : "⑦ 컴퓨터 차례"];
 function stepNo() {
-  if (S.phase === "end") return 6;
-  if (S.turn === CPU) return 5;
+  if (S.phase === "end") return 7;
+  if (S.turn !== ME) return 6;
   if (S.phase === "pick") return S.pend.stage === "flip" ? 3 : 1;
-  if (S.phase === "gostop") return 4;
+  if (S.phase === "gukjin") return 4;
+  if (S.phase === "gostop") return 5;
+  if (S.phase === "shake" || S.phase === "bomb") return 0;
+  if (handEmpty()) return 2;
   return 0;
 }
 function stepsHtml() {
   const k = stepNo();
-  return '<div class="steps" aria-label="이번 차례의 진행 순서">' + STEPS.map((t, i) => `<span class="${i < k ? "done" : i === k ? "on" : ""}">${i < k ? "✔ " : ""}${t}</span>`).join("") + "</div>"
-    + (S.phase === "end" ? "" : `<small>앞으로 내 차례 ${S.hands[ME].length}번 남음 · 더미 ${S.deck.length}장 · 손패가 모두 없어지면 판이 끝나요 (7점 이상이면 중간에 고·스톱을 고를 수 있어요)</small>`);
+  return '<div class="steps" aria-label="이번 차례의 진행 순서">' + stepsList().map((t, i) => `<span class="${i < k ? "done" : i === k ? "on" : ""}">${i < k ? "✔ " : ""}${t}</span>`).join("") + "</div>"
+    + (S.phase === "end" ? "" : `<small>내 손패 ${S.hands[ME].length}장 · 더미 ${S.deck.length}장 · 손패가 모두 없어지면 판이 끝나요 (${THR()}점 이상이면 중간에 고·스톱을 고를 수 있어요)</small>`);
 }
 function render() {
   const pick = S.phase === "pick" && S.turn === ME ? S.pend.ids : [];
-  const my = S.turn === ME && S.phase === "hand", hint = my && stats.hint;
+  const my = S.turn === ME && S.phase === "hand" && S.hands[ME].length > 0, hint = my && stats.hint;
   const mine = S.hands[ME], monthsInHand = new Set(mine.map(GS.month)), best = hint ? GS.aiPlay(S) : -1;
   $("bar").innerHTML = bar();
   $("cap").innerHTML = capTable();
@@ -137,55 +164,77 @@ function render() {
   $("msg").textContent = pick.length ? "👆 가져올 패를 골라요 (반짝이는 패)" : msg;
   const ng = nextGuide(); $("next").className = "next" + (ng[2] ? " " + ng[2] : ""); $("next").innerHTML = esc(ng[0]) + (ng[1] ? "<small>" + esc(ng[1]) + "</small>" : "") + stepsHtml();
   let a = "";
-  if (S.phase === "gostop" && S.turn === ME) a = `<button class="btn" id="bgo" type="button">🔥 고! (지금 ${S.pend.score}점)</button><button class="btn ghost" id="bstop" type="button">✋ 스톱</button>`;
+  if (S.turn === ME) {
+    if (S.phase === "gostop") a = `<button class="btn" id="bgo" type="button">🔥 고! (지금 ${S.pend.score}점)</button><button class="btn ghost" id="bstop" type="button">✋ 스톱</button>`;
+    else if (S.phase === "shake") a = `<button class="btn" id="bq1" type="button">🎲 흔들기 (점수 ×2)</button><button class="btn ghost" id="bq0" type="button">그냥 내기</button>`;
+    else if (S.phase === "bomb") a = `<button class="btn" id="bq1" type="button">💣 폭탄! (3장 한꺼번에)</button><button class="btn ghost" id="bq0" type="button">한 장만 내기</button>`;
+    else if (S.phase === "gukjin") a = `<button class="btn" id="bq1" type="button">🍶 쌍피로 쓰기 (피 2장)</button><button class="btn ghost" id="bq0" type="button">열끗으로 쓰기</button>`;
+    else if (handEmpty()) a = `<button class="btn" id="bflip" type="button">🃏 더미 뒤집기</button>`;
+  }
   $("acts").innerHTML = a;
   if ($("bgo")) { $("bgo").onclick = () => step({ t: "go" }); $("bstop").onclick = () => step({ t: "stop" }); }
-  $("hintOn").checked = stats.hint;
+  if ($("bq1")) { const ph = S.phase; $("bq1").onclick = () => step(ph === "gukjin" ? { t: "gukjin", as: "pi" } : { t: ph, yes: true }); $("bq0").onclick = () => step(ph === "gukjin" ? { t: "gukjin", as: "yeol" } : { t: ph, yes: false }); }
+  if ($("bflip")) $("bflip").onclick = () => step({ t: "flip" });
+  $("hintOn").checked = stats.hint; $("modeSel").value = String(stats.mode);
 }
 $("artSel").value = stats.art;
 $("artSel").onchange = e => { stats.art = e.target.value; stats.artSet = true; GoStopArt.mode(stats.art); document.body.classList.toggle("art-gm", stats.art === "gemini"); sv(KEY, stats); render(); };
 $("hintOn").onchange = e => { stats.hint = e.target.checked; sv(KEY, stats); render(); };
+$("modeSel").onchange = e => { stats.mode = +e.target.value === 3 ? 3 : 2; lastWinner = -1; sv(KEY, stats); start(); };
 function describe(l) {
-  const who = l.who === ME ? "나" : "컴퓨터";
-  let t = `${who}: ${lab(l.hand)}를 내고` + (l.flip != null ? ` ${lab(l.flip)}를 뒤집어` : "") + (l.got.length ? ` → ${l.got.map(lab).join(", ")} 가져감` : " → 가져온 패 없음");
+  const who = pname(l.who), bomb = l.sp.includes("폭탄");
+  let t = l.hand === null ? `${who}: 손패가 없어 더미만 뒤집어` : bomb ? `${who}: 💣 ${GS.month(l.hand)}월 패 3장을 한꺼번에 내고` : `${who}: ${lab(l.hand)}를 내고`;
+  t += (l.flip != null ? ` ${lab(l.flip)}를 뒤집어` : "") + (l.got.length ? ` → ${l.got.map(lab).join(", ")} 가져감` : " → 가져온 패 없음");
   if (l.steal.length) t += ` · 상대 피 ${l.steal.length}장 빼앗음`; if (l.sp.length) t += " ✨" + l.sp.join("·");
   return t;
 }
 function step(a) {
   clearTimeout(timer);
-  const who = S.turn;
+  const who = S.turn, before = S.cap.map(c => c.slice());
   try { GS.act(S, a); } catch (e) { console.error(e); return; }
-  if (a.t === "go" || a.t === "stop") msg = (who === ME ? "나" : "컴퓨터") + (a.t === "go" ? ": 고! 🔥" : ": 스톱!");
-  if (S.last && S.turnNo !== lastTurnNo) { lastTurnNo = S.turnNo; msg = describe(S.last); }
+  if (S.last && S.turnNo !== lastTurnNo) { // 이번에 누구에게서 피를 몇 장 빼앗았는지(점수판 표시용)
+    S.last.stealFrom = {}; S.cap.forEach((c, p) => { const lost = before[p].filter(id => !c.includes(id) && S.last.steal.includes(id)).length; if (lost) S.last.stealFrom[p] = lost; });
+  }
+  if (a.t === "go" || a.t === "stop") msg = pname(who) + (a.t === "go" ? ": 고! 🔥" : ": 스톱!");
+  if (S.last && S.turnNo !== lastTurnNo) { lastTurnNo = S.turnNo; msg = describe(S.last) + (a.t === "gukjin" ? " · 9월 열끗을 " + (a.as === "pi" ? "쌍피" : "열끗") + "으로 써요" : ""); }
   render();
   if (S.phase === "end") return finish();
-  if (S.turn === CPU) timer = setTimeout(() => step(GS.aiStep(S)), S.phase === "gostop" ? 1100 : 1200);
+  if (S.turn !== ME) timer = setTimeout(() => step(GS.aiStep(S)), S.phase === "gostop" ? 1100 : 1200);
 }
 $("hand").addEventListener("click", e => { const b = e.target.closest("button.gc"); if (!b || b.disabled || !S || S.phase !== "hand" || S.turn !== ME) return; step({ t: "play", id: +b.dataset.id }); });
 $("field").addEventListener("click", e => { const b = e.target.closest("button.gc"); if (!b || b.disabled || !S || S.phase !== "pick" || S.turn !== ME) return; step({ t: "pick", id: +b.dataset.id }); });
 function finish() {
-  const r = S.result; if (done) return; done = true; let html, add = 0;
-  if (r.draw) { stats.d++; html = `<h2>🤝 나가리</h2><div class="note">아무도 7점을 못 냈어요. 다시 해 봐요!</div>`; lastWinner = -1; }
+  const r = S.result; if (done) return; done = true; let html, add = 0, n = N();
+  if (r.draw) { stats.d++; html = `<h2>🤝 나가리</h2><div class="note">아무도 ${THR()}점을 못 냈어요. 다시 해 봐요!</div>`; lastWinner = -1; }
   else if (r.winner === ME) {
     stats.w++; add = r.points; stats.best = Math.max(stats.best, r.points); lastWinner = ME;
-    if (window.fgPerson && fgPerson.grant) fgPerson.grant(r.points, "맞고 승리");
+    if (window.fgPerson && fgPerson.grant) fgPerson.grant(r.points, n === 3 ? "고스톱 승리" : "맞고 승리");
     html = `<h2>🏆 승리!</h2>`;
-  } else { stats.l++; lastWinner = CPU; html = `<h2>😢 아쉬워요</h2><div class="note">컴퓨터가 스톱했어요. 졌을 때는 포인트를 잃지 않아요.</div>`; }
-  if (!r.draw) html += `<table class="tbl"><tbody>${r.parts.map(x => `<tr><td>${x.n}</td><td>${x.p}점</td></tr>`).join("")}${r.go ? `<tr><td>고 ${r.go}번</td><td>${r.go >= 3 ? "×" + Math.pow(2, r.go - 2) : "+" + r.go + "점"}</td></tr>` : ""}${r.mult.filter(x => !/^고/.test(x)).map(x => `<tr><td>${x}</td><td>×2</td></tr>`).join("")}<tr><td><b>합계</b></td><td><b>${r.points}점</b></td></tr></tbody></table>${r.winner === ME ? `<div class="ok" style="margin-top:6px">⭐ 포인트 +${add}p (최대 50p)</div>` : ""}`;
+  } else {
+    stats.l++; lastWinner = r.winner; const mine = r.per.find(x => x.who === ME);
+    html = `<h2>😢 아쉬워요</h2><div class="note">${esc(pname(r.winner))} 스톱! 졌을 때는 포인트를 잃지 않아요.${mine && mine.gobak ? " (고박: 내가 고를 불러서 진 사람들 몫을 모두 내는 것으로 쳐요)" : ""}</div>`;
+  }
+  if (!r.draw) {
+    const common = r.common.filter(x => !/^고/.test(x));
+    html += `<table class="tbl"><tbody>${r.parts.map(x => `<tr><td>${x.n}</td><td>${x.p}점</td></tr>`).join("")}${r.go ? `<tr><td>고 ${r.go}번</td><td>${r.go >= 3 ? "×" + Math.pow(2, r.go - 2) : "+" + r.go + "점"}</td></tr>` : ""}${common.map(x => `<tr><td>${x}</td><td>×2</td></tr>`).join("")}`
+      + r.per.map(x => `<tr><td>낼 점수 · ${esc(pname(x.who))}${x.mult.length ? " · " + x.mult.join("·") : ""}</td><td>${x.pay}점</td></tr>`).join("")
+      + `<tr><td><b>합계 · ${esc(pname(r.winner))} 받는 점수</b></td><td><b>${r.points}점</b></td></tr></tbody></table>${r.winner === ME ? `<div class="ok" style="margin-top:6px">⭐ 포인트 +${add}p</div>` : ""}`;
+  }
   html += `<div class="acts" style="margin-top:8px"><button class="btn" id="again" type="button">🎴 한 판 더</button></div><div class="note">전적: ${stats.w}승 ${stats.l}패 ${stats.d}나가리 · 최고 ${stats.best}점</div>`;
   sv(KEY, stats); $("result").innerHTML = html; $("result").hidden = false; $("again").onclick = start; $("result").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 function start() {
-  clearTimeout(timer); done = false; $("result").hidden = true; msg = "패를 나눴어요. 내 차례부터!"; lastTurnNo = 0;
-  S = GS.newGame((Math.random() * 2147483647) | 0, lastWinner === CPU ? 1 : 0);
-  if (S.turn === CPU) msg = "컴퓨터가 먼저 시작해요.";
-  render(); if (S.turn === CPU) timer = setTimeout(() => step(GS.aiStep(S)), 900);
+  clearTimeout(timer); done = false; $("result").hidden = true; lastTurnNo = 0;
+  const first = stats.mode === 3 ? Math.max(lastWinner, 0) : (lastWinner === 1 ? 1 : 0);
+  S = GS.newGame((Math.random() * 2147483647) | 0, first, stats.mode);
+  msg = S.turn === ME ? "패를 나눴어요. 내 차례부터!" : pname(S.turn) + "부터 시작해요.";
+  render(); if (S.turn !== ME) timer = setTimeout(() => step(GS.aiStep(S)), 900);
 }
 start();
 '''
 
 make("out/go-stop.html", "맞고 (고스톱)", "🎴", 12, "go-stop-stats-v1",
-     "컴퓨터와 둘이서 하는 화투 놀이예요. 이기면 점수만큼 포인트를 받고, 져도 잃지 않아요. 화투 그림은 한국 민화풍이고, 다른 그림으로 바꿀 수도 있어요.", BODY, JS, CSS)
+     "컴퓨터와 둘이서(맞고) 또는 컴퓨터 둘과 셋이서(고스톱) 하는 화투 놀이예요. 이기면 점수만큼 포인트를 받고, 져도 잃지 않아요. 화투 그림은 한국 민화풍이고, 다른 그림으로 바꿀 수도 있어요.", BODY, JS, CSS)
 # 규칙 엔진(gostop-core.js)과 그림(gostop-art.js)을 화면 스크립트보다 먼저 읽는다
 p = "out/go-stop.html"; s = open(p, encoding="utf-8").read()
 s = s.replace("<script>\nconst $ = id", '<script src="gostop-core.js"></script>\n<script src="gostop-art.js"></script>\n<script>\nconst $ = id', 1)

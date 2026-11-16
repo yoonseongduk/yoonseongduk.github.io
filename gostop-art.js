@@ -9,7 +9,7 @@
   function type(id) { return root.GoStop.info(id).type; }
   function name(id) {
     var m = (id >> 2) + 1, k = id & 3, t = type(id), kind = t === "gwang" ? "Hikari" : t === "yeol" ? "Tane" : t === "ddi" ? "Tanzaku" : null, i, n = 0;
-    if (m === 11) return "Hanafuda_December_" + (kind ? kind : k === 1 ? "Kasu_3" : k === 2 ? "Kasu_1" : "Kasu_2") + "_Alt.svg"; // 오동
+    if (m === 11) return "Hanafuda_December_" + (kind ? kind : k === 1 ? "Kasu_2" : k === 2 ? "Kasu_1" : "Kasu_3") + "_Alt.svg"; // 오동: 번호 41이 똥쌍피이고 노란 배경 그림(Kasu_2)이 쌍피 그림이다
     if (m === 12) return "Hanafuda_November_" + (kind ? kind : "Kasu") + "_Alt.svg"; // 비(버들)
     if (kind) return "Hanafuda_" + MON[m] + "_" + kind + "_Alt.svg";
     for (i = m * 4 - 4; i < id; i++) if (type(i) === "pi") n++; // 그 달의 첫 피 → Kasu_1, 둘째 피 → Kasu_2

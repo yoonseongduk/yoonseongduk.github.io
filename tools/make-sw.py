@@ -13,6 +13,7 @@ files += ["fonts/" + os.path.basename(f) for f in sorted(glob.glob(R + "fonts/*.
 files += ["data/" + os.path.basename(f) for f in sorted(glob.glob(R + "data/*"))]
 files += ["cards/" + os.path.basename(f) for f in sorted(glob.glob(R + "cards/*.svg"))]   # 맞고 화투 그림(CC BY-SA, cards/LICENSE.txt)
 files += ["cards-gemini/" + os.path.basename(f) for f in sorted(glob.glob(R + "cards-gemini/*.webp"))]   # 맞고 화투 그림(Gemini 생성 새 민화)
+files += ["cards-trump/" + os.path.basename(f) for f in sorted(glob.glob(R + "cards-trump/*.webp"))]   # 트럼프 카드 그림
 files += ["cards-minhwa/" + os.path.basename(f) for f in sorted(glob.glob(R + "cards-minhwa/*.svg"))]   # 맞고 화투 그림(직접 그린 민화풍)
 files += [os.path.basename(f) for f in sorted(glob.glob(R + "*.js")) if os.path.basename(f) != "sw.js"]
 h = hashlib.md5()

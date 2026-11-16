@@ -5,7 +5,7 @@ from mkpage import make
 CSS = '''.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.note{font-size:.85rem;color:var(--muted)}.rk{font-family:var(--font-display);font-size:1.3rem;min-width:2ch}.pt{font-family:var(--font-display);font-size:1.3rem}.me{background:var(--soft);border-radius:10px;padding:8px 6px}.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:4px 2px;border-bottom:1px solid var(--line)}.tbl td:last-child{text-align:right;color:var(--muted)}'''
 BODY = '''  <div class="card"><b>🏆 가족 포인트 순위</b><div id="rank"></div><div class="note" id="rnote"></div></div>
   <div class="card"><b id="whot">👤 내 포인트</b><div class="g3"><div class="stat"><small>합계</small><b id="s-total">0</b></div><div class="stat"><small>오늘</small><b id="s-today">0</b></div><div class="stat"><small>연속 출석</small><b id="s-streak">0일</b></div></div><div id="log"></div></div>
-  <div class="card"><b>📘 포인트는 이렇게 얻어요</b><table class="tbl"><tbody id="rules"></tbody></table><div class="note">게임을 10초 이상 하면 한 판으로 쳐요. 같은 게임은 하루에 몇 번까지만 받아요. 포인트는 이 폰에만 저장되고, 놀이용 숫자라 다른 것으로 바꿀 수 없어요.</div></div>'''
+  <div class="card"><b>📘 포인트는 이렇게 얻어요</b><table class="tbl"><tbody id="rules"></tbody></table><div class="note">게임을 10초 이상 하면 한 판으로 쳐요. 같은 게임은 하루에 몇 번까지만 받아요(맞고는 제한이 없어요). 게임 화면 위의 「🎮 오늘 이 게임」 칸에서 오늘 받은 포인트와 하루 최대를 볼 수 있어요. 포인트는 이 폰에만 저장되고, 놀이용 숫자라 다른 것으로 바꿀 수 없어요.</div></div>'''
 JS = r'''
 const P = window.fgPerson;
 let titles = {};
@@ -27,7 +27,7 @@ function render() {
 }
 (function rules() {
   const c = P.cfg;
-  const r = [["게임 한 판 (기본)", "+" + c.base + "p"], ["같은 게임 하루 최대", c.perDay + "판"], ["이겼어요·클리어", "+" + c.win + "p"], ["최고 기록 세우기", "+" + c.best + "p"], ["처음 해 보는 게임", "+" + c.first + "p"], ["어려운 게임", "×" + c.hard], ["게임이 정해 주는 점수(맞고 승리)", "한 판 최대 " + c.grantMax + "p"], ["연속 출석(하루마다)", "+" + c.streakStep + "p씩, 최대 " + c.streakMax + "p"]];
+  const r = [["게임 한 판 (기본)", "+" + c.base + "p"], ["같은 게임 하루 최대", c.perDay + "판"], ["이겼어요·클리어", "+" + c.win + "p"], ["최고 기록 세우기", "+" + c.best + "p"], ["처음 해 보는 게임", "+" + c.first + "p"], ["어려운 게임", "×" + c.hard], ["게임이 정해 주는 점수(맞고 승리)", "맞고는 제한 없음 (다른 게임은 한 판 최대 " + c.grantMax + "p)"], ["연속 출석(하루마다)", "+" + c.streakStep + "p씩, 최대 " + c.streakMax + "p"]];
   $("rules").innerHTML = r.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join("");
 })();
 render();

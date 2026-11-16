@@ -33,14 +33,14 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 .res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
 .big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-.table{display:flex;gap:12px;align-items:center;justify-content:center}.oc{width:64px;height:90px;border-radius:10px;border:2px solid var(--line);background:#fff;color:#111;font-size:1.1rem;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative;min-width:0}.oc.red{color:#d6453a}.oc.back{background:repeating-linear-gradient(45deg,#2f6fdf,#2f6fdf 6px,#1f4fa0 6px,#1f4fa0 12px);color:#fff;font-size:1.8rem}.oc.back small{position:absolute;bottom:2px;right:6px;font-size:.9rem;background:var(--bad);border-radius:8px;padding:0 4px}.oh{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.oh .oc{width:54px;height:76px}.oh .oc.can{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 3px 0 var(--accent)}.oh .oc:disabled{opacity:1}.want{font-weight:700;min-width:80px}
+.table{display:flex;gap:12px;align-items:center;justify-content:center}.oc{width:64px;height:90px;border-radius:10px;border:2px solid var(--line);background:#fff;color:#111;font-size:1.1rem;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative;min-width:0}.oc.red{color:#d6453a}.oc.back{background:repeating-linear-gradient(45deg,#2f6fdf,#2f6fdf 6px,#1f4fa0 6px,#1f4fa0 12px);color:#fff;font-size:1.8rem}.oc.back small{position:absolute;bottom:2px;right:6px;font-size:.9rem;background:var(--bad);border-radius:8px;padding:0 4px}.oh{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.oh .oc{width:54px;height:76px}.oh .oc.can{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 3px 0 var(--accent)}.oh .oc:disabled{opacity:1}.want{font-weight:700;min-width:80px}.oc.tr{background-size:100% 100%;background-repeat:no-repeat;background-color:transparent;border:0;font-size:0;color:transparent;box-shadow:0 1px 3px rgba(0,0,0,.4)}.oc.tr b{font-size:0}.oc.back.tr small{font-size:1.1rem;color:#fff;font-weight:800;text-shadow:0 1px 3px #000;position:absolute;right:5px;bottom:4px}
 </style>
 </head>
 <body>
 <main>
   <h1>원카드 🂡</h1>
   <div class="stats"><div class="stat"><small>컴퓨터 카드</small><b id="cn">0</b></div><div class="stat"><small>내 카드</small><b id="mn">0</b></div><div class="stat"><small>누적 승리</small><b id="wins">0</b></div></div>
-  <div class="table"><button type="button" class="oc back" id="deckb" aria-label="카드 받기">🂠<small id="atk"></small></button><div class="oc" id="top"></div><div class="want" id="want"></div></div>
+  <div class="table"><button type="button" class="oc back tr" style="background-image:url(cards-trump/back.webp)" id="deckb" aria-label="카드 받기">🂠<small id="atk"></small></button><div class="oc" id="top"></div><div class="want" id="want"></div></div>
   <p class="center" id="msg" style="min-height:1.5em;font-weight:700"></p>
   <div class="oh" id="hand"></div>
   <div class="seg" id="suits" style="--n:4" hidden></div>
@@ -65,8 +65,8 @@ function newGame() { deck = mk(); mine = deck.splice(0, 7); cpu = deck.splice(0,
 const topCard = () => disc[disc.length - 1];
 function canPlay(c) { if (atk > 0) return c.r === atkRank; const t = topCard(), s = want >= 0 ? want : t.s; return c.r === t.r || c.s === s || (c.r === 6 && false); }
 function render() {
-  const t = topCard(); $("top").className = "oc" + (red(t) ? " red" : ""); $("top").innerHTML = `<b>${nm(t)}</b>`; $("want").textContent = want >= 0 ? `바뀐 무늬: ${SU[want]}` : ""; $("atk").textContent = atk ? "+" + atk : "";
-  $("hand").innerHTML = mine.map((c, k) => `<button type="button" class="oc${red(c) ? " red" : ""}${turn === 0 && !over && !busy && canPlay(c) ? " can" : ""}" data-k="${k}" ${turn !== 0 || over || busy || pickSuit ? "disabled" : ""}><b>${nm(c)}</b></button>`).join("");
+  const t = topCard(); $("top").className = "oc tr" + (red(t) ? " red" : ""); $("top").style.backgroundImage = `url(cards-trump/${"shdc"[t.s]}${RK[t.r]}.webp)`; $("top").innerHTML = `<b>${nm(t)}</b>`; $("want").textContent = want >= 0 ? `바뀐 무늬: ${SU[want]}` : ""; $("atk").textContent = atk ? "+" + atk : "";
+  $("hand").innerHTML = mine.map((c, k) => `<button type="button" style="background-image:url(cards-trump/${"shdc"[c.s]}${RK[c.r]}.webp)" class="oc tr${red(c) ? " red" : ""}${turn === 0 && !over && !busy && canPlay(c) ? " can" : ""}" data-k="${k}" ${turn !== 0 || over || busy || pickSuit ? "disabled" : ""}><b>${nm(c)}</b></button>`).join("");
   $("cn").textContent = cpu.length; $("mn").textContent = mine.length; $("wins").textContent = wins; $("deckb").disabled = turn !== 0 || over || busy || pickSuit;
 }
 function finish(w) { over = true; if (w) { wins++; sv(KEY, wins); } $("res").innerHTML = `<b>${w ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요"}</b><p class="muted">누적 승리 ${wins}번</p>`; $("res").hidden = false; render(); }

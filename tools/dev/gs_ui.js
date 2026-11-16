@@ -33,7 +33,10 @@ const ok = (c, m) => { console.log((c ? '[통과] ' : '[실패] ') + m); if (!c)
   ok(await p.evaluate(() => { const s = JSON.parse(localStorage.getItem('go-stop-stats-v1')); return !!s && s.w + s.l + s.d === 1; }), '전적이 저장된다');
   const before = await p.evaluate(() => fgPerson.points()); await p.evaluate(() => fgPerson.grant(14, '맞고 승리')); const after = await p.evaluate(() => fgPerson.points());
   ok(after - before === 14, '맞고 승리 포인트 +14 연결 (' + before + '→' + after + ')');
-  await p.evaluate(() => fgPerson.grant(99, '맞고 승리')); ok((await p.evaluate(() => fgPerson.points())) - after === 50, '한 판 최대 50p');
+  await p.evaluate(() => fgPerson.grant(99, '맞고 승리')); ok((await p.evaluate(() => fgPerson.points())) - after === 99, '맞고는 한 판 포인트 상한이 없다(+99)');
+  await p.evaluate(() => { for (let i = 0; i < 5; i++) fgPerson.grant(7, '맞고 승리'); }); ok((await p.evaluate(() => fgPerson.points())) - after === 99 + 35, '맞고는 하루 횟수 제한이 없다(연속 5번 +35)');
+  await p.waitForTimeout(300); const gt = await p.$eval('#fg-gpt', e => e.textContent), wt = await p.$eval('#fg-who', e => e.textContent);
+  ok(/제한 없음/.test(gt) && /\d+p/.test(gt), '이 게임 포인트 표시(제한 없음): ' + gt); ok(/⭐ \d+p/.test(wt), '내 포인트 칩: ' + wt);
   await p.click('#again'); await p.waitForTimeout(500); ok((await p.$$('#hand .gc')).length === 10 && await p.$eval('#result', e => e.hidden), '한 판 더: 새 판이 시작된다');
   ok(errs.length === 0, '오류 없음 ' + errs.join(' | ').slice(0, 200));
   await b.close(); console.log(bad ? '실패 ' + bad + '건' : '모두 통과'); process.exit(bad ? 1 : 0);

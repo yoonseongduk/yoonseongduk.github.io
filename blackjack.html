@@ -27,7 +27,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .table{background:var(--felt);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:14px;color:#fff;min-height:290px}
 .hand h2{font-family:var(--font-display);font-weight:400;font-size:1.05rem;margin:0 0 6px;display:flex;justify-content:space-between}.cards{display:flex;gap:8px;flex-wrap:wrap;min-height:84px}
 .card{width:58px;height:84px;border-radius:8px;background:#fff;color:#1b1b1b;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.5rem;line-height:1.1;box-shadow:0 2px 4px rgba(0,0,0,.35)}.card.r{color:var(--red)}.card small{font-size:1.2rem}
-.card.back{background:repeating-linear-gradient(45deg,#2f5bd0 0 6px,#264ab0 6px 12px);color:transparent}
+.card.back{background:repeating-linear-gradient(45deg,#2f5bd0 0 6px,#264ab0 6px 12px);color:transparent}.card.tr{background-color:transparent;background-size:100% 100%;background-repeat:no-repeat;font-size:0;color:transparent;box-shadow:0 2px 4px rgba(0,0,0,.35)}.card.tr small{font-size:0}
 .msg{text-align:center;font-family:var(--font-display);font-size:1.3rem;min-height:1.8em;padding:6px 0}
 .bets{display:flex;gap:8px;justify-content:center}.chip{background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:8px 16px;font-family:var(--font-display);font-size:1.15rem}.chip.on{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
 .row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.25rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.4;cursor:default}
@@ -79,7 +79,7 @@ function settle() {
   render();
 }
 function again() { if (chips <= 0) chips = START; if (bet > chips) bet = Math.min(chips, 10); state = "bet"; player = []; dealer = []; msg = "판돈을 고르고 딜을 눌러요."; render(); }
-const cardHtml = (c, hidden) => hidden ? `<div class="card back">?</div>` : `<div class="card ${c.s === "♥" || c.s === "♦" ? "r" : ""}" aria-label="${c.s}${c.r}">${c.r}<small>${c.s}</small></div>`;
+const cardHtml = (c, hidden) => hidden ? `<div class="card back tr" style="background-image:url(cards-trump/back.webp)">?</div>` : `<div class="card tr ${c.s === "♥" || c.s === "♦" ? "r" : ""}" style="background-image:url(cards-trump/${"shdc"["♠♥♦♣".indexOf(c.s)]}${c.r}.webp)" aria-label="${c.s}${c.r}">${c.r}<small>${c.s}</small></div>`;
 function render() {
   const hideHole = state === "play";
   $("dealer").innerHTML = dealer.map((c, i) => cardHtml(c, hideHole && i === 1)).join("") || `<span class="muted" style="color:#d8efe0">카드가 없어요</span>`; $("player").innerHTML = player.map(c => cardHtml(c)).join("") || `<span class="muted" style="color:#d8efe0">카드가 없어요</span>`;

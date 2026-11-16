@@ -60,7 +60,7 @@ BODY = '''  <div class="bar" id="bar"></div>
     • <b>쪽</b>(낸 패와 뒤집은 패가 같은 달) · <b>따닥</b> · <b>싹쓸이</b> · <b>뻑 먹기</b>는 상대 피를 1장 가져와요. 3장이 묶이는 <b>뻑</b>은 나중에 누가 4장을 가져가요.<br>
     • 점수: 광 3장 3점(비광 포함 2점)·4장 4점·5장 15점, 고도리 5점, 홍단·청단·초단 각 3점, 열끗·띠 5장부터 1점씩, 피 10장부터 1점씩(쌍피는 2장).<br>
     • 7점 이상이면 <b>고</b>(더 하기) 또는 <b>스톱</b>. 고는 1번 +1점, 2번 +2점, 3번부터 2배씩. 광박·피박이면 2배.<br>
-    • 방금 가져온 패는 주황 테두리로 반짝여요. 힌트를 켜면 짝이 맞는 패(초록)와 추천 패(⭐)를 알려 줘요. 포인트는 놀이용이에요. 이기면 점수만큼(최대 50p) 받고, 지면 잃지 않아요.<br>
+    • 방금 가져온 패는 주황 테두리로 반짝여요. 힌트를 켜면 짝이 맞는 패(초록)와 추천 패(⭐)를 알려 줘요. 포인트는 놀이용이에요. 이기면 점수만큼(상한 없음) 받고, 하루 횟수 제한도 없고, 지면 잃지 않아요.<br>
     • 화투 그림: 기본(🖼️ 새 민화)은 AI(Gemini)로 만든 그림이고, 🎎 단순 민화는 이 앱에서 직접 그린 그림이에요. '그림'에서 🎴 옛 화투를 고르면 Louie Mantia·すけじょ의 그림(CC BY-SA 4.0, Wikimedia Commons)이 나와요. 자세한 출처는 licenses.html 에 있어요.</div></details></div>'''
 
 JS = r'''
@@ -139,7 +139,7 @@ function finish() {
   const r = S.result; if (done) return; done = true; let html, add = 0;
   if (r.draw) { stats.d++; html = `<h2>🤝 나가리</h2><div class="note">아무도 7점을 못 냈어요. 다시 해 봐요!</div>`; lastWinner = -1; }
   else if (r.winner === ME) {
-    stats.w++; add = Math.min(r.points, 50); stats.best = Math.max(stats.best, r.points); lastWinner = ME;
+    stats.w++; add = r.points; stats.best = Math.max(stats.best, r.points); lastWinner = ME;
     if (window.fgPerson && fgPerson.grant) fgPerson.grant(r.points, "맞고 승리");
     html = `<h2>🏆 승리!</h2>`;
   } else { stats.l++; lastWinner = CPU; html = `<h2>😢 아쉬워요</h2><div class="note">컴퓨터가 스톱했어요. 졌을 때는 포인트를 잃지 않아요.</div>`; }

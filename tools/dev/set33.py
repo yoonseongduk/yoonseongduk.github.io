@@ -33,7 +33,7 @@ function onAct(from, d) {
   if (H.hands) { P.cnt = { [P.a]: H.hands[P.a].length, [P.b]: H.hands[P.b].length }; P.deckN = H.deck.length; } pushS();
 }
 function changed(was) {}
-function cardHtml(c, big) { return `<span class="cd${red(cs(c)) ? " rd" : ""}${big ? " bg" : ""}">${SU[cs(c)]}<b>${RK[cr(c)]}</b></span>`; }
+function cardHtml(c, big) { return `<span class="cd tr${big ? " bg" : ""}" style="background-image:url(cards-trump/${"shdc"[cs(c)]}${RK[cr(c)]}.webp)" aria-label="${SU[cs(c)]}${RK[cr(c)]}">${SU[cs(c)]}<b>${RK[cr(c)]}</b></span>`; }
 function render() {
   if (!P || P.top === undefined) { $("st").textContent = !P ? "연결을 기다리는 중…" : "상대가 들어오면 시작해요"; $("hand").innerHTML = ""; $("draw").hidden = true; if (P) common(); return; }
   const pl = amPlayer(), can = P.ph === "play" && P.turn === me;
@@ -53,7 +53,8 @@ render();
 ''', '''
 .hand{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}.hand button{border:0;background:none;padding:0}.hand button[disabled]{opacity:.45}
 .cd{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:42px;height:58px;border-radius:8px;border:1px solid var(--line);background:#fff;color:#1c2233;font-size:.9rem;line-height:1.1}.cd b{font-family:var(--font-display);font-size:1.2rem}.cd.rd{color:#d6453a}
-.cd.bg{width:72px;height:100px;font-size:1.4rem}.cd.bg b{font-size:2rem}''')
+.cd.bg{width:72px;height:100px;font-size:1.4rem}.cd.bg b{font-size:2rem}
+.cd.tr,.cd.tr.bk{background-color:transparent;background-size:100% 100%;background-repeat:no-repeat;border:0;box-shadow:0 1px 3px rgba(0,0,0,.4);font-size:0!important;color:transparent}.cd.tr b{font-size:0!important}''')
 
 # ── 체커: 8×8 어두운 칸, 대각선 앞으로 한 칸, 뛰어넘어 잡기(잡을 수 있으면 반드시, 이어서 잡기), 끝줄에 닿으면 왕(뒤로도). 상대 말을 다 잡거나 못 움직이게 하면 승리.
 #   먼저 하는 사람 🔵은 아래(6~8줄)에서 위로, 🔴는 위에서 아래로. 각자 화면에서는 내 말이 아래쪽에 보여요. 칸 값: 1 🔵, 2 🔴, 3 🔵왕, 4 🔴왕.

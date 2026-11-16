@@ -14,7 +14,7 @@ make("out/high-low.html", "하이로우", "🂡", 340, "highlow-v1",
      r'''const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"], SUITS = ["♠", "♥", "♦", "♣"];
 let deck, cur, streak, best = ld(KEY) || 0, over, hist;
 const newDeck = () => shuf(SUITS.flatMap(s => RANKS.map((r, i) => ({ r, s, v: i + 1 }))));
-const red = c => c.s === "♥" || c.s === "♦", cardHtml = (c, small) => `<span class="pcard ${red(c) ? "r" : ""} ${small ? "sm" : ""}">${c.r}<small>${c.s}</small></span>`;
+const red = c => c.s === "♥" || c.s === "♦", cardHtml = (c, small) => `<span class="pcard tr ${red(c) ? "r" : ""} ${small ? "sm" : ""}" style="background-image:url(cards-trump/${"shdc"[SUITS.indexOf(c.s)]}${c.r}.webp)" aria-label="${c.s}${c.r}">${c.r}<small>${c.s}</small></span>`;
 // 비교: 숫자 값만 본다. 같으면 'tie'
 const judge = (a, b, guess) => (b.v === a.v ? "tie" : (b.v > a.v) === (guess === "hi") ? "win" : "lose");
 function start() { deck = newDeck(); cur = deck.pop(); hist = [cur]; streak = 0; over = false; $("again").hidden = true; $("msg").textContent = "다음 카드는?"; render(); }
@@ -28,7 +28,7 @@ function guess(g) {
 }
 function render() { $("cur").innerHTML = cardHtml(cur); $("st").textContent = streak; $("bs").textContent = best; $("left").textContent = deck.length; $("hist").innerHTML = hist.slice(-12).map(c => cardHtml(c, true)).join(""); $("hi").disabled = $("lo").disabled = over; }
 $("hi").onclick = () => guess("hi"); $("lo").onclick = () => guess("lo"); $("again").onclick = start; start();''',
-     css=".felt{background:#2d7a4a;border-radius:20px;padding:24px;display:grid;place-items:center}.pcard{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:120px;height:170px;border-radius:12px;background:#fff;color:#1b1b1b;font-family:var(--font-display);font-size:3.2rem;line-height:1.1;box-shadow:0 4px 8px rgba(0,0,0,.35)}.pcard small{font-size:2.6rem}.pcard.r{color:#d6332b}.pcard.sm{width:38px;height:54px;font-size:1.05rem;border-radius:6px;box-shadow:none;border:1px solid var(--line)}.pcard.sm small{font-size:.9rem}.hist{display:flex;gap:5px;flex-wrap:wrap}")
+     css=".felt{background:#2d7a4a;border-radius:20px;padding:24px;display:grid;place-items:center}.pcard{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:120px;height:170px;border-radius:12px;background:#fff;color:#1b1b1b;font-family:var(--font-display);font-size:3.2rem;line-height:1.1;box-shadow:0 4px 8px rgba(0,0,0,.35)}.pcard small{font-size:2.6rem}.pcard.r{color:#d6332b}.pcard.sm{width:38px;height:54px;font-size:1.05rem;border-radius:6px;box-shadow:none;border:1px solid var(--line)}.pcard.sm small{font-size:.9rem}.hist{display:flex;gap:5px;flex-wrap:wrap}.pcard.tr{background-color:transparent;background-size:100% 100%;background-repeat:no-repeat;font-size:0;color:transparent}.pcard.tr small{font-size:0}.pcard.tr.sm{border:0}")
 
 # ---------------- 로또 번호 뽑기 ----------------
 make("out/lotto-picker.html", "로또 번호 뽑기", "🎱", 45, "lotto-v1",

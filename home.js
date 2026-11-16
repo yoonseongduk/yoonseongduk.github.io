@@ -15,7 +15,7 @@
     var P = window.fgPerson; if (!P) return null;
     var b = document.createElement("button"); b.type = "button"; b.id = "fg-who";
     var who = P.player(), pts = P.points();
-    b.textContent = who ? "👤 " + who + " · ⭐ " + pts + "p" : "👤 누가 하나요?";
+    b.textContent = (who ? "👤 " + who : "👤 누가 하나요?") + " · ⭐ " + pts + "p"; // 이름을 안 골라도 내 포인트는 항상 보인다
     b.style.cssText = "display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:999px;border:1px solid var(--line,#ccd);background:var(--surface,#fff);color:var(--fg,#1c2233);font:700 .88rem/1.2 system-ui,sans-serif;cursor:pointer";
     b.onclick = function () {
       var old = document.getElementById("fg-whomenu"); if (old) { old.remove(); return; }
@@ -37,6 +37,15 @@
     };
     return b;
   }
+  // 이 게임에서 오늘 받은 포인트 / 하루 최대 (포인트를 주는 게임에서만)
+  function gameText() { var g = window.fgPerson.game(); return g.unlimited ? "🎮 오늘 이 게임 " + g.earned + "p · 제한 없음" : "🎮 오늘 이 게임 " + g.earned + " / " + g.max + "p"; }
+  function gamePill() {
+    var P = window.fgPerson; if (!P || !P.game || !P.game().listed) return null;
+    var s = document.createElement("span"); s.id = "fg-gpt"; s.textContent = gameText();
+    s.title = "이 게임에서 오늘 받은 포인트와 하루 최대 포인트예요. 처음 해 본 보너스와 연속 출석 보너스는 따로 받아요.";
+    s.style.cssText = "display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;border:1px dashed var(--line,#ccd);background:var(--soft,#f4f1f6);color:var(--muted,#5b6275);font:700 .8rem/1.2 system-ui,sans-serif";
+    return s;
+  }
   function add() {
     if (document.getElementById("fg-bar")) return;
     var bar = document.createElement("div"); bar.id = "fg-bar"; bar.style.cssText = "display:flex;flex-wrap:wrap;align-items:center;gap:8px;align-self:flex-start;margin:0 0 6px";
@@ -47,6 +56,8 @@
       bar.appendChild(a);
     }
     var c = chip(); if (c) bar.appendChild(c);
+    var gp = gamePill(); if (gp) bar.appendChild(gp);
+    addEventListener("fgpoints", function () { var w = document.getElementById("fg-who"), P = window.fgPerson; if (w && P) w.textContent = (P.player() ? "👤 " + P.player() : "👤 누가 하나요?") + " · ⭐ " + P.points() + "p"; var g = document.getElementById("fg-gpt"); if (g) g.textContent = gameText(); });
     var m = document.querySelector("main") || document.body; m.insertBefore(bar, m.firstChild);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", add); else add();

@@ -1,4 +1,5 @@
 import sys, re, json
+def TI(n): return '<img src="cards-trump/%s.webp" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.35)">' % n   # 제목 줄의 트럼프 카드 아이콘
 sys.path.insert(0, ".")
 from set32 import duo, party   # set32(→set31→set30)를 불러오면 앞의 같이 하기 게임도 모두 다시 만들어져요
 
@@ -8,7 +9,7 @@ TOPICS = dict(re.findall(r'"([^"]+)": "([^"]+)"', _wt[_wt.index("const TOPICS"):
 
 # ── 원카드: 같은 무늬·숫자 내기, 2=+2·A=+3(같은 숫자로 막으면 더해져 넘어감), J·Q·K=한 번 더, 7=무늬 바꾸기, 먼저 다 내면 승리, 15장이 되면 짐.
 #   카드 번호 = 무늬×13 + 숫자(0=A, 1=2 … 10=J, 11=Q, 12=K). 패는 방장만 알고 각자에게 privTo로 보내요.
-duo("net-onecard.html", "원카드 (같이 하기)", "🃏", 0, "net-onecard-v1",
+duo("net-onecard.html", "원카드 (같이 하기)", TI("cJ"), 0, "net-onecard-v1",
     "같은 무늬나 같은 숫자의 카드를 내서 손에 든 카드를 먼저 모두 없애면 이겨요. 낼 카드가 없으면 '카드 받기'. 특별 카드: 2=상대 +2장, A=상대 +3장(같은 숫자로 막으면 더해져 넘어가요), J·Q·K=한 번 더, 7=무늬 바꾸기. 카드가 15장이 되면 져요! 내 카드는 내 폰에만 보여요.",
     '<p class="center" id="st"></p><div class="stats" id="cnt"></div><div class="big" id="top"></div><p class="center" id="info"></p><div class="row" id="suits" hidden></div><button class="btn ghost" id="draw" type="button" hidden>카드 받기</button><div class="hand" id="hand"></div>',
     r'''

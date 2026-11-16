@@ -31,17 +31,17 @@ GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지
          ["net-react.html", "⚡", "반응 대결", "여러 명 · 초록색이 되면 누구보다 빨리", "hand"],
          ["net-bomb.html", "💣", "폭탄 돌리기", "여러 명 · 폰끼리 폭탄을 넘기다 펑!", "party"],
          ["net-lots.html", "🎟️", "제비뽑기", "여러 명 · 각자 폰에서 한 장씩 뽑기", "party"],
-         ["net-onecard.html", "🃏", "원카드", "2명 · 같은 무늬·숫자 내기, 먼저 다 없애기", "card"],
+         ["net-onecard.html", "img:cards-trump/cJ.webp", "원카드", "2명 · 같은 무늬·숫자 내기, 먼저 다 없애기", "card"],
          ["net-checkers.html", "♛", "체커 (서양 장기)", "2명 · 뛰어넘어 잡기, 끝줄에 가면 왕", "board"],
          ["net-yut.html", "🪵", "윷놀이", "2명 · 윷을 던져 말 2개를 먼저 돌리기", "dice"],
          ["net-yacht.html", "🎲", "주사위 족보", "2~6명 · 차례대로 굴려 12개 족보 채우기", "dice"],
          ["net-wordtrick.html", "🤫", "제시어 추리", "여러 명 · 한 명만 제시어를 몰라요", "party"],
-         ["net-hula.html", "🃏", "훌라", "2~5명 · 같은 숫자·이어진 숫자로 등록, 먼저 다 내리기", "card"],
-         ["net-poker.html", "♠️", "포커 (5장 바꾸기)", "2~6명 · 3장까지 바꾸고 족보 겨루기", "card"],
-         ["net-oldmaid.html", "🤡", "도둑잡기", "2~6명 · 옆 사람 카드를 뽑아 짝 맞추기, 조커가 남으면 짐", "card"],
-         ["net-21.html", "🎴", "블랙잭 (21)", "1~6명 · 다 같이 컴퓨터 딜러와 21 겨루기", "card"],
-         ["net-president.html", "👑", "대통령 게임", "2~6명 · 더 센 카드를 내며 먼저 다 내면 대통령", "card"],
-         ["net-sevens.html", "7️⃣", "세븐 (7 늘어놓기)", "2~6명 · 7 옆으로 이어 놓기, 패스는 3번까지", "card"]]
+         ["net-hula.html", "img:cards-trump/h7.webp", "훌라", "2~5명 · 같은 숫자·이어진 숫자로 등록, 먼저 다 내리기", "card"],
+         ["net-poker.html", "img:cards-trump/dQ.webp", "포커 (5장 바꾸기)", "2~6명 · 3장까지 바꾸고 족보 겨루기", "card"],
+         ["net-oldmaid.html", "img:cards-trump/joker-c.webp", "도둑잡기", "2~6명 · 옆 사람 카드를 뽑아 짝 맞추기, 조커가 남으면 짐", "card"],
+         ["net-21.html", "img:cards-trump/sA.webp", "블랙잭 (21)", "1~6명 · 다 같이 컴퓨터 딜러와 21 겨루기", "card"],
+         ["net-president.html", "img:cards-trump/sK.webp", "대통령 게임", "2~6명 · 더 센 카드를 내며 먼저 다 내면 대통령", "card"],
+         ["net-sevens.html", "img:cards-trump/c7.webp", "세븐 (7 늘어놓기)", "2~6명 · 7 옆으로 이어 놓기, 패스는 3번까지", "card"]]
 
 import gamenum, json as _json
 NUMS = gamenum.ensure()
@@ -52,7 +52,7 @@ QCNT = gamenum.quiz_counts()
 BUZZ_OK = [r[0] for r in RACE if r[3] == "quiz" and "const D = [" in open(gamenum.REPO + "/" + r[0], encoding="utf-8").read()]
 HUB_CSS = LINK_CSS + '''
 .gm{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px}
-.gm .e{font-size:1.8rem}.gm b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.25rem}
+.gm .e{font-size:1.8rem}.gm .ti{height:2.3rem;width:auto;display:block;border-radius:3px}.gm b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.25rem}
 #gf{width:100%;border:0;display:block;min-height:200px;background:transparent}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:8px}.no{font-size:.72rem;color:var(--muted);font-weight:700;margin-left:4px}
 .gh{font-family:var(--font-display);font-size:1.1rem;margin-top:6px}
@@ -355,11 +355,13 @@ const frameWin = () => $("gf").contentWindow;
 function loadGame(f, extra) {
   const g = GAMES.find(x => x[0] === f) || null; if (game === (g && g[0])) return;
   game = g ? g[0] : null; gameReady = false; gq = []; if (solo) bots.forEach(botLoad);
-  $("stage").hidden = !g; $("gf").style.height = "200px"; $("gf").src = g ? g[0] + (extra || "") : "about:blank"; $("gname").textContent = g ? g[1] + " " + g[2] + (solo ? " · 🤖 연습" : "") : "";
+  $("stage").hidden = !g; $("gf").style.height = "200px"; $("gf").src = g ? g[0] + (extra || "") : "about:blank"; $("gname").textContent = g ? ptx(g[1]) + " " + g[2] + (solo ? " · 🤖 연습" : "") : "";
   $("home").hidden = role !== "host"; if (role === "host") $("pick").hidden = !!g;
   if (g) { $("room").open = false; $("hostbox").hidden = true; setTimeout(() => $("stage").scrollIntoView({ block: "start" }), 60); }
 }
-const gmBtn = (f, e, t, d, n, kind) => `<button type="button" class="gm" data-${kind}="${f}"><span class="e">${e}</span><span><b>${esc(t)}<span class="no">#${n}</span></b><span class="note">${esc(d)}</span></span></button>`;
+// 아이콘: 이모지 글자 또는 "img:경로"(그림). 글자만 쓰는 곳(textContent)은 ptx 로 이모지로 바꿔 쓴다
+const ico = e => /^img:/.test(e) ? '<img class="ti" src="' + e.slice(4) + '" alt="">' : esc(e), ptx = e => /^img:/.test(e) ? "♠️" : e;
+const gmBtn = (f, e, t, d, n, kind) => `<button type="button" class="gm" data-${kind}="${f}"><span class="e">${ico(e)}</span><span><b>${esc(t)}<span class="no">#${n}</span></b><span class="note">${esc(d)}</span></span></button>`;
 // 묶음은 접어 두고(처음엔 모두 접힘) 누르면 펼쳐요. 찾기 글자가 있으면 맞는 게임이 있는 묶음만 펼쳐서 보여 줘요. 펼친 묶음은 다시 그려도 그대로.
 const openG = new Set();
 const findHit = (q, title, num) => { if (!q) return true; const qn = /^#?\d+$/.test(q) ? +q.replace("#", "") : 0; return qn ? num === qn : title.toLowerCase().includes(q); };
@@ -381,7 +383,7 @@ function raceList() {
 }
 $("gq").addEventListener("input", showPick);
 // 퀴즈는 '각자 풀기(동시 도전)'와 '퀴즈 버저(방장이 읽고 먼저 누르기)' 중에서 골라요. 버저는 고른 퀴즈가 방장 화면에 미리 선택돼요.
-function quizMode(f) { const g = raceGame(f); $("qmt").textContent = `${g[1]} ${g[2]} #${g[4]}`; $("qm2").hidden = !BUZZ_OK.includes(f) || solo; $("qmode").hidden = false; $("qmode").scrollIntoView({ block: "center", behavior: "smooth" });
+function quizMode(f) { const g = raceGame(f); $("qmt").textContent = `${ptx(g[1])} ${g[2]} #${g[4]}`; $("qm2").hidden = !BUZZ_OK.includes(f) || solo; $("qmode").hidden = false; $("qmode").scrollIntoView({ block: "center", behavior: "smooth" });
   $("qm1").onclick = () => { $("qmode").hidden = true; raceStart(f); }; $("qm2").onclick = () => { $("qmode").hidden = true; pickGame("net-buzzer.html", "#quiz=" + encodeURIComponent(f)); }; $("qm0").onclick = () => { $("qmode").hidden = true; }; }
 $("rq").addEventListener("input", raceList);
 function pickGame(f, extra) { if (role !== "host") return; if (game && extra) { loadGame(null); } if (R) { R = null; bcast({ t: "race", R: null }); onRace(null); } loadGame(f, extra); bcast({ t: "load", game: f }); }
@@ -431,7 +433,7 @@ function startWatch() { rBase = new Set(raceLines()); clearInterval(rWatch); rWa
 function onRace(r) {
   R = r; clearInterval(rTick); if (!r) { $("namecard").hidden = false; $("rstage").hidden = true; $("rf").srcdoc = ""; clearInterval(rSnap); rLoaded = rRun = 0; cssSent = 0; rT0 = 0; if (role === "host") showPick(); else $("wait").hidden = !!game; return; }
   $("pick").hidden = true; $("wait").hidden = true; $("rstage").hidden = false; $("room").open = false; $("hostbox").hidden = true; $("namecard").hidden = true;
-  if (rLoaded !== r.rno) { rLoaded = r.rno; rRun = 0; rT0 = 0; myRes = null; $("rtime").textContent = "0:00.0"; lastSnap = ""; mirrors = {}; $("mirs").innerHTML = ""; const g = raceGame(r.f); $("rname").textContent = g ? `${g[1]} ${g[2]} #${g[4]}` : r.f;
+  if (rLoaded !== r.rno) { rLoaded = r.rno; rRun = 0; rT0 = 0; myRes = null; $("rtime").textContent = "0:00.0"; lastSnap = ""; mirrors = {}; $("mirs").innerHTML = ""; const g = raceGame(r.f); $("rname").textContent = g ? `${ptx(g[1])} ${g[2]} #${g[4]}` : r.f;
     $("rcover").hidden = false; $("rcover").className = ""; $("rcover").onclick = null; $("rcover").textContent = "게임을 불러오는 중…";
     fetch(r.f).then(x => x.text()).then(t => { if (rLoaded !== r.rno) return; const base = location.href.split("#")[0].replace(/[^/]*$/, "");
       $("rf").srcdoc = t.replace(/<head>/i, `<head><base href="${base}">` + raceShim(r.seed)); setTimeout(() => $("rstage").scrollIntoView({ block: "start" }), 60); if (!rRun) $("rcover").textContent = role === "host" ? "모두 준비되면 ▶ 시작을 눌러요" : "방장이 시작하면 3초 뒤 시작해요"; })

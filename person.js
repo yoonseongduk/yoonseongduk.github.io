@@ -44,7 +44,7 @@
   function award(kind, extra) {
     if (!GAMES[file]) return null;
     var s = load(), n = me(), u = s.p[n] || (s.p[n] = { total: 0, day: "", lastDay: "", streak: 0, today: {}, bonus: {}, seen: [], log: [] }), now = Date.now(), td = ymd(now), pts = 0, why = [];
-    if (u.day !== td) { u.streakNew = true; u.day = td; u.today = {}; u.bonus = {}; u.earn = {}; }
+    if (u.day !== td) { u.streakNew = true; u.day = td; u.today = {}; u.bonus = {}; u.earn = {}; u.hist = {}; }
     var mult = HARD[file] ? CFG.hard : 1, core = 0;
     if (kind === "grant") { // 게임이 직접 정해 주는 점수(예: 맞고 승리). 한 판 최대 grantMax, 하루 상한은 가산과 같이 쓴다
       if ((!UNL[file] && (u.bonus[file] || 0) >= CFG.perDay) || !(extra.pts > 0)) return null;
@@ -58,7 +58,7 @@
       if (!UNL[file] && (u.bonus[file] || 0) >= CFG.perDay) return null;
       u.bonus[file] = (u.bonus[file] || 0) + 1; core = Math.round((kind === "win" ? CFG.win : CFG.best) * mult); pts += core; why.push(kind === "win" ? "이겼어요" : "최고 기록");
     }
-    delete u.streakNew; u.total += pts; u.earn = u.earn || {}; u.earn[file] = (u.earn[file] || 0) + core; // 게임별 오늘 획득(처음 해 본 보너스·연속 출석은 뺀 값)
+    delete u.streakNew; u.total += pts; u.earn = u.earn || {}; u.earn[file] = (u.earn[file] || 0) + core; u.hist = u.hist || {}; (u.hist[file] = u.hist[file] || []).push({ t: now, p: pts, w: why.join("·") }); if (u.hist[file].length > 200) u.hist[file].shift(); // 게임별 오늘 획득(처음 해 본 보너스·연속 출석은 뺀 값)
      u.log.push({ t: now, f: file, p: pts, w: why.join("·") }); if (u.log.length > CFG.keepLog) u.log.splice(0, u.log.length - CFG.keepLog);
     rs(PK, JSON.stringify(s)); toast("+" + pts + "p  " + why.join("·")); try { dispatchEvent(new Event("fgpoints")); } catch (e) {} return pts;
   }
@@ -67,7 +67,7 @@
     tq.push(t); clearTimeout(tt);
     tt = setTimeout(function () {
       var m = tq.join("  /  "); tq = [];
-      var d = document.createElement("div"); d.textContent = "⭐ " + m;
+      var d = document.createElement("div"); d.id = "fg-toast"; d.textContent = "⭐ " + m;
       d.style.cssText = "position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:99997;background:#1c2233;color:#fff;border-radius:999px;padding:8px 16px;font:700 .9rem/1.3 system-ui,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.35);pointer-events:none;max-width:92vw;text-align:center";
       (document.body || document.documentElement).appendChild(d); setTimeout(function () { d.remove(); }, 2600);
     }, 250);
@@ -83,14 +83,28 @@
       var u = load().p[me()], mult = HARD[file] ? CFG.hard : 1, today = u && u.day === ymd(Date.now());
       return { listed: !!GAMES[file], unlimited: !!UNL[file], earned: today && u.earn ? (u.earn[file] || 0) : 0, max: CFG.perDay * (Math.round(CFG.base * mult) + Math.round(Math.max(CFG.win, CFG.best) * mult)) };
     },
+    history: function () { var u = load().p[me()]; return u && u.day === ymd(Date.now()) && u.hist && u.hist[file] ? u.hist[file].slice() : []; }, // 오늘 이 게임에서 받은 포인트 이력 [{t,p,w}]
     points: function (n) { var u = load().p[n || me()]; return u ? u.total : 0; },
     all: function () { return load().p; }
   };
 
-  // ── 플레이 감지: 입력이 있고 minSec 초가 지나면 "한 판"으로 친다. 이김 글귀·최고 기록 저장도 감지한다.
+  // ── 플레이 감지: 한 판마다 센다. 입력이 있고 minSec 초가 지나면 "한 판", 이김 글귀·최고 기록 저장도 판마다 한 번씩 감지한다.
+  //    판이 끝났거나(이김·짐 글귀) "다시 시작"류 버튼을 누르면 새 판이 시작돼서 점수를 또 받을 수 있다(하루 횟수 제한은 그대로).
   if (!GAMES[file] || window.parent !== window) return;
-  var input = 0, t0 = Date.now(), played = false, won = false, bested = false;
-  ["pointerdown", "keydown", "touchstart"].forEach(function (ev) { addEventListener(ev, function () { input++; }, { capture: true, passive: true }); });
+  var input = 0, t0 = Date.now(), played = false, won = false, bested = false, ended = false, snap = { input: 0, ended: false, t0: 0, played: false };
+  function newRound() { input = 0; t0 = Date.now(); played = false; won = false; bested = false; ended = false; }
+  ["pointerdown", "keydown", "touchstart"].forEach(function (ev) { addEventListener(ev, function () {
+    if (ev === "pointerdown") snap = { input: input, ended: ended, t0: t0, played: played }; // 누르기 직전 판 상태(다시 시작 버튼 처리에 쓴다)
+    if (ended) newRound(); // 끝난 판 다음 첫 입력 = 새 판
+    input++;
+  }, { capture: true, passive: true }); });
+  var RESTART_RE = /다시|새 ?게임|새 ?판|새로|한 ?판 더|재시작|리셋|처음부터|다음 ?판|again|retry|restart|replay/i;
+  addEventListener("click", function (e) {
+    var el = e.target && e.target.closest ? e.target.closest("button,a,[role=button],.btn,summary") : null; if (!el) return;
+    var txt = (el.textContent || "").trim(); if (txt.length > 24 || !RESTART_RE.test(txt)) return;
+    if (!snap.ended && snap.input > 0 && !snap.played && Date.now() - snap.t0 >= CFG.minSec * 1000) { played = true; award("play"); } // 끝나기 전에 다시 눌러도 충분히 했으면 인정
+    newRound(); snap = { input: 0, ended: false, t0: Date.now(), played: false };
+  }, true);
   setInterval(function () { if (!played && input > 0 && Date.now() - t0 >= CFG.minSec * 1000) { played = true; award("play"); } }, 1000);
   bestHook = function () { if (!bested && input > 0 && Date.now() - t0 >= 3000) { bested = true; setTimeout(function () { ensure(); award("best"); }, 0); } };
   function ensure() { if (!played) { played = true; award("play"); } }
@@ -98,12 +112,13 @@
   function watch() {
     if (!window.MutationObserver) return;
     new MutationObserver(function (ms) {
-      if (won || input === 0) return;
-      for (var i = 0; i < ms.length && !won; i++) {
+      if (won || ended || input === 0) return;
+      for (var i = 0; i < ms.length && !won && !ended; i++) {
         var nodes = ms[i].addedNodes; for (var j = 0; j < nodes.length; j++) {
+          var nd = nodes[j], el = nd.nodeType === 1 ? nd : nd.parentElement; if (el && el.closest && el.closest("#fg-bar,#fg-toast")) continue; // 포인트 안내(토스트)·이력 패널의 글자를 게임 글귀로 오인하지 않는다
           var t = (nodes[j].textContent || "").trim(); if (!t || t.length > 300) continue;
-          if (NG_RE.test(t) || /컴퓨터/.test(t)) continue;
-          if (OK_RE.test(t) || t.indexOf("🎉") === 0) { won = true; ensure(); award("win"); break; }
+          if (NG_RE.test(t) || /컴퓨터/.test(t)) { if (NG_RE.test(t)) { ended = true; if (Date.now() - t0 >= CFG.minSec * 1000) ensure(); break; } continue; } // 졌어요·게임 오버: 판 끝(충분히 했으면 플레이 점수)
+          if (OK_RE.test(t) || t.indexOf("🎉") === 0) { won = true; ended = true; ensure(); award("win"); break; }
         }
       }
     }).observe(document.documentElement, { childList: true, subtree: true });

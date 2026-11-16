@@ -93,11 +93,13 @@ function newSet() { return new Set(S.last ? S.last.got.concat(S.last.steal) : []
 function capTable() {
   const nw = newSet(), L = S.last, n = N(), order = seatOrder();
   const cell = (p, k) => {
-    const ids = S.cap[p].filter(id => GS.info(id).type === k).sort((a, b) => a - b);
-    let c = ids.length; if (k === "pi") { c = ids.reduce((s, x) => s + GS.info(x).pi, 0); if (S.gukjin && S.gukjin[p] === "pi" && S.cap[p].includes(GS.RULES.gukjin)) c += 2; } // 쌍피로 쓴 국진은 피 2장
+    const gp = id => id === GS.RULES.gukjin && S.gukjin && S.gukjin[p] === "pi"; // 쌍피로 쓴 국진
+    const ids = S.cap[p].filter(id => (gp(id) ? "pi" : GS.info(id).type) === k).sort((a, b) => a - b);
+    let c = ids.length; if (k === "pi") { c = ids.reduce((s, x) => s + (gp(x) ? 2 : GS.info(x).pi), 0); } // 쌍피로 쓴 국진은 피 2장
     return `<span class="n">${c}</span>` + ids.map(id => card(id, { cls: nw.has(id) ? "new" : "" })).join("");
   };
-  const sc = p => GS.scoreOf(S, p).parts.map(x => x.n + " " + x.p + "점").join(" · ") || "&nbsp;";
+  const mulOf = p => Math.pow(GS.RULES.shakeMult, S.shake[p] || 0) * Math.pow(GS.RULES.bombMult, S.bomb[p] || 0);
+  const sc = p => { const t = GS.scoreOf(S, p), m = mulOf(p); return (t.parts.map(x => x.n + " " + x.p + "점").join(" · ") + (m > 1 && t.total ? " · " + (S.shake[p] ? "흔들기" : "") + (S.bomb[p] ? "폭탄" : "") + " ×" + m + " = " + t.total * m + "점" : "")) || "&nbsp;"; };
   const fresh = p => L && L.who === p && (L.got.length + L.steal.length) ? `<em>방금 +${L.got.length + L.steal.length}</em>` : "";
   const fresh2 = p => L && L.stealFrom && L.stealFrom[p] ? `<em>피 -${L.stealFrom[p]}</em>` : "";
   $("cap").style.gridTemplateColumns = "2.1em repeat(" + n + ",minmax(0,1fr))";
@@ -109,7 +111,8 @@ function bar() {
   const n = N(), on = S.phase !== "end" ? S.turn : -1;
   $("bar").style.gridTemplateColumns = "repeat(" + n + ",1fr)"; $("bar").className = "bar" + (n === 3 ? " b3" : "");
   return seatOrder().map(p => {
-    const sp = (S.shake[p] ? " · 🎲×" + S.shake[p] : "") + (S.bomb[p] ? " · 💣×" + S.bomb[p] : "");
+    const mm = Math.pow(GS.RULES.shakeMult, S.shake[p] || 0) * Math.pow(GS.RULES.bombMult, S.bomb[p] || 0), tt = GS.scoreOf(S, p).total;
+    const sp = (mm > 1 && tt ? " · ×" + mm + "=" + tt * mm + "점" : "") + (S.shake[p] ? " · 🎲×" + S.shake[p] : "") + (S.bomb[p] ? " · 💣×" + S.bomb[p] : "");
     return `<div class="bs${on === p ? " on" : ""}"><span class="bn">${p === ME ? "🙂" : "🤖"} ${esc(pname(p))}</span><span class="bp">${GS.scoreOf(S, p).total}점</span><span class="bm">손패 ${S.hands[p].length}장${S.goCount[p] ? " · 고 " + S.goCount[p] + "번" : ""}${sp}${p === ME && n === 2 ? " · 더미 " + S.deck.length : ""}</span></div>`;
   }).join("");
 }
@@ -165,7 +168,7 @@ function render() {
   const ng = nextGuide(); $("next").className = "next" + (ng[2] ? " " + ng[2] : ""); $("next").innerHTML = esc(ng[0]) + (ng[1] ? "<small>" + esc(ng[1]) + "</small>" : "") + stepsHtml();
   let a = "";
   if (S.turn === ME) {
-    if (S.phase === "gostop") a = `<button class="btn" id="bgo" type="button">🔥 고! (지금 ${S.pend.score}점)</button><button class="btn ghost" id="bstop" type="button">✋ 스톱</button>`;
+    if (S.phase === "gostop") a = `<button class="btn" id="bgo" type="button">🔥 고! (지금 ${S.pend.score}점${(S.shake[S.turn] || S.bomb[S.turn]) ? " → 배수 반영 " + S.pend.score * Math.pow(GS.RULES.shakeMult, S.shake[S.turn] || 0) * Math.pow(GS.RULES.bombMult, S.bomb[S.turn] || 0) + "점" : ""})</button><button class="btn ghost" id="bstop" type="button">✋ 스톱</button>`;
     else if (S.phase === "shake") a = `<button class="btn" id="bq1" type="button">🎲 흔들기 (점수 ×2)</button><button class="btn ghost" id="bq0" type="button">그냥 내기</button>`;
     else if (S.phase === "bomb") a = `<button class="btn" id="bq1" type="button">💣 폭탄! (3장 한꺼번에)</button><button class="btn ghost" id="bq0" type="button">한 장만 내기</button>`;
     else if (S.phase === "gukjin") a = `<button class="btn" id="bq1" type="button">🍶 쌍피로 쓰기 (피 2장)</button><button class="btn ghost" id="bq0" type="button">열끗으로 쓰기</button>`;
@@ -216,7 +219,7 @@ function finish() {
   }
   if (!r.draw) {
     const common = r.common.filter(x => !/^고/.test(x));
-    html += `<table class="tbl"><tbody>${r.parts.map(x => `<tr><td>${x.n}</td><td>${x.p}점</td></tr>`).join("")}${r.go ? `<tr><td>고 ${r.go}번</td><td>${r.go >= 3 ? "×" + Math.pow(2, r.go - 2) : "+" + r.go + "점"}</td></tr>` : ""}${common.map(x => `<tr><td>${x}</td><td>×2</td></tr>`).join("")}`
+    html += `<table class="tbl"><tbody>${r.parts.map(x => `<tr><td>${x.n}</td><td>${x.p}점</td></tr>`).join("")}${r.go ? `<tr><td>고 ${r.go}번</td><td>${r.go >= 3 ? "×" + Math.pow(2, r.go - 2) : "+" + r.go + "점"}</td></tr>` : ""}${common.map(x => `<tr><td>${x}</td><td>×${/흔들기/.test(x) ? Math.pow(GS.RULES.shakeMult, S.shake[r.winner]) : /폭탄/.test(x) ? Math.pow(GS.RULES.bombMult, S.bomb[r.winner]) : 2}</td></tr>`).join("")}`
       + r.per.map(x => `<tr><td>낼 점수 · ${esc(pname(x.who))}${x.mult.length ? " · " + x.mult.join("·") : ""}</td><td>${x.pay}점</td></tr>`).join("")
       + `<tr><td><b>합계 · ${esc(pname(r.winner))} 받는 점수</b></td><td><b>${r.points}점</b></td></tr></tbody></table>${r.winner === ME ? `<div class="ok" style="margin-top:6px">⭐ 포인트 +${add}p</div>` : ""}`;
   }

@@ -15,7 +15,7 @@
     for (i = m * 4 - 4; i < id; i++) if (type(i) === "pi") n++; // 그 달의 첫 피 → Kasu_1, 둘째 피 → Kasu_2
     return "Hanafuda_" + MON[m] + "_Kasu_" + (n + 1) + "_Alt.svg";
   }
-  var mode = "gemini"; // "gemini" = Gemini 로 만든 새 민화(기본, cards-gemini/NN.webp), "minhwa" = 직접 그린 SVG, "old" = Commons 공개 그림(CC BY-SA)
+  var mode = "old"; // 기본은 옛 화투. "gemini" = Gemini 로 만든 새 민화(cards-gemini/NN.webp), "minhwa" = 직접 그린 SVG, "old" = Commons 공개 그림(CC BY-SA)
   function nn(id) { return (id < 10 ? "0" : "") + id; }
   function url(id) { return mode === "old" ? "cards/" + name(id) : mode === "minhwa" ? "cards-minhwa/" + nn(id) + ".svg" : "cards-gemini/" + nn(id) + ".webp"; }
   function img(id) { return '<img src="' + url(id) + '" alt="" draggable="false">'; }

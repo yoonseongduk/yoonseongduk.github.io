@@ -60,6 +60,10 @@ button.gc{cursor:pointer}button.gc:disabled{cursor:default}
 .gc.new{outline:3px solid #ff7a1a;outline-offset:0;z-index:2;animation:pulse .8s ease-in-out 4}
 .cap .gc.new{outline-width:2px}
 @keyframes pulse{50%{transform:scale(1.35)}}
+.stk{position:relative;width:40px;height:66px;margin:10px 10px 6px 0}
+.stk i{position:absolute;inset:0;border-radius:5px;border:2px solid #f3e4c0;box-shadow:0 1px 2px rgba(0,0,0,.45);background-color:#a8282c;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.16) 0 2px,transparent 2px 8px),repeating-linear-gradient(-45deg,rgba(0,0,0,.2) 0 2px,transparent 2px 8px)}
+.stk i::after{content:"";position:absolute;inset:7px;border:1.5px solid rgba(243,228,192,.8);border-radius:3px}
+.stk i:nth-child(1){transform:translate(0,0)}.stk i:nth-child(2){transform:translate(3px,-3px)}.stk i:nth-child(3){transform:translate(6px,-6px)}.stk i:nth-child(4){transform:translate(9px,-9px)}
 .pile{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:50px;padding:6px;border-radius:10px;background:var(--soft);font-size:.8rem}.pile b{font-family:var(--font-display);font-size:1.3rem;font-weight:400}
 .board{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start}
 .tight{padding:8px 10px;gap:6px}
@@ -110,7 +114,7 @@ const TAG = { gwang: "광", yeol: "열", pi: "피" };
 let S = null, lastWinner = -1, lastTurnNo = 0, msg = "", done = false, timer = 0;
 let stats = ld(KEY) || { w: 0, l: 0, d: 0, best: 0 };
 if (typeof stats.hint !== "boolean") stats.hint = true;
-if (stats.art !== "old" && stats.art !== "minhwa") stats.art = "gemini";
+if (!stats.artSet || (stats.art !== "gemini" && stats.art !== "minhwa")) stats.art = "old"; // 기본은 옛 화투, 사용자가 고른 뒤에는 그 선택을 따른다
 GoStopArt.mode(stats.art);
 document.body.classList.toggle("art-gm", stats.art === "gemini");
 function face(id) { const i = GS.info(id); return { i, tag: i.type === "ddi" ? "띠" : i.pi === 2 ? "쌍피" : TAG[i.type] }; }
@@ -145,7 +149,8 @@ function render() {
   $("bar").innerHTML = bar();
   $("cap").innerHTML = capTable();
   $("field").innerHTML = S.field.slice().sort((a, b) => a - b).map(id => card(id, { on: pick.includes(id), cls: pick.includes(id) ? "pick" : hint && monthsInHand.has(GS.month(id)) ? "tgt" : "" })).join("");
-  $("pile").innerHTML = `<b>${S.deck.length}</b>더미`;
+  const nl = Math.min(4, Math.ceil(S.deck.length / 6));
+  $("pile").innerHTML = `<div class="stk" aria-hidden="true">${"<i></i>".repeat(Math.max(nl, S.deck.length ? 1 : 0))}</div><b>${S.deck.length}</b>더미`;
   $("hand").innerHTML = mine.slice().sort((a, b) => a - b).map(id => { const m = hint && S.field.some(x => GS.month(x) === GS.month(id)); return card(id, { on: my, cls: (my ? "can" : "") + (id === best ? " best" : m ? " match" : "") }); }).join("");
   $("msg").textContent = pick.length ? "👆 가져올 패를 골라요 (반짝이는 패)" : msg;
   let a = "";
@@ -155,7 +160,7 @@ function render() {
   $("hintOn").checked = stats.hint;
 }
 $("artSel").value = stats.art;
-$("artSel").onchange = e => { stats.art = e.target.value; GoStopArt.mode(stats.art); document.body.classList.toggle("art-gm", stats.art === "gemini"); sv(KEY, stats); render(); };
+$("artSel").onchange = e => { stats.art = e.target.value; stats.artSet = true; GoStopArt.mode(stats.art); document.body.classList.toggle("art-gm", stats.art === "gemini"); sv(KEY, stats); render(); };
 $("hintOn").onchange = e => { stats.hint = e.target.checked; sv(KEY, stats); render(); };
 function describe(l) {
   const who = l.who === ME ? "나" : "컴퓨터";

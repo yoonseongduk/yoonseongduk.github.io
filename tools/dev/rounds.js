@@ -22,6 +22,20 @@ let bad = 0; const ok = (c, m) => { console.log((c ? "[통과] " : "[실패] ") 
   const before = await p.evaluate(() => fgPerson.points()); await p.waitForTimeout(500);
   ok(await p.evaluate(() => fgPerson.points()) === before && (await p.$$eval("#fg-ghist tr", t => t.length)) === 5, '이력 패널을 열어도 포인트가 늘지 않는다(패널 글자를 이김 글귀로 오인하지 않음)');
   await p.click("#fg-gpt"); ok(!(await p.$("#fg-ghist")), '다시 누르면 닫힌다');
+  // ── 실제 5장 포커로 여러 판: 짧게 끝나는 판·진 판도 플레이 점수가 들어가고 이력에 쌓인다
+  const q = await b.newPage({ viewport: { width: 360, height: 800 } }); q.on("pageerror", e => errs.push(String(e).slice(0, 120)));
+  await q.goto("http://localhost:8765/poker-draw.html"); await q.waitForTimeout(600);
+  await q.evaluate(() => { fgPerson.cfg.roundSec = 1; fgPerson.cfg.minSec = 99; });
+  const g = () => q.evaluate(() => fgPerson.game());
+  for (let h = 1; h <= 4; h++) {
+    await q.click("#mh button"); await q.waitForTimeout(1300);            // 카드 하나 고정(입력) 후 1.3초
+    await q.click("#act"); await q.waitForTimeout(400);                   // 카드 교체하기 → 이김/짐/비김 글귀
+    const gg = await g(); ok(gg.plays === Math.min(h, 3), h + '번째 판 끝: 플레이 ' + gg.plays + '/3번이 그 자리에서 반영된다 (결과: ' + (await q.$eval("#res b", e => e.textContent)) + ')');
+    if (h < 4) { await q.click("#act"); await q.waitForTimeout(300); }      // 다음 판
+  }
+  const hist = await q.evaluate(() => fgPerson.history());
+  ok(hist.length >= 3 && hist.every(x => x.p > 0), '이력에 판마다 쌓인다 (' + hist.length + '건: ' + hist.map(x => x.w).join(' / ') + ')');
+  await q.click("#fg-gpt"); const panel = await q.$eval("#fg-ghist", e => e.innerText); ok(/플레이 3\/3번/.test(panel) && panel.includes("합계 " + hist.reduce((t, x) => t + x.p, 0) + "p"), '이력 패널의 합계·횟수가 맞다');
   ok(errs.length === 0, '오류 없음 ' + errs.join('|'));
   await b.close(); console.log(bad ? "실패 " + bad + "건" : "모두 통과"); process.exit(bad ? 1 : 0);
 })();

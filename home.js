@@ -46,8 +46,8 @@
     p.textContent = ""; var head = document.createElement("div"); head.style.cssText = "font-weight:800;margin-bottom:4px"; p.appendChild(head);
     t.style.cssText = "width:100%;border-collapse:collapse";
     h.slice().reverse().forEach(function (x) { tot += x.p; var tr = document.createElement("tr"), d = new Date(x.t); [pad(d.getHours()) + ":" + pad(d.getMinutes()), "+" + x.p + "p", x.w].forEach(function (c, i) { var td = document.createElement("td"); td.textContent = c; td.style.cssText = "padding:3px 4px;border-bottom:1px solid var(--line,#e6e1ea)" + (i === 1 ? ";font-weight:800;text-align:right;white-space:nowrap" : ""); tr.appendChild(td); }); t.appendChild(tr); });
-    head.textContent = "📜 오늘 이 게임에서 받은 포인트 · 합계 " + tot + "p";
-    if (!g.unlimited) { var nt = document.createElement("div"); nt.textContent = "위쪽 「오늘 이 게임 " + g.earned + " / " + g.max + "p」는 처음 해 본 보너스·연속 출석 보너스를 뺀 값이에요."; nt.style.cssText = "font-weight:600;font-size:.76rem;color:var(--muted,#5b6275);margin-bottom:4px"; p.appendChild(nt); }
+    head.textContent = "📜 오늘 이 게임에서 받은 포인트 · 합계 " + tot + "p" + (g.unlimited ? " (제한 없음)" : "");
+    if (!g.unlimited) { var nt = document.createElement("div"); nt.textContent = "오늘 받은 횟수: 플레이 " + g.plays + "/" + g.per + "번 · 이김·최고 기록 " + g.bonus + "/" + g.per + "번 (넘으면 더 안 올라요). 위쪽 「오늘 이 게임 " + g.earned + " / " + g.max + "p」는 처음 해 본 보너스·연속 출석 보너스를 뺀 값이에요."; nt.style.cssText = "font-weight:600;font-size:.76rem;color:var(--muted,#5b6275);margin-bottom:4px"; p.appendChild(nt); }
     if (!h.length) { var n = document.createElement("div"); n.textContent = "아직 받은 포인트가 없어요. 게임을 10초 이상 하거나 이기면 쌓여요."; n.style.cssText = "color:var(--muted,#5b6275)"; p.appendChild(n); } else p.appendChild(t);
   }
   function gamePill() {

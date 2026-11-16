@@ -7,7 +7,7 @@ CSS = r'''
 main{gap:8px}
 .note{font-size:.85rem;color:var(--muted)}
 .gc{--cw:56px;width:var(--cw);height:calc(var(--cw)*1.64);flex:none;padding:0;border:0;background:transparent;position:relative;border-radius:calc(var(--cw)*.09);font:inherit;color:#1c2233}
-.art-gm .gc{height:calc(var(--cw)*1.55)}
+.art-gm .gc{height:calc(var(--cw)*1.61)}
 .gc img{width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4))}
 .gc .g{position:absolute;left:1px;top:1px;font-size:max(8px,calc(var(--cw)*.18));font-weight:800;line-height:1.2;padding:0 3px;border-radius:6px;background:rgba(255,255,255,.9);border:1px solid rgba(0,0,0,.3);white-space:nowrap}
 .t-gwang .g{background:#ffe27a}.t-yeol .g{background:#ffd2a6}.t-ddi .g{background:#cfe3ff}.d-red .g{background:#ffc9c4}.d-cho .g{background:#ffdcc4}.d-plain .g{background:#e4e4e4}

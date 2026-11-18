@@ -6,7 +6,7 @@
      가운데(22)에서 시작하면 27·28 → 도착(가장 빨리 나가는 길). 지름길은 "그 칸에서 움직이기 시작할 때"만 들어가요(그냥 지나가면 바깥길).
    윷가락 4개: 평평한 면 수 1=도(1칸) 2=개(2) 3=걸(3) 4=윷(4) 0=모(5). 도인데 표시된 가락이 평평하면 빽도(뒤로 1칸).
    말은 한 편에 4개. 같은 편 말이 한 칸에 모이면 업기(함께 움직임). 상대 말이 있는 칸에 서면 잡기(상대 말들은 출발 전으로, 한 번 더 던짐). 윷·모도 한 번 더.
-   4개를 모두 도착시키면 이겨요. 도착은 출발점(0)을 지나거나 정확히 서는 것 모두 인정.
+   4개를 모두 도착시키면 이겨요. 출발·도착 칸(0)에 정확히 서면 말이 그 칸에 남고(잡힐 수도 있어요), 다음에 그 말을 움직이면 몇 칸이든 도착해요. 그 칸을 넘어가면 바로 도착이에요.
    편 상태 side = { w: 출발 전 말 수, done: 도착한 말 수, stacks: [{ at, lane, n, trail }] }  (JSON 가능). lane: "o" 바깥길, "a" 지름길 ㉮, "b" 지름길 ㉯. */
 (function (root) {
   "use strict";
@@ -35,9 +35,13 @@
       trail.pop(); if (!trail.length) return { home: true };
       var t = trail[trail.length - 1]; return { at: t[0], lane: t[1], trail: trail };
     }
+    if (st && st.at === 0) return { end: true };   // 출발·도착 칸에 서 있던 말은 어느 칸이든 움직이면 도착
     for (i = 0; i < steps; i++) {
       nx = (!st && i === 0) ? [1, "o"] : succ(at, lane, i === 0);
-      if (nx === END) return { end: true };
+      if (nx === END) {
+        if (i === steps - 1) { at = 0; lane = "o"; trail.push([0, "o"]); return { at: 0, lane: "o", trail: trail }; }   // 정확히 출발·도착 칸에 서면 그 칸에 남아요
+        return { end: true };                                                                                             // 넘어가면 바로 도착
+      }
       at = nx[0]; lane = nx[1]; trail.push([at, lane]);
     }
     return { at: at, lane: lane, trail: trail };
@@ -85,7 +89,7 @@
       var s = Math.random() * 2 - 1;
       if (m.to === END) s += 40 * m.n; else if (m.to === HOME) s -= 30 * m.n;
       else {
-        s += 60 * m.cap + (m.stack ? 6 : 0) + (m.to === 5 || m.to === 10 || m.to === 22 ? 7 : 0) + (m.to >= 20 ? 4 : 0);
+        s += 60 * m.cap + (m.to === 0 ? 8 * m.n : 0) + (m.stack ? 6 : 0) + (m.to === 5 || m.to === 10 || m.to === 22 ? 7 : 0) + (m.to >= 20 ? 4 : 0);
         s += 0.4 * (m.to === 0 ? 0 : (m.to >= 20 ? m.to - 10 : m.to)) * m.n;
         var danger = 0; // 이 칸에 서면 상대가 다음에 잡을 수 있나(상대 말이 1~5칸 뒤에 있나)
         opp.stacks.forEach(function (o) { for (var k = 1; k <= 5; k++) { var r = advance(o, k); if (r && r.at === m.to) danger = 1; } });

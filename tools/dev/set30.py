@@ -33,7 +33,7 @@ GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지
          ["net-lots.html", "🎟️", "제비뽑기", "여러 명 · 각자 폰에서 한 장씩 뽑기", "party"],
          ["net-onecard.html", "img:cards-trump/cJ.webp", "원카드", "2명 · 같은 무늬·숫자 내기, 먼저 다 없애기", "card"],
          ["net-checkers.html", "♛", "체커 (서양 장기)", "2명 · 뛰어넘어 잡기, 끝줄에 가면 왕", "board"],
-         ["net-yut.html", "🪵", "윷놀이", "2명 · 말 4개, 지름길·업기·빽도·잡기가 있는 일반 윷놀이", "dice"],
+         ["net-yut.html", "img:yut-img/yut_icon.svg", "윷놀이", "2명 · 말 4개, 지름길·업기·빽도·잡기가 있는 일반 윷놀이", "dice"],
          ["net-yacht.html", "🎲", "주사위 족보", "2~6명 · 차례대로 굴려 12개 족보 채우기", "dice"],
          ["net-wordtrick.html", "🤫", "제시어 추리", "여러 명 · 한 명만 제시어를 몰라요", "party"],
          ["net-hula.html", "img:cards-trump/h7.webp", "훌라", "2~5명 · 같은 숫자·이어진 숫자로 등록, 먼저 다 내리기", "card"],

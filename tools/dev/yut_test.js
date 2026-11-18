@@ -10,13 +10,14 @@ ok(Y.advance(st(8, "o", 1, [[8, "o"]]), 3).at === 11, "10을 지나가면 11");
 let r = Y.advance(st(5), 3); ok(r.at === 22, "5→20→21→22 (가운데)");
 r = Y.advance(st(5), 5); ok(r.at === 24, "㉮ 5칸 = 24");
 r = Y.advance(st(5), 6); ok(r.at === 15 && r.lane === "o", "㉮ 6칸 = 15 (바깥길로)");
-r = Y.advance(st(5), 11); ok(r.end, "㉮ 11칸 = 도착");
-r = Y.advance(st(10), 5); ok(r.at === 28, "㉯ 5칸 = 28"); ok(Y.advance(st(10), 6).end, "㉯ 6칸 = 도착");
+r = Y.advance(st(5), 11); ok(r.at === 0, "㉮ 11칸 = 출발·도착 칸에 멈춤"); ok(Y.advance(st(5), 12).end, "㉮ 12칸 = 도착");
+r = Y.advance(st(10), 5); ok(r.at === 28, "㉯ 5칸 = 28"); ok(Y.advance(st(10), 6).at === 0, "㉯ 6칸 = 출발·도착 칸에 멈춤"); ok(Y.advance(st(10), 7).end, "㉯ 7칸 = 도착");
 r = Y.advance(st(22, "a"), 1); ok(r.at === 27, "가운데에서 시작하면 27");
-r = Y.advance(st(22, "a", 1, [[20, "a"], [21, "a"], [22, "a"]]), 3); ok(r.end, "가운데에서 3칸 = 도착");
+r = Y.advance(st(22, "a", 1, [[20, "a"], [21, "a"], [22, "a"]]), 3); ok(r.at === 0 && !r.end, "가운데에서 걸(3칸) = 출발·도착 칸에 남음"); ok(Y.advance(st(22, "a", 1, [[20, "a"], [21, "a"], [22, "a"]]), 4).end, "가운데에서 윷(4칸) = 도착");
 r = Y.advance(st(20, "a", 1, [[20, "a"]]), 3); ok(r.at === 23, "㉮ 20에서 3칸 = 23 (가운데를 지나 계속)");
 r = Y.advance(st(26, "b", 1, [[25, "b"], [26, "b"]]), 3); ok(r.at === 28, "㉯ 26에서 3칸 = 28");
-ok(Y.advance(st(19), 1).end && Y.advance(st(19), 3).end, "19에서 도착");
+ok(Y.advance(st(19), 1).at === 0, "19에서 도(1칸) = 출발·도착 칸에 남음"); ok(Y.advance(st(19), 2).end && Y.advance(st(19), 3).end, "19에서 2칸 이상 = 도착");
+ok(Y.advance(st(0, "o", 1, [[19, "o"], [0, "o"]]), 1).end, "출발·도착 칸의 말은 도(1칸)로도 도착"); r = Y.advance(st(0, "o", 1, [[19, "o"], [0, "o"]]), -1); ok(r.at === 19, "출발·도착 칸의 말 빽도 → 19");
 ok(Y.advance(null, 1).at === 1 && Y.advance(null, 5).at === 5, "출발 전 말: 1칸=1, 5칸=5");
 // 빽도
 r = Y.advance(st(2, "o", 1, [[1, "o"], [2, "o"]]), -1); ok(r.at === 1, "빽도 2→1");
@@ -35,6 +36,10 @@ a.w = 2; a.stacks.push(st(2, "o", 1, [[1, "o"], [2, "o"]]));
 o = Y.options(a, b, 3).find(m => m.from === 1); ok(o.to === 5 && o.stack, "같은 편 위로 → 업기");
 res = Y.apply(a, b, o, 3); ok(res.stack && a.stacks.length === 1 && a.stacks[0].n === 2, "업으면 한 덩어리");
 o = Y.options(a, b, 1).find(m => m.from === 0); res = Y.apply(a, b, o, 1); ok(a.stacks[0].at === 20 && a.stacks[0].n === 2, "업은 말은 함께 움직임(5→20)");
+// 출발·도착 칸에 남은 말: 업기·잡기·도착 처리
+a = Y.newSide(); b = Y.newSide(); a.w = 2; a.stacks.push(st(0, "o", 1, [[19, "o"], [0, "o"]])); b.w = 3; b.stacks.push(st(27, "b", 1, [[27, "b"]]));
+o = Y.options(b, a, 2).find(m => m.from === 0); ok(o && o.to === 0 && o.cap === 1, "출발·도착 칸에 서 있는 말은 정확히 서면 잡을 수 있다");
+let fin = Y.options(a, b, 1).find(m => m.from === 0); res = Y.apply(a, b, fin, 1); ok(res.fin === 1 && a.done === 1 && a.stacks.length === 0, "출발·도착 칸의 말이 움직이면 도착");
 // 무작위 대국 3000판: 말 수 보존, 끝남, 모든 칸 방문
 const seen = new Set(); let maxTurns = 0;
 for (let g = 0; g < 3000; g++) {

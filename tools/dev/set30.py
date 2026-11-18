@@ -41,7 +41,8 @@ GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지
          ["net-oldmaid.html", "img:cards-trump/joker-c.webp", "도둑잡기", "2~6명 · 옆 사람 카드를 뽑아 짝 맞추기, 조커가 남으면 짐", "card"],
          ["net-21.html", "img:cards-trump/sA.webp", "블랙잭 (21)", "1~6명 · 다 같이 컴퓨터 딜러와 21 겨루기", "card"],
          ["net-president.html", "img:cards-trump/sK.webp", "대통령 게임", "2~6명 · 더 센 카드를 내며 먼저 다 내면 대통령", "card"],
-         ["net-sevens.html", "img:cards-trump/c7.webp", "세븐 (7 늘어놓기)", "2~6명 · 7 옆으로 이어 놓기, 패스는 3번까지", "card"]]
+         ["net-sevens.html", "img:cards-trump/c7.webp", "세븐 (7 늘어놓기)", "2~6명 · 7 옆으로 이어 놓기, 패스는 3번까지", "card"],
+         ["net-gostop.html", "🎴", "맞고·고스톱 (화투)", "2~3명 · 화투 짝 맞추기, 고·스톱·흔들기·폭탄", "card"]]
 
 import gamenum, json as _json
 NUMS = gamenum.ensure()
@@ -136,7 +137,7 @@ HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px
 # ───── 🤖 컴퓨터와 연습: 컴퓨터 한 명 = 보이지 않는 화면 속 화면(같은 게임 파일, 참가자 역할). 같이 하기가 말을 중계해요(진짜 연결과 같은 방식).
 #   컴퓨터는 1초쯤마다 자기 화면에서 '누를 수 있는 버튼'을 하나 골라 눌러요(기본). 카드 게임 6개는 아래처럼 조금 더 똑똑하게 골라요.
 #   코드는 그 컴퓨터 화면 안에서 실행돼요(같은 사이트라 가능). mine = 지금 그 컴퓨터 차례인지. 무언가 했으면 1, 아니면 0을 돌려줘요.
-SOLO_NO = ["net-buzzer.html", "net-mafia.html", "net-wordtrick.html", "net-lots.html", "net-react.html"]   # 사람끼리 말로 하거나 진행자가 필요한 게임
+SOLO_NO = ["net-gostop.html", "net-buzzer.html", "net-mafia.html", "net-wordtrick.html", "net-lots.html", "net-react.html"]   # 사람끼리 말로 하거나 진행자가 필요한 게임
 SOLO_GENERIC = r'''const ex = /다시|새 판|새 게임|새 세트|시작|나가|끊기|방 닫|🔁|공개|투표|기다/;
   const bs = [...document.querySelectorAll("main button")].filter(b => !b.disabled && b.offsetParent !== null && !b.closest("[hidden]") && b.id !== "again" && b.id !== "go" && !ex.test(b.textContent));
   if (!bs.length) return 0; bs[Math.floor(Math.random() * bs.length)].click(); return 1;'''

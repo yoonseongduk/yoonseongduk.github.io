@@ -31,7 +31,7 @@
 - [x] 🔹 **가족 순위표(게임별 사람 기록 비교)** (2026-11-18, `family-ranking.html`·`tools/dev/set37.py`): 대표 11개 게임. 다음 단계: 다른 게임도 `set37.py`의 `BOARDS`에 한 줄씩 추가(저장 값 모양과 좋은 방향 확인 필요), 폰 실제 확인
 - [x] **맞고(2인 고스톱) + 컴퓨터 1단계** (2026-11-11, `gostop-core.js`·`go-stop.html`)
 - [x] 🔹 **고스톱 2단계: 3인(컴퓨터 2명), 흔들기·폭탄·쌍피 선택, 멍박·고박** (2026-11-16, 결정 D28, `gostop-core.js` 2~3인 엔진·`gs_test.js` 3000판×2·`gs_ui.js` 3인 대국)
-- [ ] 🔹 **고스톱 3단계: 같이 하기 연동**(카드 게임 공통 틀 재사용)
+- [x] 🔹 **고스톱 3단계: 같이 하기 연동** (2026-11-18, `net-gostop.html`·`tools/dev/set39.py`): 사람끼리 2~3명. 다음 단계: 같이 하기 안 컴퓨터 참가(연습 모드), 포인트 연결, 폰 여러 대 실제 확인
 - [ ] 🔹 (참고) 가족 명단 연동 확대(위 항목으로 대체): 현재 `family.js`를 쓰는 화면은 9개뿐(chore-rota, family-members, health-log, med-check, order-picker, personality-16, scoreboard, team-split, index). 아래 게임에 "가족 중 누가 하는지" 선택을 붙이면 좋아요.
   - 점수·기록이 있는 게임(반응속도, 타자, 암산, 구구단 등) → 사람별 최고 기록
   - `scoreboard.html`과 연결해 가족 순위표

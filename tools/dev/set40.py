@@ -29,12 +29,14 @@ function yOpt(m, sd) { // 움직임 하나를 글로: "3번 칸의 말 2개(업�
   const from = m.from < 0 ? "출발 전 말 1개" : yNode(sd.stacks[m.from].at) + "의 말 " + m.n + "개" + (m.n > 1 ? "(업은 말)" : "");
   return from + " → " + yTo(m.to) + (m.cap ? " · 잡기! (" + m.cap + "개)" : "") + (m.stack ? " · 업기" : "");
 }
-function ySticks(t) { return t ? t.flat.map((f, i) => `<span class="${f ? "sf" : "sr"}${i === 0 ? " mk" : ""}">${f ? "▬" : "◖"}</span>`).join("") : "🥢🥢🥢🥢"; }
+const YIMG = { "-1": "backdo", 1: "do", 2: "gae", 3: "geol", 4: "yut", 5: "mo" };   // 결과 카드 그림: yut-img/yut_*.svg (사용자가 만든 그림)
+Object.values(YIMG).forEach(k => { const im = new Image(); im.src = "yut-img/yut_" + k + ".svg"; });   // 던질 때 늦게 뜨지 않게 미리 불러와요
+const yCard = n => YIMG[n] ? `<img class="ycard" src="yut-img/yut_${YIMG[n]}.svg" alt="${Y.NAMES[n]}" draggable="false">` : "🥢🥢🥢🥢";
 function yPanel(sd, mark) { return `${mark} 출발 전 ${sd.w} · 도착 ${sd.done}/4` + (sd.stacks.length ? " · 판 위 " + sd.stacks.map(s => yNode(s.at) + (s.n > 1 ? " ×" + s.n : "")).join(", ") : ""); }
 const yRules = () => `<details open><summary>📘 윷놀이 규칙 (일반 규칙)</summary><div class="note" style="margin-top:6px">
   <b>목표</b>: 내 말 <b>4개</b>를 먼저 모두 한 바퀴 돌려 <b>도착</b>시키면 이겨요.<br>
   <b>윷 던지기</b>: 가락 4개의 평평한 면(▬)이 몇 개인지 봐요.
-  <table class="tbl"><tbody><tr><td>평평한 면 1개</td><td><b>도</b> 1칸 (표시된 ✖ 가락이 평평하면 <b>빽도</b>: 뒤로 1칸)</td></tr><tr><td>2개</td><td><b>개</b> 2칸</td></tr><tr><td>3개</td><td><b>걸</b> 3칸</td></tr><tr><td>4개</td><td><b>윷</b> 4칸 · 한 번 더</td></tr><tr><td>0개(모두 둥글어요)</td><td><b>모</b> 5칸 · 한 번 더</td></tr></tbody></table>
+  <table class="tbl"><tbody><tr><td><img class="yth" src="yut-img/yut_do.svg" alt="도"></td><td>평평한 면 1개</td><td><b>도</b> 1칸</td></tr><tr><td><img class="yth" src="yut-img/yut_gae.svg" alt="개"></td><td>2개</td><td><b>개</b> 2칸</td></tr><tr><td><img class="yth" src="yut-img/yut_geol.svg" alt="걸"></td><td>3개</td><td><b>걸</b> 3칸</td></tr><tr><td><img class="yth" src="yut-img/yut_yut.svg" alt="윷"></td><td>4개</td><td><b>윷</b> 4칸 · 한 번 더</td></tr><tr><td><img class="yth" src="yut-img/yut_mo.svg" alt="모"></td><td>0개(모두 둥글어요)</td><td><b>모</b> 5칸 · 한 번 더</td></tr><tr><td><img class="yth" src="yut-img/yut_backdo.svg" alt="빽도"></td><td>도인데 ✖ 표시 가락이 평평</td><td><b>빽도</b> 뒤로 1칸</td></tr></tbody></table>
   <b>말판</b>: 바깥 길을 반시계 방향으로 출발점(0)에서 시작해 19번 칸을 지나면 도착이에요. 말은 던진 칸 수만큼 움직여요. 도착은 출발점을 정확히 밟거나 지나가면 돼요.<br>
   <b>🔀 지름길</b>: 모서리 <b>5번</b>이나 <b>10번</b>에 <b>서 있다가</b> 다음에 움직이면 안쪽 길로 들어가요. 그냥 지나가기만 하면 바깥 길이에요.<br>
   &nbsp;&nbsp;• 5번에서 시작: 20→21→<b>가운데(22)</b>→23→24→15번으로 나와 바깥 길(15 이후)을 이어 가요.<br>
@@ -53,6 +55,10 @@ CSS = r'''
 @keyframes ypulse{to{stroke-width:2}}
 .yb .yn{font-size:9px;fill:var(--muted);pointer-events:none;font-family:var(--font-body)}.yb .yn.s{font-size:7.5px}.yb .yt{pointer-events:none}.yb .ytn{font-size:15px;font-weight:800;fill:#fff;pointer-events:none}
 .sticks{font-size:2rem;display:flex;justify-content:center;gap:10px;min-height:1.4em}.sticks .sf{color:#c78a3b}.sticks .sr{color:#8a5a22}.sticks .mk{outline:2px dashed #d6453a;outline-offset:2px;border-radius:4px}
+.sticks{min-height:0}.ycard{height:190px;width:auto;max-width:100%;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.35);animation:ythrow .65s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes ythrow{0%{transform:translateY(-70px) rotate(-14deg) scale(.55);opacity:0}55%{transform:translateY(8px) rotate(3deg) scale(1.06);opacity:1}100%{transform:none}}
+.yth{height:56px;width:auto;border-radius:6px;display:block}
+@media(prefers-reduced-motion:reduce){.ycard{animation:none}}
 .pcsb{display:grid;gap:6px}.pcsb button{text-align:left;line-height:1.35}
 .tbl{width:100%;border-collapse:collapse;font-size:.85rem;margin:4px 0}.tbl td{padding:3px 4px;border-bottom:1px solid var(--line)}
 details summary{cursor:pointer;font-weight:700}.note{font-size:.85rem;color:var(--muted);line-height:1.6}
@@ -70,11 +76,11 @@ SOLO_BODY = r'''  <div class="stats" style="grid-template-columns:repeat(4,1fr)"
 SOLO_JS = SHARED + r'''
 let S, turn, roll, opts, over, busy, wins = ld(KEY) || 0, lastT = null;
 const who = w => w ? "컴퓨터" : "나";
-function newGame() { S = [Y.newSide(), Y.newSide()]; turn = 0; roll = null; opts = []; over = false; busy = false; lastT = null; $("fin").hidden = true; $("res").textContent = ""; $("msg").textContent = "윷을 던져 보세요!"; render(); }
+function newGame() { S = [Y.newSide(), Y.newSide()]; turn = 0; roll = null; opts = []; over = false; busy = false; lastT = null; $("sticks").innerHTML = yCard(0); $("fin").hidden = true; $("res").textContent = ""; $("msg").textContent = "윷을 던져 보세요!"; render(); }
 function render() {
   const hl = roll !== null && turn === 0 ? [...new Set(opts.filter(m => typeof m.to === "number").map(m => m.to))] : [];
   $("brd").innerHTML = yBoard([{ s: S[0], c: YCOL[0] }, { s: S[1], c: YCOL[1] }], hl);
-  $("sticks").innerHTML = ySticks(lastT); $("d1").textContent = S[0].done + "/4"; $("d2").textContent = S[1].done + "/4"; $("wins").textContent = wins; $("turn").textContent = over ? "-" : who(turn);
+  $("d1").textContent = S[0].done + "/4"; $("d2").textContent = S[1].done + "/4"; $("wins").textContent = wins; $("turn").textContent = over ? "-" : who(turn);
   $("pnl").innerHTML = "🔵 나: " + esc(yPanel(S[0], "").trim()) + "<br>🔴 컴퓨터: " + esc(yPanel(S[1], "").trim());
   const pk = roll !== null && turn === 0 && !over;
   $("pick").hidden = !pk; $("pick").innerHTML = pk ? opts.map((m, k) => `<button class="btn ghost sm" type="button" data-k="${k}">${esc(yOpt(m, S[0]))}</button>`).join("") : "";
@@ -82,7 +88,7 @@ function render() {
 }
 function say(t) { $("msg").textContent = t; }
 function doThrow(w) {
-  const t = Y.toss(); lastT = t; roll = t.n; $("res").textContent = t.name + (t.n >= 4 ? "!" : ""); opts = Y.options(S[w], S[1 - w], roll);
+  const t = Y.toss(); lastT = t; roll = t.n; $("sticks").innerHTML = yCard(t.n); $("res").textContent = t.name + (t.n >= 4 ? "!" : ""); opts = Y.options(S[w], S[1 - w], roll);
   if (!opts.length) { say(`${who(w)}: ${t.name}! 움직일 수 있는 말이 없어서 차례가 넘어가요`); roll = null; turn = 1 - w; render(); if (turn === 1) cpuLater(); return; }
   if (w === 0 && opts.length > 1) { say(`${t.name}! 움직일 말을 골라요 (아래 버튼이나 초록 칸을 눌러요)`); render(); return; }
   resolve(w, w === 0 ? 0 : Y.aiPick(S[w], S[1 - w], roll));
@@ -114,7 +120,7 @@ duo("net-yut.html", "윷놀이 (같이 하기)", "🪵", 25, "net-yut-v1",
     "일반 규칙 윷놀이예요. 말 4개를 먼저 모두 도착시키면 이겨요. 지름길(5번·10번·가운데), 업기, 빽도, 잡기가 있고 윷·모·잡기는 한 번 더 던져요. 던지고 나면 움직일 말을 골라요(초록 칸을 눌러도 돼요). 규칙은 화면 맨 아래에 있어요.",
     '<p class="center" id="st"></p><div id="brd"></div><div class="center"><div class="sticks" id="sticks">🥢🥢🥢🥢</div><p class="big center" id="res" style="font-size:1.8rem;min-height:1.3em"></p></div><p class="center note" id="pnl"></p><div class="pcsb" id="pick" hidden></div><button class="btn" id="th" type="button" hidden>🥢 윷 던지기</button><div id="rules"></div>',
     SHARED + r'''
-function newRound() { return { ph: "play", s: { [P.a]: Y.newSide(), [P.b]: Y.newSide() }, turn: P.first, roll: null, msg: "", tf: null, tn: "" }; }
+function newRound() { return { ph: "play", s: { [P.a]: Y.newSide(), [P.b]: Y.newSide() }, turn: P.first, roll: null, msg: "", tf: null, tn: "", tr: 0, tk: 0 }; }
 const mk = id => id === P.a ? "🔵" : "🔴", colOf = id => id === P.a ? YCOL[0] : YCOL[1];
 function optsOf(id, r) { return Y.options(P.s[id], P.s[oppOf(id)], r); }
 function resolveNet(from, r, k) {
@@ -129,7 +135,7 @@ function onAct(from, d) {
   if (P.ph !== "play" || from !== P.turn) return;
   const o = oppOf(from);
   if (d.t === "throw" && P.roll === null) {
-    const t = Y.toss(); P.tf = t.flat; P.tn = t.name; const ops = optsOf(from, t.n);
+    const t = Y.toss(); P.tf = t.flat; P.tn = t.name; P.tr = t.n; P.tk = (P.tk || 0) + 1; const ops = optsOf(from, t.n);
     if (!ops.length) { P.msg = `${nameOf(from)}: ${t.name}! 움직일 수 있는 말이 없어서 차례가 넘어가요`; P.turn = o; }
     else if (ops.length === 1) resolveNet(from, t.n, 0);
     else { P.roll = t.n; P.msg = `${nameOf(from)}: ${t.name}! 움직일 말을 골라요`; }
@@ -138,12 +144,14 @@ function onAct(from, d) {
   pushS();
 }
 function changed(was) {}
+let shownK = -1;
 function render() {
   if (!P || !P.s) { $("st").textContent = !P ? "연결을 기다리는 중…" : "상대가 들어오면 시작해요"; $("brd").innerHTML = ""; $("th").hidden = true; $("pick").hidden = true; $("pnl").textContent = ""; if (!$("rules").firstChild) $("rules").innerHTML = yRules(); if (P) common(); return; }
   const pl = amPlayer(), can = P.ph === "play" && P.turn === me, mine = can && P.roll !== null, ops = mine ? optsOf(me, P.roll) : [];
   $("st").textContent = P.ph === "end" ? endText() : (P.msg ? P.msg + " · " : "") + (!pl ? `구경 중 · ${mk(P.turn)} ${nm(P.turn)} 차례` : can ? (P.roll !== null ? `${Y.NAMES[P.roll]}! 움직일 말을 골라요` : "내 차례! 윷을 던져요") : "상대 차례예요…");
   $("brd").innerHTML = yBoard([{ s: P.s[P.a], c: YCOL[0] }, { s: P.s[P.b], c: YCOL[1] }], [...new Set(ops.filter(m => typeof m.to === "number").map(m => m.to))]);
-  $("sticks").innerHTML = ySticks(P.tf ? { flat: P.tf } : null); $("res").textContent = P.tn || "";
+  if (!P.tr) { $("sticks").innerHTML = yCard(0); shownK = -1; } else if (shownK !== P.tk) { $("sticks").innerHTML = yCard(P.tr); shownK = P.tk; }   // 새로 던졌을 때만 다시 그려서 튀어나오는 동작이 한 번만 보이게
+  $("res").textContent = P.tn || "";
   $("pnl").innerHTML = [P.a, P.b].map(id => esc(mk(id) + " " + nm(id) + ": " + yPanel(P.s[id], "").trim())).join("<br>");
   $("th").hidden = !(can && P.roll === null); $("pick").hidden = !mine;
   $("pick").innerHTML = mine ? ops.map((m, k) => `<button class="btn ghost sm" type="button" data-k="${k}">${esc(yOpt(m, P.s[me]))}</button>`).join("") : "";

@@ -76,6 +76,7 @@ button.gc{cursor:pointer}button.gc:disabled{cursor:default}
 .hint{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.8rem;color:var(--muted)}.hint label{display:flex;gap:4px;align-items:center;cursor:pointer;font-weight:700}.hint label{white-space:nowrap}.hint{flex-wrap:wrap}
 .res h2{margin-bottom:4px}.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:3px 2px;border-bottom:1px solid var(--line)}.tbl td:last-child{text-align:right}
 details summary{cursor:pointer;font-weight:700}
+.next{margin-top:2px}.next details{margin-top:2px}.next summary{font-size:.78rem;font-weight:600;color:var(--muted)}
 @media(prefers-reduced-motion:reduce){.gc.new,.field .gc.pick{animation:none}}
 
 </style>
@@ -87,9 +88,9 @@ details summary{cursor:pointer;font-weight:700}
   <div class="card tight"><div class="cap" id="cap"></div></div>
   <div class="card tight"><div class="board"><div class="field" id="field" aria-label="바닥"></div><div class="pile" id="pile"></div></div></div>
   <div class="msg" id="msg" role="status" aria-live="polite"></div>
-  <div class="next" id="next" aria-live="polite"></div>
   <div class="acts" id="acts"></div>
   <div class="hand" id="hand" aria-label="내 손패"></div>
+  <div class="next" id="next" aria-live="polite"></div>
   <div class="hint"><span>🟢 짝이 맞는 패 · ⭐ 추천 패 · 점선은 바닥의 짝</span><span style="display:flex;gap:10px;align-items:center"><label>인원 <select id="modeSel"><option value="2">맞고 (2인)</option><option value="3">고스톱 (3인)</option></select></label><label>그림 <select id="artSel"><option value="gemini">🖼️ 새 민화</option><option value="minhwa">🎎 단순 민화</option><option value="old">🎴 옛 화투</option></select></label><label><input type="checkbox" id="hintOn"> 힌트</label></span></div>
   <div class="card res" id="result" hidden></div>
   <div class="card"><details><summary>📘 규칙 보기</summary><div class="note" style="margin-top:6px">
@@ -200,6 +201,8 @@ function stepsHtml() {
   return '<div class="steps" aria-label="이번 차례의 진행 순서">' + stepsList().map((t, i) => `<span class="${i < k ? "done" : i === k ? "on" : ""}">${i < k ? "✔ " : ""}${t}</span>`).join("") + "</div>"
     + (S.phase === "end" ? "" : `<small>내 손패 ${S.hands[ME].length}장 · 더미 ${S.deck.length}장 · 손패가 모두 없어지면 판이 끝나요 (${THR()}점 이상이면 중간에 고·스톱을 고를 수 있어요)</small>`);
 }
+let nxOpen = false; // 손패 아래 안내의 「단계·자세한 설명」을 펼쳐 둔 상태(다시 그려도 유지)
+$("next").addEventListener("toggle", e => { if (e.target.tagName === "DETAILS") nxOpen = e.target.open; }, true);
 function render() {
   const pick = S.phase === "pick" && S.turn === ME ? S.pend.ids : [];
   const my = S.turn === ME && S.phase === "hand" && S.hands[ME].length > 0, hint = my && stats.hint;
@@ -211,7 +214,7 @@ function render() {
   $("pile").innerHTML = `<div class="stk" aria-hidden="true">${"<i></i>".repeat(Math.max(nl, S.deck.length ? 1 : 0))}</div><b>${S.deck.length}</b>더미`;
   $("hand").innerHTML = mine.slice().sort((a, b) => a - b).map(id => { const m = hint && S.field.some(x => GS.month(x) === GS.month(id)); return card(id, { on: my, cls: (my ? "can" : "") + (id === best ? " best" : m ? " match" : "") }); }).join("");
   $("msg").textContent = pick.length ? "👆 가져올 패를 골라요 (반짝이는 패)" : msg;
-  const ng = nextGuide(); $("next").className = "next" + (ng[2] ? " " + ng[2] : ""); $("next").innerHTML = esc(ng[0]) + (ng[1] ? "<small>" + esc(ng[1]) + "</small>" : "") + stepsHtml();
+  const ng = nextGuide(); $("next").className = "next" + (ng[2] ? " " + ng[2] : ""); $("next").innerHTML = esc(ng[0]) + `<details${nxOpen ? " open" : ""}><summary>단계·자세한 설명 보기</summary>` + (ng[1] ? "<small>" + esc(ng[1]) + "</small>" : "") + stepsHtml() + "</details>";
   let a = "";
   if (S.turn === ME) {
     if (S.phase === "gostop") a = `<button class="btn" id="bgo" type="button">🔥 고! (지금 ${S.pend.score}점${(S.shake[S.turn] || S.bomb[S.turn]) ? " → 배수 반영 " + S.pend.score * Math.pow(GS.RULES.shakeMult, S.shake[S.turn] || 0) * Math.pow(GS.RULES.bombMult, S.bomb[S.turn] || 0) + "점" : ""})</button><button class="btn ghost" id="bstop" type="button">✋ 스톱</button>`;

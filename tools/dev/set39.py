@@ -13,7 +13,7 @@ _i = _src.index("CSS = r'''") + len("CSS = r'''"); GCSS = _src[_i:_src.index("''
 GCSS = GCSS.replace("main{gap:8px}\n", "").replace(".pile{", ".gpile{").replace(".pile b{", ".gpile b{")
 assert ".gpile" in GCSS and ".gc{" in GCSS
 
-BODY = '<p class="center" id="st"></p><div class="bar" id="bar"></div><div id="tbl"></div><div class="hand" id="hand"></div><div class="acts" id="acts"></div><button class="btn" id="go" type="button" hidden>▶ 시작하기</button>'
+BODY = '<p class="center" id="st"></p><div class="bar" id="bar"></div><div id="tbl"></div><div class="acts" id="acts"></div><div class="hand" id="hand"></div><div class="next" id="nx" aria-live="polite"></div><button class="btn" id="go" type="button" hidden>▶ 시작하기</button>'
 
 JS = r'''
 const GS = window.GoStop, GTAG = { gwang: "광", yeol: "열", pi: "피" };
@@ -103,7 +103,7 @@ function resultHtml(V) {
 function render() {
   if (!P) { $("st").textContent = "연결을 기다리는 중…"; return; }
   goBtn();
-  if (P.ph === "wait" || !P.v) { $("st").textContent = waitText(2, 3); $("bar").innerHTML = ""; idle(); return; }
+  if (P.ph === "wait" || !P.v) { $("st").textContent = waitText(2, 3); $("bar").innerHTML = ""; $("nx").textContent = ""; idle(); return; }
   const V = P.v, n = V.hn.length, myS = seatOf(me), mine = P.ph === "play" && myS >= 0 && V.turn === myS;
   const order = []; if (myS >= 0) { for (let k = 1; k < n; k++) order.push((myS + k) % n); order.push(myS); } else for (let p = 0; p < n; p++) order.push(p);
   $("bar").style.gridTemplateColumns = "repeat(" + n + ",1fr)"; $("bar").className = "bar" + (n === 3 ? " b3" : ""); $("bar").innerHTML = barHtml(V, order, myS);
@@ -112,7 +112,7 @@ function render() {
   const nl = Math.min(4, Math.ceil(V.dn / 6));
   $("tbl").innerHTML = capTable(V, order, myS)
     + `<div class="card tight"><div class="board"><div class="field" id="field" aria-label="바닥">${V.field.slice().sort((a, b) => a - b).map(id => gcard(id, { on: pk.includes(id), cls: pk.includes(id) ? "pick" : "" })).join("")}</div><div class="gpile"><div class="stk" aria-hidden="true">${"<i></i>".repeat(Math.max(nl, V.dn ? 1 : 0))}</div><b>${V.dn}</b>더미</div></div></div>`
-    + `<div class="next${mine ? "" : " cpu"}">${esc(guideText(V, myS, mine))}</div>` + resultHtml(V) + totHtml();
+    + resultHtml(V) + totHtml(); $("nx").className = "next" + (mine ? "" : " cpu"); $("nx").textContent = guideText(V, myS, mine);
   $("hand").innerHTML = hh.map(id => gcard(id, { on: canPlay, cls: canPlay && V.field.some(x => GS.month(x) === GS.month(id)) ? "can match" : (canPlay ? "can" : "") })).join("");
   let a = "";
   if (mine && P.ph === "play") {

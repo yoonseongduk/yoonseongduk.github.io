@@ -19,7 +19,7 @@ const ok = (c, m) => { console.log((c ? '[통과] ' : '[실패] ') + m); if (!c)
   for (let i = 0; i < 600; i++) {
     const end = await p.$eval('#result', e => !e.hidden); if (end) break;
     if (!sawNew && await p.$('#cap .gc.new')) sawNew = true;
-    sawGuide.add(await p.$eval('#next', e => e.innerText)); sawStep.add(await p.$eval('#next .steps .on', e => e.innerText).catch(() => 'none'));
+    sawGuide.add(await p.$eval('#next', e => e.innerText)); sawStep.add(await p.$eval('#next .steps .on', e => e.textContent).catch(() => 'none'));
     if (await p.$('#bstop')) { await p.click(i % 2 ? '#bstop' : '#bgo').catch(() => {}); await p.waitForTimeout(300); continue; }
     if (await p.$('#bq1')) { await p.click(i % 2 ? '#bq1' : '#bq0').catch(() => {}); await p.waitForTimeout(300); continue; }
     if (await p.$('#bflip')) { await p.click('#bflip').catch(() => {}); await p.waitForTimeout(300); continue; }
@@ -72,7 +72,7 @@ const ok = (c, m) => { console.log((c ? '[통과] ' : '[실패] ') + m); if (!c)
   await setup([0, 1, 2, 40, 41, 44, 45], [8, 12], [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]);
   await p.click('#hand .gc[data-id="0"]'); await p.waitForTimeout(150);
   ok(/흔들기/.test(await p.$eval('#bq1', e => e.textContent)) && /흔들기를 할까요/.test(await p.$eval('#next', e => e.innerText)), '손패 같은 달 3장(바닥에 없음): 「흔들기」 버튼과 안내가 뜬다');
-  ok((await p.$eval('#next .steps .on', e => e.innerText)).includes('손패 내기'), '흔들기 질문 중에는 ① 손패 내기 단계가 강조된다');
+  ok((await p.$eval('#next .steps .on', e => e.textContent)).includes('손패 내기'), '흔들기 질문 중에는 ① 손패 내기 단계가 강조된다');
   await p.click('#bq1'); await p.waitForTimeout(250);
   ok(await p.evaluate(() => S.shake[0] === 1 && S.last && S.last.sp.includes('흔들기')) && /흔들기/.test(await p.$eval('#msg', e => e.textContent)), '흔들기를 누르면 적용되고 안내 메시지에 표시된다');
   ok(await p.$eval('#bar .bs:last-child .bm', e => /🎲×1/.test(e.textContent)), '점수판에 내 흔들기(🎲×1)가 표시된다');
@@ -83,7 +83,7 @@ const ok = (c, m) => { console.log((c ? '[통과] ' : '[실패] ') + m); if (!c)
   ok(await p.evaluate(() => S.bomb[0] === 1 && S.hands[0].length === 4) && /폭탄/.test(await p.$eval('#msg', e => e.textContent)), '폭탄을 누르면 3장이 한꺼번에 나가고 메시지에 표시된다');
   await setup([], [8], [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]);
   ok((await p.$$('#hand .gc')).length === 0 && !!(await p.$('#bflip')) && /더미 뒤집기/.test(await p.$eval('#next', e => e.innerText)), '손패가 없으면 「더미 뒤집기」 버튼과 안내가 뜬다');
-  ok((await p.$eval('#next .steps .on', e => e.innerText)).includes('더미 뒤집기'), '손패 없는 차례에는 ③ 더미 뒤집기 단계가 강조된다');
+  ok((await p.$eval('#next .steps .on', e => e.textContent)).includes('더미 뒤집기'), '손패 없는 차례에는 ③ 더미 뒤집기 단계가 강조된다');
   await p.click('#bflip'); await p.waitForTimeout(250);
   ok(await p.evaluate(() => S.last && S.last.hand === null && S.deck.length < 14) && /더미만 뒤집어/.test(await p.$eval('#msg', e => e.textContent)), '「더미 뒤집기」를 누르면 더미만 뒤집고 메시지가 나온다');
   await p.evaluate(() => clearTimeout(timer));

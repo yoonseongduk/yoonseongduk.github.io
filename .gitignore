@@ -15,3 +15,5 @@ tests/
 tools/dev/gemini_src/
 .git-private/
 비공개_동기화.md
+tools/dev/gs_shot*.png
+tools/dev/index.png

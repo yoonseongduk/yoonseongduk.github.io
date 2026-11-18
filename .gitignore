@@ -13,3 +13,5 @@ tests/
 .env
 *.key
 tools/dev/gemini_src/
+.git-private/
+비공개_동기화.md

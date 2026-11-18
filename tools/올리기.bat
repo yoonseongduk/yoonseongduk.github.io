@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0.."
-echo ===== 가족 게임 올리기 =====
+echo ===== 가족 게임 올리기 (공개 사이트 + 비공개 문서) =====
 echo [1/5] 사이트의 최신 내용을 먼저 받아 옵니다...
 git pull
 if errorlevel 1 goto fail
@@ -26,11 +26,13 @@ git push
 if errorlevel 1 goto fail
 echo.
 echo 완료! 1~2분 뒤 사이트에 반영되고, 폰은 인터넷이 될 때 앱을 열면 새 버전을 받아요.
+call :private
 pause
 exit /b 0
 :nothing
 echo.
 echo 올릴 변경 내용이 없어요. (파일을 고친 뒤에 다시 실행하세요.)
+call :private
 pause
 exit /b 0
 :noid
@@ -49,4 +51,24 @@ exit /b 1
 echo.
 echo 중간에 오류가 났어요. 위의 메시지를 캡처해서 알려 주세요.
 pause
+exit /b 1
+:private
+echo.
+echo ===== 비공개 작업 문서(design, 작업상태) 올리기 =====
+set PG=git --git-dir=.git-private --work-tree=.
+if not exist .git-private goto privskip
+%PG% add -f design tests 작업상태.md 비공개_동기화.md
+%PG% diff --cached --quiet
+if errorlevel 1 %PG% commit -m "작업 문서 갱신"
+%PG% pull --no-rebase --no-edit origin main
+if errorlevel 1 goto privfail
+%PG% push origin main
+if errorlevel 1 goto privfail
+echo 비공개 문서도 올렸어요.
+exit /b 0
+:privskip
+echo .git-private가 없어 건너뜁니다. (비공개_동기화.md의 최초 설정 참고)
+exit /b 0
+:privfail
+echo 비공개 문서 올리기에서 오류가 났어요. 위의 메시지를 확인하세요. (충돌이면 비공개_동기화.md 규칙 참고)
 exit /b 1

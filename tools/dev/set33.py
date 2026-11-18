@@ -101,44 +101,7 @@ render();
 
 # ── 윷놀이: 시작 화면의 윷놀이와 같은 간단 규칙(20칸 한 바퀴, 말 2개, 지름길 없음). 도1 개2 걸3 윷4 모5(확률은 윷가락 4개처럼 4·6·4·1·1/16).
 #   윷·모가 나오거나 상대 말을 잡으면 한 번 더. 말 2개를 먼저 도착시키면 승리. 말 위치: 0 = 아직 출발 전, 1~19 = 판 위, 20 = 도착.
-duo("net-yut.html", "윷놀이 (같이 하기)", "🪵", 25, "net-yut-v1",
-    "윷을 던져 나온 칸만큼 말을 움직여요. 도=1칸, 개=2, 걸=3, 윷=4, 모=5. 윷이나 모가 나오거나 상대 말을 잡으면 한 번 더 던져요! 말 2개를 먼저 한 바퀴(20칸) 돌려 도착시키면 이겨요.",
-    '<p class="center" id="st"></p><div class="track" id="tr"></div><div class="row" id="pcs"></div><button class="btn" id="th" type="button" hidden>🪵 윷 던지기</button>',
-    r'''
-const NAMES = ["", "도", "개", "걸", "윷", "모"], TR = 20;
-const throwYut = () => { const f = [0, 0, 0, 0].reduce(a => a + (Math.random() < .5 ? 1 : 0), 0); return f === 0 ? 5 : f; };   // 평평한 면 개수: 1도 2개 3걸 4윷, 0이면 모
-function newRound() { return { ph: "play", pos: { [P.a]: [0, 0], [P.b]: [0, 0] }, turn: P.first, roll: 0, msg: "" }; }
-function onAct(from, d) {
-  if (P.ph !== "play" || from !== P.turn) { if (d.t === "again" && P.ph === "end") { round(true); pushS(); } return; }
-  if (d.t === "throw" && !P.roll) { P.roll = throwYut(); P.msg = `${nameOf(from)}: ${NAMES[P.roll]}!`; }
-  else if (d.t === "move" && P.roll && (d.k === 0 || d.k === 1) && P.pos[from][d.k] < TR) { const o = oppOf(from), np = Math.min(TR, P.pos[from][d.k] + P.roll); let extra = P.roll >= 4, cap = false;
-    P.pos[from][d.k] = np; if (np < TR) P.pos[o] = P.pos[o].map(x => { if (x === np) { cap = true; return 0; } return x; });
-    if (cap) { extra = true; P.msg = `${nameOf(from)}가 상대 말을 잡았어요! 한 번 더`; } else if (extra) P.msg = `${NAMES[P.roll]}! 한 번 더 던져요`; else P.msg = np >= TR ? `${nameOf(from)}의 말이 도착했어요!` : "";
-    P.roll = 0; if (P.pos[from].every(x => x >= TR)) finish(from); else if (!extra) P.turn = o; }
-  else return;
-  pushS();
-}
-function changed(was) {}
-// 판: 6×6 테두리 20칸. 1번 칸은 오른쪽 아래에서 위로, 시계 반대 방향으로 돌아 20번(도착)이 출발점.
-const CELL = (() => { const a = []; for (let r = 4; r >= 0; r--) a.push([r, 5]); for (let c = 4; c >= 0; c--) a.push([0, c]); for (let r = 1; r <= 5; r++) a.push([r, 0]); for (let c = 1; c <= 5; c++) a.push([5, c]); return a; })();
-function render() {
-  if (!P || !P.pos) { $("st").textContent = !P ? "연결을 기다리는 중…" : "상대가 들어오면 시작해요"; $("tr").innerHTML = ""; $("th").hidden = true; $("pcs").innerHTML = ""; if (P) common(); return; }
-  const pl = amPlayer(), can = P.ph === "play" && P.turn === me, mark = id => id === P.first ? "🔵" : "🔴";
-  $("st").textContent = P.ph === "end" ? endText() : (P.msg ? P.msg + " · " : "") + (!pl ? `구경 중 · ${mark(P.turn)} ${nm(P.turn)} 차례` : can ? (P.roll ? `${NAMES[P.roll]}(${P.roll}칸)! 움직일 말을 골라요` : "내 차례! 윷을 던져요") : "상대 차례예요…");
-  const at = {}; [P.a, P.b].forEach(id => P.pos[id].forEach((x, k) => { if (x > 0 && x < TR) (at[x] = at[x] || []).push(mark(id) + (k + 1)); }));
-  let h = ""; for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) { const n = CELL.findIndex(([y, x]) => y === r && x === c) + 1;
-    h += n ? `<div class="tc${n === 20 ? " go" : n % 5 === 0 ? " cn" : ""}">${n === 20 ? "출발·도착" : (at[n] || []).join("")}</div>` : (r === 1 && c === 1 ? `<div class="mid">${P.roll ? NAMES[P.roll] : "🪵"}<small>${[P.a, P.b].map(id => `${mark(id)} ${esc(nm(id))}: 대기 ${P.pos[id].filter(x => !x).length} · 도착 ${P.pos[id].filter(x => x >= TR).length}`).join("<br>")}</small></div>` : r >= 1 && r <= 4 && c >= 1 && c <= 4 ? "" : "<div></div>"); }
-  $("tr").innerHTML = h; $("th").hidden = !(can && !P.roll);
-  $("pcs").innerHTML = can && P.roll ? P.pos[me].map((x, k) => x < TR ? `<button class="btn ghost sm" type="button" data-k="${k}">${mark(me)}${k + 1} 말 (${x ? x + "번 칸" : "출발 전"} → ${Math.min(TR, x + P.roll) >= TR ? "도착" : Math.min(TR, x + P.roll) + "번 칸"})</button>` : "").join("") : "";
-  $("pcs").querySelectorAll("[data-k]").forEach(b => b.onclick = () => act({ t: "move", k: +b.dataset.k }));
-  common();
-}
-$("th").onclick = () => act({ t: "throw" });
-render();
-''', '''.track{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;width:min(100%,330px);margin:0 auto}.tc{aspect-ratio:1;border-radius:50%;background:var(--soft);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.8rem;line-height:1;text-align:center;flex-wrap:wrap}
-.tc.cn{background:color-mix(in srgb,var(--accent) 22%,var(--surface))}.tc.go{border-radius:10px;font-size:.6rem;background:color-mix(in srgb,var(--ok) 25%,var(--surface))}
-.mid{grid-column:2/6;grid-row:2/6;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-display);font-size:2.4rem;text-align:center}.mid small{font-family:var(--font-body);font-size:.75rem;line-height:1.5;color:var(--muted)}''')
-
+# 윷놀이(net-yut.html)는 일반 규칙(말 4개·지름길·업기·빽도)으로 바뀌어 set40.py 가 만들어요.
 # ── 주사위 족보(여러 명, 2~6명): 시작 화면 주사위 족보와 같은 12칸 점수표. 차례마다 3번까지 굴리고, 고정한 주사위는 그대로. 12칸을 모두 채우면 끝.
 party("net-yacht.html", "주사위 족보 (같이 하기)", "🎲", 330, "net-yacht-v1",
       "연결된 사람이 차례대로 해요. 주사위 5개를 한 차례에 최대 3번 굴리고, 마음에 드는 주사위는 눌러서 고정해요. 점수표에서 칸을 골라 채우면 다음 사람 차례! 12칸을 모두 채우면 끝나요. 1~6의 합이 63점 이상이면 보너스 35점.",

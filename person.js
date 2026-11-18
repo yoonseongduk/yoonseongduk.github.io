@@ -12,7 +12,7 @@
   var UNL = { "go-stop.html": 1 }; // 포인트 제한(하루 횟수·한 판 상한)이 없는 게임 (결정 D18)
   var BET = { "blackjack.html": 1 }; // 내 포인트를 판돈으로 거는 게임(결정 D25): 제한이 없고, 자동 플레이·이김·최고 기록 점수는 주지 않으며 fgPerson.stake()로 정산한다
   var PAT = /-best-|-wins-|-stats-/, PK = "fg-points-v1", PLAYER = "fg-player-v1", ME = "family-me-v1";
-  var RAWPAGE = /\/(backup|family-points)\.html$/.test(location.pathname); // 이 화면들은 사람별 키 변환 없이 저장소를 그대로 읽는다
+  var RAWPAGE = /\/(backup|family-points|family-ranking)\.html$/.test(location.pathname); // 이 화면들은 사람별 키 변환 없이 저장소를 그대로 읽는다
 
   function rg(k) { try { return g0.call(LS, k); } catch (e) { return null; } }
   function rs(k, v) { try { s0.call(LS, k, v); } catch (e) {} }

@@ -32,6 +32,7 @@
         }, n === who);
       });
       item("⭐ 포인트 보기", function () { if (leaveOk()) location.href = "family-points.html"; });
+      item("🏅 가족 순위표", function () { if (leaveOk()) location.href = "family-ranking.html"; });
       b.parentNode.insertBefore(m, b.nextSibling);
       m.style.position = "static"; m.style.marginTop = "6px"; m.style.flexBasis = "100%";
     };

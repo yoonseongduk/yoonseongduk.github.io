@@ -52,9 +52,9 @@ function render() {
 $("draw").onclick = () => act({ t: "draw" });
 render();
 ''', '''
-.hand{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}.hand button{border:0;background:none;padding:0}.hand button[disabled]{opacity:.45}
-.cd{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:42px;height:58px;border-radius:8px;border:1px solid var(--line);background:#fff;color:#1c2233;font-size:.9rem;line-height:1.1}.cd b{font-family:var(--font-display);font-size:1.2rem}.cd.rd{color:#d6453a}
-.cd.bg{width:72px;height:100px;font-size:1.4rem}.cd.bg b{font-size:2rem}
+.hand{--cw:clamp(62px,19vw,78px);display:flex;flex-wrap:wrap;gap:4px;justify-content:center}.hand button{border:0;background:none;padding:0}.hand:has(> :nth-child(6)){padding-right:calc(var(--cw)*.3)}.hand:has(> :nth-child(6)) > *{margin-right:calc(var(--cw)*-.3)}.hand:has(> :nth-child(12)){--cw:clamp(52px,16vw,64px)}.hand:has(> :nth-child(12)){padding-right:calc(var(--cw)*.45)}.hand:has(> :nth-child(12)) > *{margin-right:calc(var(--cw)*-.45)}.hand button[disabled]{opacity:.45}
+.cd{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;--w:var(--cw,clamp(62px,19vw,78px));width:var(--w);height:calc(var(--w)*1.4);border-radius:8px;border:1px solid var(--line);background:#fff;color:#1c2233;font-size:.9rem;line-height:1.1}.cd b{font-family:var(--font-display);font-size:1.2rem}.cd.rd{color:#d6453a}
+.cd.bg{--w:clamp(92px,28vw,120px);font-size:1.4rem}.cd.bg b{font-size:2rem}
 .cd.tr,.cd.tr.bk{background-color:transparent;background-size:100% 100%;background-repeat:no-repeat;border:0;box-shadow:0 1px 3px rgba(0,0,0,.4);font-size:0!important;color:transparent}.cd.tr b{font-size:0!important}''')
 
 # ── 체커: 8×8 어두운 칸, 대각선 앞으로 한 칸, 뛰어넘어 잡기(잡을 수 있으면 반드시, 이어서 잡기), 끝줄에 닿으면 왕(뒤로도). 상대 말을 다 잡거나 못 움직이게 하면 승리.

@@ -25,7 +25,7 @@ GAMES = [["net-tictactoe.html", "⭕❌", "틱택토", "2명 대결 · 나머지
          ["net-pig.html", "🎲", "피그 주사위", "2명 · 굴릴까 저금할까, 먼저 100점", "dice"],
          ["net-memory.html", "🃏", "카드 짝 대결", "2명 · 번갈아 짝 맞추기", "hide"],
          ["net-rps.html", "✊", "가위바위보 대결", "2명 · 몰래 고르고 동시에 공개, 3승 먼저", "hand"],
-         ["net-highcard.html", "🂡", "하이카드 대결", "2명 · 카드 10장으로 몰래 한 장씩", "card"],
+         ["net-highcard.html", "img:cards-trump/hA.webp", "하이카드 대결", "2명 · 카드 10장으로 몰래 한 장씩", "card"],
          ["net-buzzer.html", "🔔", "퀴즈 버저", "여러 명 · 방장이 문제를 내면 먼저 누른 사람이 답해요", "party"],
          ["net-mafia.html", "🕵️", "역할 뽑기 (마피아)", "여러 명 · 각자 폰에 비밀 역할", "party"],
          ["net-react.html", "⚡", "반응 대결", "여러 명 · 초록색이 되면 누구보다 빨리", "hand"],
@@ -53,7 +53,7 @@ QCNT = gamenum.quiz_counts()
 BUZZ_OK = [r[0] for r in RACE if r[3] == "quiz" and "const D = [" in open(gamenum.REPO + "/" + r[0], encoding="utf-8").read()]
 HUB_CSS = LINK_CSS + '''
 .gm{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px}
-.gm .e{font-size:1.8rem}.gm .ti{height:2.3rem;width:auto;display:block;border-radius:3px}.gm b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.25rem}
+.gm .e{font-size:1.8rem}.gm .ti{height:3.6rem;width:auto;display:block;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.4)}.gm b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.25rem}
 #gf{width:100%;border:0;display:block;min-height:200px;background:transparent}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:8px}.no{font-size:.72rem;color:var(--muted);font-weight:700;margin-left:4px}
 .gh{font-family:var(--font-display);font-size:1.1rem;margin-top:6px}

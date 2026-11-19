@@ -50,7 +50,7 @@ textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}.inhub body{
 .li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}
 #tbl{display:grid;gap:8px}#acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}#acts .btn{flex:1 1 140px}
 .inhub .card{padding:8px 4px}   /* 같이 하기 화면 안에서는 바깥 여백을 줄여 카드를 더 크게 */
-.hand{--cw:clamp(72px,22vw,96px);display:flex;flex-wrap:wrap;gap:4px;justify-content:center}.hand button{border:0;background:none;padding:0;transition:transform .1s}.hand button[disabled]{opacity:.5}
+.hand{--cw:clamp(72px,22vw,96px);display:flex;flex-wrap:wrap;gap:4px;justify-content:center}.hand button{border:0;background:none;padding:0;transition:transform .1s}.hand button[disabled]{filter:brightness(.6) saturate(.75)}.hand button:not([disabled]){position:relative;z-index:1}   /* 낼 수 없는 카드는 어둡게(반투명이면 겹친 카드가 비쳐 보여요), 낼 수 있는 카드는 맨 위로 */
 .hand button.on{transform:translateY(-8px)}.hand button.on .cd{outline:3px solid var(--accent)}
 .cd{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;--w:var(--cw,clamp(72px,22vw,96px));width:var(--w);height:calc(var(--w)*1.4);border-radius:7px;border:1px solid #c9c2b4;background:#fff;color:#1c2233;font-size:.85rem;line-height:1.05;flex:none}
 .cd b{font-family:var(--font-display);font-size:1.15rem;font-weight:400}.cd.rd{color:#d6453a}.cd.jk{color:#7a3fd0}

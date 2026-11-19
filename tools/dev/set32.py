@@ -270,7 +270,7 @@ render();
 # ── 하이카드 대결: 각자 카드 10장(1~13), 매 판 몰래 한 장씩 내서 큰 쪽이 1점, 10판 뒤 많이 이긴 쪽이 승리. 패는 각자 폰에만(방장이 따로 보냄).
 duo("net-highcard.html", "하이카드 대결 (같이 하기)", '<img src="cards-trump/hA.webp" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.35)">', 45, "net-highcard-v1",
     "카드 10장(트럼프 카드 52장 중)을 받아요. 숫자는 A=1 … J=11, Q=12, K=13이에요. 매 판 내 카드 한 장을 몰래 골라 내면 동시에 공개되고, 숫자가 큰 쪽이 1점! 큰 카드를 언제 쓸지 잘 생각하세요. 10판 뒤 더 많이 이긴 쪽이 승리해요. 내 카드는 내 폰에만 보여요.",
-    '<p class="center" id="st"></p><div class="stats" id="cnt"></div><div class="big" id="rev"></div><div class="choice" id="hand" style="grid-template-columns:repeat(4,1fr)"></div><div id="log"></div>',
+    '<p class="center" id="st"></p><div class="stats" id="cnt"></div><div class="big" id="rev"></div><div class="hcf" id="hand"></div><div id="log"></div>',
     r'''
 let hand = [];
 const RKN = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"], rv = c => c % 13 + 1;   // 카드 번호 = 무늬×13 + 숫자(0=A … 12=K), 숫자 값은 1~13
@@ -302,7 +302,7 @@ function render() {
   common();
 }
 render();
-''', '''.cimg{display:block;width:100%;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.45)}.choice button.cb{padding:0;border:0;background:none}.choice button.cb[disabled]{opacity:.55}
+''', '''.cimg{display:block;width:100%;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.45)}.inhub .card{padding:8px 4px}.hcf{--cw:clamp(72px,22vw,96px);display:flex;flex-wrap:wrap;justify-content:center;gap:6px 0;padding-right:calc(var(--cw)*.35)}.hcf button.cb{width:var(--cw);flex:none;margin-right:calc(var(--cw)*-.35);padding:0;border:0;background:none}.hcf button.cb[disabled]{opacity:.55}
 .rvs{display:flex;align-items:center;justify-content:center;gap:10px}.rvs .cimg,.rvs .cph{width:clamp(96px,30vw,128px)}.rvs small{color:var(--muted)}.cph{display:flex;align-items:center;justify-content:center;aspect-ratio:5/7;border:2px dashed var(--line);border-radius:8px;font-size:2rem;color:var(--muted)}
 .lg{display:flex;align-items:center;gap:6px}.lg .cimg{width:44px}''')
 

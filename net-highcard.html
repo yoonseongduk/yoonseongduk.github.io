@@ -47,7 +47,7 @@ textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}.inhub body{
 .grid8{display:grid;gap:3px;width:min(100%,340px);margin:0 auto}.grid8 button{aspect-ratio:1;border-radius:6px;border:0;padding:0;font-size:1.3rem;line-height:1}
 .big{font-family:var(--font-display);font-size:clamp(2rem,12vw,3.4rem);text-align:center;line-height:1.2}
 .choice{display:grid;gap:8px}.choice button{padding:14px 8px;border-radius:14px;border:1px solid var(--line);background:var(--soft);font-family:var(--font-display);font-size:1.3rem}.choice button[disabled]{opacity:.4}
-.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.cimg{display:block;width:100%;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.45)}.choice button.cb{padding:0;border:0;background:none}.choice button.cb[disabled]{opacity:.55}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}.cimg{display:block;width:100%;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.45)}.inhub .card{padding:8px 4px}.hcf{--cw:clamp(72px,22vw,96px);display:flex;flex-wrap:wrap;justify-content:center;gap:6px 0;padding-right:calc(var(--cw)*.35)}.hcf button.cb{width:var(--cw);flex:none;margin-right:calc(var(--cw)*-.35);padding:0;border:0;background:none}.hcf button.cb[disabled]{opacity:.55}
 .rvs{display:flex;align-items:center;justify-content:center;gap:10px}.rvs .cimg,.rvs .cph{width:clamp(96px,30vw,128px)}.rvs small{color:var(--muted)}.cph{display:flex;align-items:center;justify-content:center;aspect-ratio:5/7;border:2px dashed var(--line);border-radius:8px;font-size:2rem;color:var(--muted)}
 .lg{display:flex;align-items:center;gap:6px}.lg .cimg{width:44px}
 </style>
@@ -55,7 +55,7 @@ textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}.inhub body{
 <body>
 <main>
   <h1>하이카드 대결 (같이 하기) <img src="cards-trump/hA.webp" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.35)"></h1>
-  <div class="card"><p class="center" id="st"></p><div class="stats" id="cnt"></div><div class="big" id="rev"></div><div class="choice" id="hand" style="grid-template-columns:repeat(4,1fr)"></div><div id="log"></div><p class="center note" id="sc"></p><button class="btn ghost sm" id="again" type="button" hidden>새 판</button></div>
+  <div class="card"><p class="center" id="st"></p><div class="stats" id="cnt"></div><div class="big" id="rev"></div><div class="hcf" id="hand"></div><div id="log"></div><p class="center note" id="sc"></p><button class="btn ghost sm" id="again" type="button" hidden>새 판</button></div>
   <p class="muted">카드 10장(트럼프 카드 52장 중)을 받아요. 숫자는 A=1 … J=11, Q=12, K=13이에요. 매 판 내 카드 한 장을 몰래 골라 내면 동시에 공개되고, 숫자가 큰 쪽이 1점! 큰 카드를 언제 쓸지 잘 생각하세요. 10판 뒤 더 많이 이긴 쪽이 승리해요. 내 카드는 내 폰에만 보여요.</p>
 </main>
 <script>

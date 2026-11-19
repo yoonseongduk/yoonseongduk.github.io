@@ -82,8 +82,8 @@ $("again").onclick = newGame; newGame();''',
  css=".bs{display:grid;gap:4px;max-width:300px;margin:0 auto;width:100%}.bc{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:color-mix(in srgb,#2f8fe0 20%,var(--surface));padding:0;font-size:1.2rem;min-width:0;display:flex;align-items:center;justify-content:center}.bc.miss{background:var(--surface)}.bc.hit{background:color-mix(in srgb,var(--bad) 28%,var(--surface))}.mine .bc.ship{background:var(--soft)}.bc:disabled{opacity:1;cursor:default}")
 
 # ---------- 하이카드 ----------
-make(H+"high-card.html", "하이카드 대결", "🃏", 355, "highcard-best-v1",
- "카드 10장(1~13 중 랜덤)을 받아요. 매 판 <b>내 카드 한 장을 골라 내면</b> 컴퓨터도 한 장을 내고, <b>숫자가 큰 쪽이 점수 1점</b>! 큰 카드를 언제 쓸지 잘 생각하세요. 10판 뒤 더 많이 이긴 쪽이 승리해요.",
+make(H+"high-card.html", "하이카드 대결", '<img src="cards-trump/sA.webp" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.35)">', 355, "highcard-best-v1",
+ "카드 10장(트럼프 카드 52장 중)을 받아요. 숫자는 A=1 … J=11, Q=12, K=13이에요. 매 판 <b>내 카드 한 장을 골라 내면</b> 컴퓨터도 한 장을 내고, <b>숫자가 큰 쪽이 점수 1점</b>! 큰 카드를 언제 쓸지 잘 생각하세요. 10판 뒤 더 많이 이긴 쪽이 승리해요.",
  r'''  <div class="stats"><div class="stat"><small>나</small><b id="s1">0</b></div><div class="stat"><small>판</small><b id="rd">1/10</b></div><div class="stat"><small>컴퓨터</small><b id="s2">0</b></div></div>
   <div class="table"><div class="slot" id="cpuc">?</div><span class="vs">VS</span><div class="slot" id="myc">?</div></div>
   <p class="center" id="msg" style="min-height:1.5em;font-weight:700">낼 카드를 고르세요</p>
@@ -91,20 +91,23 @@ make(H+"high-card.html", "하이카드 대결", "🃏", 355, "highcard-best-v1",
   <div class="res" id="res" hidden></div>
   <button class="btn ghost" id="again" type="button">새 게임</button>''',
  r'''let mine = [], cpu = [], round = 0, s1 = 0, s2 = 0, busy = false, wins = ld(KEY) || 0, tempo = 1;
-const draw10 = () => shuf(Array.from({ length: 13 }, (_, k) => k + 1)).slice(0, 10).sort((a, b) => a - b);
+const RKN = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"], rv = c => c % 13 + 1;   // 카드 번호 = 무늬×13 + 숫자(0=A … 12=K), 숫자 값은 1~13
+const cimg = c => `<img class="cimg" src="cards-trump/${"shdc"[Math.floor(c / 13)]}${RKN[c % 13]}.webp" alt="${RKN[c % 13]}" draggable="false">`;
+const BACK = '<img class="cimg" src="cards-trump/back.webp" alt="" draggable="false">';
+const draw10 = () => shuf(Array.from({ length: 52 }, (_, k) => k)).slice(0, 10).sort((a, b) => rv(a) - rv(b) || a - b);
 const face = n => ({ 1: "A", 11: "J", 12: "Q", 13: "K" }[n] || n);
-function newGame() { mine = draw10(); cpu = shuf(draw10()); round = 0; s1 = s2 = 0; busy = false; $("cpuc").textContent = "?"; $("myc").textContent = "?"; $("msg").textContent = "낼 카드를 고르세요"; $("res").hidden = true; render(); }
-function render() { $("hand").innerHTML = mine.map((n, k) => `<button type="button" class="pc ${mine[k] === 0 ? "used" : ""}" data-k="${k}" ${mine[k] === 0 || busy ? "disabled" : ""}>${mine[k] === 0 ? "" : face(n)}</button>`).join(""); $("s1").textContent = s1; $("s2").textContent = s2; $("rd").textContent = Math.min(round + 1, 10) + "/10"; }
+function newGame() { mine = draw10(); cpu = shuf(draw10()); round = 0; s1 = s2 = 0; busy = false; $("cpuc").innerHTML = BACK; $("myc").innerHTML = BACK; $("msg").textContent = "낼 카드를 고르세요"; $("res").hidden = true; render(); }
+function render() { $("hand").innerHTML = mine.map((n, k) => `<button type="button" class="pc ${n < 0 ? "used" : ""}" data-k="${k}" ${n < 0 || busy ? "disabled" : ""} aria-label="${n < 0 ? "낸 카드" : RKN[n % 13]}">${n < 0 ? "" : cimg(n)}</button>`).join(""); $("s1").textContent = s1; $("s2").textContent = s2; $("rd").textContent = Math.min(round + 1, 10) + "/10"; }
 async function play(k) {
-  if (busy || !mine[k]) return; busy = true; const m = mine[k], c = cpu[round]; mine[k] = 0; $("myc").textContent = face(m); $("cpuc").textContent = face(c);
+  if (busy || mine[k] === undefined || mine[k] < 0) return; busy = true; const mc = mine[k], cc = cpu[round], m = rv(mc), c = rv(cc); mine[k] = -1; $("myc").innerHTML = cimg(mc); $("cpuc").innerHTML = cimg(cc);
   if (m > c) { s1++; $("msg").textContent = `${face(m)} > ${face(c)} 내가 이겼어요!`; } else if (m < c) { s2++; $("msg").textContent = `${face(m)} < ${face(c)} 컴퓨터 승!`; } else $("msg").textContent = "같은 숫자! 무승부";
   round++; render(); await new Promise(r => setTimeout(r, 900 * tempo));
-  if (round >= 10) { const w = s1 > s2; if (w) { wins++; sv(KEY, wins); } $("res").innerHTML = `<b>${s1 === s2 ? "비겼어요 🤝" : w ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요"} (${s1} : ${s2})</b><p class="muted">누적 승리 ${wins}번</p>`; $("res").hidden = false; } else { $("cpuc").textContent = "?"; $("myc").textContent = "?"; $("msg").textContent = "낼 카드를 고르세요"; }
+  if (round >= 10) { const w = s1 > s2; if (w) { wins++; sv(KEY, wins); } $("res").innerHTML = `<b>${s1 === s2 ? "비겼어요 🤝" : w ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요"} (${s1} : ${s2})</b><p class="muted">누적 승리 ${wins}번</p>`; $("res").hidden = false; } else { $("cpuc").innerHTML = BACK; $("myc").innerHTML = BACK; $("msg").textContent = "낼 카드를 고르세요"; }
   busy = false; render();
 }
 $("hand").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) play(+b.dataset.k); });
 $("again").onclick = newGame; newGame();''',
- css=".table{display:flex;align-items:center;justify-content:center;gap:16px}.slot{width:90px;height:120px;border-radius:14px;border:2px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:3rem}.vs{font-family:var(--font-display);color:var(--muted)}.hand{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.pc{aspect-ratio:3/4;border-radius:10px;border:2px solid var(--accent);background:var(--surface);font-family:var(--font-display);font-size:1.6rem;padding:0;min-width:0}.pc.used{visibility:hidden}")
+ css=".table{display:flex;align-items:center;justify-content:center;gap:16px}.slot{width:90px;height:120px;border-radius:14px;border:2px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:3rem}.vs{font-family:var(--font-display);color:var(--muted)}.hand{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.pc{aspect-ratio:3/4;border-radius:10px;border:2px solid var(--accent);background:var(--surface);font-family:var(--font-display);font-size:1.6rem;padding:0;min-width:0}.pc.used{visibility:hidden}.slot{width:96px;height:134px;padding:0;border:0;background:none}.slot img,.pc img{width:100%;height:100%;display:block;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.45)}.pc{aspect-ratio:5/7;border:0;background:none}")
 
 # ---------- 마피아 역할 배정 ----------
 make(H+"mafia-helper.html", "역할 뽑기 (마피아)", "🕵️", 270, "mafia-helper-v1",

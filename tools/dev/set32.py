@@ -268,18 +268,21 @@ render();
 ''')
 
 # ── 하이카드 대결: 각자 카드 10장(1~13), 매 판 몰래 한 장씩 내서 큰 쪽이 1점, 10판 뒤 많이 이긴 쪽이 승리. 패는 각자 폰에만(방장이 따로 보냄).
-duo("net-highcard.html", "하이카드 대결 (같이 하기)", "🂡", 45, "net-highcard-v1",
-    "카드 10장(1~13 중 랜덤)을 받아요. 매 판 내 카드 한 장을 몰래 골라 내면 동시에 공개되고, 숫자가 큰 쪽이 1점! 큰 카드를 언제 쓸지 잘 생각하세요. 10판 뒤 더 많이 이긴 쪽이 승리해요. 내 카드는 내 폰에만 보여요.",
+duo("net-highcard.html", "하이카드 대결 (같이 하기)", '<img src="cards-trump/hA.webp" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.35)">', 45, "net-highcard-v1",
+    "카드 10장(트럼프 카드 52장 중)을 받아요. 숫자는 A=1 … J=11, Q=12, K=13이에요. 매 판 내 카드 한 장을 몰래 골라 내면 동시에 공개되고, 숫자가 큰 쪽이 1점! 큰 카드를 언제 쓸지 잘 생각하세요. 10판 뒤 더 많이 이긴 쪽이 승리해요. 내 카드는 내 폰에만 보여요.",
     '<p class="center" id="st"></p><div class="stats" id="cnt"></div><div class="big" id="rev"></div><div class="choice" id="hand" style="grid-template-columns:repeat(5,1fr)"></div><div id="log"></div>',
     r'''
 let hand = [];
-function newRound() { const deal = () => Array.from({ length: 10 }, () => ri(1, 13)).sort((x, y) => x - y); H.hand = { [P.a]: deal(), [P.b]: deal() }; H.pick = {};
+const RKN = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"], rv = c => c % 13 + 1;   // 카드 번호 = 무늬×13 + 숫자(0=A … 12=K), 숫자 값은 1~13
+const cimg = c => `<img class="cimg" src="cards-trump/${"shdc"[Math.floor(c / 13)]}${RKN[c % 13]}.webp" alt="${RKN[c % 13]}" draggable="false">`;
+const BACK = '<img class="cimg" src="cards-trump/back.webp" alt="" draggable="false">';
+function newRound() { const deal = () => shuf(Array.from({ length: 52 }, (_, i) => i)).slice(0, 10).sort((x, y) => rv(x) - rv(y) || x - y); H.hand = { [P.a]: deal(), [P.b]: deal() }; H.pick = {};
   return { ph: "play", rno: 1, w: { [P.a]: 0, [P.b]: 0 }, picked: {}, rev: null, log: [] }; }
 function afterPush() { if (H.hand) [P.a, P.b].forEach(id => privTo(id, { hand: H.hand[id] })); }
 function onPriv(d) { if (Array.isArray(d.hand)) { hand = d.hand; render(); } }
 function onAct(from, d) {
   if (d.t === "play" && P.ph === "play" && !P.rev && !P.picked[from]) { const c = +d.c, k = H.hand[from].indexOf(c); if (k < 0) return; H.hand[from].splice(k, 1); H.pick[from] = c; P.picked[from] = 1;
-    if (P.picked[P.a] && P.picked[P.b]) { const ca = H.pick[P.a], cb = H.pick[P.b], win = ca === cb ? null : ca > cb ? P.a : P.b; if (win) P.w[win]++;
+    if (P.picked[P.a] && P.picked[P.b]) { const ca = H.pick[P.a], cb = H.pick[P.b], win = rv(ca) === rv(cb) ? null : rv(ca) > rv(cb) ? P.a : P.b; if (win) P.w[win]++;
       P.rev = { [P.a]: ca, [P.b]: cb, win }; P.log.push([ca, cb]); H.pick = {};
       if (P.rno >= 10) { const wa = P.w[P.a], wb = P.w[P.b]; finish(wa === wb ? "D" : wa > wb ? P.a : P.b); }
       else setTimeout(() => { if (P.ph !== "play") return; P.rev = null; P.picked = {}; P.rno++; pushS(); }, 1600); }
@@ -292,14 +295,16 @@ function render() {
   const pl = amPlayer(), can = pl && P.ph === "play" && !P.rev && !P.picked[me], r = P.rev;
   $("st").textContent = P.ph === "end" ? endText() : r ? (r.win ? (r.win === me ? "이번 판은 내가 이겼어요!" : `${nm(r.win)} 이겼어요!`) : "같은 숫자! 비겼어요") : !pl ? `구경 중 · ${P.rno}/10판` : can ? `${P.rno}/10판 · 낼 카드를 골라요` : "상대를 기다려요…";
   $("cnt").innerHTML = [P.a, P.b].map(id => `<div class="stat"><small>${esc(nm(id))}</small><b>${P.w[id]}점</b></div>`).join("") + `<div class="stat"><small>판</small><b>${Math.min(P.rno, 10)}/10</b></div>`;
-  $("rev").innerHTML = r ? `${r[P.a]} <small style="font-size:.4em">vs</small> ${r[P.b]}<div class="note">${esc(nm(P.a))} · ${esc(nm(P.b))}</div>` : [P.a, P.b].map(id => P.picked[id] ? "🂠" : "🤔").join(" ");
-  $("hand").innerHTML = pl && P.ph === "play" ? hand.map(c => `<button type="button" data-c="${c}"${can ? "" : " disabled"}>${c}</button>`).join("") : "";
+  $("rev").innerHTML = r ? `<div class="rvs">${cimg(r[P.a])}<small>vs</small>${cimg(r[P.b])}</div><div class="note">${esc(nm(P.a))} · ${esc(nm(P.b))}</div>` : `<div class="rvs">${[P.a, P.b].map(id => P.picked[id] ? BACK : '<span class="cph">?</span>').join("<small>vs</small>")}</div><div class="note">${esc(nm(P.a))} · ${esc(nm(P.b))}</div>`;
+  $("hand").innerHTML = pl && P.ph === "play" ? hand.map(c => `<button type="button" class="cb" data-c="${c}" aria-label="${RKN[c % 13]}"${can ? "" : " disabled"}>${cimg(c)}</button>`).join("") : "";
   $("hand").querySelectorAll("button:not([disabled])").forEach(b => b.onclick = () => { act({ t: "play", c: +b.dataset.c }); });
-  $("log").innerHTML = P.log.length ? `<div class="lb">지난 판 (${esc(nm(P.a))} : ${esc(nm(P.b))})</div>` + P.log.map(([x, y], i) => `<div class="li"><span>${i + 1}판</span><b>${x} : ${y}</b></div>`).reverse().join("") : "";
+  $("log").innerHTML = P.log.length ? `<div class="lb">지난 판 (${esc(nm(P.a))} : ${esc(nm(P.b))})</div>` + P.log.map(([x, y], i) => `<div class="li"><span>${i + 1}판</span><span class="lg">${cimg(x)}<b>:</b>${cimg(y)}</span></div>`).reverse().join("") : "";
   common();
 }
 render();
-''')
+''', '''.cimg{display:block;width:100%;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.45)}.choice button.cb{padding:0;border:0;background:none}.choice button.cb[disabled]{opacity:.55}
+.rvs{display:flex;align-items:center;justify-content:center;gap:10px}.rvs .cimg,.rvs .cph{width:clamp(80px,26vw,110px)}.rvs small{color:var(--muted)}.cph{display:flex;align-items:center;justify-content:center;aspect-ratio:5/7;border:2px dashed var(--line);border-radius:8px;font-size:2rem;color:var(--muted)}
+.lg{display:flex;align-items:center;gap:6px}.lg .cimg{width:30px}''')
 
 # ───────── 여러 명 파티 게임 공통: 모든 기기가 참가, 방장 게임이 진행·판정하고 공개 상태 P를 나눠 줘요. 한 사람에게만 보낼 것은 privTo.
 # 게임마다 initState()·onRoster()·onAct(from, d)·onPriv(d)·changed(was)·render()를 만들어요.

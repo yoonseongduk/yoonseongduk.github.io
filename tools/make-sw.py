@@ -17,14 +17,17 @@ files += ["cards-trump/" + os.path.basename(f) for f in sorted(glob.glob(R + "ca
 files += ["cards-minhwa/" + os.path.basename(f) for f in sorted(glob.glob(R + "cards-minhwa/*.svg"))]   # 맞고 화투 그림(직접 그린 민화풍)
 files += ["yut-img/" + os.path.basename(f) for f in sorted(glob.glob(R + "yut-img/yut_*.svg"))]   # 윷 결과 카드 그림(PNG·GIF는 용량이 커서 저장하지 않음)
 files += [os.path.basename(f) for f in sorted(glob.glob(R + "*.js")) if os.path.basename(f) != "sw.js"]
-h = hashlib.md5()
+h = hashlib.md5(b"sw-format-2")                                           # 서비스 워커 방식(아래 js 틀)을 바꾸면 이 글자도 바꿔서 새 버전 이름이 나오게 해요(예전 저장 공간과 섞이지 않게)
 TEXT = (".html", ".css", ".webmanifest", ".js", ".txt", ".json", ".svg")   # Windows가 줄 끝 표시(CRLF)를 바꿔도 같은 버전이 되도록 맞춘다
+hashes = {}                                                              # 파일별 지문: 폰이 업데이트할 때 바뀐 파일만 새로 받는 데 써요
 for f in files:
     if f != "./":
         data = open(R + f, "rb").read()
         if f.endswith(TEXT):
             data = data.replace(b"\r\n", b"\n")
         h.update(data)
+        hashes[f] = hashlib.md5(data).hexdigest()[:8]
+hashes["./"] = hashes.get("index.html", "")                              # "./"(주소 맨 처음)은 시작 화면 파일과 같아요
 ver = "family-games-" + h.hexdigest()[:10]
 old = open(R + "sw.js", encoding="utf-8").read() if os.path.exists(R + "sw.js") else ""
 mv, mb = re.search(r'VERSION = "([^"]+)"', old), re.search(r'BUILD = "([^"]+)"', old)
@@ -35,19 +38,36 @@ js = '''// 오프라인에서도 게임이 실행되도록 모든 파일을 폰�
 const VERSION = "%s";
 const BUILD = "%s";      // 이 버전을 만든 날짜(한국 시간)
 const GAMES = %d;         // 들어 있는 게임 수
-const PRECACHE = %s;
+const PRECACHE = %s;      // 파일 이름 → 파일 지문(내용이 같으면 같은 값)
+const FILES = Object.keys(PRECACHE), META = "family-games-meta";
 
+// 업데이트: 새 저장 공간을 통째로 만들되(중간에 끊겨도 예전 것은 그대로), 지문이 같은 파일은 인터넷에서 다시 받지 않고
+// 예전 저장 공간에서 복사해요. 바뀐 파일만 새로 받아요. (예전 지문표가 없으면 한 번은 전부 받아요)
+async function readMeta() { try { const r = await (await caches.open(META)).match("manifest"); return r ? await r.json() : null; } catch (e) { return null; } }
 self.addEventListener("install", e => {
   e.waitUntil((async () => {
-    const c = await caches.open(VERSION);
-    await Promise.all(PRECACHE.map(u => c.add(new Request(u, { cache: "reload" })).catch(() => {})));
+    const prev = await readMeta();
+    if (!prev || prev.version !== VERSION) await caches.delete(VERSION);   // 이전에 끊긴 설치가 남긴 반쪽짜리를 지우고 새로 시작(쓰고 있는 저장 공간은 지우지 않아요)
+    const oldC = prev && prev.version && prev.version !== VERSION && await caches.has(prev.version) ? await caches.open(prev.version) : null;
+    const c = await caches.open(VERSION), done = {};
+    await Promise.all(FILES.map(async u => {
+      const req = new Request(u);
+      if (oldC && prev.hashes && prev.hashes[u] === PRECACHE[u]) {  // 바뀌지 않은 파일: 복사
+        const hit = await oldC.match(req); if (hit) { await c.put(req, hit); done[u] = PRECACHE[u]; return; }
+      }
+      try { const r = await fetch(new Request(u, { cache: "reload" })); if (!r.ok) throw 0; await c.put(req, r); done[u] = PRECACHE[u]; }   // 바뀐 파일·새 파일: 새로 받기
+      catch (err) {                                                 // 못 받았으면 예전 것을 그대로 두고(지문은 예전 값) 다음 업데이트 때 다시 시도
+        const hit = oldC && await oldC.match(req); if (hit) { await c.put(req, hit); done[u] = (prev.hashes && prev.hashes[u]) || ""; }
+      }
+    }));
+    try { await (await caches.open(META)).put("manifest", new Response(JSON.stringify({ version: VERSION, hashes: done }))); } catch (err) {}
     self.skipWaiting();
   })());
 });
 
 self.addEventListener("activate", e => {
   e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (k !== VERSION) await caches.delete(k);
+    for (const k of await caches.keys()) if (k !== VERSION && k !== META) await caches.delete(k);
     await self.clients.claim();
   })());
 });
@@ -82,10 +102,10 @@ self.addEventListener("message", e => {
   if (e.data && e.data.type === "status" && e.ports[0]) {
     e.waitUntil((async () => {
       const c = await caches.open(VERSION);
-      e.ports[0].postMessage({ count: (await c.keys()).length, total: PRECACHE.length, version: VERSION, build: BUILD, games: GAMES });
+      e.ports[0].postMessage({ count: (await c.keys()).length, total: FILES.length, version: VERSION, build: BUILD, games: GAMES });
     })());
   }
 });
-''' % (ver, build, games, json.dumps(files, ensure_ascii=False))
+''' % (ver, build, games, json.dumps(hashes, ensure_ascii=False, separators=(",", ":")))
 open(R + "sw.js", "w", encoding="utf-8", newline="\n").write(js)
 print("sw.js 갱신:", ver, "| 저장 대상 파일", len(files), "개")

@@ -1,0 +1,21 @@
+{
+  "packageId": "io.github.yoonseongduk.familygames",
+  "host": "yoonseongduk.github.io",
+  "name": "우리 가족 미니 게임",
+  "launcherName": "가족 게임",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#c4552b",
+  "navigationColor": "#c4552b",
+  "backgroundColor": "#f4f1ec",
+  "enableNotifications": false,
+  "startUrl": "/index.html",
+  "iconUrl": "https://yoonseongduk.github.io/icon-512.png",
+  "maskableIconUrl": "https://yoonseongduk.github.io/icon-512.png",
+  "webManifestUrl": "https://yoonseongduk.github.io/manifest.webmanifest",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "fallbackType": "customtabs",
+  "signingKey": { "path": "./android.keystore", "alias": "familygames" },
+  "_설명": "이 파일은 Bubblewrap(명령줄 도구)용 견본이에요. packageId는 한 번 정하면 바꿀 수 없어요. PWABuilder 웹사이트를 쓰면 이 파일은 필요 없어요."
+}

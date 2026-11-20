@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "여기에_패키지_이름 (예: io.github.yoonseongduk.familygames)",
+      "sha256_cert_fingerprints": [
+        "여기에_앱_서명_SHA-256_지문 (예: 14:6D:E9:83:...)"
+      ]
+    }
+  }
+]

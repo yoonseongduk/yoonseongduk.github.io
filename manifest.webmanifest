@@ -10,6 +10,7 @@
  "orientation": "portrait",
  "background_color": "#f4f1ec",
  "theme_color": "#c4552b",
+ "categories": ["games", "entertainment", "education"],
  "prefer_related_applications": false,
  "related_applications": [{"platform": "webapp", "url": "https://yoonseongduk.github.io/manifest.webmanifest"}],
  "icons": [

@@ -242,6 +242,7 @@ start();
 
 make("out/go-stop.html", "맞고 (고스톱)", "🎴", 12, "go-stop-stats-v1",
      "컴퓨터와 둘이서(맞고) 또는 컴퓨터 둘과 셋이서(고스톱) 하는 화투 놀이예요. 이기면 점수만큼 포인트를 받고, 져도 잃지 않아요. 화투 그림은 한국 민화풍이고, 다른 그림으로 바꿀 수도 있어요.", BODY, JS, CSS)
+  <p class="muted">🪙 이 게임의 포인트는 놀이용 점수예요. 실제 돈이나 상품으로 바꿀 수 없고, 실제 도박이 아니에요.</p>
 # 규칙 엔진(gostop-core.js)과 그림(gostop-art.js)을 화면 스크립트보다 먼저 읽는다
 p = "out/go-stop.html"; s = open(p, encoding="utf-8").read()
 s = s.replace("<script>\nconst $ = id", '<script src="gostop-core.js"></script>\n<script src="gostop-art.js"></script>\n<script>\nconst $ = id', 1)

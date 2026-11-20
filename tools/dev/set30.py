@@ -374,7 +374,7 @@ function bindGroups(el, q) { el.querySelectorAll("details.grp").forEach(d => d.a
 function showPick() {
   $("pick").hidden = !!game || !!R;
   const q = $("gq").value.trim().toLowerCase();
-  $("glist").innerHTML = groupsHtml(HUB_GROUPS, k => GAMES.filter(g => g[4] === k && !(solo && SOLO_NO.includes(g[0])) && findHit(q, g[2], NUMS[g[0]])).map(g => gmBtn(g[0], g[1], g[2], g[3], NUMS[g[0]] || "", "g")), q, "g") || '<p class="note">찾는 게임이 없어요.</p>';
+  $("glist").innerHTML = groupsHtml(HUB_GROUPS, k => GAMES.filter(g => g[4] === k && (!window.fgCasino || fgCasino.show(g[0])) && !(solo && SOLO_NO.includes(g[0])) && findHit(q, g[2], NUMS[g[0]])).map(g => gmBtn(g[0], g[1], g[2], g[3], NUMS[g[0]] || "", "g")), q, "g") || '<p class="note">찾는 게임이 없어요.</p>';
   $("glist").querySelectorAll("[data-g]").forEach(b => b.onclick = () => pickGame(b.dataset.g)); bindGroups($("glist"), () => $("gq").value.trim()); raceList();
 }
 function raceList() {

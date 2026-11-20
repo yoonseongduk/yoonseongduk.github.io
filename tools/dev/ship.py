@@ -18,6 +18,10 @@ for f, *_ in games:
     if 'register("sw.js")' not in s:
         s = s.replace("</body>", REG + "</body>", 1)
     if ("class=\"opt\"" in s or "WrongNotes" in s) and "wrong-hook.js" not in s: s = s.replace("</body>", '<script src="wrong-hook.js"></script>\n</body>', 1)
+    # 카드·화투 놀이(casino.js 의 FILES) 화면은 가족 앱에서 직접 열면 시작 화면으로 돌려보내요(생성기를 다시 돌려도 유지)
+    _cj = open(R + "casino.js", encoding="utf-8").read()
+    if re.search(r'"' + re.escape(f) + r'": 1', _cj) and not f.startswith("net-") and "fgCasino.guard" not in s: s = s.replace('<script src="person.js"></script>', '<script src="person.js"></script>\n<script src="casino.js"></script>\n<script>fgCasino.guard();</script>', 1)
+    if "fgCasino" in s and "casino.js" not in s and "<script>\nconst $ = id" in s: s = s.replace("<script>\nconst $ = id", '<script src="casino.js"></script>\n<script>\nconst $ = id', 1)
     if "FAMILY." in s and "family.js" not in s and "<script>\nconst $ = id" in s: s = s.replace("<script>\nconst $ = id", '<script src="family.js"></script>\n<script>\nconst $ = id', 1)
     # net-* 는 같이 하기 화면 안에서 열려서, 약 알림이 두 번 뜨지 않게 넣지 않아요
     if "med-notify.js" not in s and not f.endswith("med-check.html") and not f.startswith("net-"): s = s.replace("</body>", '<script src="med-notify.js" defer></script>\n</body>', 1)

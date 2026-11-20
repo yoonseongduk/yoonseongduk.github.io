@@ -56,6 +56,7 @@ input[type=search]:focus-visible, button:focus-visible, a:focus-visible { outlin
 section { display: flex; flex-direction: column; gap: 10px; }
 h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.35rem; margin: 0; display: flex; align-items: baseline; gap: 8px; }
 h2 span { font-family: var(--font-body); font-size: .85rem; color: var(--muted); }
+.cas { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; font-size: .92rem; } .cas input { width: 20px; height: 20px; } .cas small { color: var(--muted); }
 .subh { font-family: var(--font-display); font-weight: 400; font-size: 1.05rem; margin: 14px 0 6px; display: flex; align-items: baseline; gap: 8px; color: var(--muted); }
 .subh span { font-family: var(--font-body); font-size: .8rem; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -117,9 +118,11 @@ footer { color: var(--muted); font-size: .85rem; }
   </section>
   <input type="search" id="q" placeholder="게임 이름·설명·번호(예: 12)로 찾기" autocomplete="off" aria-label="게임 검색">
   <div class="chips" id="chips" role="group" aria-label="분류"></div>
+  <div id="casinoBox"></div>
   <div id="list"></div>
   <footer>점수와 설정은 이 휴대폰(브라우저)에만 저장돼요. · <a href="licenses.html" style="color:inherit">출처와 저작권</a> · <a href="privacy.html" style="color:inherit">개인정보 처리방침</a></footer>
 </main>
+<script src="casino.js"></script>
 <script>
 // 분류: id, 이름, 아이콘, 색(hue 0~360)
 /*NUM*/const QCNT = {"chosung-quiz.html":"99낱말","proverb-quiz.html":"200문제","trivia-quiz.html":"573문제","capital-quiz.html":"194개 나라","english-quiz.html":"206문제","idiom-quiz.html":"560문제","spelling-quiz.html":"201문제","emoji-quiz.html":"202문제","ox-quiz.html":"219문제","word-chain.html":"사전 33만 낱말","space-quiz.html":"204문제","animal-quiz.html":"204문제","korea-quiz.html":"204문제","hero-quiz.html":"203문제","weekday-quiz.html":"251문제","color-mix-quiz.html":"205문제","emoji-english-quiz.html":"202문제","tradition-quiz.html":"218문제","math-quiz.html":"205문제","flag-quiz.html":"226문제","korean-food-quiz.html":"202문제","world-food-quiz.html":"203문제","job-quiz.html":"202문제","sports-quiz.html":"213문제","music-quiz.html":"216문제","sea-quiz.html":"203문제","insect-quiz.html":"201문제","plant-quiz.html":"201문제","weather-quiz.html":"207문제","earth-quiz.html":"213문제","dino-quiz.html":"201문제","hanja-quiz.html":"3,500문제","onomatopoeia-quiz.html":"203문제","purekorean-quiz.html":"1,317문제","dialect-quiz.html":"208문제","heritage-quiz.html":"202문제","worldhero-quiz.html":"203문제","invention-quiz.html":"201문제","it-quiz.html":"209문제","safety-quiz.html":"202문제","economy-quiz.html":"203문제","fairytale-quiz.html":"202문제","zodiac-quiz.html":"202문제","hanja-write.html":"한자 3,500자","jlpt-quiz.html":"2,511문제","korean-history-quiz.html":"1,574문제","hanja-idiom-quiz.html":"3,312문제","hanja-today.html":"한자 3,500자","newword-quiz.html":"269문제"}, NUM = {"slide-puzzle.html":1,"number-merge.html":2,"mine-puzzle.html":3,"light-off.html":4,"number-baseball.html":5,"quick-math.html":6,"memory-match.html":7,"color-sequence.html":8,"reaction-test.html":9,"color-match.html":10,"whack-a-mole.html":11,"snake.html":12,"block-stack.html":13,"tic-tac-toe.html":14,"rps-tournament.html":15,"decision-roulette.html":16,"ladder-game.html":17,"hanoi.html":18,"sudoku.html":19,"chosung-quiz.html":20,"proverb-quiz.html":21,"trivia-quiz.html":22,"capital-quiz.html":23,"number-tap.html":24,"omok.html":25,"flip-board.html":26,"breakout.html":27,"word-trick.html":28,"bomb-pass.html":29,"habit-stamp.html":30,"english-quiz.html":31,"idiom-quiz.html":32,"spelling-quiz.html":33,"emoji-quiz.html":34,"ox-quiz.html":35,"word-chain.html":36,"four-in-row.html":37,"maze.html":38,"make24.html":39,"color-code.html":40,"odd-color.html":41,"number-memory.html":42,"space-quiz.html":43,"animal-quiz.html":44,"korea-quiz.html":45,"hero-quiz.html":46,"nonogram.html":47,"water-sort.html":48,"typing-test.html":49,"click-speed.html":50,"aim-trainer.html":51,"snakes-ladders.html":52,"blackjack.html":53,"rps-streak.html":54,"table-tennis.html":55,"fruit-catch.html":56,"jump-runner.html":57,"wing-bird.html":58,"stack-tower.html":59,"balloon-pop.html":60,"meteor-dodge.html":61,"road-cross.html":62,"fruit-slice.html":63,"space-shooter.html":64,"jump-up.html":65,"bug-squash.html":66,"lots.html":67,"team-split.html":68,"dice-roller.html":69,"coin-flip.html":70,"truth-dare.html":71,"balance-game.html":72,"food-worldcup.html":73,"bingo.html":74,"high-low.html":75,"lotto-picker.html":76,"pomodoro.html":77,"split-bill.html":78,"color-fill.html":79,"number-sort.html":80,"treasure-hunt.html":81,"up-down.html":82,"word-search.html":83,"weekday-quiz.html":84,"clock-quiz.html":85,"size-compare.html":86,"odd-emoji.html":87,"pattern-memory.html":88,"mukjjippa.html":89,"cham-cham-cham.html":90,"color-mix-quiz.html":91,"emoji-english-quiz.html":92,"tradition-quiz.html":93,"math-quiz.html":94,"tap-duel.html":95,"reaction-duel.html":96,"dice-combo.html":97,"mini-sudoku.html":98,"magic-square.html":99,"word-guess-en.html":100,"flag-quiz.html":101,"korean-food-quiz.html":102,"world-food-quiz.html":103,"job-quiz.html":104,"sports-quiz.html":105,"music-quiz.html":106,"sea-quiz.html":107,"insect-quiz.html":108,"plant-quiz.html":109,"weather-quiz.html":110,"earth-quiz.html":111,"dino-quiz.html":112,"hangman.html":113,"ten-pairs.html":114,"sequence-quiz.html":115,"equation-fill.html":116,"number-pyramid.html":117,"block-puzzle.html":118,"robot-path.html":119,"pipe-connect.html":120,"mirror-pattern.html":121,"sentence-order.html":122,"pancake-flip.html":123,"one-stroke.html":124,"stroop-color.html":125,"times-table.html":126,"spot-memory.html":127,"reverse-memory.html":128,"rhythm-tap.html":129,"arrow-reaction.html":130,"odd-even.html":131,"count-flash.html":132,"same-picture.html":133,"reverse-tap.html":134,"time-stop.html":135,"red-green-light.html":136,"coin-chase.html":137,"fishing.html":138,"car-dodge.html":139,"alien-defense.html":140,"cave-flyer.html":141,"gravity-flip.html":142,"cannon-shot.html":143,"bowling.html":144,"basketball-shoot.html":145,"archery.html":146,"penalty-kick.html":147,"mini-golf.html":148,"marble-drop.html":149,"air-hockey.html":150,"dots-boxes.html":151,"ship-hunt.html":152,"high-card.html":153,"mafia-helper.html":154,"charades.html":155,"choseong-party.html":156,"quiz-buzzer.html":157,"pig-dice.html":158,"game-31.html":159,"memory-duel.html":160,"order-picker.html":161,"peg-solitaire.html":162,"mancala.html":163,"hex-game.html":164,"poker-draw.html":165,"one-card.html":166,"yut-nori.html":167,"checkers.html":168,"alkkagi.html":169,"age-calc.html":170,"dday-counter.html":171,"unit-convert.html":172,"bmi-calc.html":173,"discount-calc.html":174,"scoreboard.html":175,"todo-list.html":176,"water-tracker.html":177,"allowance-book.html":178,"stopwatch-timer.html":179,"menu-picker.html":180,"daily-fortune.html":181,"hanja-quiz.html":182,"onomatopoeia-quiz.html":183,"purekorean-quiz.html":184,"dialect-quiz.html":185,"heritage-quiz.html":186,"worldhero-quiz.html":187,"invention-quiz.html":188,"it-quiz.html":189,"safety-quiz.html":190,"economy-quiz.html":191,"fairytale-quiz.html":192,"zodiac-quiz.html":193,"word-scramble.html":194,"binary-game.html":195,"knights-tour.html":196,"n-queens.html":197,"ball-juggle.html":198,"frog-jump.html":199,"twenty-questions.html":200,"wrong-notes.html":201,"hanja-write.html":202,"jlpt-quiz.html":203,"korean-history-quiz.html":204,"hanja-idiom-quiz.html":205,"calendar-tools.html":206,"personality-16.html":207,"career-calc.html":208,"bmr-calc.html":209,"exercise-kcal.html":210,"chore-rota.html":211,"health-log.html":212,"med-check.html":213,"mood-diary.html":214,"fridge-date.html":215,"family-members.html":216,"backup.html":217,"hanja-today.html":218,"link-test.html":219,"play-together.html":220,"net-tictactoe.html":221,"net-ship-hunt.html":222,"net-omok.html":223,"net-four.html":224,"net-baseball.html":225,"net-bingo.html":226,"net-flip.html":227,"net-dots.html":228,"net-mancala.html":229,"net-hex.html":230,"net-31.html":231,"net-pig.html":232,"net-memory.html":233,"net-rps.html":234,"net-highcard.html":235,"net-buzzer.html":236,"net-mafia.html":237,"net-react.html":238,"net-bomb.html":239,"net-lots.html":240,"net-onecard.html":241,"net-checkers.html":242,"net-yut.html":243,"net-yacht.html":244,"net-wordtrick.html":245,"net-hula.html":246,"net-poker.html":247,"net-oldmaid.html":248,"net-21.html":249,"net-president.html":250,"net-sevens.html":251,"family-points.html":252,"go-stop.html":253,"family-ranking.html":254,"daily-mission.html":255,"net-gostop.html":256,"newword-quiz.html":257,"quiz-flags.html":258}, NETG = [["net-tictactoe.html","⭕❌","틱택토",221],["net-ship-hunt.html","🚢","함선 찾기",222],["net-omok.html","⚫⚪","오목",223],["net-four.html","🔴🟡","사목 (4개 잇기)",224],["net-baseball.html","⚾","숫자 야구 대결",225],["net-bingo.html","🔢","빙고 대결",226],["net-flip.html","⚫⚪","뒤집기 보드",227],["net-dots.html","🟦","점 잇기 상자",228],["net-mancala.html","🫘","칼라하 (콩 옮기기)",229],["net-hex.html","🔷","헥스",230],["net-31.html","🔢","31 게임",231],["net-pig.html","🎲","피그 주사위",232],["net-memory.html","🃏","카드 짝 대결",233],["net-rps.html","✊","가위바위보 대결",234],["net-highcard.html","img:cards-trump/hA.webp","하이카드 대결",235],["net-buzzer.html","🔔","퀴즈 버저",236],["net-mafia.html","🕵️","역할 뽑기 (마피아)",237],["net-react.html","⚡","반응 대결",238],["net-bomb.html","💣","폭탄 돌리기",239],["net-lots.html","🎟️","제비뽑기",240],["net-onecard.html","img:cards-trump/cJ.webp","원카드",241],["net-checkers.html","♛","체커 (서양 장기)",242],["net-yut.html","img:yut-img/yut_icon.svg","윷놀이",243],["net-yacht.html","🎲","주사위 족보",244],["net-wordtrick.html","🤫","제시어 추리",245],["net-hula.html","img:cards-trump/h7.webp","훌라",246],["net-poker.html","img:cards-trump/dQ.webp","포커 (5장 바꾸기)",247],["net-oldmaid.html","img:cards-trump/joker-c.webp","도둑잡기",248],["net-21.html","img:cards-trump/sA.webp","블랙잭 (21)",249],["net-president.html","img:cards-trump/sK.webp","대통령 게임",250],["net-sevens.html","img:cards-trump/c7.webp","세븐 (7 늘어놓기)",251],["net-gostop.html","🎴","맞고·고스톱 (화투)",256]], BUZZ = ["proverb-quiz.html","trivia-quiz.html","english-quiz.html","idiom-quiz.html","spelling-quiz.html","emoji-quiz.html","ox-quiz.html","space-quiz.html","animal-quiz.html","korea-quiz.html","hero-quiz.html","weekday-quiz.html","color-mix-quiz.html","emoji-english-quiz.html","tradition-quiz.html","math-quiz.html","flag-quiz.html","korean-food-quiz.html","world-food-quiz.html","job-quiz.html","sports-quiz.html","music-quiz.html","sea-quiz.html","insect-quiz.html","plant-quiz.html","weather-quiz.html","earth-quiz.html","dino-quiz.html","hanja-quiz.html","onomatopoeia-quiz.html","purekorean-quiz.html","dialect-quiz.html","heritage-quiz.html","worldhero-quiz.html","invention-quiz.html","it-quiz.html","safety-quiz.html","economy-quiz.html","fairytale-quiz.html","zodiac-quiz.html","jlpt-quiz.html","korean-history-quiz.html","hanja-idiom-quiz.html","newword-quiz.html"];/*/NUM*/
@@ -130,10 +133,12 @@ const GROUPS = [
   { id: "board", n: "보드게임", e: "♟️", h: 95 },
   { id: "arcade", n: "아케이드", e: "🕹️", h: 15 },
   { id: "together", n: "함께 즐기기", e: "🎲", h: 150 },
+  { id: "casino", n: "카드·화투 놀이", e: "🃏", h: 20 },
   { id: "life", n: "생활", e: "📅", h: 40 }
 ];
 // 소분류: 분류 id → [[소분류 id, 아이콘, 이름], …]. 게임 한 줄 맨 끝(6번째)에 소분류 id를 쓰면 그 묶음으로 보여요. 소분류가 없거나 모르는 id면 "새 게임"에 모여요(구조는 그대로).
 const SUBS = {
+  casino: [["card","🎴","카드·화투"],["number","🎱","번호 뽑기"]],
   quiz: [["lang", "🔤", "글자·말·한자"], ["culture", "🏛️", "역사·문화·예술"], ["science", "🔬", "과학·자연"], ["common", "🌏", "세계·생활 상식"], ["review", "📒", "복습"]],
   together: [["link", "📡", "폰 연결"], ["pick", "🎲", "정하기 도구"], ["talk", "🎭", "말·분위기 게임"], ["duel", "✊", "승부·눈치 게임"]],
   life: [["health", "💪", "건강·몸"], ["calc", "🧮", "계산·시간 도구"], ["home", "🏠", "가족·집안"], ["fun", "🔮", "재미·운세"]],
@@ -196,7 +201,7 @@ const GAMES = [
   ["click-speed.html", "🖱️", "클릭 속도 테스트", "정해진 시간 동안 몇 번 누르는지 재요.", "react", "speed"],
   ["aim-trainer.html", "🎯", "조준 연습", "나타나는 과녁을 빠르게 맞혀요.", "react", "speed"],
   ["snakes-ladders.html", "🐍", "뱀 사다리", "주사위를 굴려 100칸에 먼저 도착해요. 컴퓨터와도 해요.", "together", "duel"],
-  ["blackjack.html", "img:cards-trump/sA.webp", "블랙잭", "카드 합을 21에 가깝게 만들어 딜러를 이겨요. 판돈은 내 포인트예요.", "board", "card"],
+  ["blackjack.html", "img:cards-trump/sA.webp", "블랙잭", "카드 합을 21에 가깝게 만들어 딜러를 이겨요. 판돈은 내 포인트예요.", "casino", "card"],
   ["rps-streak.html", "✊", "가위바위보 연승", "컴퓨터를 상대로 최고 연승에 도전해요.", "together", "duel"],
   ["table-tennis.html", "🏓", "탁구 대결", "컴퓨터와 탁구처럼 공을 주고받아요.", "arcade", "sport"],
   ["fruit-catch.html", "🧺", "과일 받기", "떨어지는 과일을 바구니로 받아요. 폭탄은 피해요!", "arcade", "run"],
@@ -218,8 +223,8 @@ const GAMES = [
   ["balance-game.html", "⚖️", "밸런스 게임", "둘 중 하나만 골라야 해요. 왜 골랐는지 이야기해 보세요.", "together", "talk"],
   ["food-worldcup.html", "🏆", "음식 토너먼트", "16강부터 결승까지, 오늘의 메뉴를 골라요.", "together", "pick"],
   ["bingo.html", "🔢", "빙고", "컴퓨터와 먼저 5줄을 만들어요.", "board", "table"],
-  ["high-low.html", "img:cards-trump/hK.webp", "하이로우", "다음 카드가 더 높을지 낮을지 맞혀요.", "board", "card"],
-  ["lotto-picker.html", "🎱", "행운 번호 뽑기", "재미로 보는 번호 6개와 보너스를 뽑아 줘요.", "life", "fun"],
+  ["high-low.html", "img:cards-trump/hK.webp", "하이로우", "다음 카드가 더 높을지 낮을지 맞혀요.", "casino", "card"],
+  ["lotto-picker.html", "🎱", "행운 번호 뽑기", "재미로 보는 번호 6개와 보너스를 뽑아 줘요.", "casino", "number"],
   ["pomodoro.html", "🍅", "집중 타이머", "집중과 휴식을 번갈아 알려 줘요.", "life", "calc"],
   ["split-bill.html", "🧾", "더치페이 계산기", "인원수로 나눠서 한 사람이 낼 금액을 알려 줘요.", "life", "calc"],
   ["color-fill.html", "🌊", "색 채우기", "색을 바꿔 가며 판 전체를 한 가지 색으로 채워요.", "brain", "shape"],
@@ -308,7 +313,7 @@ const GAMES = [
   ["peg-solitaire.html", "📍", "페그 솔리테어", "구슬을 뛰어넘어 하나만 남겨요", "board", "table"],
   ["mancala.html", "🫘", "칼라하 (콩 옮기기)", "콩을 뿌려 창고에 모으는 전략 게임", "board", "table"],
   ["hex-game.html", "⬢", "헥스", "육각 판에서 두 변을 먼저 이어요", "board", "table"],
-  ["poker-draw.html", "img:cards-trump/dQ.webp", "5장 포커", "카드를 교체해 족보로 컴퓨터와 대결", "board", "card"],
+  ["poker-draw.html", "img:cards-trump/dQ.webp", "5장 포커", "카드를 교체해 족보로 컴퓨터와 대결", "casino", "card"],
   ["one-card.html", "img:cards-trump/cJ.webp", "원카드", "카드를 먼저 모두 없애면 승리", "board", "card"],
   ["yut-nori.html", "img:yut-img/yut_icon.svg", "윷놀이", "말 4개로 즐기는 일반 윷놀이: 지름길·업기·빽도·잡기", "board", "table"],
   ["checkers.html", "🔴", "체커 (서양 장기)", "뛰어넘어 상대 말을 잡아요", "board", "table"],
@@ -365,7 +370,7 @@ const GAMES = [
   ["link-test.html", "📡", "폰 연결 테스트 (QR)", "QR로 폰 여러 대를 연결해 틱택토로 확인해요 (같은 와이파이)", "together", "link"],
   ["play-together.html", "👫", "같이 하기 (폰 연결)", "QR로 한 번 연결하고 여러 폰에서 같은 게임을 함께 해요", "together", "link"],
   ["family-points.html", "⭐", "가족 포인트", "게임을 하면 쌓이는 포인트와 가족 순위", "life", "home"],
-  ["go-stop.html", "🎴", "맞고 (고스톱)", "컴퓨터와 맞고(2인)·고스톱(3인). 흔들기·폭탄도 있어요. 이기면 점수만큼 포인트", "board", "card"],
+  ["go-stop.html", "🎴", "맞고 (고스톱)", "컴퓨터와 맞고(2인)·고스톱(3인). 흔들기·폭탄도 있어요. 이기면 점수만큼 포인트", "casino", "card"],
   ["family-ranking.html", "🏅", "가족 순위표", "게임별로 가족 중 누가 가장 잘했는지 최고 기록 비교", "life", "home"],
   ["daily-mission.html", "🎯", "오늘의 미션", "날짜마다 게임 3개가 정해져요. 가족이 같이 도전하고 다 하면 도장!", "life", "home"],
   ["newword-quiz.html", "💬", "신조어 퀴즈", "요즘 유행어·줄임말의 뜻을 맞혀요.", "quiz", "lang"],
@@ -379,14 +384,15 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 let group = "all", query = "";
 
 function render() {
-  const q = query.trim().toLowerCase();
+  const q = query.trim().toLowerCase(), cOn = fgCasino.on(), G = GAMES.filter(g => fgCasino.show(g[0]));   // 카드·화투 놀이를 끄면 목록·검색·개수에서 빠져요
+  if (!cOn && group === "casino") group = "all";
   // 숫자만 넣으면(앞에 # 있어도 돼요) 게임 고유번호로 찾아요
   const qn = /^#?\d+$/.test(q) ? +q.replace("#", "") : 0, hit = g => qn ? NUM[g[0]] === qn : (g[2] + " " + g[3]).toLowerCase().includes(q);
-  const shown = GAMES.filter(g => (group === "all" || g[4] === group) && (!q || hit(g)));
-  const net = q && group === "all" ? NETG.filter(g => qn ? g[3] === qn : g[2].toLowerCase().includes(q)) : [];
-  $("count").textContent = q || group !== "all" ? `${shown.length + net.length}개를 찾았어요 (전체 ${GAMES.length}개)` : `게임 ${GAMES.length}개`;
-  $("chips").innerHTML = [{ id: "all", n: "전체", e: "" }, ...GROUPS].map(g => {
-    const n = g.id === "all" ? GAMES.length : GAMES.filter(x => x[4] === g.id).length;
+  const shown = G.filter(g => (group === "all" || g[4] === group) && (!q || hit(g)));
+  const net = q && group === "all" ? NETG.filter(g => fgCasino.show(g[0]) && (qn ? g[3] === qn : g[2].toLowerCase().includes(q))) : [];
+  $("count").textContent = q || group !== "all" ? `${shown.length + net.length}개를 찾았어요 (전체 ${G.length}개)` : `게임 ${G.length}개`;
+  $("chips").innerHTML = [{ id: "all", n: "전체", e: "" }, ...GROUPS.filter(g => G.some(x => x[4] === g.id))].map(g => {
+    const n = g.id === "all" ? G.length : G.filter(x => x[4] === g.id).length;
     return `<button type="button" class="chip" data-g="${g.id}" aria-pressed="${g.id === group}">${g.e} ${g.n} ${n}</button>`;
   }).join("");
   const card = (g, gr) => `<a class="game" style="--h:${gr.h}" href="${esc(g[0])}"><span class="icon" aria-hidden="true">${ico(g[1])}</span><span class="no">${BUZZ.includes(g[0]) ? '<span title="같이 하기 퀴즈 버저로도 할 수 있어요">🔔</span> ' : ""}#${NUM[g[0]] || ""}</span><h3>${esc(g[2])}</h3><p>${esc(g[3])}</p>${QCNT[g[0]] ? `<p class="qc">📚 ${QCNT[g[0]]}</p>` : ""}</a>`;
@@ -399,8 +405,10 @@ function render() {
     return `<section><h2>${gr.e} ${gr.n}<span>${items.length}개</span></h2>${body}</section>`;
   }).join("") + (net.length ? `<section><h2>👫 같이 하기 게임<span>${net.length}개</span></h2><div class="grid">${net.map(g =>
       `<a class="game" style="--h:205" href="play-together.html"><span class="icon" aria-hidden="true">${ico(g[1])}</span><span class="no">#${g[3]}</span><h3>${esc(g[2])}</h3><p>👫 같이 하기 화면에서 폰을 연결해 함께 해요</p></a>`).join("")}</div></section>` : "");
+  $("casinoBox").innerHTML = fgCasino.inApp() ? "" : `<label class="cas"><input type="checkbox" id="casChk" ${cOn ? "checked" : ""}> 🃏 카드·화투 놀이 보기 <small>(블랙잭·맞고·포커 등, 놀이용 점수예요)</small></label>`;
   $("list").innerHTML = html || `<div class="empty">찾는 게임이 없어요. 다른 단어로 찾아보세요.</div>`;
 }
+$("casinoBox").addEventListener("change", e => { if (e.target.id === "casChk") { fgCasino.set(e.target.checked); render(); } });
 $("chips").addEventListener("click", e => { const b = e.target.closest("[data-g]"); if (b) { group = b.dataset.g; render(); } });
 $("q").addEventListener("input", e => { query = e.target.value; render(); });
 render();

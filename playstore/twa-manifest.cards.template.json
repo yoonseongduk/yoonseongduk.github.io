@@ -1,0 +1,24 @@
+{
+  "packageId": "io.github.yoonseongduk.cardgames",
+  "host": "yoonseongduk.github.io",
+  "name": "가족 카드·화투 놀이",
+  "launcherName": "카드 놀이",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#c4552b",
+  "navigationColor": "#c4552b",
+  "backgroundColor": "#f4f1ec",
+  "enableNotifications": false,
+  "startUrl": "/index.html?app=cards",
+  "iconUrl": "https://yoonseongduk.github.io/icon-512.png",
+  "maskableIconUrl": "https://yoonseongduk.github.io/icon-512.png",
+  "webManifestUrl": "https://yoonseongduk.github.io/manifest.webmanifest",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "fallbackType": "customtabs",
+  "signingKey": {
+    "path": "./android-cards.keystore",
+    "alias": "cardgames"
+  },
+  "_설명": "카드·화투 앱(성인용 등급) 견본이에요. 시작 주소 ?app=cards 이면 카드·화투 놀이만 보여요."
+}

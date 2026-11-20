@@ -9,13 +9,16 @@
   "navigationColor": "#c4552b",
   "backgroundColor": "#f4f1ec",
   "enableNotifications": false,
-  "startUrl": "/index.html",
+  "startUrl": "/index.html?app=store",
   "iconUrl": "https://yoonseongduk.github.io/icon-512.png",
   "maskableIconUrl": "https://yoonseongduk.github.io/icon-512.png",
   "webManifestUrl": "https://yoonseongduk.github.io/manifest.webmanifest",
   "appVersionName": "1.0.0",
   "appVersionCode": 1,
   "fallbackType": "customtabs",
-  "signingKey": { "path": "./android.keystore", "alias": "familygames" },
-  "_설명": "이 파일은 Bubblewrap(명령줄 도구)용 견본이에요. packageId는 한 번 정하면 바꿀 수 없어요. PWABuilder 웹사이트를 쓰면 이 파일은 필요 없어요."
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "familygames"
+  },
+  "_설명": "이 파일은 Bubblewrap(명령줄 도구)용 견본이에요(가족 앱: 카드·화투 놀이 숨김). packageId는 한 번 정하면 바꿀 수 없어요. PWABuilder 웹사이트를 쓰면 이 파일은 필요 없고, 같은 값을 화면에 입력하면 돼요."
 }

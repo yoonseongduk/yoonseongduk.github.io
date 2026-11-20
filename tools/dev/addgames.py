@@ -14,9 +14,9 @@ if len(sys.argv) > 2:                                   # 새 분류가 필요�
 m = re.search(r'const GAMES = \[\n(.*?)\n\];', s, re.S); assert m
 body = m.group(1)
 add = ''
-for f, e, t, d, g in games:
+for f, e, t, d, g, *sub in games:     # 6번째(선택) = 소분류 id (index.html 의 SUBS). 없으면 시작 화면에서 "새 게임"에 모여요
     if f'"{f}"' in body: continue
-    add += f',\n  ["{f}", "{e}", "{t}", "{d}", "{g}"]'
+    add += f',\n  ["{f}", "{e}", "{t}", "{d}", "{g}"' + (f', "{sub[0]}"' if sub and sub[0] else "") + "]"
 s = s.replace(m.group(0), 'const GAMES = [\n' + body + add + '\n];', 1)
 open(p, 'w', encoding='utf-8').write(s)
 print('추가된 게임', add.count('["'))

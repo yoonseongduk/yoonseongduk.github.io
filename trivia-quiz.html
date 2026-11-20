@@ -38,6 +38,8 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 <body>
 <main>
   <h1>상식 퀴즈 💡</h1>
+  <div class="chips" id="lvs" role="group" aria-label="등급"></div>
+  <p class="muted" id="lvp"></p>
   <div class="chips" id="cats" role="group" aria-label="분류"></div>
   <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
   <div class="q" id="q"></div>
@@ -623,6 +625,7 @@ const D = [
 ["생활", "시계의 긴바늘이 12를 가리키면 몇 분일까요?", "0분(정각)", ["30분", "15분", "12분"]],
 ["생활", "달력에서 빨간색으로 쓰는 날은?", "공휴일", ["월요일", "숙제 날", "비 오는 날"]]
 ];
+const LV = "113213121111132111112121111112221111122113222121122221111111112212222212212121222122233222223232211122332212221122122233223223312113221233213313321112112111233221111131111131111121221211223122332321113132123231223221112111221222112321222311133133122133323221332211331221332133322233222232212232113233122113321132133333313122113332333123313112333333333323322223333232332332113123222232222312211121211111211112222321111112122221121122322211111221333333223313121111233212323332321231111121111111112111111111111211111122111122222211111111122211111111112122121111111211111121111";
 const CATS = ["전체", "과학", "지리", "역사", "몸", "생활"];
 const $ = id => document.getElementById(id), KEY = "trivia-best-v1";
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
@@ -630,9 +633,21 @@ const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch
 const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 let cat = "전체", qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+/*LEVEL*/
+const LVN = ["전체", "🌱 초급", "🌿 중급", "🌳 고급"], LVM = [1, 1, 1.5, 2], LVK = KEY.split("-best-").join("-lv-") === KEY ? KEY + "-lv" : KEY.split("-best-").join("-lv-");
+let lv = +ld(LVK) || 0; if (!(lv >= 0 && lv <= 3)) lv = 0;
+const lvOf = n => +(typeof LV === "string" && LV[n] || 2), lvCnt = l => D.filter((d, n) => lvOf(n) === l).length, bestKey = () => lv ? KEY + "-L" + lv : KEY;
+best = ld(bestKey()) || 0;
+function renderLv() {
+  if (lv && lvCnt(lv) < 4) lv = 0;
+  window.FG_MULT = LVM[lv]; window.FG_LV = lv ? LVN[lv].slice(3) : "";
+  $("lvs").innerHTML = LVN.map((n, k) => `<button class="chip ${k === lv ? "on" : ""}" type="button" data-l="${k}" aria-pressed="${k === lv}">${n}${k ? `<small> ${lvCnt(k)}</small>` : ""}</button>`).join("");
+  $("lvp").textContent = lv ? `${LVN[lv].slice(3)} 문제예요. 포인트가 ×${LVM[lv]}배로 쌓여요.` : "초급 ×1 · 중급 ×1.5 · 고급 ×2 포인트 (전체는 ×1)";
+}
+$("lvs").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b) { lv = +b.dataset.l; sv(LVK, lv); best = ld(bestKey()) || 0; start(); } });
 
 function start() {
-  const pool = D.filter(d => cat === "전체" || d[0] === cat); qs = shuf(pool).slice(0, 10).map(d => ({ d, opts: shuf([d[2], ...d[3]]) })); i = 0; score = 0; $("res").hidden = true;
+  renderLv(); const pool = D.filter((d, n) => (!lv || lvOf(n) === lv) && (cat === "전체" || d[0] === cat)); qs = shuf(pool).slice(0, 10).map(d => ({ d, opts: shuf([d[2], ...d[3]]) })); i = 0; score = 0; $("res").hidden = true;
   $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
 }
 function show() {
@@ -647,7 +662,7 @@ function pick(k) {
   $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
 }
 function finish() {
-  const full = qs.length === 10; let note = ""; if (full && cat === "전체" && score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  const full = qs.length === 10; let note = ""; if (full && cat === "전체" && score > best) { best = score; sv(bestKey(), best); note = " 🏆 최고 기록이에요!"; }
   $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("next").hidden = true;
   $("res").innerHTML = `<b>${qs.length}문제 중 ${score}개 정답</b><p class="muted">${score >= qs.length * .9 ? "상식 박사님! 🎓" : score >= qs.length * .6 ? "잘했어요 👍" : "조금만 더 힘내요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
   $("res").hidden = false; $("best").textContent = best; $("again").onclick = start;

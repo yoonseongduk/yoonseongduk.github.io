@@ -141,11 +141,14 @@ def import_idx(name, listfile, idxfile):
     os.makedirs(QL, exist_ok=True); json.dump(out, open(os.path.join(QL, name + ".json"), "w", encoding="utf-8"), ensure_ascii=False)
     print(name, "등급", len(out), "/", len(q))
 
-def main(a):
+def main(a_):
+    a = a_
     if a and a[0] == "import": return import_idx(a[1], a[2], a[3])
     names = quiz_files() if not a or a[0] == "check" else [x if x.endswith("-quiz") else x + "-quiz" for x in a]
     for n in names:
         c = apply_one(os.path.join(REPO, n + ".html"))
         if c: print(f"{n:24} 초급 {c[0]:4} 중급 {c[1]:4} 고급 {c[2]:4} 합계 {sum(c)}")
+    if not a_ or a_[0] == "check":                      # 공통 틀이 아닌 퀴즈(속담·상식·세계 수도)도 함께
+        import qlevel_custom; qlevel_custom.apply_all()
 
 if __name__ == "__main__": main(sys.argv[1:])

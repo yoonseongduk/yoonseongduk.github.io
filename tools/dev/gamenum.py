@@ -29,7 +29,7 @@ def quiz_counts():
             elif r[0] == "capital-quiz.html":
                 i = h.index("const FL = {"); out[r[0]] = f"{h[i:h.index('};', i)].count(':'):,}개 나라"
             elif r[0] == "chosung-quiz.html":
-                i = h.index("const WORDS = {"); blk = h[i:h.index("};", i)]; out[r[0]] = f"{sum(len(v.split()) for v in re.findall(r':\s*\"([^\"]+)\"', blk)):,}낱말"
+                m = re.search(r"/\*WORDS\*/const W = (.*?);/\*/WORDS\*/", h, re.S); out[r[0]] = f"{len(json.loads(m.group(1))):,}낱말"
             elif r[0] in ("hanja-write.html", "hanja-today.html"):
                 out[r[0]] = f"한자 {len(json.load(open(os.path.join(REPO, 'data/hanja.json'), encoding='utf-8'))):,}자"
             elif r[0] == "word-chain.html":

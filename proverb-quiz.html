@@ -35,11 +35,14 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .opt:disabled{cursor:default}
 .exp{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:.95rem}.exp b{font-family:var(--font-display);font-weight:400;font-size:1.05rem;color:var(--accent)}.exp p{margin:0}.exp .eg{background:var(--soft);border-radius:10px;padding:8px 10px}
 .res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.9rem;font-family:inherit;color:inherit;cursor:pointer}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.chip small{opacity:.7}
 </style>
 </head>
 <body>
 <main>
   <h1>속담 퀴즈 📜</h1>
+  <div class="chips" id="lvs" role="group" aria-label="등급"></div>
+  <p class="muted" id="lvp"></p>
   <div class="stats"><div class="stat"><small>문제</small><b id="no">0/10</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
   <div class="q" id="q"></div>
   <div class="opts" id="opts"></div>
@@ -252,14 +255,27 @@ const D = [
 ["오뉴월 ", "감기", "는 개도 안 걸린다", ["더위", "소나기", "장마"], "여름에 감기 걸리는 사람을 놀리는 말이에요.", "여름에 감기 걸린 동생에게 오뉴월 감기는 개도 안 걸린다고 놀렸어요."],
 ["열 손가락 깨물어 ", "안 아픈", " 손가락 없다", ["안 뜨거운", "안 무거운", "안 차가운"], "부모에게는 자식이 모두 똑같이 소중하다는 뜻이에요.", "엄마는 우리 형제를 똑같이 사랑해요. 열 손가락 깨물어 안 아픈 손가락 없다더니!"]
 ];
+const LV = "11111111112111111111221212221111111111212112311313133112133112223112231312121121233212132111111313221212211222112321311311331333123231332221333322232322323223323323222322322331232221323223223323332232";
 const $ = id => document.getElementById(id), KEY = "proverb-best-v1";
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 let qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+/*LEVEL*/
+const LVN = ["전체", "🌱 초급", "🌿 중급", "🌳 고급"], LVM = [1, 1, 1.5, 2], LVK = KEY.split("-best-").join("-lv-") === KEY ? KEY + "-lv" : KEY.split("-best-").join("-lv-");
+let lv = +ld(LVK) || 0; if (!(lv >= 0 && lv <= 3)) lv = 0;
+const lvOf = n => +(typeof LV === "string" && LV[n] || 2), lvCnt = l => D.filter((d, n) => lvOf(n) === l).length, bestKey = () => lv ? KEY + "-L" + lv : KEY;
+best = ld(bestKey()) || 0;
+function renderLv() {
+  if (lv && lvCnt(lv) < 4) lv = 0;
+  window.FG_MULT = LVM[lv]; window.FG_LV = lv ? LVN[lv].slice(3) : "";
+  $("lvs").innerHTML = LVN.map((n, k) => `<button class="chip ${k === lv ? "on" : ""}" type="button" data-l="${k}" aria-pressed="${k === lv}">${n}${k ? `<small> ${lvCnt(k)}</small>` : ""}</button>`).join("");
+  $("lvp").textContent = lv ? `${LVN[lv].slice(3)} 문제예요. 포인트가 ×${LVM[lv]}배로 쌓여요.` : "초급 ×1 · 중급 ×1.5 · 고급 ×2 포인트 (전체는 ×1)";
+}
+$("lvs").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b) { lv = +b.dataset.l; sv(LVK, lv); best = ld(bestKey()) || 0; start(); } });
 
-function start() { qs = shuf(D).slice(0, 10).map(d => ({ d, opts: shuf([d[1], ...d[3]]) })); i = 0; score = 0; $("res").hidden = true; show(); }
+function start() { renderLv(); qs = shuf(D.filter((d, n) => !lv || lvOf(n) === lv)).slice(0, 10).map(d => ({ d, opts: shuf([d[1], ...d[3]]) })); i = 0; score = 0; $("res").hidden = true; show(); }
 function show() {
   const { d, opts } = qs[i]; locked = false; $("next").hidden = true; $("exp").hidden = true;
   $("q").className = "q"; $("q").innerHTML = `${esc(d[0])}<span class="blank">&nbsp;?&nbsp;</span>${esc(d[2])}`;
@@ -275,7 +291,7 @@ function pick(k) {
   $("score").textContent = score; $("next").textContent = i === 9 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
 }
 function finish() {
-  let note = ""; if (score > best) { best = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; }
+  let note = ""; if (score > best) { best = score; sv(bestKey(), best); note = " 🏆 최고 기록이에요!"; }
   $("q").innerHTML = "끝!"; $("opts").innerHTML = ""; $("exp").hidden = true; $("next").hidden = true;
   $("res").innerHTML = `<b>10문제 중 ${score}개 정답</b><p class="muted">${score >= 9 ? "속담 박사님! 🎓" : score >= 6 ? "잘했어요 👍" : "조금만 더 힘내요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`;
   $("res").hidden = false; $("best").textContent = best; $("again").onclick = start;

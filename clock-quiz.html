@@ -45,7 +45,7 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
   <div class="opts" id="opts"></div>
   <div class="res" id="res" hidden></div>
   <button class="btn" id="next" type="button" hidden>다음 문제</button>
-  <p class="muted">시계 그림을 보고 <b>몇 시 몇 분</b>인지 골라 보세요. 짧은 바늘이 '시', 긴 바늘이 '분'을 가리켜요. 쉬움은 5분 단위, 어려움은 1분 단위예요.</p>
+  <p class="muted">시계 그림을 보고 <b>몇 시 몇 분</b>인지 골라 보세요. 짧은 바늘이 '시', 긴 바늘이 '분'을 가리켜요. 초급은 정각·30분, 중급은 5분 단위, 고급은 1분 단위예요. 등급이 높을수록 포인트가 더 쌓여요(×1 · ×1.5 · ×2).</p>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -55,7 +55,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;"
 const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const KEY = "clockquiz-best-v1";
-const LV = { easy: { step: 5, label: "쉬움", hint: "5분 단위" }, hard: { step: 1, label: "어려움", hint: "1분 단위" } }, ROUND = 10;
+const LV = { basic: { step: 30, label: "🌱 초급", hint: "정각·30분", mult: 1 }, easy: { step: 5, label: "🌿 중급", hint: "5분 단위", mult: 1.5 }, hard: { step: 1, label: "🌳 고급", hint: "1분 단위", mult: 2 } }, ROUND = 10;   // 등급별 포인트 배수(mult)는 window.FG_MULT 로 알려요
 let lv = (ld(KEY + "-lv") in LV) ? ld(KEY + "-lv") : "easy", qs, i, score, locked, best = ld(KEY) || {};
 const label = (h, m) => `${h}시 ${m ? m + "분" : "정각"}`;
 // 시침과 분침의 각도 (12시 방향이 0도, 시계 방향). 시침은 분이 지난 만큼도 조금 더 간다
@@ -65,7 +65,7 @@ function makeQ() {
   while (set.size < 4) { const t = Math.random(); let hh = h, mm = m; if (t < .35) hh = ri(1, 12); else if (t < .7) mm = ri(0, 59 / step | 0) * step; else { hh = ri(1, 12); mm = ri(0, 59 / step | 0) * step; } set.add(label(hh, mm)); }
   return { h, m, ans, opts: shuf([...set]) };
 }
-function start() { qs = Array.from({ length: ROUND }, makeQ); i = 0; score = 0; $("res").hidden = true; show(); }
+function start() { window.FG_MULT = LV[lv].mult; window.FG_LV = LV[lv].label.slice(3); qs = Array.from({ length: ROUND }, makeQ); i = 0; score = 0; $("res").hidden = true; show(); }
 function drawClock(h, m) {
   const c = $("cv").getContext("2d"), R = 300, css = getComputedStyle(document.documentElement), fg = css.getPropertyValue("--fg").trim(), line = css.getPropertyValue("--line").trim(), acc = css.getPropertyValue("--accent").trim(), sf = css.getPropertyValue("--surface").trim();
   c.clearRect(0, 0, 640, 640); c.save(); c.translate(320, 320); c.fillStyle = sf; c.beginPath(); c.arc(0, 0, R, 0, 7); c.fill(); c.lineWidth = 10; c.strokeStyle = fg; c.stroke();
@@ -74,7 +74,7 @@ function drawClock(h, m) {
   const A = angles(h, m); const hand = (deg, len, w, col) => { const a = deg * Math.PI / 180; c.strokeStyle = col; c.lineWidth = w; c.lineCap = "round"; c.beginPath(); c.moveTo(-Math.sin(a) * 20, Math.cos(a) * 20); c.lineTo(Math.sin(a) * len, -Math.cos(a) * len); c.stroke(); };
   hand(A.hour, 150, 16, fg); hand(A.min, 220, 10, acc); c.fillStyle = fg; c.beginPath(); c.arc(0, 0, 14, 0, 7); c.fill(); c.restore();
 }
-function show() { const q = qs[i]; locked = false; $("next").hidden = true; drawClock(q.h, q.m); $("opts").innerHTML = q.opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${o}</button>`).join(""); $("no").textContent = (i + 1) + "/" + ROUND; $("score").textContent = score; $("best").textContent = best[lv] || 0; $("lv").style.setProperty("--n", 2); $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join(""); }
+function show() { const q = qs[i]; locked = false; $("next").hidden = true; drawClock(q.h, q.m); $("opts").innerHTML = q.opts.map((o, k) => `<button class="opt" type="button" data-k="${k}">${o}</button>`).join(""); $("no").textContent = (i + 1) + "/" + ROUND; $("score").textContent = score; $("best").textContent = best[lv] || 0; $("lv").style.setProperty("--n", 3); $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join(""); }
 function pick(k) { if (locked) return; locked = true; const q = qs[i]; if (q.opts[k] === q.ans) score++; document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (q.opts[n] === q.ans) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); }); $("score").textContent = score; $("next").textContent = i === ROUND - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false; }
 function finish() { let note = ""; if (score > (best[lv] || 0)) { best[lv] = score; sv(KEY, best); note = " 🏆 최고 기록이에요!"; } $("opts").innerHTML = ""; $("next").hidden = true; $("res").innerHTML = `<b>${ROUND}문제 중 ${score}개 정답</b><p class="muted">${score >= 9 ? "시계 박사님! 🎓" : score >= 6 ? "잘했어요 👍" : "조금만 더 연습해 봐요 💪"}${note}</p><button class="btn" id="again" type="button" style="margin-top:10px;width:100%">다시 하기</button>`; $("res").hidden = false; $("best").textContent = best[lv]; $("again").onclick = start; }
 $("opts").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) pick(+b.dataset.k); }); $("next").onclick = () => { if (i === ROUND - 1) finish(); else { i++; show(); } };

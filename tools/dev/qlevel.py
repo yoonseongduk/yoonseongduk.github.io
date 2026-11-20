@@ -115,12 +115,22 @@ def patch_flag(h):
     h = h.replace("</style>", FLAG_CSS + "</style>", 1)
     return h
 
+# ── 등급 + 분류를 함께 골라서 문제가 0개가 되면 등급을 "전체"로 되돌려요(예: 신조어 퀴즈의 초급 + 최신 2025~)
+GUARD_MARK = "/*GUARD*/"
+POOL_RE = r'(const pool = D\.filter\(\(d, n\) => \(!lv \|\| lvOf\(n\) === lv\) && [^\n]*?\);)'
+def patch_guard(h):
+    import re as _re
+    if GUARD_MARK in h or "const pool = D.filter((d, n) =>" not in h: return h
+    m = _re.search(POOL_RE, h); assert m, "pool 줄을 못 찾음(가드)"
+    g = m.group(1) + ' ' + GUARD_MARK + ' if (!pool.length && lv) { lv = 0; sv(LVK, lv); best = ld(bestKey()) || 0; return start(); }'
+    return h[:m.start()] + g + h[m.end():]
+
 def apply_one(path):
     name = os.path.basename(path)[:-5]
     if not name.endswith("-quiz"): return None
     h = open(path, encoding="utf-8", newline="").read(); crlf = "\r\n" in h; h = h.replace("\r\n", "\n")
     if "function options(d)" not in h or "ROUND = 10" not in h: return None
-    h = patch_flag(patch_html(h))
+    h = patch_guard(patch_flag(patch_html(h)))
     h = re.sub(r'const LV = "[123]*";\n', "", h)
     D, i, j = read_d(h)
     lv = levels_for(name, D)

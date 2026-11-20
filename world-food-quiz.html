@@ -84,7 +84,7 @@ function options(d) {                                   // 보기를 만든다: 
   return shuf([d[1], ...wrong]);
 }
 function start() {
-  renderLv(); const pool = D.filter((d, n) => (!lv || lvOf(n) === lv) && !isFlag(d[0]) && (cat === "전체" || d[3] === cat));
+  renderLv(); const pool = D.filter((d, n) => (!lv || lvOf(n) === lv) && !isFlag(d[0]) && (cat === "전체" || d[3] === cat)); /*GUARD*/ if (!pool.length && lv) { lv = 0; sv(LVK, lv); best = ld(bestKey()) || 0; return start(); }
   qs = shuf(pool).slice(0, ROUND).map(d => ({ d, opts: options(d) })); i = 0; score = 0; $("res").hidden = true;
   $("cats").hidden = CATS.length < 3; $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
 }

@@ -647,7 +647,7 @@ function renderLv() {
 $("lvs").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b) { lv = +b.dataset.l; sv(LVK, lv); best = ld(bestKey()) || 0; start(); } });
 
 function start() {
-  renderLv(); const pool = D.filter((d, n) => (!lv || lvOf(n) === lv) && (cat === "전체" || d[0] === cat)); qs = shuf(pool).slice(0, 10).map(d => ({ d, opts: shuf([d[2], ...d[3]]) })); i = 0; score = 0; $("res").hidden = true;
+  renderLv(); const pool = D.filter((d, n) => (!lv || lvOf(n) === lv) && (cat === "전체" || d[0] === cat)); /*GUARD*/ if (!pool.length && lv) { lv = 0; sv(LVK, lv); best = ld(bestKey()) || 0; return start(); } qs = shuf(pool).slice(0, 10).map(d => ({ d, opts: shuf([d[2], ...d[3]]) })); i = 0; score = 0; $("res").hidden = true;
   $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
 }
 function show() {

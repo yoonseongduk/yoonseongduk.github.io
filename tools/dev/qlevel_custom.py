@@ -48,6 +48,7 @@ def apply(name):
     else:
         D, j = read_d(h); lv = "".join(str(jm.get(c["key"](r), 2)) for r in D)
         h = h[:j] + '\nconst LV = "' + lv + '";' + h[j:]
+    import qlevel; h = qlevel.patch_guard(h)          # 분류까지 고르면 문제가 0개가 될 수 있는 퀴즈(상식)는 등급을 전체로 되돌려요
     if crlf: h = h.replace("\n", "\r\n")
     open(p, "w", encoding="utf-8", newline="").write(h)
     return [lv.count(x) for x in "123"]

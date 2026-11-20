@@ -67,7 +67,7 @@ $("start").onclick = start; setSt("준비");''',
  css=".field{position:relative;height:min(46vh,300px);background:var(--surface);border:1px solid var(--line);border-radius:16px}.field span{position:absolute;font-size:clamp(1.6rem,8vw,2.2rem);line-height:1}.seg button{padding:14px 4px;font-family:var(--font-display);font-size:1.3rem;font-weight:400}")
 
 # ---------- 같은 그림 찾기 ----------
-make(H+"dobble-match.html", "같은 그림 찾기", "🔍", 34, "dobble-best-v1",
+make(H+"same-picture.html", "같은 그림 찾기", "🔍", 34, "dobble-best-v1",
  "위아래 두 카드에는 <b>똑같은 그림이 딱 하나</b> 들어 있어요. 그 그림을 빨리 찾아서 눌러 보세요! 틀리면 시간이 줄어요. 40초 안에 몇 장이나 맞힐 수 있을까요?",
  r'''  <div class="stats"><div class="stat"><small>남은 시간</small><b id="time">40</b></div><div class="stat"><small>맞힌 수</small><b id="score">0</b></div><div class="stat"><small>최고</small><b id="best">0</b></div></div>
   <div class="dcard" id="c1"></div>

@@ -1,0 +1,11 @@
+끝말잇기 낱말 목록(data/words-ko.txt) 출처·라이선스
+
+출처: 국립국어원 표준국어대사전(https://stdict.korean.go.kr, https://kdict.korean.go.kr/standard)의 표제어(낱말).
+한글 2~7글자 낱말만 골라 한 줄에 하나씩 적은 목록이에요(뜻풀이·용례는 포함하지 않음). 목록은 GitHub 공개 자료
+acidsound/korean_wordlist 에서 가져왔어요.
+
+라이선스: 국립국어원 사전 누리집의 저작권 정책(https://kdict.korean.go.kr/info/copyright, 2026-11-20 확인)에 따라
+"별도로 명시되지 않은 모든 자료는 크리에이티브 커먼즈 저작자표시-동일조건변경허락 2.0 대한민국 라이선스(CC BY-SA 2.0 KR)에
+따라 배포되며 상업적 용도까지 자유롭게 이용할 수 있고, 저작자 표시와 동일조건변경허락 조건을 지켜야 해요."
+→ 이 목록 파일도 같은 라이선스(CC BY-SA 2.0 KR, https://creativecommons.org/licenses/by-sa/2.0/kr/)로 이용할 수 있어요.
+이 앱은 국립국어원과 관련이 없어요.

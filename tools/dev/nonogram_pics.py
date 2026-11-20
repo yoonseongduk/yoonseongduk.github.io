@@ -37,7 +37,35 @@ def _big_pics():
         if y in (4, 5) and x in (4, 5, 9, 10): return "k"
         if y == 10 and 4 <= x <= 10 or (y == 9 and x in (3, 11)): return "k"
         return "y"
-    return [("하트", "❤️", heart), ("집", "🏠", house), ("전나무", "🌲", pine), ("고양이", "🐱", cat), ("로켓", "🚀", rocket), ("해", "☀️", _disk(sun)), ("웃는 얼굴", "😊", _disk(smile))]
+    def star(x, y):  # 5꼭지 별: 안쪽 오각형 + 다섯 뾰족이를 선분 거리로 채운다
+        import math
+        px, py = x - 7, y - 7.6; R, r = 7.4, 3.2; pts = []
+        for i in range(10):
+            a = -math.pi / 2 + i * math.pi / 5; rad = R if i % 2 == 0 else r; pts.append((rad * math.cos(a), rad * math.sin(a)))
+        inside = False
+        for i in range(10):
+            (x1, y1), (x2, y2) = pts[i], pts[(i + 1) % 10]
+            if (y1 > py) != (y2 > py) and px < (x2 - x1) * (py - y1) / (y2 - y1) + x1: inside = not inside
+        return "y" if inside else "."
+    def bear(x, y):
+        dx, dy = x - 7, y - 8
+        if (x - 3) ** 2 + (y - 3) ** 2 <= 6 or (x - 11) ** 2 + (y - 3) ** 2 <= 6: return "n"      # 귀
+        if dx * dx + dy * dy > 36: return "."
+        if (x, y) in ((5, 7), (9, 7), (6, 7), (8, 7)): return "k"                                   # 눈
+        if (x - 7) ** 2 + (y - 10.5) ** 2 <= 6: return "k" if (x, y) in ((7, 9), (6, 9), (8, 9)) else "w"   # 입 주변(흰색)과 코(검정)
+        return "n"
+    def apple(x, y):
+        if (x, y) in ((7, 2), (7, 3)): return "n"                                                  # 꼭지
+        if (x, y) in ((8, 2), (9, 2), (9, 3), (10, 3), (8, 3)): return "g"                         # 잎
+        if (x - 4.6) ** 2 + (y - 9) ** 2 <= 20 or (x - 9.4) ** 2 + (y - 9) ** 2 <= 20 or (x - 7) ** 2 + (y - 11) ** 2 <= 22: return "r"
+        return "."
+    def rainbow(x, y):
+        import math
+        d = math.hypot(x - 7, y - 13.5)
+        for lo, hi, c in ((11.5, 13.9, "r"), (9.0, 11.5, "o"), (6.6, 9.0, "y"), (4.2, 6.6, "g"), (1.8, 4.2, "b")):
+            if lo < d <= hi and y <= 13: return c
+        return "."
+    return [("하트", "❤️", heart), ("집", "🏠", house), ("전나무", "🌲", pine), ("고양이", "🐱", cat), ("로켓", "🚀", rocket), ("해", "☀️", _disk(sun)), ("웃는 얼굴", "😊", _disk(smile)), ("별", "⭐", _disk(star)), ("곰", "🐻", _disk(bear)), ("사과", "🍎", _disk(apple)), ("무지개", "🌈", _disk(rainbow))]
 
 PICS = {
  5: [
@@ -51,6 +79,10 @@ PICS = {
   ("우산", "☂️", [".rrr.", "rrrrr", "..n..", "..n..", ".nn.."]),
   ("물방울", "💧", ["..b..", ".bbb.", "bbbbb", "bbbbb", ".bbb."]),
   ("버섯", "🍄", [".rrr.", "rwrwr", "rrrrr", "..w..", "..w.."]),
+  ("번개", "⚡", ["..yyy", "..yy.", ".yyyy", "..yy.", ".yy.."]),
+  ("체리", "🍒", ["...g.", "..n.n", ".n..n", "rr.rr", "rr.rr"]),
+  ("눈사람", "⛄", ["..k..", "..w..", ".www.", "wwwww", ".www."]),
+  ("딸기", "🍓", [".g.g.", "rrrrr", "rrrrr", ".rrr.", "..r.."]),
  ],
  8: [
   ("하트", "❤️", [".rr..rr.", "rrrrrrrr", "rrrrrrrr", "rrrrrrrr", ".rrrrrr.", "..rrrr..", "...rr...", "........"]),
@@ -63,6 +95,10 @@ PICS = {
   ("눈사람", "⛄", ["..kkkk..", "...kk...", "..wwww..", ".wkwwkw.", "..wwww..", ".wwwwww.", "wwwwwwww", ".wwwwww."]),
   ("버섯", "🍄", ["..rrrr..", ".rrwwrr.", "rrrwwrrr", "rrrrrrrr", "...ww...", "...ww...", "...ww...", "..wwww.."]),
   ("로켓", "🚀", ["...rr...", "..rrrr..", "..rwwr..", "..rwwr..", "..rrrr..", ".rrrrrr.", ".r.yy.r.", "...yy..."]),
+  ("토끼", "🐰", [".ww..ww.", ".ww..ww.", ".wwwwww.", "wwwwwwww", "wkwwwwkw", "wwwppwww", ".wwwwww.", "..wwww.."]),
+  ("개구리", "🐸", [".gg..gg.", "gwkggwkg", "gggggggg", "gggggggg", "grrrrrrg", ".gggggg.", "..gggg..", "........"]),
+  ("달", "🌙", ["..yyyy..", ".yyy....", "yyy.....", "yyy.....", "yyy.....", "yyy.....", ".yyy....", "..yyyy.."]),
+  ("번개", "⚡", ["....yyyy", "...yyyy.", "..yyyy..", ".yyyyyyy", "...yyyy.", "..yyy...", ".yyy....", "yy......"]),
  ],
  10: [
   ("하트", "❤️", ["..........", ".rrr..rrr.", "rrrrrrrrrr", "rrrrrrrrrr", "rrrrrrrrrr", ".rrrrrrrr.", "..rrrrrr..", "...rrrr...", "....rr....", ".........."]),
@@ -76,6 +112,10 @@ PICS = {
   ("로봇", "🤖", ["....rr....", "..ssssss..", ".ssssssss.", ".ssksskss.", ".ssssssss.", ".skkkkkks.", "..ssssss..", "ssssssssss", "ss.ssss.ss", "ss......ss"]),
   ("오리", "🦆", ["..........", "...yyy....", "..yykyy...", "..yyyyoo..", "..yyyy....", "...yyyy...", ".yyyyyyyy.", "yyyyyyyyyy", ".yyyyyyyy.", "..yyyyyy.."]),
   ("우산", "☂️", [".....r....", "..rrrrrr..", ".rrrrrrrr.", "rrrrrrrrrr", "r.rr.rr.rr", "....n.....", "....n.....", "....n.....", "....n.....", "...nn....."]),
+  ("펭귄", "🐧", ["...kkkk...", "..kkkkkk..", "..kwkkwk..", "..kkookk..", ".kkwwwwkk.", ".kwwwwwwk.", ".kwwwwwwk.", "..kwwwwk..", "..oo..oo..", ".........."]),
+  ("물고기", "🐟", ["..........", "...bbbb...", "b.bbbbbb..", "bbbbkbbbb.", "bbbbbbbbbb", "bbbbbbbbb.", "b.bbbbbb..", "...bbbb...", "..........", ".........."]),
+  ("눈사람", "⛄", ["...kkkk...", "....kk....", "...wwww...", "..wkwwkw..", "...wwww...", "..wwwwww..", ".wwwwwwww.", ".wwwwwwww.", "..wwwwww..", ".........."]),
+  ("열기구", "🎈", ["..rrrrrr..", ".rrrrrrrr.", "rrrwwwwrrr", "rrrwwwwrrr", ".rrrwwrrr.", "..rrrrrr..", "...rrrr...", "....nn....", "....nn....", "...nnnn..."]),
  ],
  15: _big_pics(),
 }

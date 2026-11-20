@@ -23,7 +23,7 @@ for line in t.splitlines():
 import json
 nums = json.load(open(R + "tools/dev/game_numbers.json", encoding="utf-8")); idx = open(R + "index.html", encoding="utf-8").read()
 have = {int(i.split("-")[1]) for i in ids if i.startswith("G-")}
-miss = [f for f, n in nums.items() if n not in have and f'"{f}"' in idx and not f.startswith("net-")]
+miss = [f for f, n in nums.items() if n not in have and f'"{f}"' in idx]
 if miss: bad += 1; print("❌ 2부에 없는 게임:", miss)
 dup = {i for i in ids if ids.count(i) > 1}
 if dup: bad += 1; print("❌ 중복 ID:", sorted(dup))

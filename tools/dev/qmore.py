@@ -22,7 +22,12 @@ def _row(f, base):
     if isinstance(base[1], str) and re.match(r"^[OX] ", base[1]):                      # OX 퀴즈
         assert a in ("O", "X"), f"OX 답은 O 또는 X: {f}"
         return [q, "O 맞아요" if a == "O" else "X 아니에요", [], f[2].strip() if len(f) > 2 else "", f[3].strip() if len(f) > 3 else ""]
-    if len(base) == 2: return [q, a]                                                      # 국기·이모지 영어
+    if len(base) == 2:                                                                    # 국기·이모지 영어: 그림|정답 · 그림|정답|해설 · 문제|정답|오답1|오답2|오답3(|해설)
+        if len(f) >= 5:
+            w = [x.strip() for x in f[2:5]]; assert all(w) and a not in w and len(set(w)) == 3, f"오답 3개가 필요해요: {f}"
+            return [q, a, w, "", f[5].strip() if len(f) > 5 else ""]
+        if len(f) == 3 and f[2].strip(): return [q, a, [], "", f[2].strip()]
+        return [q, a]
     if base[2] is None: return [q, a, None, f[2].strip() if len(f) > 2 else ""]           # 이모지 퀴즈(분류)
     w = [x.strip() for x in f[2:5]]
     assert len(w) == 3 and all(w), f"오답 3개가 필요해요: {f}"

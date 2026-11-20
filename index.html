@@ -405,7 +405,7 @@ function render() {
     return `<section><h2>${gr.e} ${gr.n}<span>${items.length}개</span></h2>${body}</section>`;
   }).join("") + (net.length ? `<section><h2>👫 같이 하기 게임<span>${net.length}개</span></h2><div class="grid">${net.map(g =>
       `<a class="game" style="--h:205" href="play-together.html"><span class="icon" aria-hidden="true">${ico(g[1])}</span><span class="no">#${g[3]}</span><h3>${esc(g[2])}</h3><p>👫 같이 하기 화면에서 폰을 연결해 함께 해요</p></a>`).join("")}</div></section>` : "");
-  $("casinoBox").innerHTML = fgCasino.inApp() ? "" : `<label class="cas"><input type="checkbox" id="casChk" ${cOn ? "checked" : ""}> 🃏 카드·화투 놀이 보기 <small>(블랙잭·맞고·포커 등, 놀이용 점수예요)</small></label>`;
+  $("casinoBox").innerHTML = `<label class="cas"><input type="checkbox" id="casChk" ${cOn ? "checked" : ""}> 🃏 카드·화투 놀이 보기 <small>(블랙잭·맞고·포커 등, 놀이용 점수예요)</small></label>`;
   $("list").innerHTML = html || `<div class="empty">찾는 게임이 없어요. 다른 단어로 찾아보세요.</div>`;
 }
 $("casinoBox").addEventListener("change", e => { if (e.target.id === "casChk") { fgCasino.set(e.target.checked); render(); } });

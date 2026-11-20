@@ -31,6 +31,8 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .cc span.d,.rc span.d{color:var(--done);text-decoration:line-through}
 .c{aspect-ratio:1;border:1px solid var(--line);background:var(--bg);border-radius:3px;padding:0;position:relative;min-width:0}
 .c.f{background:var(--fill);border-color:var(--fill)}.c.m::after{content:"✕";position:absolute;inset:0;display:grid;place-items:center;color:var(--mark);font-size:.9em;font-weight:700}
+.board.pic{gap:0}.board.pic .c{border:0;border-radius:0;background:transparent}.board.pic .c.f{animation:nopop .45s both;animation-delay:var(--d,0ms)}
+@keyframes nopop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}@media(prefers-reduced-motion:reduce){.board.pic .c.f{animation:none}}
 .c.b5{border-right:2px solid var(--muted)}.c.r5{border-bottom:2px solid var(--muted)}
 .row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:11px;font-family:var(--font-display);font-size:1.15rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:.95rem;font-weight:700}.btn.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
@@ -45,7 +47,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
   <div class="row"><button class="btn on" id="mFill" type="button">■ 칠하기</button><button class="btn ghost" id="mMark" type="button">✕ 표시</button><button class="btn ghost" id="clear" type="button">모두 지우기</button></div>
   <div class="res" id="res" hidden></div>
   <div class="row" style="grid-template-columns:1fr 1fr"><button class="btn ghost" id="reveal" type="button">정답 보기</button><button class="btn" id="newGame" type="button">새 퍼즐</button></div>
-  <p class="muted">위쪽과 왼쪽 숫자는 그 줄에서 <b>이어서 칠해야 하는 칸의 수</b>예요. (예: <b>3 1</b>은 3칸을 칠하고, 한 칸 이상 띄운 뒤 1칸을 칠해요.) 칸을 누르거나 끌어서 칠하고, 칠하면 안 된다고 확신하는 칸은 ✕로 표시하세요. 모든 줄의 숫자가 맞으면 완성! 다 맞춘 줄의 숫자는 흐려져요.</p>
+  <p class="muted">칸을 모두 맞추면 <b>숨은 그림</b>이 색깔과 함께 나타나요. 위쪽과 왼쪽 숫자는 그 줄에서 <b>이어서 칠해야 하는 칸의 수</b>예요. (예: <b>3 1</b>은 3칸을 칠하고, 한 칸 이상 띄운 뒤 1칸을 칠해요.) 칸을 누르거나 끌어서 칠하고, 칠하면 안 된다고 확신하는 칸은 ✕로 표시하세요. 모든 줄의 숫자가 맞으면 완성! 다 맞춘 줄의 숫자는 흐려져요.</p>
 </main>
 <script>
 const LV = { 5: { n: 5, label: "5×5", hint: "쉬움" }, 8: { n: 8, label: "8×8", hint: "보통" }, 10: { n: 10, label: "10×10", hint: "어려움" } };
@@ -59,9 +61,11 @@ let lv = [5, 8, 10].includes(ld(LKEY)) ? ld(LKEY) : 5, n, sol, cur, mode = "fill
 const runs = line => { const r = []; let c = 0; for (const v of line) { if (v) c++; else if (c) { r.push(c); c = 0; } } if (c) r.push(c); return r.length ? r : [0]; };
 const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
 const rowOf = (g, y) => g[y].map(v => v === 1 ? 1 : 0), colOf = (g, x) => g.map(r => r[x] === 1 ? 1 : 0);
-function makePuzzle() {                                 // 무작위 그림을 만든다. 비어 있는 줄이 없도록 한다
-  for (;;) { const g = Array.from({ length: n }, () => Array.from({ length: n }, () => (Math.random() < .58 ? 1 : 0)));
-    if (g.every(r => r.some(Boolean)) && g[0].map((_, x) => g.some(r => r[x])).every(Boolean)) return g; }
+/*PICS*/const PICS = {"5": [{"n": "하트", "e": "❤️", "g": [".r.r.", "rrrrr", "rrrrr", ".rrr.", "..r.."]}, {"n": "집", "e": "🏠", "g": ["..r..", ".rrr.", "rrrrr", "yyyyy", "yynyy"]}, {"n": "나무", "e": "🌳", "g": ["..g..", ".ggg.", "ggggg", "..n..", "..n.."]}, {"n": "별", "e": "⭐", "g": ["..y..", "yyyyy", ".yyy.", ".yyy.", "yy.yy"]}, {"n": "웃는 얼굴", "e": "😊", "g": [".yyy.", "ykyky", "yyyyy", "ykkky", ".yyy."]}, {"n": "꽃", "e": "🌸", "g": [".ppp.", "ppypp", ".ppp.", "..g..", "..g.."]}], "8": [{"n": "하트", "e": "❤️", "g": [".rr..rr.", "rrrrrrrr", "rrrrrrrr", "rrrrrrrr", ".rrrrrr.", "..rrrr..", "...rr...", "........"]}, {"n": "집", "e": "🏠", "g": ["...rr...", "..rrrr..", ".rrrrrr.", "rrrrrrrr", ".yyyyyy.", ".ycyynn.", ".yyyynn.", ".yyyynn."]}, {"n": "나무", "e": "🌳", "g": ["...gg...", "..gggg..", ".gggggg.", "gggggggg", ".gggggg.", "...nn...", "...nn...", "...nn..."]}, {"n": "물고기", "e": "🐟", "g": ["........", "..bbbb..", ".bbbbbb.", "b.bbkbb.", "bbbbbbbb", "b.bbbbb.", "..bbbb..", "........"]}, {"n": "아이스크림", "e": "🍦", "g": ["..pppp..", ".pppppp.", "pppppppp", "oooooooo", ".oooooo.", "..oooo..", "...oo...", "...oo..."]}, {"n": "해", "e": "☀️", "g": ["...yy...", ".y.yy.y.", "..yyyy..", "yyyyyyyy", "yyyyyyyy", "..yyyy..", ".y.yy.y.", "...yy..."]}], "10": [{"n": "하트", "e": "❤️", "g": ["..........", ".rrr..rrr.", "rrrrrrrrrr", "rrrrrrrrrr", "rrrrrrrrrr", ".rrrrrrrr.", "..rrrrrr..", "...rrrr...", "....rr....", ".........."]}, {"n": "집", "e": "🏠", "g": ["....rr....", "...rrrr...", "..rrrrrr..", ".rrrrrrrr.", "rrrrrrrrrr", ".yyyyyyyy.", ".yccyyccy.", ".yccyyccy.", ".yyyynnyy.", ".yyyynnyy."]}, {"n": "나무", "e": "🌳", "g": ["....gg....", "...gggg...", "..gggggg..", ".gggggggg.", "...gggg...", "..gggggg..", ".gggggggg.", "....nn....", "....nn....", "....nn...."]}, {"n": "고양이", "e": "🐱", "g": ["ss......ss", "sss....sss", "ssssssssss", "ssksssskss", "ssssssssss", "ssssppssss", "ssskssksss", ".ssssssss.", "..ssssss..", ".........."]}, {"n": "곰", "e": "🐻", "g": ["nn......nn", "nnn....nnn", ".nnnnnnnn.", "nnnnnnnnnn", "nnknnnnknn", "nnnnnnnnnn", "nnnwwwwnnn", "nnnwkkwnnn", ".nnnnnnnn.", "..nnnnnn.."]}, {"n": "꽃", "e": "🌷", "g": ["....pp....", "..pppppp..", ".pppyyppp.", ".pppyyppp.", "..pppppp..", "....pp....", ".....g....", "..gg.g....", "...ggg....", ".....g...."]}, {"n": "돛단배", "e": "⛵", "g": ["....w.....", "....ww....", "....www...", "....wwww..", "....wwwww.", "....n.....", ".nnnnnnnn.", "..nnnnnn..", "bbbbbbbbbb", "bbbbbbbbbb"]}]}, PAL = {"r": "#e5484d", "o": "#f2994a", "y": "#f5c518", "g": "#3fa34d", "b": "#3b82c4", "c": "#7fd0e8", "k": "#23272f", "w": "#f6f1e4", "s": "#9aa3b2", "n": "#8a5a34", "p": "#f48fb1"};/*/PICS*/
+let pic = null; const lastK = {};   // pic = 이번 판의 숨은 그림 {n 이름, e 이모지, g 줄 목록}. 크기별로 방금 한 그림은 바로 다시 안 나와요
+function makePuzzle() {            // 숨은 그림(직접 디자인한 그림, 정답이 하나뿐인 것만)을 하나 골라 칠할 칸으로 바꾼다
+  const list = PICS[n]; let k; do { k = Math.floor(Math.random() * list.length); } while (list.length > 1 && k === lastK[n]);
+  lastK[n] = k; pic = list[k]; return pic.g.map(r => [...r].map(ch => (ch === "." ? 0 : 1)));
 }
 function newGame() {
   clearInterval(timer); n = LV[lv].n; sol = makePuzzle(); cur = Array.from({ length: n }, () => Array(n).fill(0)); t0 = 0; done = false; revealed = false; $("time").textContent = "0:00"; $("res").hidden = true; render();
@@ -73,7 +77,7 @@ function set(y, x, v) { if (done || cur[y][x] === v) return; startTimer(); cur[y
 function win() {
   done = true; clearInterval(timer); const s = Math.max(1, Math.floor((Date.now() - t0) / 1000)); let t = `${fmt(s)} 만에 완성했어요.`;
   if (!revealed && (!best[lv] || s < best[lv])) { best[lv] = s; sv(KEY, best); t += " 🏆 최고 기록이에요!"; }
-  $("res").innerHTML = `<b>🎉 완성!</b><p class="muted">${t}</p>`; $("res").hidden = false; render();
+  $("res").innerHTML = `<b>🎉 완성!</b><div style="font-size:2.6rem;line-height:1.2;margin:2px 0">${pic.e}</div><p style="margin:0"><span style="font-weight:700">${pic.n}</span> 그림이 나타났어요!</p><p class="muted">${t}</p>`; $("res").hidden = false; render();
 }
 function render() {
   const rc = rowClues(), cc = colClues(), rows = cur.map((_, y) => runs(rowOf(cur, y))), cols = sol[0].map((_, x) => runs(colOf(cur, x)));
@@ -81,9 +85,9 @@ function render() {
   let h = `<div></div>` + cc.map((c, x) => `<div class="cc">${c.map(v => `<span class="${same(cols[x], c) ? "d" : ""}">${v}</span>`).join("")}</div>`).join("");
   for (let y = 0; y < n; y++) {
     h += `<div class="rc">${rc[y].map(v => `<span class="${same(rows[y], rc[y]) ? "d" : ""}">${v}</span>`).join("")}</div>`;
-    for (let x = 0; x < n; x++) h += `<button type="button" class="c ${cur[y][x] === 1 ? "f" : cur[y][x] === 2 ? "m" : ""} ${(x + 1) % 5 === 0 && x < n - 1 ? "b5" : ""} ${(y + 1) % 5 === 0 && y < n - 1 ? "r5" : ""}" data-y="${y}" data-x="${x}" aria-label="${y + 1}행 ${x + 1}열 ${cur[y][x] === 1 ? "칠함" : cur[y][x] === 2 ? "표시" : "빈칸"}"></button>`;
+    for (let x = 0; x < n; x++) h += `<button type="button" class="c ${done ? (sol[y][x] ? "f" : "") : cur[y][x] === 1 ? "f" : cur[y][x] === 2 ? "m" : ""} ${(x + 1) % 5 === 0 && x < n - 1 ? "b5" : ""} ${(y + 1) % 5 === 0 && y < n - 1 ? "r5" : ""}" data-y="${y}" data-x="${x}"${done && sol[y][x] ? ` style="background:${PAL[pic.g[y][x]]};border-color:${PAL[pic.g[y][x]]};box-shadow:0 0 0 .6px ${PAL[pic.g[y][x]]};--d:${(x + y) * 28}ms"` : ""} aria-label="${y + 1}행 ${x + 1}열 ${cur[y][x] === 1 ? "칠함" : cur[y][x] === 2 ? "표시" : "빈칸"}"></button>`;
   }
-  $("board").innerHTML = h; $("best").textContent = best[lv] ? fmt(best[lv]) : "-";
+  $("board").className = "board" + (done ? " pic" : ""); $("board").innerHTML = h; $("best").textContent = best[lv] ? fmt(best[lv]) : "-";
   $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${+k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${+k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
   $("mFill").className = "btn " + (mode === "fill" ? "on" : "ghost"); $("mMark").className = "btn " + (mode === "mark" ? "on" : "ghost");
 }
@@ -94,7 +98,7 @@ $("board").addEventListener("pointermove", e => { if (paint === null) return; co
 ["pointerup", "pointercancel"].forEach(ev => document.addEventListener(ev, () => { paint = null; }));
 $("mFill").onclick = () => { mode = "fill"; render(); }; $("mMark").onclick = () => { mode = "mark"; render(); };
 $("clear").onclick = () => { if (done) return; cur = cur.map(r => r.map(() => 0)); render(); };
-$("reveal").onclick = () => { if (done) return; revealed = true; cur = sol.map(r => r.map(v => (v ? 1 : 0))); done = true; clearInterval(timer); $("res").innerHTML = `<b>정답이에요</b><p class="muted">정답을 봐서 기록은 남지 않아요.</p>`; $("res").hidden = false; render(); };
+$("reveal").onclick = () => { if (done) return; revealed = true; cur = sol.map(r => r.map(v => (v ? 1 : 0))); done = true; clearInterval(timer); $("res").innerHTML = `<b>정답이에요</b><div style="font-size:2.6rem;line-height:1.2;margin:2px 0">${pic.e}</div><p style="margin:0">숨은 그림: <span style="font-weight:700">${pic.n}</span></p><p class="muted">정답을 봐서 기록은 남지 않아요.</p>`; $("res").hidden = false; render(); };
 $("newGame").onclick = newGame;
 $("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && +b.dataset.l !== lv) { lv = +b.dataset.l; sv(LKEY, lv); newGame(); } });
 newGame();

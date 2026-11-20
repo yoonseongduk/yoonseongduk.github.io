@@ -84,3 +84,94 @@
 🥁|drum
 🎹|piano
 🎻|violin
+
+## 초급
+🍚|rice
+🐭|mouse
+🍐|pear
+🐥|chick
+🌻|sunflower
+🍄|mushroom
+👶|baby
+🏀|basketball
+🚪|door
+🔔|bell
+⚾|baseball
+🏆|trophy
+## 중급
+🥦|broccoli
+🥭|mango
+🥝|kiwi
+🍆|eggplant
+🍠|sweet potato
+🌭|hot dog
+🥜|peanut
+🥥|coconut
+🍿|popcorn
+🍯|honey
+🥐|croissant
+🦈|shark
+🦅|eagle
+🦜|parrot
+🦢|swan
+🐫|camel
+🦘|kangaroo
+🐊|crocodile
+🐺|wolf
+🦌|deer
+🐌|snail
+🐞|ladybug
+🦉|owl
+🌵|cactus
+🌴|palm tree
+🌋|volcano
+⛺|tent
+🏰|castle
+🎤|microphone
+🎧|headphones
+## 고급
+🦔|hedgehog
+🐓|rooster
+⚓|anchor
+🧲|magnet
+🛒|shopping cart
+📷|camera
+🦚|peacock
+🦏|rhinoceros
+🦛|hippopotamus
+🦇|bat
+🦎|lizard
+🐉|dragon
+🦂|scorpion
+🐛|caterpillar
+🦞|lobster
+🦐|shrimp
+🦑|squid
+🐚|seashell
+🥨|pretzel
+🥟|dumpling
+🥒|cucumber
+🧅|onion
+🧄|garlic
+🌰|chestnut
+🍈|melon
+🔭|telescope
+🔬|microscope
+🔦|flashlight
+🔋|battery
+🧭|compass
+🧩|jigsaw puzzle
+🎨|paint palette
+🧹|broom
+🧺|laundry basket
+🧯|fire extinguisher
+🔧|wrench
+🔨|hammer
+🚦|traffic light
+🌍|globe
+⛽|gas station
+🧸|teddy bear
+🛁|bathtub
+🍙|rice ball
+🚇|subway
+🚛|truck

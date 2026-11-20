@@ -1,0 +1,58 @@
+# 영어 단어 퀴즈 추가 문제 (영어 단어|한글 뜻|품사: 명사·동사·형용사)
+## 초급
+pig|돼지|명사
+sheep|양|명사
+duck|오리|명사
+frog|개구리|명사
+ball|공|명사
+hat|모자|명사
+shoe|신발|명사
+ear|귀|명사
+mouth|입|명사
+red|빨간|형용사
+blue|파란|형용사
+white|하얀|형용사
+## 중급
+bridge|다리|명사
+garden|정원|명사
+ticket|표|명사
+address|주소|명사
+medicine|약|명사
+neighbor|이웃|명사
+build|짓다|동사
+carry|나르다|동사
+borrow|빌리다|동사
+choose|고르다|동사
+wonderful|멋진|형용사
+crowded|붐비는|형용사
+## 고급
+ability|능력|명사
+accident|사고|명사
+advice|충고|명사
+adventure|모험|명사
+century|세기|명사
+courage|용기|명사
+culture|문화|명사
+enemy|적|명사
+environment|환경|명사
+experience|경험|명사
+festival|축제|명사
+future|미래|명사
+history|역사|명사
+journey|여행|명사
+language|언어|명사
+believe|믿다|동사
+celebrate|축하하다|동사
+decide|결정하다|동사
+imagine|상상하다|동사
+invite|초대하다|동사
+receive|받다|동사
+remember|기억하다|동사
+ancient|고대의|형용사
+careful|조심하는|형용사
+dangerous|위험한|형용사
+lonely|외로운|형용사
+nervous|불안한|형용사
+polite|예의 바른|형용사
+popular|인기 있는|형용사
+shy|수줍어하는|형용사

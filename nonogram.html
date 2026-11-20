@@ -43,13 +43,14 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 <body>
 <main>
   <h1>노노그램 🖼️</h1>
+  <div class="seg" id="gm" role="radiogroup" aria-label="모드" style="grid-template-columns:1fr 1fr"></div>
   <div class="seg" id="lv" role="radiogroup" aria-label="크기"></div>
   <div class="stats"><div class="stat"><small>시간</small><b id="time">0:00</b></div><div class="stat"><small>최고(이 크기)</small><b id="best">-</b></div></div>
   <div class="ctl" id="ctl"><div class="row" id="ctlrow" style="grid-template-columns:1fr 1fr"><button class="btn on" id="mFill" type="button">■ 칠하기</button><button class="btn ghost" id="mMark" type="button">✕ 표시</button><button class="btn ghost" id="mMove" type="button" hidden>✋ 이동</button><button class="btn ghost" id="zoom" type="button" hidden>🔍 한눈에</button></div></div>
   <div class="bwrap" id="bw"><div class="board" id="board" role="grid" aria-label="노노그램 판"></div></div>
     <div class="res" id="res" hidden></div>
   <div class="row"><button class="btn ghost" id="clear" type="button">모두 지우기</button><button class="btn ghost" id="reveal" type="button">정답 보기</button><button class="btn" id="newGame" type="button">새 퍼즐</button></div>
-  <p class="muted">칸을 모두 맞추면 <b>숨은 그림</b>이 색깔과 함께 나타나요. (15×15는 ✋ 이동을 누르거나 위·왼쪽 <b>숫자 부분을 밀면</b> 판이 움직여요.) 위쪽과 왼쪽 숫자는 그 줄에서 <b>이어서 칠해야 하는 칸의 수</b>예요. (예: <b>3 1</b>은 3칸을 칠하고, 한 칸 이상 띄운 뒤 1칸을 칠해요.) 칸을 누르거나 끌어서 칠하고, 칠하면 안 된다고 확신하는 칸은 ✕로 표시하세요. 모든 줄의 숫자가 맞으면 완성! 다 맞춘 줄의 숫자는 흐려져요.</p>
+  <p class="muted"><b>🖼️ 그림 모드</b>는 준비된 그림 999개 중에서, <b>🎲 랜덤 모드</b>는 판마다 새로 만든 그림이 나와요(모두 추측 없이 풀려요). 칸을 모두 맞추면 <b>숨은 그림</b>이 색깔과 함께 나타나요. (15×15는 ✋ 이동을 누르거나 위·왼쪽 <b>숫자 부분을 밀면</b> 판이 움직여요.) 위쪽과 왼쪽 숫자는 그 줄에서 <b>이어서 칠해야 하는 칸의 수</b>예요. (예: <b>3 1</b>은 3칸을 칠하고, 한 칸 이상 띄운 뒤 1칸을 칠해요.) 칸을 누르거나 끌어서 칠하고, 칠하면 안 된다고 확신하는 칸은 ✕로 표시하세요. 모든 줄의 숫자가 맞으면 완성! 다 맞춘 줄의 숫자는 흐려져요.</p>
 </main>
 <script>
 const LV = { 5: { n: 5, label: "5×5", hint: "쉬움" }, 8: { n: 8, label: "8×8", hint: "보통" }, 10: { n: 10, label: "10×10", hint: "어려움" }, 15: { n: 15, label: "15×15", hint: "매우 어려움" } };
@@ -68,7 +69,89 @@ const HAND = {}; Object.keys(PICS).forEach(k => { HAND[k] = PICS[k].length; }); 
 let genLoaded = false;   // 프로그램이 만든 그림(data/nonogram-gen.json)을 불러왔는지. 못 불러와도 직접 디자인한 그림으로 계속 돼요
 try { fetch("data/nonogram-gen.json").then(r => (r.ok ? r.json() : null)).then(d => { if (!d) return; Object.keys(d).forEach(k => { if (PICS[k]) PICS[k] = PICS[k].slice(0, HAND[k]).concat(d[k]); }); genLoaded = true; }).catch(() => {}); } catch (e) {}
 let pic = null, picNo = 0; const lastK = {};   // pic = 이번 판의 숨은 그림 {n 이름, e 이모지, g 줄 목록}. 크기별로 방금 한 그림은 바로 다시 안 나와요
-function makePuzzle() {            // 숨은 그림(직접 디자인한 그림, 정답이 하나뿐인 것만)을 하나 골라 칠할 칸으로 바꾼다
+// ── 랜덤 모드: 판마다 새 그림을 그 자리에서 만든다(몬스터·문양·눈송이). 줄 논리만으로 풀리는(정답 하나·추측 불필요) 것만 쓴다
+const GMKEY = "nonogram-gmode-v1"; let gm = ld(GMKEY) === "rand" ? "rand" : "pic";   // pic = 그림 모드(준비된 그림 999개), rand = 랜덤 모드
+const bk = () => (gm === "rand" ? "r" : "") + lv;   // 최고 기록 칸: 랜덤 모드는 따로(r5, r8…)
+const ARR = new Map();
+function arrangements(m, clue) {
+  const key = m + ":" + clue.join(","); if (ARR.has(key)) return ARR.get(key);
+  const ks = clue.length === 1 && clue[0] === 0 ? [] : clue, out = [];
+  (function rec(i, k, cur) {
+    if (k === ks.length) { out.push(cur.concat(Array(m - cur.length).fill(0))); return; }
+    const need = ks.slice(k).reduce((s, v) => s + v, 0) + ks.length - k - 1;
+    for (let s = i; s <= m - need; s++) rec(s + ks[k] + 1, k + 1, cur.concat(Array(s - cur.length).fill(0), Array(ks[k]).fill(1)));
+  })(0, 0, []);
+  ARR.set(key, out); return out;
+}
+function lineSolvable(g) {
+  const m = g.length, rc = g.map(r => runs(r)), cc = g[0].map((_, x) => runs(g.map(r => r[x]))), st = Array.from({ length: m }, () => Array(m).fill(-1));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const hor of [true, false]) for (let i = 0; i < m; i++) {
+      const clue = hor ? rc[i] : cc[i], cur = hor ? st[i].slice() : st.map(r => r[i]);
+      if (!cur.includes(-1)) continue;
+      const ok = arrangements(m, clue).filter(ar => cur.every((c, k) => c === -1 || c === ar[k]));
+      if (!ok.length) return false;
+      for (let k = 0; k < m; k++) if (cur[k] === -1) { const v = ok[0][k]; if (ok.every(ar => ar[k] === v)) { if (hor) st[i][k] = v; else st[k][i] = v; changed = true; } }
+    }
+  }
+  return st.every(r => r.every(v => v !== -1));
+}
+function components(g) {   // 칠한 칸 덩어리 수(8방향). 몬스터는 한 덩어리여야 그림처럼 보여요
+  const m = g.length, seen = new Set(); let cnt = 0;
+  for (let y = 0; y < m; y++) for (let x = 0; x < m; x++) if (g[y][x] && !seen.has(y * 99 + x)) {
+    cnt++; const st = [[y, x]]; seen.add(y * 99 + x);
+    while (st.length) { const [cy, cx] = st.pop(); for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const ny = cy + dy, nx = cx + dx; if (ny >= 0 && ny < m && nx >= 0 && nx < m && g[ny][nx] && !seen.has(ny * 99 + nx)) { seen.add(ny * 99 + nx); st.push([ny, nx]); } } }
+  }
+  return cnt;
+}
+const sym4 = (g, y, x, m) => { const v = g[y][x]; g[y][m - 1 - x] = v; g[m - 1 - y][x] = v; g[m - 1 - y][m - 1 - x] = v; };
+function genShape(kind, m) {
+  const half = Math.ceil(m / 2), rnd = Math.random;
+  for (let t = 0; t < 40; t++) {
+    let g = Array.from({ length: m }, () => Array(m).fill(0));
+    if (kind === "blob") {
+      g = g.map(() => Array.from({ length: m }, () => (rnd() < .62 ? 1 : 0)));
+      const mir = () => { for (let y = 0; y < m; y++) for (let x = 0; x < half; x++) g[y][m - 1 - x] = g[y][x]; };
+      mir();
+      for (let r = 0; r < 2; r++) { const h = g.map(row => row.slice()); for (let y = 0; y < m; y++) for (let x = 0; x < m; x++) { let s = 0; for (let yy = Math.max(0, y - 1); yy <= Math.min(m - 1, y + 1); yy++) for (let xx = Math.max(0, x - 1); xx <= Math.min(m - 1, x + 1); xx++) s += g[yy][xx]; h[y][x] = s >= 5 ? 1 : 0; } g = h; mir(); }
+      const tot = g.flat().reduce((s, v) => s + v, 0), rows = g.filter(r => r.some(Boolean)).length, cols = g[0].filter((_, x) => g.some(r => r[x])).length;
+      if (tot >= .38 * m * m && tot <= .78 * m * m && rows >= m - 1 && cols >= m - 1 && components(g) === 1) return g;
+    } else {
+      const q = Array.from({ length: half }, () => Array(half).fill(0));
+      for (let y = 0; y < half; y++) for (let x = (kind === "snow" ? y : 0); x < half; x++) { q[y][x] = rnd() < .55 ? 1 : 0; if (kind === "snow") q[x][y] = q[y][x]; }
+      for (let y = 0; y < half; y++) for (let x = 0; x < half; x++) { g[y][x] = q[y][x]; sym4(g, y, x, m); }
+      const tot = g.flat().reduce((s, v) => s + v, 0);
+      if (tot >= .4 * m * m && tot <= .75 * m * m && g.every(r => r.some(Boolean))) return g;
+    }
+  }
+  return null;
+}
+const R_ADJ = ["졸린", "화난", "웃는", "수줍은", "용감한", "배고픈", "반짝이는", "작은", "큰", "씩씩한", "엉뚱한", "느긋한", "장난꾸러기", "똑똑한", "착한", "신나는", "조용한", "빠른", "포근한", "깜찍한", "듬직한", "아기", "꼬마", "슈퍼", "비밀의", "행운의", "춤추는", "노래하는"];
+const R_BLOB = [["도깨비", "👹"], ["외계인", "👽"], ["몬스터", "👾"], ["로봇", "🤖"], ["유령", "👻"], ["문어", "🐙"], ["용", "🐲"], ["공룡", "🦖"], ["고슴도치", "🦔"], ["올빼미", "🦉"], ["곰돌이", "🐻"], ["토끼", "🐰"], ["여우", "🦊"], ["거북이", "🐢"], ["개구리", "🐸"]];
+const R_PAT = [["문양", "🔷"], ["무늬", "🔶"], ["장식", "💠"], ["보석", "💎"], ["타일", "🟦"], ["만화경", "🔮"]], R_SNOW = [["눈송이", "❄️"], ["눈꽃", "❄️"], ["별빛", "✨"], ["결정", "💠"]];
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+function makeRandom(m) {   // 새 그림 하나: {n 이름, e 이모지, g 줄 목록}. 못 만들면 null
+  for (let t = 0; t < 400; t++) {
+    const r = Math.random() * 10, kind = r < 5 ? "blob" : r < 8 ? "pat" : "snow", g = genShape(kind === "pat" ? "mandala" : kind, m);
+    if (!g || !lineSolvable(g)) continue;
+    const body = pick("royg" + "bcns" + "ps"), acc = pick([..."royggbckpn"].filter(c => c !== body)), half = Math.ceil(m / 2), rows = g.map(rw => rw.map(v => (v ? body : ".")));
+    const cells = []; g.forEach((rw, y) => rw.forEach((v, x) => { if (v) cells.push([y, x]); }));
+    if (kind === "blob") {
+      const up = cells.filter(([y, x]) => y < Math.floor(m / 2) && x < Math.floor(m / 2) && x > 0);
+      if (up.length) { const [y, x] = pick(up), eye = pick(["k", "k", "w"]); rows[y][x] = eye; if (g[y][m - 1 - x]) rows[y][m - 1 - x] = eye; }
+      cells.forEach(([y, x]) => { if (x < half && Math.random() < .14 && rows[y][x] === body) { rows[y][x] = acc; if (g[y][m - 1 - x]) rows[y][m - 1 - x] = acc; } });
+    } else {
+      cells.forEach(([y, x]) => { if ((x + y) % 2 === 0 && Math.random() < .28 && rows[y][x] === body) rows[y][x] = acc; });
+    }
+    const [noun, emo] = pick(kind === "blob" ? R_BLOB : kind === "pat" ? R_PAT : R_SNOW);
+    return { n: pick(R_ADJ) + " " + noun, e: emo, g: rows.map(rw => rw.join("")) };
+  }
+  return null;
+}
+function makePuzzle() {
+  if (gm === "rand") { const rp = makeRandom(n); if (rp) { pic = rp; picNo = 0; return rp.g.map(r => [...r].map(ch => (ch === "." ? 0 : 1))); } }   // 랜덤 모드(만들기에 실패하면 준비된 그림으로)            // 숨은 그림(직접 디자인한 그림, 정답이 하나뿐인 것만)을 하나 골라 칠할 칸으로 바꾼다
   const list = PICS[n]; let k;   // 직접 디자인한 그림을 35%, 나머지는 프로그램이 만든 그림(불러왔을 때)에서 고른다
   do { k = genLoaded && list.length > HAND[n] && Math.random() > .35 ? HAND[n] + Math.floor(Math.random() * (list.length - HAND[n])) : Math.floor(Math.random() * HAND[n]); } while (list.length > 1 && k === lastK[n]);
   lastK[n] = k; pic = list[k]; picNo = k + 1; return pic.g.map(r => [...r].map(ch => (ch === "." ? 0 : 1)));
@@ -82,8 +165,8 @@ function solvedNow() { const rc = rowClues(), cc = colClues(); return cur.every(
 function set(y, x, v) { if (done || cur[y][x] === v) return; startTimer(); cur[y][x] = v; render(); if (solvedNow()) win(); }
 function win() {
   done = true; zoomIn = false; clearInterval(timer); const s = Math.max(1, Math.floor((Date.now() - t0) / 1000)); let t = `${fmt(s)} 만에 완성했어요.`;
-  if (!revealed && (!best[lv] || s < best[lv])) { best[lv] = s; sv(KEY, best); t += " 🏆 최고 기록이에요!"; }
-  $("res").innerHTML = `<b>🎉 완성!</b><div style="font-size:2.6rem;line-height:1.2;margin:2px 0">${pic.e}</div><p style="margin:0"><span style="font-weight:700">${pic.n}</span> 그림이 나타났어요!</p><p class="muted" style="margin:0">그림 ${picNo} / ${PICS[n].length}</p><p class="muted">${t}</p>`; $("res").hidden = false; render();
+  if (!revealed && (!best[bk()] || s < best[bk()])) { best[bk()] = s; sv(KEY, best); t += " 🏆 최고 기록이에요!"; }
+  $("res").innerHTML = `<b>🎉 완성!</b><div style="font-size:2.6rem;line-height:1.2;margin:2px 0">${pic.e}</div><p style="margin:0"><span style="font-weight:700">${pic.n}</span> 그림이 나타났어요!</p><p class="muted" style="margin:0">${gm === "rand" ? "🎲 랜덤 그림 (이번에만 나와요)" : `그림 ${picNo} / ${PICS[n].length}`}</p><p class="muted">${t}</p>`; $("res").hidden = false; render();
 }
 function render() {
   const rc = rowClues(), cc = colClues(), rows = cur.map((_, y) => runs(rowOf(cur, y))), cols = sol[0].map((_, x) => runs(colOf(cur, x)));
@@ -94,7 +177,8 @@ function render() {
     h += `<div class="rc">${rc[y].map(v => `<span class="${same(rows[y], rc[y]) ? "d" : ""}">${v}</span>`).join("")}</div>`;
     for (let x = 0; x < n; x++) h += `<button type="button" class="c ${done ? (sol[y][x] ? "f" : "") : cur[y][x] === 1 ? "f" : cur[y][x] === 2 ? "m" : ""} ${(x + 1) % 5 === 0 && x < n - 1 ? "b5" : ""} ${(y + 1) % 5 === 0 && y < n - 1 ? "r5" : ""}" data-y="${y}" data-x="${x}"${done && sol[y][x] ? ` style="background:${PAL[pic.g[y][x]]};border-color:${PAL[pic.g[y][x]]};box-shadow:0 0 0 .6px ${PAL[pic.g[y][x]]};--d:${(x + y) * 28}ms"` : ""} aria-label="${y + 1}행 ${x + 1}열 ${cur[y][x] === 1 ? "칠함" : cur[y][x] === 2 ? "표시" : "빈칸"}"></button>`;
   }
-  $("board").className = "board" + (done ? " pic" : "") + (n > 10 ? " n15" : "") + (mode === "move" ? " mv" : ""); $("bw").className = "bwrap" + (big ? " scroll" : ""); $("mMove").hidden = $("zoom").hidden = n <= 10; $("ctlrow").style.gridTemplateColumns = n > 10 ? "repeat(4,1fr)" : "1fr 1fr"; $("zoom").textContent = zoomIn ? "🔍 한눈에" : "🔍 크게"; $("mMove").className = "btn " + (mode === "move" ? "on" : "ghost"); $("board").innerHTML = h; $("best").textContent = best[lv] ? fmt(best[lv]) : "-";
+  $("board").className = "board" + (done ? " pic" : "") + (n > 10 ? " n15" : "") + (mode === "move" ? " mv" : ""); $("bw").className = "bwrap" + (big ? " scroll" : ""); $("mMove").hidden = $("zoom").hidden = n <= 10; $("ctlrow").style.gridTemplateColumns = n > 10 ? "repeat(4,1fr)" : "1fr 1fr"; $("zoom").textContent = zoomIn ? "🔍 한눈에" : "🔍 크게"; $("mMove").className = "btn " + (mode === "move" ? "on" : "ghost"); $("board").innerHTML = h; $("best").textContent = best[bk()] ? fmt(best[bk()]) : "-";
+  $("gm").innerHTML = [["pic", "🖼️ 그림 모드", "준비된 그림"], ["rand", "🎲 랜덤 모드", "매번 새 그림"]].map(([k, t, h]) => `<button type="button" class="${gm === k ? "on" : ""}" data-g="${k}" role="radio" aria-checked="${gm === k}">${t}<small>${h}</small></button>`).join("");
   $("lv").innerHTML = Object.keys(LV).map(k => `<button type="button" class="${+k === lv ? "on" : ""}" data-l="${k}" role="radio" aria-checked="${+k === lv}">${LV[k].label}<small>${LV[k].hint}</small></button>`).join("");
   $("mFill").className = "btn " + (mode === "fill" ? "on" : "ghost"); $("mMark").className = "btn " + (mode === "mark" ? "on" : "ghost");
 }
@@ -108,6 +192,7 @@ $("zoom").onclick = () => { zoomIn = !zoomIn; if (mode === "move" && !zoomIn) mo
 $("clear").onclick = () => { if (done) return; cur = cur.map(r => r.map(() => 0)); render(); };
 $("reveal").onclick = () => { if (done) return; revealed = true; cur = sol.map(r => r.map(v => (v ? 1 : 0))); done = true; zoomIn = false; clearInterval(timer); $("res").innerHTML = `<b>정답이에요</b><div style="font-size:2.6rem;line-height:1.2;margin:2px 0">${pic.e}</div><p style="margin:0">숨은 그림: <span style="font-weight:700">${pic.n}</span></p><p class="muted">정답을 봐서 기록은 남지 않아요.</p>`; $("res").hidden = false; render(); };
 $("newGame").onclick = newGame;
+$("gm").addEventListener("click", e => { const b = e.target.closest("[data-g]"); if (b && b.dataset.g !== gm) { gm = b.dataset.g; sv(GMKEY, gm); newGame(); } });
 $("lv").addEventListener("click", e => { const b = e.target.closest("[data-l]"); if (b && +b.dataset.l !== lv) { lv = +b.dataset.l; sv(LKEY, lv); newGame(); } });
 newGame();
 </script>

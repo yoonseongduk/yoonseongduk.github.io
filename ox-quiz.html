@@ -33,6 +33,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:58px;padding:8px 10px;font-weight:700;font-size:1.02rem;overflow-wrap:anywhere}
 .opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}.opt:disabled{cursor:default}
 .res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.flagb{margin-top:8px;background:transparent;border:1px dashed var(--line);border-radius:999px;padding:4px 12px;font-family:var(--font-body);font-size:.85rem;color:var(--muted)}.flagb.on{border-style:solid;border-color:var(--bad);color:var(--bad)}
 </style>
 </head>
 <body>
@@ -60,6 +61,11 @@ const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const CATS = ["전체", ...new Set(D.map(d => d[3]).filter(Boolean))];
 let cat = "전체", qs = [], i = 0, score = 0, best = ld(KEY) || 0, locked = false;
+/*FLAG*/
+const FLK = "quiz-flags-v1", FLF = (location.pathname.split("/").pop() || "quiz-quiz.html");
+const flAll = () => { const v = ld(FLK); return v && typeof v === "object" ? v : {}; }, isFlag = q => !!(flAll()[FLF] || {})[q];
+function toggleFlag(d, picked) { const all = flAll(), m = all[FLF] || (all[FLF] = {}); if (m[d[0]]) delete m[d[0]]; else m[d[0]] = { a: String(d[1]), p: String(picked || ""), t: Date.now() }; if (!Object.keys(m).length) delete all[FLF]; sv(FLK, all); }
+function showFlag(d, picked) { $("q").insertAdjacentHTML("beforeend", `<button class="flagb ${isFlag(d[0]) ? "on" : ""}" type="button" data-flag="1">${isFlag(d[0]) ? "🚩 신고했어요 (누르면 취소)" : "🚩 문제가 이상해요"}</button>`); $("q").querySelector("[data-flag]").onclick = e => { toggleFlag(d, picked); e.target.classList.toggle("on", isFlag(d[0])); e.target.textContent = isFlag(d[0]) ? "🚩 신고했어요 (누르면 취소)" : "🚩 문제가 이상해요"; }; }
 /*LEVEL*/
 const LVN = ["전체", "🌱 초급", "🌿 중급", "🌳 고급"], LVM = [1, 1, 1.5, 2], LVK = KEY.split("-best-").join("-lv-") === KEY ? KEY + "-lv" : KEY.split("-best-").join("-lv-");
 let lv = +ld(LVK) || 0; if (!(lv >= 0 && lv <= 3)) lv = 0;
@@ -79,7 +85,7 @@ function _unused(d) {                                   // 보기를 만든다: 
   return shuf([d[1], ...wrong]);
 }
 function start() {
-  renderLv(); const pool = D.filter((d, n) => (!lv || lvOf(n) === lv) && (cat === "전체" || d[3] === cat));
+  renderLv(); const pool = D.filter((d, n) => (!lv || lvOf(n) === lv) && !isFlag(d[0]) && (cat === "전체" || d[3] === cat));
   qs = shuf(pool).slice(0, ROUND).map(d => ({ d, opts: options(d) })); i = 0; score = 0; $("res").hidden = true;
   $("cats").hidden = CATS.length < 3; $("cats").innerHTML = CATS.map(c => `<button class="chip ${c === cat ? "on" : ""}" type="button" data-c="${c}" aria-pressed="${c === cat}">${c}</button>`).join(""); show();
 }
@@ -94,6 +100,7 @@ function pick(k) {
   if (locked) return; locked = true; const { d, opts } = qs[i]; if (opts[k] === d[1]) score++;
   document.querySelectorAll(".opt").forEach((b, n) => { b.disabled = true; if (opts[n] === d[1]) b.classList.add("ok"); else if (n === k) b.classList.add("bad"); });
   if (d[4]) $("q").insertAdjacentHTML("beforeend", `<span class="note">${esc(d[4])}</span>`);
+  showFlag(d, opts[k]);
   $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;
 }
 function finish() {

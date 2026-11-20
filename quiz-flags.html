@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<script src="person.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>신고한 퀴즈 문제</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(0 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(0 22% 86%);--accent:hsl(0 65% 46%);--accent-fg:#fff;--soft:hsl(0 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(0 22% 10%);--surface:hsl(0 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(0 16% 25%);--accent:hsl(0 75% 68%);--accent-fg:#10131c;--soft:hsl(0 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.it{padding:10px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}.it:last-child{border-bottom:0}
+.it b{overflow-wrap:anywhere}.it .note{font-size:.85rem;color:var(--muted);overflow-wrap:anywhere}.rm{align-self:flex-start;background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:.85rem}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+</style>
+</head>
+<body>
+<main>
+  <h1>신고한 퀴즈 문제 🚩</h1>
+  <div class="card"><b id="sum">🚩 신고한 문제</b>
+    <p class="muted">퀴즈에서 보기를 고른 뒤 나오는 "🚩 문제가 이상해요" 단추로 신고한 문제예요. 이 폰에만 저장되고, 신고한 문제는 이 폰에서 다시 나오지 않아요. 아래 복사 단추로 글을 복사해서 개발자에게 전달해 주세요.</p>
+    <div class="row2"><button class="btn" id="copy" type="button">📋 전체 복사</button><button class="btn ghost" id="clear" type="button">🗑️ 모두 지우기</button></div>
+    <div class="muted" id="msg" role="status"></div></div>
+  <div id="list"></div>
+
+  <p class="muted">문제가 이상할 때 신고하고 모아서 전달해요.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KEY = "quiz-flags-v1";
+
+// KEY·$·esc 는 공통 틀(mkpage)에 있어요
+const fld = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; } };
+const fsv = v => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} };
+const nm = f => f.replace(/\.html$/, "");
+const day = t => { const d = new Date(t); return (d.getMonth() + 1) + "/" + d.getDate(); };
+function rows() { const a = []; const all = fld(); Object.keys(all).forEach(f => Object.keys(all[f]).forEach(q => a.push({ f, q, ...all[f][q] }))); return a.sort((x, y) => y.t - x.t); }
+function render() {
+  const r = rows(); $("sum").textContent = "🚩 신고한 문제 " + r.length + "개";
+  const g = {}; r.forEach(x => (g[x.f] = g[x.f] || []).push(x));
+  $("list").innerHTML = r.length ? Object.keys(g).map(f => `<section class="card"><b>${esc(nm(f))} (${g[f].length})</b>${g[f].map(x => `<div class="it"><b>${esc(x.q)}</b><span class="note">정답으로 저장된 답: ${esc(x.a)} · 내가 고른 답: ${esc(x.p || "-")} · ${day(x.t)}</span><button class="rm" type="button" data-f="${esc(f)}" data-q="${esc(x.q)}">신고 취소</button></div>`).join("")}</section>`).join("") : `<div class="card muted">아직 신고한 문제가 없어요. 퀴즈에서 이상한 문제를 만나면 🚩를 눌러 주세요.</div>`;
+}
+function text() { const r = rows(); return "[퀴즈 문제 신고] 총 " + r.length + "개\n" + r.map(x => `${x.f} | ${x.q} | 정답: ${x.a} | 고른 답: ${x.p || "-"} | ${day(x.t)}`).join("\n"); }
+$("list").addEventListener("click", e => { const b = e.target.closest(".rm"); if (!b) return; const all = fld(); if (all[b.dataset.f]) { delete all[b.dataset.f][b.dataset.q]; if (!Object.keys(all[b.dataset.f]).length) delete all[b.dataset.f]; fsv(all); } render(); });
+$("copy").onclick = async () => {
+  const t = text();
+  try { await navigator.clipboard.writeText(t); $("msg").textContent = "복사했어요! 개발자에게 붙여넣어 주세요."; }
+  catch (e) { const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); $("msg").textContent = "복사했어요! 개발자에게 붙여넣어 주세요."; } catch (e2) { $("msg").textContent = "복사가 안 돼요. 아래 글을 직접 선택해 복사해 주세요: " + t; } ta.remove(); }
+};
+$("clear").onclick = () => { if (confirm("신고한 문제를 모두 지울까요? (지우면 그 문제가 다시 나와요)")) { fsv({}); render(); $("msg").textContent = "모두 지웠어요."; } };
+render();
+
+</script>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
+<script src="home.js" defer></script>
+</body>
+</html>

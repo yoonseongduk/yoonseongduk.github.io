@@ -105,3 +105,6 @@ def make(path, title, emoji, hue, key, help_, data, label="", kind="choice", qsi
          .replace("@@QSIZE@@", qsize).replace("@@HELP@@", help_).replace("@@LABEL@@", json.dumps(label, ensure_ascii=False)).replace("@@DATA@@", json.dumps(data, ensure_ascii=False)))
     open(path, "w", encoding="utf-8").write(s)
     print("만듦:", path, len(data), "문제")
+    try:                                   # 등급·문제 신고 단추는 qlevel.py 가 붙여요
+        import qlevel; qlevel.apply_one(path)
+    except ImportError: pass

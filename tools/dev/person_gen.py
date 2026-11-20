@@ -7,7 +7,7 @@ R = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..
 NOT_GAME = {"link-test.html", "play-together.html", "team-split.html", "order-picker.html", "lots.html", "decision-roulette.html", "dice-roller.html", "coin-flip.html", "mafia-helper.html", "scoreboard.html"}
 HARD = ["sudoku.html", "mini-sudoku.html", "nonogram.html", "n-queens.html", "knights-tour.html", "magic-square.html", "hanoi.html", "water-sort.html", "mine-puzzle.html", "block-stack.html", "hanja-write.html", "peg-solitaire.html", "checkers.html", "go-stop.html"]
 t = open(R + "index.html", encoding="utf-8").read()
-g = re.findall(r'\["([^"]+\.html)", "[^"]*", "[^"]*", "[^"]*", "(\w+)"\]', t)
+g = re.findall(r'\["([^"]+\.html)", "[^"]*", "[^"]*", "[^"]*", "(\w+)"(?:, "[^"]*")?\]', t)
 files = sorted({f for f, k in g if k in ("brain", "quiz", "react", "board", "arcade", "together") and f not in NOT_GAME})
 hard = [f for f in HARD if f in files]
 line = "/*GAMES*/ var GAMES = " + json.dumps({f: 1 for f in files}, ensure_ascii=False, separators=(",", ":")) + "; var HARD = " + json.dumps({f: 1 for f in hard}, ensure_ascii=False, separators=(",", ":")) + "; /*/GAMES*/"

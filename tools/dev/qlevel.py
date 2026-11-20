@@ -91,12 +91,36 @@ def patch_html(h):
     h = h.replace(a, "sv(bestKey(), best); note", 1)
     return h
 
+# ── 🚩 문제 오류 신고(공통 틀): 신고한 문제는 localStorage "quiz-flags-v1" = {퀴즈 파일: {문제: {a: 정답, p: 내가 고른 답, t: 시각}}} 에 저장하고, quiz-flags.html 에서 모아 보고 복사해요
+FMARK = "/*FLAG*/"
+FLAG_CSS = ".flagb{margin-top:8px;background:transparent;border:1px dashed var(--line);border-radius:999px;padding:4px 12px;font-family:var(--font-body);font-size:.85rem;color:var(--muted)}.flagb.on{border-style:solid;border-color:var(--bad);color:var(--bad)}\n"
+FLAG_JS = r'''/*FLAG*/
+const FLK = "quiz-flags-v1", FLF = (location.pathname.split("/").pop() || "quiz-quiz.html");
+const flAll = () => { const v = ld(FLK); return v && typeof v === "object" ? v : {}; }, isFlag = q => !!(flAll()[FLF] || {})[q];
+function toggleFlag(d, picked) { const all = flAll(), m = all[FLF] || (all[FLF] = {}); if (m[d[0]]) delete m[d[0]]; else m[d[0]] = { a: String(d[1]), p: String(picked || ""), t: Date.now() }; if (!Object.keys(m).length) delete all[FLF]; sv(FLK, all); }
+function showFlag(d, picked) { $("q").insertAdjacentHTML("beforeend", `<button class="flagb ${isFlag(d[0]) ? "on" : ""}" type="button" data-flag="1">${isFlag(d[0]) ? "🚩 신고했어요 (누르면 취소)" : "🚩 문제가 이상해요"}</button>`); $("q").querySelector("[data-flag]").onclick = e => { toggleFlag(d, picked); e.target.classList.toggle("on", isFlag(d[0])); e.target.textContent = isFlag(d[0]) ? "🚩 신고했어요 (누르면 취소)" : "🚩 문제가 이상해요"; }; }
+'''
+
+def patch_flag(h):
+    if FMARK in h: return h
+    a = "/*LEVEL*/"
+    assert a in h, "등급 패치가 먼저 필요해요"
+    h = h.replace(a, FLAG_JS + a, 1)
+    a = '  $("score").textContent = score; $("next").textContent = i === qs.length - 1 ? "결과 보기" : "다음 문제"; $("next").hidden = false;\n}'
+    assert h.count(a) == 1, "pick 끝 줄을 못 찾음"
+    h = h.replace(a, "  showFlag(d, opts[k]);\n" + a, 1)
+    a = '(!lv || lvOf(n) === lv) && (cat === "전체" || d[3] === cat));'
+    assert a in h, "pool 줄을 못 찾음"
+    h = h.replace(a, '(!lv || lvOf(n) === lv) && !isFlag(d[0]) && (cat === "전체" || d[3] === cat));', 1)   # 신고한 문제는 이 폰에서 다시 안 나와요
+    h = h.replace("</style>", FLAG_CSS + "</style>", 1)
+    return h
+
 def apply_one(path):
     name = os.path.basename(path)[:-5]
     if not name.endswith("-quiz"): return None
     h = open(path, encoding="utf-8", newline="").read(); crlf = "\r\n" in h; h = h.replace("\r\n", "\n")
     if "function options(d)" not in h or "ROUND = 10" not in h: return None
-    h = patch_html(h)
+    h = patch_flag(patch_html(h))
     h = re.sub(r'const LV = "[123]*";\n', "", h)
     D, i, j = read_d(h)
     lv = levels_for(name, D)

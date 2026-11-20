@@ -5,6 +5,40 @@
 # 새 그림을 넣으면 정답이 하나뿐인지 꼭 이 검사로 확인하세요(여러 개면 사람이 푼 그림이 달라질 수 있어요).
 import sys, json, re, itertools
 
+def _row(*parts):
+    s = "".join(ch * k for ch, k in parts); assert len(s) == 15, (len(s), s); return s
+def _disk(fn):  # 15×15 위에서 (x,y)마다 글자를 정하는 함수로 그림을 만든다
+    return ["".join(fn(x, y) for x in range(15)) for y in range(15)]
+def _big_pics():
+    D = "."
+    heart = [_row((D,15)), _row((D,2),("r",4),(D,3),("r",4),(D,2)), _row((D,1),("r",6),(D,1),("r",6),(D,1)), _row(("r",15)), _row(("r",15)), _row(("r",15)), _row(("r",15)),
+             _row((D,1),("r",13),(D,1)), _row((D,2),("r",11),(D,2)), _row((D,3),("r",9),(D,3)), _row((D,4),("r",7),(D,4)), _row((D,5),("r",5),(D,5)), _row((D,6),("r",3),(D,6)), _row((D,7),("r",1),(D,7)), _row((D,15))]
+    house = [_row((D,7),("r",1),(D,7)), _row((D,6),("r",3),(D,6)), _row((D,5),("r",5),(D,5)), _row((D,4),("r",7),(D,4)), _row((D,3),("r",9),(D,3)), _row((D,2),("r",11),(D,2)), _row((D,1),("r",13),(D,1)), _row(("r",15)),
+             _row((D,1),("y",13),(D,1)), _row((D,1),("y",1),("c",2),("y",7),("c",2),("y",1),(D,1)), _row((D,1),("y",1),("c",2),("y",7),("c",2),("y",1),(D,1)),
+             _row((D,1),("y",5),("n",3),("y",5),(D,1)), _row((D,1),("y",5),("n",3),("y",5),(D,1)), _row((D,1),("y",5),("n",3),("y",5),(D,1)), _row((D,1),("y",5),("n",3),("y",5),(D,1))]
+    pine = [_row((D,7),("g",1),(D,7)), _row((D,6),("g",3),(D,6)), _row((D,5),("g",5),(D,5)), _row((D,6),("g",3),(D,6)), _row((D,5),("g",5),(D,5)), _row((D,4),("g",7),(D,4)), _row((D,5),("g",5),(D,5)), _row((D,4),("g",7),(D,4)),
+            _row((D,3),("g",9),(D,3)), _row((D,2),("g",11),(D,2)), _row((D,3),("g",9),(D,3)), _row((D,2),("g",11),(D,2)), _row((D,1),("g",13),(D,1)), _row((D,6),("n",3),(D,6)), _row((D,6),("n",3),(D,6))]
+    cat = [_row(("s",2),(D,11),("s",2)), _row(("s",3),(D,9),("s",3)), _row(("s",4),(D,7),("s",4)), _row(("s",15)), _row(("s",15)), _row(("s",3),("k",2),("s",5),("k",2),("s",3)), _row(("s",3),("k",2),("s",5),("k",2),("s",3)),
+           _row(("s",15)), _row(("s",6),("p",3),("s",6)), _row(("s",5),("k",2),("s",1),("k",2),("s",5)), _row((D,1),("s",13),(D,1)), _row((D,2),("s",11),(D,2)), _row((D,3),("s",9),(D,3)), _row((D,5),("s",5),(D,5)), _row((D,15))]
+    rocket = [_row((D,7),("r",1),(D,7)), _row((D,6),("r",3),(D,6)), _row((D,5),("r",5),(D,5)), _row((D,5),("r",1),("w",3),("r",1),(D,5)), _row((D,5),("r",1),("w",3),("r",1),(D,5)),
+              _row((D,5),("r",1),("c",3),("r",1),(D,5)), _row((D,5),("r",1),("c",3),("r",1),(D,5)), _row((D,5),("r",1),("w",3),("r",1),(D,5)), _row((D,5),("r",1),("w",3),("r",1),(D,5)),
+              _row((D,4),("r",7),(D,4)), _row((D,3),("r",9),(D,3)), _row((D,2),("r",4),(D,3),("r",4),(D,2)), _row((D,6),("y",3),(D,6)), _row((D,6),("y",3),(D,6)), _row((D,7),("o",1),(D,7))]
+    def sun(x, y):  # 광선 길이를 방향마다 다르게 하고 대각선 광선은 뺀다(대칭이면 정답이 여러 개가 돼요)
+        dx, dy = x - 7, y - 7
+        if dx * dx + dy * dy <= 19: return "y"
+        if dx == 0 and dy <= -5: return "o"          # 위 광선(길이 3)
+        if dx == 0 and dy >= 6: return "o"           # 아래 광선(길이 2)
+        if dy == 0 and dx <= -6: return "o"          # 왼쪽 광선(길이 2)
+        if dy == 0 and dx >= 5: return "o"           # 오른쪽 광선(길이 3)
+        return "."
+    def smile(x, y):
+        dx, dy = x - 7, y - 7
+        if dx * dx + dy * dy > 42: return "."
+        if y in (4, 5) and x in (4, 5, 9, 10): return "k"
+        if y == 10 and 4 <= x <= 10 or (y == 9 and x in (3, 11)): return "k"
+        return "y"
+    return [("하트", "❤️", heart), ("집", "🏠", house), ("전나무", "🌲", pine), ("고양이", "🐱", cat), ("로켓", "🚀", rocket), ("해", "☀️", _disk(sun)), ("웃는 얼굴", "😊", _disk(smile))]
+
 PICS = {
  5: [
   ("하트", "❤️", [".r.r.", "rrrrr", "rrrrr", ".rrr.", "..r.."]),
@@ -13,6 +47,10 @@ PICS = {
   ("별", "⭐", ["..y..", "yyyyy", ".yyy.", ".yyy.", "yy.yy"]),
   ("웃는 얼굴", "😊", [".yyy.", "ykyky", "yyyyy", "ykkky", ".yyy."]),
   ("꽃", "🌸", [".ppp.", "ppypp", ".ppp.", "..g..", "..g.."]),
+  ("달", "🌙", [".yyy.", "yy...", "yy...", "yy...", ".yyy."]),
+  ("우산", "☂️", [".rrr.", "rrrrr", "..n..", "..n..", ".nn.."]),
+  ("물방울", "💧", ["..b..", ".bbb.", "bbbbb", "bbbbb", ".bbb."]),
+  ("버섯", "🍄", [".rrr.", "rwrwr", "rrrrr", "..w..", "..w.."]),
  ],
  8: [
   ("하트", "❤️", [".rr..rr.", "rrrrrrrr", "rrrrrrrr", "rrrrrrrr", ".rrrrrr.", "..rrrr..", "...rr...", "........"]),
@@ -21,6 +59,10 @@ PICS = {
   ("물고기", "🐟", ["........", "..bbbb..", ".bbbbbb.", "b.bbkbb.", "bbbbbbbb", "b.bbbbb.", "..bbbb..", "........"]),
   ("아이스크림", "🍦", ["..pppp..", ".pppppp.", "pppppppp", "oooooooo", ".oooooo.", "..oooo..", "...oo...", "...oo..."]),
   ("해", "☀️", ["...yy...", ".y.yy.y.", "..yyyy..", "yyyyyyyy", "yyyyyyyy", "..yyyy..", ".y.yy.y.", "...yy..."]),
+  ("고양이", "🐱", ["s......s", "ss....ss", "ssssssss", "ssksskss", "ssssssss", "sssppsss", ".ssssss.", "..ssss.."]),
+  ("눈사람", "⛄", ["..kkkk..", "...kk...", "..wwww..", ".wkwwkw.", "..wwww..", ".wwwwww.", "wwwwwwww", ".wwwwww."]),
+  ("버섯", "🍄", ["..rrrr..", ".rrwwrr.", "rrrwwrrr", "rrrrrrrr", "...ww...", "...ww...", "...ww...", "..wwww.."]),
+  ("로켓", "🚀", ["...rr...", "..rrrr..", "..rwwr..", "..rwwr..", "..rrrr..", ".rrrrrr.", ".r.yy.r.", "...yy..."]),
  ],
  10: [
   ("하트", "❤️", ["..........", ".rrr..rrr.", "rrrrrrrrrr", "rrrrrrrrrr", "rrrrrrrrrr", ".rrrrrrrr.", "..rrrrrr..", "...rrrr...", "....rr....", ".........."]),
@@ -30,7 +72,12 @@ PICS = {
   ("곰", "🐻", ["nn......nn", "nnn....nnn", ".nnnnnnnn.", "nnnnnnnnnn", "nnknnnnknn", "nnnnnnnnnn", "nnnwwwwnnn", "nnnwkkwnnn", ".nnnnnnnn.", "..nnnnnn.."]),
   ("꽃", "🌷", ["....pp....", "..pppppp..", ".pppyyppp.", ".pppyyppp.", "..pppppp..", "....pp....", ".....g....", "..gg.g....", "...ggg....", ".....g...."]),
   ("돛단배", "⛵", ["....w.....", "....ww....", "....www...", "....wwww..", "....wwwww.", "....n.....", ".nnnnnnnn.", "..nnnnnn..", "bbbbbbbbbb", "bbbbbbbbbb"]),
+  ("사과", "🍎", [".....n.gg.", ".....nggg.", "..rrrnrr..", ".rrrrrrrr.", "rrrrrrrrrr", "rrrrrrrrrr", "rrrrrrrrrr", ".rrrrrrrr.", "..rrrrrr..", "...rr.rr.."]),
+  ("로봇", "🤖", ["....rr....", "..ssssss..", ".ssssssss.", ".ssksskss.", ".ssssssss.", ".skkkkkks.", "..ssssss..", "ssssssssss", "ss.ssss.ss", "ss......ss"]),
+  ("오리", "🦆", ["..........", "...yyy....", "..yykyy...", "..yyyyoo..", "..yyyy....", "...yyyy...", ".yyyyyyyy.", "yyyyyyyyyy", ".yyyyyyyy.", "..yyyyyy.."]),
+  ("우산", "☂️", [".....r....", "..rrrrrr..", ".rrrrrrrr.", "rrrrrrrrrr", "r.rr.rr.rr", "....n.....", "....n.....", "....n.....", "....n.....", "...nn....."]),
  ],
+ 15: _big_pics(),
 }
 PAL = {"r": "#e5484d", "o": "#f2994a", "y": "#f5c518", "g": "#3fa34d", "b": "#3b82c4", "c": "#7fd0e8", "k": "#23272f", "w": "#f6f1e4", "s": "#9aa3b2", "n": "#8a5a34", "p": "#f48fb1"}
 

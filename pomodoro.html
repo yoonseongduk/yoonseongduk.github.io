@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <script src="person.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>뽀모도로 타이머</title>
+<title>집중 타이머</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#c4552b">
@@ -38,7 +38,7 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 </head>
 <body>
 <main>
-  <h1>뽀모도로 타이머 🍅</h1>
+  <h1>집중 타이머 🍅</h1>
   <div class="seg" id="pre" role="radiogroup" aria-label="시간 설정"></div>
   <div class="dial"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="bg"/><circle cx="60" cy="60" r="52" class="fg" id="ring"/></svg><div class="inner"><div class="mode" id="mode">집중</div><div class="time" id="time">25:00</div><div class="muted" id="cnt"></div></div></div>
   <div class="row"><button class="btn" id="go" type="button">시작</button><button class="btn ghost" id="reset" type="button">처음으로</button></div>
@@ -66,7 +66,7 @@ function toggle() {
 function reset() { running = false; clearInterval(timer); mode = "f"; left = total(); draw(); }
 function draw() {
   $("time").textContent = fmt(left); $("mode").textContent = mode === "f" ? "🍅 집중" : "☕ 휴식"; $("ring").style.strokeDashoffset = 326.7 * (1 - left / total()); $("ring").style.stroke = mode === "f" ? "var(--accent)" : "#2fa05a";
-  $("cnt").textContent = done ? `오늘 ${done}번 집중했어요` : ""; $("go").textContent = running ? "일시정지" : (left < total() ? "계속" : "시작"); document.title = running ? fmt(left) + " · 뽀모도로" : "뽀모도로 타이머";
+  $("cnt").textContent = done ? `오늘 ${done}번 집중했어요` : ""; $("go").textContent = running ? "일시정지" : (left < total() ? "계속" : "시작"); document.title = running ? fmt(left) + " · 뽀모도로" : "집중 타이머";
   $("pre").style.setProperty("--n", 3); $("pre").innerHTML = Object.keys(PRE).map(k => `<button type="button" class="${k === pre ? "on" : ""}" data-p="${k}" role="radio" aria-checked="${k === pre}" ${running ? "disabled" : ""}>${PRE[k].label}<small>${PRE[k].hint} (분)</small></button>`).join("");
 }
 $("pre").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b && !b.disabled) { pre = b.dataset.p; sv(KEY, pre); reset(); } });

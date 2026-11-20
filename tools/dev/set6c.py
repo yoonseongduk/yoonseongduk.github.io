@@ -30,8 +30,8 @@ function render() { $("cur").innerHTML = cardHtml(cur); $("st").textContent = st
 $("hi").onclick = () => guess("hi"); $("lo").onclick = () => guess("lo"); $("again").onclick = start; start();''',
      css=".felt{background:#2d7a4a;border-radius:20px;padding:24px;display:grid;place-items:center}.pcard{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:150px;height:210px;border-radius:12px;background:#fff;color:#1b1b1b;font-family:var(--font-display);font-size:3.2rem;line-height:1.1;box-shadow:0 4px 8px rgba(0,0,0,.35)}.pcard small{font-size:2.6rem}.pcard.r{color:#d6332b}.pcard.sm{width:54px;height:76px;font-size:1.05rem;border-radius:6px;box-shadow:none;border:1px solid var(--line)}.pcard.sm small{font-size:.9rem}.hist{display:flex;gap:5px;flex-wrap:wrap}.pcard.tr{background-color:transparent;background-size:100% 100%;background-repeat:no-repeat;font-size:0;color:transparent}.pcard.tr small{font-size:0}.pcard.tr.sm{border:0}")
 
-# ---------------- 로또 번호 뽑기 ----------------
-make("out/lotto-picker.html", "로또 번호 뽑기", "🎱", 45, "lotto-v1",
+# ---------------- 행운 번호 뽑기 ----------------
+make("out/lotto-picker.html", "행운 번호 뽑기", "🎱", 45, "lotto-v1",
      "1부터 45까지 서로 다른 6개의 번호와 보너스 번호 1개를 무작위로 뽑아요. 재미로 보는 번호이고, 당첨을 보장하지 않아요. 복권은 건전하게, 무리하지 않는 범위에서 즐기세요.",
      r'''  <div class="card"><div class="step"><h2>게임 수</h2><div><button id="minus" type="button" aria-label="줄이기">−</button><b id="n">5</b><button id="plus" type="button" aria-label="늘리기">＋</button></div></div></div>
   <div id="out"></div>
@@ -49,8 +49,8 @@ $("copy").onclick = async () => { if (!sets.length) return; const t = sets.map((
 $("minus").onclick = () => { if (n > 1) { n--; sv(KEY, n); render(); } }; $("plus").onclick = () => { if (n < 5) { n++; sv(KEY, n); render(); } }; go();''',
      css=".lrow{display:flex;align-items:center;gap:6px;justify-content:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 6px;margin-bottom:8px}.lrow>b{font-family:var(--font-display);width:1.4em;color:var(--muted)}.lb{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-size:1.15rem;text-shadow:0 1px 1px rgba(0,0,0,.3);flex:none}.lb.bonus{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--muted)}.plus{color:var(--muted);font-weight:700}@media(max-width:360px){.lb{width:32px;height:32px;font-size:1rem}.lrow{gap:4px}}")
 
-# ---------------- 뽀모도로 타이머 ----------------
-make("out/pomodoro.html", "뽀모도로 타이머", "🍅", 8, "pomodoro-v1",
+# ---------------- 집중 타이머 ----------------
+make("out/pomodoro.html", "집중 타이머", "🍅", 8, "pomodoro-v1",
      "집중하는 시간과 쉬는 시간을 번갈아 타이머로 알려 줘요. 집중이 끝나면 쉬는 시간이 자동으로 시작돼요. 시작 버튼을 눌러야 소리가 나요. 화면을 켜 두면 가장 정확해요.",
      r'''  <div class="seg" id="pre" role="radiogroup" aria-label="시간 설정"></div>
   <div class="dial"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="bg"/><circle cx="60" cy="60" r="52" class="fg" id="ring"/></svg><div class="inner"><div class="mode" id="mode">집중</div><div class="time" id="time">25:00</div><div class="muted" id="cnt"></div></div></div>
@@ -69,7 +69,7 @@ function toggle() {
 function reset() { running = false; clearInterval(timer); mode = "f"; left = total(); draw(); }
 function draw() {
   $("time").textContent = fmt(left); $("mode").textContent = mode === "f" ? "🍅 집중" : "☕ 휴식"; $("ring").style.strokeDashoffset = 326.7 * (1 - left / total()); $("ring").style.stroke = mode === "f" ? "var(--accent)" : "#2fa05a";
-  $("cnt").textContent = done ? `오늘 ${done}번 집중했어요` : ""; $("go").textContent = running ? "일시정지" : (left < total() ? "계속" : "시작"); document.title = running ? fmt(left) + " · 뽀모도로" : "뽀모도로 타이머";
+  $("cnt").textContent = done ? `오늘 ${done}번 집중했어요` : ""; $("go").textContent = running ? "일시정지" : (left < total() ? "계속" : "시작"); document.title = running ? fmt(left) + " · 뽀모도로" : "집중 타이머";
   $("pre").style.setProperty("--n", 3); $("pre").innerHTML = Object.keys(PRE).map(k => `<button type="button" class="${k === pre ? "on" : ""}" data-p="${k}" role="radio" aria-checked="${k === pre}" ${running ? "disabled" : ""}>${PRE[k].label}<small>${PRE[k].hint} (분)</small></button>`).join("");
 }
 $("pre").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b && !b.disabled) { pre = b.dataset.p; sv(KEY, pre); reset(); } });

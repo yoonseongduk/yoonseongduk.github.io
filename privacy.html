@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<script src="person.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>개인정보 처리방침</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c4552b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="가족 게임">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon-48.png">
+
+<style>
+/* 레이아웃: 제목 아래에 설정과 결과 카드를 위에서 아래로 쌓는다. 버튼은 크게, 결과는 눈에 띄게 */
+:root{--bg:hsl(8 30% 95%);--surface:#fff;--fg:#1c2233;--muted:#626b82;--line:hsl(8 22% 86%);--accent:hsl(8 65% 46%);--accent-fg:#fff;--soft:hsl(8 45% 92%);--ok:#1f9d62;--bad:#d6453a;--font-display:"Do Hyeon","Noto Sans KR",sans-serif;--font-body:"Noto Sans KR",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:hsl(8 22% 10%);--surface:hsl(8 18% 15%);--fg:#e9edf7;--muted:#97a1b9;--line:hsl(8 16% 25%);--accent:hsl(8 75% 68%);--accent-fg:#10131c;--soft:hsl(8 20% 20%);--ok:#4cc98a;--bad:#ff7b68;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.5;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));user-select:none;-webkit-user-select:none}
+main{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--font-display);font-weight:400;font-size:2rem;margin:0}h2{font-family:var(--font-display);font-weight:400;font-size:1.25rem;margin:0}p{margin:0}.muted{color:var(--muted);font-size:.9rem}.center{text-align:center}
+button{font:inherit;cursor:pointer;color:inherit}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:0}.stat small{display:block;color:var(--muted);font-size:.72rem}.stat b{font-family:var(--font-display);font-weight:400;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),1fr)}.seg button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 4px;font-weight:700;line-height:1.3}.seg button small{display:block;font-weight:400;color:var(--muted);font-size:.72rem}.seg button.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}.seg button.on small{color:var(--bg);opacity:.8}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.45;cursor:default}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.step{display:flex;align-items:center;justify-content:space-between;gap:10px}.step div{display:flex;align-items:center;gap:10px}.step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}.step b{font-family:var(--font-display);font-weight:400;font-size:1.6rem;min-width:2ch;text-align:center}
+input[type=text],input[type=number],textarea{width:100%;background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;user-select:text;-webkit-user-select:text}textarea{resize:vertical;min-height:96px}
+.res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.6rem}
+.big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.92rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}.padwrap{display:flex;justify-content:center}#pad{width:min(100%,340px,calc(100dvh - 470px));min-width:200px;aspect-ratio:1;border:2px solid var(--fg);border-radius:12px;touch-action:none;background:var(--surface)}.row3{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:8px}.row3 .btn{padding:12px 4px;font-size:1.05rem}
+.dock{position:sticky;bottom:0;z-index:5;display:grid;gap:8px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));background:var(--bg);box-shadow:0 -10px 10px -8px var(--bg)}.dock .res{padding:8px 12px}.dock .res b{font-size:1.3rem}.dock[data-done] #undo,.dock[data-done] #clear,.dock[data-done] #check{display:none}.dock[data-done] .row3{display:none}
+@media(max-height:820px){h1{font-size:1.5rem}main{gap:8px}.seg button small{display:none}.seg button{padding:6px 4px}.stats{gap:6px}.stat{padding:2px 10px;display:flex;align-items:baseline;justify-content:space-between}.stat small{margin-right:6px}.stat b{font-size:1.1rem}.card{padding:8px 12px}.card .big{font-size:1.4rem!important}.dock .res p.muted{font-size:.8rem;line-height:1.35}#help{display:none}}
+.dock[data-done]{grid-template-columns:1fr 1fr}.dock[data-done] .res{grid-column:1/-1}.dock[data-done] #next{grid-column:span 2}.dock[data-done] #self:not([hidden])+#next{grid-column:auto}.dock .btn{padding:10px 6px;font-size:1.1rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>개인정보 처리방침 🔒</h1>
+  <p class="muted">시행일: 2026년 11월 20일 · 「우리 가족 미니 게임」(이하 '앱')은 가족끼리 즐기려고 만든 비영리 게임 모음이에요. 이 앱이 정보를 어떻게 다루는지 쉽게 적었어요.</p>
+
+  <section class="card"><h2>✅ 한 줄 요약</h2>
+    <p><b>개발자는 사용자의 개인정보를 수집하거나 서버로 보내지 않아요.</b> 회원가입, 로그인, 광고, 분석(통계) 도구, 결제가 없어요. 모든 기록은 사용자의 기기 안에만 저장돼요.</p></section>
+
+  <section class="card"><h2>📦 기기에 저장되는 정보</h2>
+    <p>게임 점수·최고 기록, 오답 노트, 포인트, 가족·친구 이름 명단, 약 복용·병원 일정, 건강 기록, 용돈 기입장, 생일·시간(운세용), 설정 같은 내용은 이 기기의 브라우저 저장소(localStorage)에만 저장돼요. 개발자나 다른 사람에게 전송되지 않아요.</p>
+    <p class="muted">앱 데이터나 브라우저 저장소를 지우면 기록도 함께 사라져요. 기기를 바꿀 때는 앱 안의 '기록 백업·복원'으로 직접 파일에 저장해 옮길 수 있어요(파일은 사용자가 직접 보관해요).</p></section>
+
+  <section class="card"><h2>📶 인터넷과 외부 서버</h2>
+    <p>앱은 인터넷 없이도 동작하도록 모든 파일을 기기에 저장해 두고 써요. 광고·분석·추적 서비스, 외부 글꼴·CDN을 사용하지 않아요. '같이 하기'는 같은 와이파이의 기기끼리 직접 연결(WebRTC)하며, 별도 서버를 거치지 않고 게임 내용만 주고받아요.</p></section>
+
+  <section class="card"><h2>📷 권한</h2>
+    <p><b>카메라</b>: 같이 하기·폰 연결 테스트에서 상대 기기의 QR 코드를 읽을 때만 사용해요. 찍은 영상은 저장하거나 전송하지 않아요. 허용하지 않아도 코드 복사·붙여넣기로 연결할 수 있어요.</p>
+    <p><b>알림</b>: 약 복용 알림 등을 기기 안에서 띄울 때만 사용해요(허용했을 때). 알림 내용은 서버를 거치지 않아요.</p></section>
+
+  <section class="card"><h2>👶 어린이</h2>
+    <p>앱은 어린이도 쓸 수 있는 가족용이에요. 이름·연락처·위치 등을 요구하거나 수집하지 않아요. 가족 명단에 적는 이름은 사용자가 직접 정한 별명이어도 되고, 기기 밖으로 나가지 않아요.</p></section>
+
+  <section class="card"><h2>🩺 건강·약 도구</h2>
+    <p>약 복용 체크표, 건강 기록, 체질량·기초대사량 계산기는 기록과 참고용이며 의학적 진단이나 치료를 대신하지 않아요. 입력한 내용은 이 기기에만 저장돼요. 몸이 불편하면 의사·약사와 상담하세요.</p></section>
+
+  <section class="card"><h2>🎲 포인트와 카드 게임</h2>
+    <p>앱 안의 포인트는 놀이용 점수예요. 실제 돈이나 상품으로 바꿀 수 없고, 돈을 걸거나 결제하는 기능이 없어요. 블랙잭·맞고·행운 번호 뽑기도 재미로만 즐기는 게임이며 실제 도박·복권과 관계없어요.</p></section>
+
+  <section class="card"><h2>🔁 방침 변경과 문의</h2>
+    <p>앱이 정보를 수집하는 기능이 생기면 먼저 이 방침을 고치고 안내할게요. 궁금한 점이나 삭제 요청은 아래 주소로 알려 주세요.</p>
+    <p style="overflow-wrap:anywhere"><a href="https://github.com/yoonseongduk/yoonseongduk.github.io/issues" style="color:var(--accent)">github.com/yoonseongduk/yoonseongduk.github.io/issues</a></p>
+    <p class="muted">출처와 저작권은 <a href="licenses.html" style="color:var(--accent)">출처와 저작권</a> 페이지에 있어요.</p></section>
+</main>
+<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+<script src="med-notify.js" defer></script>
+<script src="home.js" defer></script>
+</body>
+</html>

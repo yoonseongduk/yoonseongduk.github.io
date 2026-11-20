@@ -49,10 +49,10 @@ $("a").onclick = () => pick("a"); $("b").onclick = () => pick("b");
 $("next").onclick = () => { pos++; if (pos >= order.length) { order = shuf(order); pos = 0; } show(); }; show();''' % json.dumps(bal, ensure_ascii=False),
      css=".opt{border:3px solid var(--line);background:var(--surface);border-radius:20px;padding:22px 16px;font-family:var(--font-display);font-size:1.35rem;line-height:1.35;min-height:96px;overflow-wrap:anywhere}.opt.a{border-color:#e8453c}.opt.b{border-color:#2f7fe0}.opt.picked{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}.opt.dim{opacity:.4}")
 
-# ---------------- 음식 월드컵 ----------------
+# ---------------- 음식 토너먼트 ----------------
 foods = [["🍕", "피자"], ["🍔", "햄버거"], ["🍣", "초밥"], ["🍜", "라면"], ["🍗", "치킨"], ["🥟", "만두"], ["🍝", "파스타"], ["🌮", "타코"], ["🍙", "주먹밥"], ["🍛", "카레"], ["🥩", "스테이크"], ["🍤", "튀김"], ["🍞", "빵"], ["🥗", "샐러드"], ["🍦", "아이스크림"], ["🍩", "도넛"],
          ["🍰", "케이크"], ["🍟", "감자튀김"], ["🌭", "핫도그"], ["🍲", "전골"], ["🍢", "오뎅꼬치"], ["🥞", "팬케이크"], ["🧇", "와플"], ["🍫", "초콜릿"], ["🍪", "쿠키"], ["🍉", "수박"], ["🍓", "딸기"], ["🍖", "갈비"], ["🌯", "부리또"], ["🥪", "샌드위치"], ["🍱", "도시락"], ["🍡", "떡꼬치"]]
-make("out/food-worldcup.html", "음식 월드컵", "🏆", 12, "foodcup-v1",
+make("out/food-worldcup.html", "음식 토너먼트", "🏆", 12, "foodcup-v1",
      "두 음식 중 더 먹고 싶은 쪽을 눌러서 16강부터 결승까지 올라가요. 마지막에 남은 음식이 오늘의 메뉴 후보예요! 가족과 같이 하면 의견이 갈려서 더 재미있어요.",
      r'''  <div class="stats" style="grid-template-columns:repeat(2,1fr)"><div class="stat"><small>라운드</small><b id="round">16강</b></div><div class="stat"><small>진행</small><b id="prog">1/8</b></div></div>
   <div class="bar"><i id="bar"></i></div>

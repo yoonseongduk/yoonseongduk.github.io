@@ -28,7 +28,14 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .pl{display:flex;align-items:center;gap:10px}.pl i{width:20px;height:20px;border-radius:50%;flex:none}.pl span{flex:1}.pl button{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.9rem}
 .players{display:flex;gap:6px;flex-wrap:wrap}.chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:3px 12px;font-size:.88rem}.chip i{width:14px;height:14px;border-radius:50%}.chip.cur{border-color:var(--accent);font-weight:700}
 .wrap{border-radius:12px;overflow:hidden;border:2px solid var(--line)}canvas{width:100%;display:block;aspect-ratio:1}
-.dice{display:flex;align-items:center;gap:14px}.die{flex:none;width:68px;height:68px;border-radius:16px;background:#fffdf6;border:3px solid var(--dc,#555);box-shadow:0 5px 0 rgba(0,0,0,.2),inset 0 -4px 0 rgba(0,0,0,.07);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:10px}.die i{width:12px;height:12px;border-radius:50%;background:#2a2a2a;place-self:center;box-shadow:inset 0 -2px 0 rgba(255,255,255,.25)}.die.v1 i{width:19px;height:19px;background:#d2342a}.die.q{display:flex;align-items:center;justify-content:center;font:700 2rem var(--font-display);color:#999}.die.tumble{animation:tum .48s linear infinite}@keyframes tum{0%{transform:rotate(0) translateY(0)}25%{transform:rotate(95deg) translateY(-10px)}50%{transform:rotate(190deg) translateY(0)}75%{transform:rotate(285deg) translateY(-7px)}100%{transform:rotate(360deg) translateY(0)}}@media (prefers-reduced-motion:reduce){.die.tumble{animation:none}}.msg{flex:1;min-height:3em}
+.dice{display:flex;align-items:center;gap:18px}
+/* 3D 주사위: 정육면체의 여섯 면에 눈을 그리고, 굴릴 때 실제로 돌려서 나온 눈이 앞에 오게 한다. 색은 일부러 고정해서(흰 면·검은 눈) 다크 모드에서도 똑같이 보여요 */
+.die{flex:none;width:92px;height:92px;perspective:380px;position:relative;color-scheme:light}.die::after{content:"";position:absolute;left:14px;right:6px;bottom:2px;height:12px;border-radius:50%;background:rgba(0,0,0,.28);filter:blur(4px)}
+.cube{position:absolute;left:18px;top:14px;width:54px;height:54px;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.15,.7,.2,1)}
+.cf{position:absolute;inset:0;border-radius:11px;border:2px solid var(--dc,#b9b2a0);background:linear-gradient(145deg,#ffffff,#e9e3d3);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:7px;backface-visibility:hidden;box-shadow:inset 0 0 8px rgba(0,0,0,.12)}
+.cf i{width:10px;height:10px;border-radius:50%;place-self:center;background:radial-gradient(circle at 35% 30%,#555,#111)}.cf.f1 i{width:15px;height:15px;background:radial-gradient(circle at 35% 30%,#ff6a5c,#c2271d)}
+.cf.f1{transform:translateZ(27px)}.cf.f6{transform:rotateY(180deg) translateZ(27px)}.cf.f3{transform:rotateY(90deg) translateZ(27px)}.cf.f4{transform:rotateY(-90deg) translateZ(27px)}.cf.f2{transform:rotateX(90deg) translateZ(27px)}.cf.f5{transform:rotateX(-90deg) translateZ(27px)}
+@media (prefers-reduced-motion:reduce){.cube{transition:none}}.msg{flex:1;min-height:3em}
 .btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn:disabled{opacity:.5;cursor:default}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}
 .res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
 </style>
@@ -46,7 +53,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
   <section id="game" hidden>
     <div class="players" id="chips"></div>
     <div class="wrap" style="margin-top:10px"><canvas id="cv" aria-label="뱀 사다리 판"></canvas></div>
-    <div class="dice" style="margin-top:10px"><div class="die q" id="die" role="img" aria-label="주사위">?</div><p class="msg" id="msg" aria-live="polite"></p></div>
+    <div class="dice" style="margin-top:10px"><div class="die" id="die" role="img" aria-label="주사위"></div><p class="msg" id="msg" aria-live="polite"></p></div>
     <button class="btn" id="roll" type="button" style="margin-top:10px;width:100%">주사위 굴리기</button>
     <div class="res" id="res" hidden style="margin-top:10px"></div>
     <button class="btn ghost" id="home" type="button" style="margin-top:10px;width:100%">처음으로</button>
@@ -54,7 +61,11 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 </main>
 <script>
 const COLORS = ["#e8453c", "#2f6fd0", "#e2a800", "#1f9d62"], NAMES = ["빨강", "파랑", "노랑", "초록"], PIPS = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]]; /* 주사위 눈이 놓이는 칸(3×3 중 번호) */
-function setDie(v) { const d = $("die"); d.className = "die" + (v ? " v" + v : " q"); d.innerHTML = v ? Array.from({ length: 9 }, (_, k) => PIPS[v].includes(k) ? "<i></i>" : "<span></span>").join("") : "?"; d.setAttribute("aria-label", v ? "주사위 " + v : "주사위"); d.style.setProperty("--dc", typeof turn === "number" && COLORS[turn] ? COLORS[turn] : "#555"); }
+const SHOW = { 1: [0, 0], 2: [-90, 0], 3: [0, -90], 4: [0, 90], 5: [90, 0], 6: [0, 180] }; /* 그 눈이 앞에 오게 돌리는 각도 [X, Y] */
+let dieTurns = 0;
+function setDie(v, roll) { const d = $("die"); if (!d.firstChild) d.innerHTML = '<div class="cube" id="cube">' + [1, 2, 3, 4, 5, 6].map(f => `<div class="cf f${f}">` + Array.from({ length: 9 }, (_, k) => PIPS[f].includes(k) ? "<i></i>" : "<span></span>").join("") + "</div>").join("") + "</div>";
+  const f = v || 5, [x, y] = SHOW[f]; if (roll) dieTurns++; const t = dieTurns * 720; $("cube").style.transform = `rotateX(-26deg) rotateY(-32deg) rotateX(${x + t}deg) rotateY(${y + t}deg)`;
+  d.setAttribute("aria-label", v ? "주사위 " + v : "주사위"); d.style.setProperty("--dc", typeof turn === "number" && COLORS[turn] ? COLORS[turn] : "#b9b2a0"); }
 const BASE_L = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91 }, BASE_S = { 17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78 };
 let LADDERS = BASE_L, SNAKES = BASE_S;
 /* 판 모양: base=기본 고정판, today=오늘의 판(날짜가 씨앗이라 가족 모두 같은 판), random=한 판마다 새로 섞기. 난이도 = [사다리 수, 뱀 수] */
@@ -107,8 +118,7 @@ function next() {
 }
 function roll() {
   if (over) return; busy = true; $("roll").disabled = true;
-  const v = 1 + Math.floor(Math.random() * 6), p = turn; setDie(1); const dEl = $("die"), iv = setInterval(() => { const k = 1 + Math.floor(Math.random() * 6); dEl.className = "die tumble v" + k; dEl.innerHTML = Array.from({ length: 9 }, (_, j) => PIPS[k].includes(j) ? "<i></i>" : "<span></span>").join(""); }, 80);
-  dEl.classList.add("tumble"); setTimeout(() => { clearInterval(iv); if (over) return; setDie(v); moveAfterRoll(p, v); }, 520 * tempo);
+  const v = 1 + Math.floor(Math.random() * 6), p = turn; setDie(v, true); setTimeout(() => { if (over) return; moveAfterRoll(p, v); }, 600 * tempo);
 }
 function moveAfterRoll(p, v) {
   const from = pos[p]; let to = from + v;

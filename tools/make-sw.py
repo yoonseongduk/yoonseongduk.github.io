@@ -16,6 +16,7 @@ files += ["cards-gemini/" + os.path.basename(f) for f in sorted(glob.glob(R + "c
 files += ["cards-trump/" + os.path.basename(f) for f in sorted(glob.glob(R + "cards-trump/*.webp"))]   # 트럼프 카드 그림
 files += ["cards-minhwa/" + os.path.basename(f) for f in sorted(glob.glob(R + "cards-minhwa/*.svg"))]   # 맞고 화투 그림(직접 그린 민화풍)
 files += ["yut-img/" + os.path.basename(f) for f in sorted(glob.glob(R + "yut-img/yut_*.svg"))]   # 윷 결과 카드 그림(PNG·GIF는 용량이 커서 저장하지 않음)
+files += ["snake-img/" + os.path.basename(f) for f in sorted(glob.glob(R + "snake-img/*.webp"))]   # 뱀사다리 판 배경 그림(AI 생성 민화풍)
 files += [os.path.basename(f) for f in sorted(glob.glob(R + "*.js")) if os.path.basename(f) != "sw.js"]
 h = hashlib.md5(b"sw-format-2")                                           # 서비스 워커 방식(아래 js 틀)을 바꾸면 이 글자도 바꿔서 새 버전 이름이 나오게 해요(예전 저장 공간과 섞이지 않게)
 TEXT = (".html", ".css", ".webmanifest", ".js", ".txt", ".json", ".svg")   # Windows가 줄 끝 표시(CRLF)를 바꿔도 같은 버전이 되도록 맞춘다

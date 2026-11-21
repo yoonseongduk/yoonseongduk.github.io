@@ -54,6 +54,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 <script>
 const COLORS = ["#e8453c", "#2f6fd0", "#e2a800", "#1f9d62"], NAMES = ["빨강", "파랑", "노랑", "초록"], FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 const LADDERS = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91 }, SNAKES = { 17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78 };
+const BG = { ok: false, img: new Image() }; BG.img.onload = () => { BG.ok = true; if (typeof render === "function" && pos.length) render(); }; BG.img.src = "snake-img/board-bg.webp";
 const KEY = "snakes-v1", $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -93,13 +94,20 @@ function render() {
   const cv = $("cv"), w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!w) return; cv.width = cv.height = Math.round(w * dpr);
   const c = cv.getContext("2d"), u = w / 10, css = getComputedStyle(document.documentElement); c.scale(dpr, dpr);
   const xy = n => { const { r, c: cc } = cell(n); return [(cc + .5) * u, w - (r + .5) * u]; };
-  for (let n = 1; n <= 100; n++) { const { r, c: cc } = cell(n); c.fillStyle = (r + cc) % 2 ? "#f3ecd6" : "#e5efd3"; if (LADDERS[n]) c.fillStyle = "#cfe9c4"; if (SNAKES[n]) c.fillStyle = "#f4cfc8"; if (n === 100) c.fillStyle = "#ffe08a"; c.fillRect(cc * u, w - (r + 1) * u, u, u);
-    c.fillStyle = "#5b6558"; c.font = `${Math.max(9, u * .26)}px sans-serif`; c.textAlign = "left"; c.textBaseline = "top"; c.fillText(n === 100 ? "🏁100" : n, cc * u + 3, w - (r + 1) * u + 2); }
+  const bg = BG.ok; if (bg) c.drawImage(BG.img, 0, 0, w, w); /* 민화 배경 그림(없으면 단색 칸) */
+  for (let n = 1; n <= 100; n++) { const { r, c: cc } = cell(n), x0 = cc * u, y0 = w - (r + 1) * u; c.globalAlpha = bg ? .55 : 1; c.fillStyle = (r + cc) % 2 ? "#f3ecd6" : "#e5efd3"; if (LADDERS[n]) c.fillStyle = "#cfe9c4"; if (SNAKES[n]) c.fillStyle = "#f4cfc8"; if (n === 100) c.fillStyle = "#ffe08a"; c.fillRect(x0, y0, u, u); c.globalAlpha = 1;
+    if (bg) { c.strokeStyle = "rgba(120,100,70,.35)"; c.lineWidth = 1; c.strokeRect(x0 + .5, y0 + .5, u - 1, u - 1); }
+  }
   c.lineCap = "round"; for (const [a, b] of Object.entries(LADDERS)) { const [x1, y1] = xy(+a), [x2, y2] = xy(b), dx = y2 - y1, dy = x1 - x2, L = Math.hypot(dx, dy) || 1, ox = dx / L * u * .12, oy = dy / L * u * .12;
     c.strokeStyle = "#2f8f46"; c.lineWidth = Math.max(2, u * .07); for (const s of [-1, 1]) { c.beginPath(); c.moveTo(x1 + s * ox, y1 + s * oy); c.lineTo(x2 + s * ox, y2 + s * oy); c.stroke(); }
     const steps = Math.max(2, Math.floor(Math.hypot(x2 - x1, y2 - y1) / (u * .4))); for (let k = 1; k < steps; k++) { const t = k / steps, px = x1 + (x2 - x1) * t, py = y1 + (y2 - y1) * t; c.beginPath(); c.moveTo(px - ox, py - oy); c.lineTo(px + ox, py + oy); c.stroke(); } }
   for (const [a, b] of Object.entries(SNAKES)) { const [x1, y1] = xy(+a), [x2, y2] = xy(b); c.strokeStyle = "#c8412f"; c.lineWidth = Math.max(3, u * .12); c.beginPath(); c.moveTo(x1, y1);
     const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, nx = (y2 - y1) / 5, ny = -(x2 - x1) / 5; c.bezierCurveTo(mx + nx, my + ny, mx - nx, my - ny, x2, y2); c.stroke(); c.fillStyle = "#c8412f"; c.beginPath(); c.arc(x1, y1, u * .16, 0, 7); c.fill(); }
+  /* 숫자는 뱀·사다리 위에 그려서 절대 가려지지 않게 */
+  for (let n = 1; n <= 100; n++) { const { r, c: cc } = cell(n), x0 = cc * u, y0 = w - (r + 1) * u;
+    c.font = `bold ${Math.max(9, u * .26)}px sans-serif`; c.textAlign = "left"; c.textBaseline = "top"; const t = n === 100 ? "🏁100" : n;
+    if (bg) { c.lineJoin = "round"; c.lineWidth = 3; c.strokeStyle = "rgba(255,252,240,.9)"; c.strokeText(t, x0 + 3, y0 + 2); } /* 글자 둘레 흰 테두리로 또렷하게 */
+    c.fillStyle = "#4a5446"; c.fillText(t, x0 + 3, y0 + 2); }
   pos.forEach((p, i) => { const n = p || 0; const [x, y] = n ? xy(n) : [u * .3 + i * u * .4, w + 0]; if (!n) return; const off = [[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]][i];
     c.fillStyle = COLORS[i]; c.strokeStyle = "#fff"; c.lineWidth = 2; c.beginPath(); c.arc(x + off[0] * u, y + off[1] * u, u * .17, 0, 7); c.fill(); c.stroke(); });
   $("chips").innerHTML = pos.map((p, i) => `<span class="chip ${i === turn && !over ? "cur" : ""}"><i style="background:${COLORS[i]}"></i>${NAMES[i]}${cfg.cpu[i] ? "🤖" : ""} <b>${p || "출발"}</b></span>`).join("");

@@ -46,9 +46,9 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
   <section id="setup" class="card">
     <div class="step"><h2>참가 인원</h2><div><button id="minus" type="button" aria-label="한 명 줄이기">−</button><b id="n">2</b><button id="plus" type="button" aria-label="한 명 늘리기">＋</button></div></div>
     <div id="pl"></div>
-    <div class="opt"><h2>판 모양</h2><div id="modes" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><div id="lvs" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 4px"><button type="button" class="cb" id="spBtn"></button><button type="button" class="cb" id="sixBtn"></button></div><p class="muted" id="layoutInfo" style="margin:4px 0 10px"></p></div>
+    <div class="opt"><h2>판 모양</h2><div id="modes" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><div id="lvs" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><p class="muted" id="layoutInfo" style="margin:4px 0 10px"></p><h2>규칙 켜고 끄기</h2><div id="rules" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><div style="display:flex;gap:6px;margin:4px 0 4px"><button type="button" class="cb" data-all="1">모두 켜기</button><button type="button" class="cb" data-all="0">모두 끄기(기본 규칙만)</button></div></div>
     <button class="btn" id="start" type="button">게임 시작</button>
-    <p class="muted">주사위를 굴려 100번 칸에 먼저 도착하면 이겨요. 🪜 사다리 아래칸에 서면 위로 올라가고, 🐍 뱀 꼬리 칸에 서면 뱀을 타고 머리가 있는 아래 칸으로 미끄러져요. 🎲 칸에 서면 주사위를 <b>한 번 더</b>, 💤 칸에 서면 <b>다음 차례를 쉬어요</b>(시작 화면에서 끌 수 있어요). 100에는 <b>딱 맞게</b> 도착해야 해요. 사람 대신 컴퓨터가 굴리게 정할 수도 있어요.</p>
+    <p class="muted">주사위를 굴려 100번 칸에 먼저 도착하면 이겨요. 🪜 사다리 아래칸에 서면 위로 올라가고, 🐍 뱀 꼬리 칸에 서면 뱀을 타고 머리가 있는 아래 칸으로 미끄러져요. 칸 위 그림은 특수 규칙이에요: 🎲 한 번 더 · 💤 한 판 쉬기 · 🔄 <b>1등과 자리 바꾸기</b> · 🎁 앞 3칸/뒤 2칸 · 🛡️ 뱀을 한 번 막는 방패. 6이 나오면 한 번 더, 같은 칸에 도착하면 앞서 있던 <b>상대 말을 잡아서 출발로 돌려보내요</b>. 모든 규칙은 위에서 하나씩 켜고 끌 수 있어요. 100에는 <b>딱 맞게</b> 도착해야 해요. 사람 대신 컴퓨터가 굴리게 정할 수도 있어요.</p>
   </section>
   <section id="game" hidden>
     <div class="players" id="chips"></div>
@@ -72,7 +72,7 @@ const BASE_L = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91 },
 let LADDERS = BASE_L, SNAKES = BASE_S;
 /* 판 모양: base=기본 고정판, today=오늘의 판(날짜가 씨앗이라 가족 모두 같은 판), random=한 판마다 새로 섞기. 난이도 = [사다리 수, 뱀 수] */
 const MODES = [["base", "📌 기본 판"], ["today", "📅 오늘의 판"], ["random", "🎲 매번 새로"]], LVS = [["easy", "😊 쉬움", 10, 6, { again: 5, rest: 2, swap: 2, bonus: 2, shield: 3 }], ["mid", "🙂 보통", 8, 8, { again: 4, rest: 3, swap: 2, bonus: 2, shield: 2 }], ["hard", "🔥 어려움", 6, 11, { again: 3, rest: 5, swap: 2, bonus: 3, shield: 1 }]]; /* [id, 이름, 사다리, 뱀, 특수 칸 종류별 개수] */
-const KINDS = { again: ["🎲", "한 번 더", "#ffeaa0"], rest: ["💤", "한 판 쉬기", "#cfe0f6"], swap: ["🔄", "자리 바꾸기", "#e6d6f6"], bonus: ["🎁", "보너스", "#ffd6e4"], shield: ["🛡️", "뱀 방패", "#c6eceb"] }; /* [그림, 이름, 칸 색] */
+const KINDS = { again: ["🎲", "한 번 더", "#ffeaa0"], rest: ["💤", "한 판 쉬기", "#cfe0f6"], swap: ["🔄", "1등과 자리 바꾸기", "#e6d6f6"], bonus: ["🎁", "보너스", "#ffd6e4"], shield: ["🛡️", "뱀 방패", "#c6eceb"] }; /* [그림, 이름, 칸 색] */
 /* 특수 칸: again=🎲 한 번 더(주사위를 한 번 더 굴림), rest=💤 한 판 쉬기(다음 내 차례를 건너뜀). 사다리·뱀 끝 칸과는 겹치지 않는다 */
 const BASE_P = { 12: "again", 36: "again", 47: "again", 69: "again", 22: "rest", 45: "rest", 88: "rest", 15: "swap", 58: "swap", 26: "bonus", 76: "bonus", 33: "shield", 82: "shield" };
 let SPECIAL = {}, rest = [], shield = [], sixRoll = false;
@@ -96,17 +96,19 @@ function applyLayout() {
   if (cfg.mode === "today") { const d = new Date(), seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); ({ L: LADDERS, S: SNAKES, P } = genLayout(seed * 7 + lv[2], lv[2], lv[3], lv[4])); }
   else if (cfg.mode === "random") ({ L: LADDERS, S: SNAKES, P } = genLayout((Math.random() * 4294967296) >>> 0, lv[2], lv[3], lv[4]));
   else { LADDERS = BASE_L; SNAKES = BASE_S; P = BASE_P; }
-  SPECIAL = cfg.sp ? P : {}; rest = Array(4).fill(0); shield = Array(4).fill(false); sixRoll = false;
-  $("legend").textContent = "🪜 올라가요 · 🐍 내려가요" + (cfg.sp ? " · " + Object.values(KINDS).map(k => k[0] + " " + k[1]).join(" · ") : "") + (cfg.six ? " · 6이 나오면 한 번 더" : "");
+  SPECIAL = Object.fromEntries(Object.entries(P).filter(([c, k]) => cfg.on[k])); /* 판 배치는 그대로 두고 켜진 종류만 보여 줌 */ rest = Array(4).fill(0); shield = Array(4).fill(false); sixRoll = false;
+  $("legend").textContent = "🪜 올라가요 · 🐍 내려가요" + Object.entries(KINDS).filter(([k]) => cfg.on[k]).map(([k, v]) => " · " + v[0] + " " + v[1]).join("") + (cfg.on.six ? " · 🎯 6이면 한 번 더" : "") + (cfg.on.cap ? " · 🥊 같은 칸에 도착하면 상대 말을 잡아요" : "");
 }
 const SKCOL = [["#d2452f", "#f2a08f"], ["#e08a1e", "#f8d08a"], ["#8a4fc2", "#d2b6ee"], ["#2e86c1", "#acd5f0"], ["#c23b7a", "#f2b4d2"]]; /* 뱀 색깔(몸, 무늬) */
 const arrow = (c, x, y, ang, sz, col) => { c.save(); c.translate(x, y); c.rotate(ang); c.fillStyle = col; c.strokeStyle = "rgba(40,20,10,.9)"; c.lineWidth = 1.5; c.lineJoin = "round"; c.beginPath(); c.moveTo(sz, 0); c.lineTo(-sz * .6, -sz * .8); c.lineTo(-sz * .6, sz * .8); c.closePath(); c.fill(); c.stroke(); c.restore(); }; /* 가는 방향 화살표 */
+const RULES = [["again", "🎲", "한 번 더"], ["rest", "💤", "한 판 쉬기"], ["swap", "🔄", "1등과 자리 바꾸기"], ["bonus", "🎁", "보너스(앞 3칸·뒤 2칸)"], ["shield", "🛡️", "뱀 방패"], ["six", "🎯", "6이면 한 번 더"], ["cap", "🥊", "잡기(같은 칸 도착)"]]; /* 켜고 끌 수 있는 규칙 전부 */
 const BG = { ok: false, img: new Image() }; BG.img.onload = () => { BG.ok = true; if (typeof render === "function" && pos.length) render(); }; BG.img.src = "snake-img/board-bg.webp";
 const KEY = "snakes-v1", $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 let cfg = ld(KEY) || { n: 2, cpu: [false, true, true, true] }, pos = [], turn = 0, over = false, busy = false, tempo = 1;
-cfg.n = Math.min(4, Math.max(2, cfg.n || 2)); if (!MODES.some(m => m[0] === cfg.mode)) cfg.mode = "base"; if (!LVS.some(m => m[0] === cfg.lv)) cfg.lv = "mid"; if (typeof cfg.sp !== "boolean") cfg.sp = true; if (typeof cfg.six !== "boolean") cfg.six = true;
+cfg.n = Math.min(4, Math.max(2, cfg.n || 2)); if (!MODES.some(m => m[0] === cfg.mode)) cfg.mode = "base"; if (!LVS.some(m => m[0] === cfg.lv)) cfg.lv = "mid"; if (!cfg.on || typeof cfg.on !== "object") cfg.on = {};
+for (const [k] of RULES) if (typeof cfg.on[k] !== "boolean") cfg.on[k] = k === "six" ? cfg.six !== false : k === "cap" ? true : cfg.sp !== false; /* 예전 '특수 칸·6 규칙' 설정을 이어받음 */
 
 // 칸 번호 → 판 위의 좌표. 아래줄은 왼쪽→오른쪽, 그다음 줄은 오른쪽→왼쪽 (지그재그)
 const cell = n => { const r = Math.floor((n - 1) / 10), c = r % 2 === 0 ? (n - 1) % 10 : 9 - (n - 1) % 10; return { r, c }; };
@@ -117,9 +119,9 @@ function drawSetup() {
   const bt = (a, k, t, on) => `<button type="button" class="cb ${on ? "on" : ""}" data-${a}="${k}">${t}</button>`;
   $("modes").innerHTML = MODES.map(m => bt("mode", m[0], m[1], cfg.mode === m[0])).join("");
   $("lvs").innerHTML = cfg.mode === "base" ? "" : LVS.map(m => bt("lv", m[0], m[1], cfg.lv === m[0])).join("");
-  $("spBtn").textContent = cfg.sp ? "✨ 특수 칸 켜짐" : "✨ 특수 칸 꺼짐"; $("spBtn").className = "cb" + (cfg.sp ? " on" : ""); $("sixBtn").textContent = cfg.six ? "🎯 6이면 한 번 더 켜짐" : "🎯 6이면 한 번 더 꺼짐"; $("sixBtn").className = "cb" + (cfg.six ? " on" : "");
+  $("rules").innerHTML = RULES.map(([k, ic, nm]) => `<button type="button" class="cb ${cfg.on[k] ? "on" : ""}" data-rule="${k}" aria-pressed="${cfg.on[k]}">${ic} ${nm}</button>`).join("");
   const lv = LVS.find(x => x[0] === cfg.lv);
-  const cs = cfg.mode === "base" ? Object.values(BASE_P).reduce((o, k) => (o[k] = (o[k] || 0) + 1, o), {}) : lv[4], spTxt = cfg.sp ? " 특수 칸: " + Object.entries(cs).map(([k, n]) => KINDS[k][0] + n).join(" ") + " (칸 위 그림이 뜻이에요)" : "";
+  const cs = cfg.mode === "base" ? Object.values(BASE_P).reduce((o, k) => (o[k] = (o[k] || 0) + 1, o), {}) : lv[4], on = Object.entries(cs).filter(([k]) => cfg.on[k]), spTxt = on.length ? " 특수 칸: " + on.map(([k, n]) => KINDS[k][0] + n).join(" ") + " (칸 위 그림이 뜻이에요)" : "";
   $("layoutInfo").textContent = (cfg.mode === "base" ? "언제나 같은 판이에요. (사다리 8개 · 뱀 8개)" : (cfg.mode === "today" ? "오늘 날짜로 정해져서 하루 동안은 가족 모두 같은 판이에요. " : "게임을 시작할 때마다(한 판 더 포함) 사다리와 뱀 자리가 새로 섞여요. ") + `(사다리 ${lv[2]}개 · 뱀 ${lv[3]}개)`) + spTxt;
   $("pl").innerHTML = Array.from({ length: cfg.n }, (_, i) => `<div class="pl" style="margin:6px 0"><i style="background:${COLORS[i]}"></i><span>${NAMES[i]}</span><button type="button" data-i="${i}" aria-label="${NAMES[i]} 사람 또는 컴퓨터 바꾸기">${cfg.cpu[i] ? "🤖 컴퓨터" : "👤 사람"}</button></div>`).join("");
 }
@@ -146,16 +148,19 @@ function settle(p, to) {
   if (SNAKES[to] && shield[p]) { shield[p] = false; $("msg").textContent = `${NAMES[p]}: 🛡️ 방패가 뱀을 막아 줬어요! (방패 사용)`; render(); return setTimeout(() => finishOrNext(p), 1000 * tempo); }
   if (d !== to) { $("msg").textContent = `${NAMES[p]}: ${LADDERS[to] ? "🪜 사다리를 타고 올라가요! " + to + " → " + d : "🐍 뱀에게 미끄러져요! " + to + " → " + d}`; setTimeout(() => { pos[p] = d; render(); finishOrNext(p); }, 600 * tempo); } else finishOrNext(p);
 }
-function finishOrNext(p) {
+function finishOrNext(p, capDone) {
   if (pos[p] === 100) return win(p);
+  if (cfg.on.cap && !capDone && pos[p] > 0) { /* 잡기: 도착한 칸에 있던 상대 말은 출발로 돌아간다 */
+    const hit = []; pos.forEach((x, i) => { if (i !== p && x === pos[p]) hit.push(i); });
+    if (hit.length) { hit.forEach(i => pos[i] = 0); $("msg").textContent = `${NAMES[p]}: 🥊 ${hit.map(i => NAMES[i]).join("·")} 말을 잡았어요! 잡힌 말은 출발로 돌아가요.`; render(); return setTimeout(() => finishOrNext(p, true), 1200 * tempo); } }
   const sp = SPECIAL[pos[p]], nm = NAMES[p];
   if (sp === "again") { $("msg").textContent = `${nm}: 🎲 한 번 더! 주사위를 또 굴려요.`; return setTimeout(next, 1000 * tempo); } /* 차례를 넘기지 않음 */
   if (sp === "rest") { rest[p] = 1; $("msg").textContent = `${nm}: 💤 한 판 쉬어요. 다음 차례는 건너뛰어요.`; render(); return setTimeout(endTurn, 1100 * tempo); }
   if (sp === "shield") { shield[p] = true; $("msg").textContent = `${nm}: 🛡️ 방패를 얻었어요! 다음에 만나는 뱀을 한 번 막아 줘요.`; render(); return setTimeout(() => endOrSix(p), 1000 * tempo); }
   if (sp === "swap") { /* 가장 앞선 사람과 자리를 맞바꾼다(내가 1등이면 그대로) */
     let lead = -1; pos.forEach((x, i) => { if (i !== p && x > pos[p] && (lead < 0 || x > pos[lead])) lead = i; });
-    if (lead < 0) { $("msg").textContent = `${nm}: 🔄 자리 바꾸기! 이미 1등이라 그대로예요.`; return setTimeout(() => endOrSix(p), 1000 * tempo); }
-    const a = pos[p], b = pos[lead]; pos[p] = b; pos[lead] = a; $("msg").textContent = `${nm}: 🔄 자리 바꾸기! ${NAMES[lead]}와 자리를 바꿔요. (${a} ↔ ${b})`; render(); return setTimeout(() => endOrSix(p), 1300 * tempo); }
+    if (lead < 0) { $("msg").textContent = `${nm}: 🔄 1등과 자리 바꾸기! 내가 이미 1등이라 그대로예요.`; return setTimeout(() => endOrSix(p), 1000 * tempo); }
+    const a = pos[p], b = pos[lead]; pos[p] = b; pos[lead] = a; $("msg").textContent = `${nm}: 🔄 1등 ${NAMES[lead]}와 자리를 바꿔요! (${a}번 ↔ ${b}번)`; render(); return setTimeout(() => endOrSix(p), 1300 * tempo); }
   if (sp === "bonus") { /* 반반 확률: 3칸 앞으로 또는 2칸 뒤로 */
     const fwd = Math.random() < .5, to = pos[p] + (fwd ? 3 : -2); $("msg").textContent = `${nm}: 🎁 보너스 칸! ${fwd ? "앞으로 3칸 가요 👍" : "아쉽게 뒤로 2칸 가요 😢"}`;
     if (to > 100) return setTimeout(() => endOrSix(p), 1000 * tempo); /* 100을 넘으면 제자리 */
@@ -163,7 +168,7 @@ function finishOrNext(p) {
   endOrSix(p);
 }
 /* 차례를 마치는 곳: 설정이 켜져 있고 6이 나왔으면 한 번 더 */
-function endOrSix(p) { if (cfg.six && sixRoll) { sixRoll = false; $("msg").textContent = `${NAMES[p]}: 🎯 6이 나왔어요! 한 번 더 굴려요.`; return setTimeout(next, 1000 * tempo); } setTimeout(endTurn, 500 * tempo); }
+function endOrSix(p) { if (cfg.on.six && sixRoll) { sixRoll = false; $("msg").textContent = `${NAMES[p]}: 🎯 6이 나왔어요! 한 번 더 굴려요.`; return setTimeout(next, 1000 * tempo); } setTimeout(endTurn, 500 * tempo); }
 function endTurn() { turn = (turn + 1) % cfg.n; next(); }
 function win(p) { over = true; $("roll").disabled = true; $("res").innerHTML = `<b>🎉 ${NAMES[p]} 승리!</b><p class="muted">${cfg.cpu[p] ? "컴퓨터가" : "사람이"} 가장 먼저 100번 칸에 도착했어요.</p><button class="btn" id="again" type="button" style="margin-top:8px;width:100%">한 판 더</button>`; $("res").hidden = false; $("again").onclick = begin; render(); }
 
@@ -222,8 +227,8 @@ function render() {
   $("chips").innerHTML = pos.map((p, i) => `<span class="chip ${i === turn && !over ? "cur" : ""}"><i style="background:${COLORS[i]}"></i>${NAMES[i]}${cfg.cpu[i] ? "🤖" : ""}${rest[i] ? "💤" : ""}${shield[i] ? "🛡️" : ""} <b>${p || "출발"}</b></span>`).join("");
 }
 $("minus").onclick = () => { if (cfg.n > 2) { cfg.n--; drawSetup(); } }; $("plus").onclick = () => { if (cfg.n < 4) { cfg.n++; drawSetup(); } };
-$("spBtn").onclick = () => { cfg.sp = !cfg.sp; sv(KEY, cfg); drawSetup(); }; $("sixBtn").onclick = () => { cfg.six = !cfg.six; sv(KEY, cfg); drawSetup(); };
-$("setup").addEventListener("click", e => { const b = e.target.closest("[data-mode],[data-lv]"); if (!b) return; if (b.dataset.mode) cfg.mode = b.dataset.mode; if (b.dataset.lv) cfg.lv = b.dataset.lv; sv(KEY, cfg); drawSetup(); });
+
+$("setup").addEventListener("click", e => { const b = e.target.closest("[data-mode],[data-lv],[data-rule],[data-all]"); if (!b) return; if (b.dataset.rule) cfg.on[b.dataset.rule] = !cfg.on[b.dataset.rule]; if (b.dataset.all) for (const [k] of RULES) cfg.on[k] = b.dataset.all === "1"; if (b.dataset.mode) cfg.mode = b.dataset.mode; if (b.dataset.lv) cfg.lv = b.dataset.lv; sv(KEY, cfg); drawSetup(); });
 $("pl").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b) { cfg.cpu[+b.dataset.i] = !cfg.cpu[+b.dataset.i]; drawSetup(); } });
 $("start").onclick = begin; $("roll").onclick = () => { if (!busy && !over && !cfg.cpu[turn]) roll(); };
 $("home").onclick = () => { over = true; $("game").hidden = true; $("setup").hidden = false; drawSetup(); };

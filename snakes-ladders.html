@@ -63,9 +63,12 @@ const rng = a => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15,
 function genLayout(seed, nl, ns) {
   const R = rng(seed), used = new Set([1, 100]), L = {}, S = {}, row = n => Math.floor((n - 1) / 10), pick = (lo, hi) => lo + Math.floor(R() * (hi - lo + 1));
   const run = (S, h) => { let k = 1; for (let x = h - 1; S[x]; x--) k++; for (let x = h + 1; S[x]; x++) k++; return k; }, ok = (a, b) => a !== b && !used.has(a) && !used.has(b);
+  /* 뱀 한 마리 놓기: 밟는 칸 h를 lo~hi 사이에서 고르고, 도착 칸(머리)은 1~5줄 아래. 성공하면 true */
+  const addSnake = (lo, hi) => { for (let g = 0; g < 3000; g++) { const h = pick(lo, hi), rt = pick(Math.max(0, row(h) - 5), row(h) - 1), t = rt * 10 + pick(1, 10); if (t >= 2 && ok(h, t) && run(S, h) < 4) { S[h] = t; used.add(h); used.add(t); return true; } } return false; };
+  /* 필수 규칙: 맨 위 두 줄(81~100)에는 뱀을 꼭 4마리 이상(81~90 줄 2마리 + 91~99 줄 2마리). 안 그러면 80번만 넘으면 거의 끝나서 재미가 없어요 */
+  let ds = 0; for (const [lo, hi] of [[81, 90], [81, 90], [91, 99], [91, 99]]) if (addSnake(lo, hi)) ds++;
   for (let i = 0, g = 0; i < nl && g < 3000; g++) { const a = pick(2, 89), rb = pick(row(a) + 1, Math.min(9, row(a) + 6)), b = rb * 10 + pick(1, 10); if (b <= 99 && ok(a, b)) { L[a] = b; used.add(a); used.add(b); i++; } }
-  for (let i = 0, g = 0; i < ns && g < 3000; g++) { const h = pick(12, 98), rt = pick(Math.max(0, row(h) - 5), row(h) - 1), t = rt * 10 + pick(1, 10);
-    if (t >= 2 && ok(h, t) && run(S, h) < 4) { S[h] = t; used.add(h); used.add(t); i++; } }
+  for (let i = ds; i < ns; i++) if (!addSnake(12, 98)) break;
   return { L, S };
 }
 function applyLayout() {

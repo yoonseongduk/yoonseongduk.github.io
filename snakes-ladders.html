@@ -30,7 +30,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .wrap{border-radius:12px;overflow:hidden;border:2px solid var(--line)}canvas{width:100%;display:block;aspect-ratio:1}
 .dice{display:flex;align-items:center;gap:18px}
 /* 3D 주사위: 정육면체의 여섯 면에 눈을 그리고, 굴릴 때 실제로 돌려서 나온 눈이 앞에 오게 한다. 색은 일부러 고정해서(흰 면·검은 눈) 다크 모드에서도 똑같이 보여요 */
-.die{flex:none;width:92px;height:92px;perspective:380px;position:relative;color-scheme:light}.die::after{content:"";position:absolute;left:14px;right:6px;bottom:2px;height:12px;border-radius:50%;background:rgba(0,0,0,.28);filter:blur(4px)}
+.die{flex:none;width:92px;height:92px;perspective:380px;position:relative;color-scheme:light}.die.idle{opacity:.5;filter:grayscale(.5)}.die::after{content:"";position:absolute;left:14px;right:6px;bottom:2px;height:12px;border-radius:50%;background:rgba(0,0,0,.28);filter:blur(4px)}
 .cube{position:absolute;left:18px;top:14px;width:54px;height:54px;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.15,.7,.2,1)}
 .cf{position:absolute;inset:0;border-radius:11px;border:2px solid var(--dc,#b9b2a0);background:linear-gradient(145deg,#ffffff,#e9e3d3);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:7px;backface-visibility:hidden;box-shadow:inset 0 0 8px rgba(0,0,0,.12)}
 .cf i{width:10px;height:10px;border-radius:50%;place-self:center;background:radial-gradient(circle at 35% 30%,#555,#111)}.cf.f1 i{width:15px;height:15px;background:radial-gradient(circle at 35% 30%,#ff6a5c,#c2271d)}
@@ -61,11 +61,12 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 </main>
 <script>
 const COLORS = ["#e8453c", "#2f6fd0", "#e2a800", "#1f9d62"], NAMES = ["빨강", "파랑", "노랑", "초록"], PIPS = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]]; /* 주사위 눈이 놓이는 칸(3×3 중 번호) */
+/* 윗면이 결과: 그 눈을 앞으로 돌린 뒤 한 번 더 위로 젖힌다 */
 const SHOW = { 1: [0, 0], 2: [-90, 0], 3: [0, -90], 4: [0, 90], 5: [90, 0], 6: [0, 180] }; /* 그 눈이 앞에 오게 돌리는 각도 [X, Y] */
 let dieTurns = 0;
 function setDie(v, roll) { const d = $("die"); if (!d.firstChild) d.innerHTML = '<div class="cube" id="cube">' + [1, 2, 3, 4, 5, 6].map(f => `<div class="cf f${f}">` + Array.from({ length: 9 }, (_, k) => PIPS[f].includes(k) ? "<i></i>" : "<span></span>").join("") + "</div>").join("") + "</div>";
-  const f = v || 5, [x, y] = SHOW[f]; if (roll) dieTurns++; const t = dieTurns * 720; $("cube").style.transform = `rotateX(-26deg) rotateY(-32deg) rotateX(${x + t}deg) rotateY(${y + t}deg)`;
-  d.setAttribute("aria-label", v ? "주사위 " + v : "주사위"); d.style.setProperty("--dc", typeof turn === "number" && COLORS[turn] ? COLORS[turn] : "#b9b2a0"); }
+  const first = !$("cube").style.transform, f = v || 5, [x, y] = SHOW[f]; if (first) $("cube").style.transition = "none"; else $("cube").style.transition = ""; if (roll) dieTurns++; const t = dieTurns * 720; $("cube").style.transform = `rotateX(-55deg) rotateY(-26deg) rotateX(90deg) rotateX(${x + t}deg) rotateY(${y + t}deg)`; /* 결과 눈이 윗면에 오게(진짜 주사위처럼 위에서 읽음) */ d.classList.remove("idle"); if (first) { void $("cube").offsetWidth; $("cube").style.transition = ""; }
+  d.setAttribute("aria-label", v ? "주사위 " + v : "주사위"); if (!v) d.classList.add("idle"); d.style.setProperty("--dc", typeof turn === "number" && COLORS[turn] ? COLORS[turn] : "#b9b2a0"); }
 const BASE_L = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91 }, BASE_S = { 17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78 };
 let LADDERS = BASE_L, SNAKES = BASE_S;
 /* 판 모양: base=기본 고정판, today=오늘의 판(날짜가 씨앗이라 가족 모두 같은 판), random=한 판마다 새로 섞기. 난이도 = [사다리 수, 뱀 수] */
@@ -113,7 +114,7 @@ function drawSetup() {
 }
 function begin() { sv(KEY, cfg); applyLayout(); pos = Array(cfg.n).fill(0); turn = 0; over = false; busy = false; $("setup").hidden = true; $("game").hidden = false; $("res").hidden = true; setDie(0); $("msg").textContent = ""; render(); next(); }
 function next() {
-  if (over) return; render(); $("die").style.setProperty("--dc", COLORS[turn]);
+  if (over) return; render(); $("die").classList.add("idle"); /* 새 굴림 전에는 이전 결과라 흐리게 */
   if (cfg.cpu[turn]) { busy = true; $("roll").disabled = true; setTimeout(roll, 800 * tempo); } else { busy = false; $("roll").disabled = false; $("msg").textContent = `${NAMES[turn]} 차례예요. 주사위를 굴리세요!`; }
 }
 function roll() {

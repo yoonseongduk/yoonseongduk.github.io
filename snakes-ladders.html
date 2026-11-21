@@ -35,7 +35,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .cf{position:absolute;inset:0;border-radius:11px;border:2px solid var(--dc,#b9b2a0);background:linear-gradient(145deg,#ffffff,#e9e3d3);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:7px;backface-visibility:hidden;box-shadow:inset 0 0 8px rgba(0,0,0,.12)}
 .cf i{width:10px;height:10px;border-radius:50%;place-self:center;background:radial-gradient(circle at 35% 30%,#555,#111)}.cf.f1 i{width:15px;height:15px;background:radial-gradient(circle at 35% 30%,#ff6a5c,#c2271d)}
 .cf.f1{transform:translateZ(27px)}.cf.f6{transform:rotateY(180deg) translateZ(27px)}.cf.f3{transform:rotateY(90deg) translateZ(27px)}.cf.f4{transform:rotateY(-90deg) translateZ(27px)}.cf.f2{transform:rotateX(90deg) translateZ(27px)}.cf.f5{transform:rotateX(-90deg) translateZ(27px)}
-@media (prefers-reduced-motion:reduce){.cube{transition:none}}.msg{flex:1;min-height:3em}
+@media (prefers-reduced-motion:reduce){.cube{transition:none}}.msg{flex:1;min-height:3em}.last{margin:8px 0 0;padding:8px 11px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:.92rem;line-height:1.45;min-height:2.9em}.last b{font-family:var(--font-display)}.last .ln{display:block}
 .btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn:disabled{opacity:.5;cursor:default}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}
 .res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
 </style>
@@ -54,6 +54,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
     <div class="players" id="chips"></div>
     <div class="wrap" style="margin-top:10px"><canvas id="cv" aria-label="뱀 사다리 판"></canvas></div>
     <p class="muted" id="legend" style="margin:6px 0 0;font-size:.85rem">🪜 올라가요 · 🐍 내려가요 · 🎲 한 번 더 · 💤 한 판 쉬기</p>
+    <div class="last" id="last" aria-live="polite"></div>
     <div class="dice" style="margin-top:10px"><div class="die" id="die" role="img" aria-label="주사위"></div><p class="msg" id="msg" aria-live="polite"></p></div>
     <button class="btn" id="roll" type="button" style="margin-top:10px;width:100%">주사위 굴리기</button>
     <div class="res" id="res" hidden style="margin-top:10px"></div>
@@ -106,6 +107,17 @@ const BG = { ok: false, img: new Image() }; BG.img.onload = () => { BG.ok = true
 const KEY = "snakes-v1", $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+/* 상대의 방금 차례 요약: 화면 메시지(`이름: …`)를 모아 두었다가 내 차례 안내 위에 보여 준다 */
+let logE = [];
+function showLast() { /* 지금 차례인 사람이 마지막으로 한 뒤에 움직인 상대들을 한 사람당 한 줄로 요약(최대 3명) */
+  const el = $("last"); if (!el) return; const groups = [];
+  for (let i = logE.length - 1; i >= 0 && logE[i].who !== turn; i--) { const g = groups[0]; if (g && g.who === logE[i].who) g.items.unshift(logE[i].t); else groups.unshift({ who: logE[i].who, items: [logE[i].t] }); }
+  if (!groups.length) { el.innerHTML = "📣 <span class='muted'>상대의 기록이 아직 없어요</span>"; return; }
+  const esc = t => t.replace(/[<>&]/g, "");
+  el.innerHTML = "📣 상대의 방금 차례" + groups.slice(-3).map(g => `<span class="ln"><b style="color:${COLORS[g.who]}">${NAMES[g.who]}</b> ${g.items.slice(-4).map(esc).join(" → ")}</span>`).join("");
+}
+function noteMsg(v) { for (let i = 0; i < NAMES.length; i++) if (v.startsWith(NAMES[i] + ": ")) { logE.push({ who: i, t: v.slice(NAMES[i].length + 2) }); if (logE.length > 60) logE.shift(); break; } showLast(); }
+{ const el = document.getElementById("msg"), d = Object.getOwnPropertyDescriptor(Node.prototype, "textContent"); Object.defineProperty(el, "textContent", { configurable: true, get() { return d.get.call(this); }, set(v) { d.set.call(this, v); noteMsg(String(v)); } }); }
 let cfg = ld(KEY) || { n: 2, cpu: [false, true, true, true] }, pos = [], turn = 0, over = false, busy = false, tempo = 1;
 cfg.n = Math.min(4, Math.max(2, cfg.n || 2)); if (!MODES.some(m => m[0] === cfg.mode)) cfg.mode = "base"; if (!LVS.some(m => m[0] === cfg.lv)) cfg.lv = "mid"; if (!cfg.on || typeof cfg.on !== "object") cfg.on = {};
 for (const [k] of RULES) if (typeof cfg.on[k] !== "boolean") cfg.on[k] = k === "six" ? cfg.six !== false : k === "cap" ? true : cfg.sp !== false; /* 예전 '특수 칸·6 규칙' 설정을 이어받음 */
@@ -125,7 +137,7 @@ function drawSetup() {
   $("layoutInfo").textContent = (cfg.mode === "base" ? "언제나 같은 판이에요. (사다리 8개 · 뱀 8개)" : (cfg.mode === "today" ? "오늘 날짜로 정해져서 하루 동안은 가족 모두 같은 판이에요. " : "게임을 시작할 때마다(한 판 더 포함) 사다리와 뱀 자리가 새로 섞여요. ") + `(사다리 ${lv[2]}개 · 뱀 ${lv[3]}개)`) + spTxt;
   $("pl").innerHTML = Array.from({ length: cfg.n }, (_, i) => `<div class="pl" style="margin:6px 0"><i style="background:${COLORS[i]}"></i><span>${NAMES[i]}</span><button type="button" data-i="${i}" aria-label="${NAMES[i]} 사람 또는 컴퓨터 바꾸기">${cfg.cpu[i] ? "🤖 컴퓨터" : "👤 사람"}</button></div>`).join("");
 }
-function begin() { sv(KEY, cfg); applyLayout(); pos = Array(cfg.n).fill(0); turn = 0; over = false; busy = false; $("setup").hidden = true; $("game").hidden = false; $("res").hidden = true; setDie(0); $("msg").textContent = ""; render(); next(); }
+function begin() { sv(KEY, cfg); applyLayout(); pos = Array(cfg.n).fill(0); turn = 0; over = false; busy = false; $("setup").hidden = true; $("game").hidden = false; $("res").hidden = true; setDie(0); logE = []; $("msg").textContent = ""; showLast(); render(); next(); }
 function next() {
   if (over) return;
   if (rest[turn] > 0) { rest[turn]--; $("msg").textContent = `${NAMES[turn]}: 💤 쉬는 차례예요. 건너뛰어요.`; render(); return setTimeout(endTurn, 1100 * tempo); }

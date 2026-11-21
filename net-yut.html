@@ -56,7 +56,7 @@ textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}.inhub body{
 .yb .yn{font-size:9px;fill:#7A4A1E;pointer-events:none;font-family:var(--font-body)}.yb .yn.b{font-size:11px;font-weight:700}.yb .yn.s{font-size:8px}.yb .yn.w{fill:#fff;font-weight:700}.yb .yn.l{fill:#5b3a1a;font-size:9.5px}
 .yb .yt{pointer-events:none}.yb .ytn{font-size:15px;font-weight:800;fill:#fff;pointer-events:none}
 .sticks{font-size:2rem;display:flex;justify-content:center;gap:10px;min-height:1.4em}.sticks .sf{color:#c78a3b}.sticks .sr{color:#8a5a22}.sticks .mk{outline:2px dashed #d6453a;outline-offset:2px;border-radius:4px}
-.sticks{min-height:0}.ycard{height:190px;width:auto;max-width:100%;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.35);animation:ythrow .65s cubic-bezier(.2,.9,.3,1.2)}
+.yready{height:130px;width:auto;max-width:100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}.sticks{min-height:0}.ycard{height:190px;width:auto;max-width:100%;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.35);animation:ythrow .65s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes ythrow{0%{transform:translateY(-70px) rotate(-14deg) scale(.55);opacity:0}55%{transform:translateY(8px) rotate(3deg) scale(1.06);opacity:1}100%{transform:none}}
 .yth{height:56px;width:auto;border-radius:6px;display:block}
 @media(prefers-reduced-motion:reduce){.ycard{animation:none}}
@@ -70,7 +70,7 @@ details summary{cursor:pointer;font-weight:700}.note{font-size:.85rem;color:var(
 <body>
 <main>
   <h1>윷놀이 (같이 하기) <img src="yut-img/yut_icon.svg" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:4px"></h1>
-  <div class="card"><p class="center" id="st"></p><div id="brd"></div><div class="center"><div class="sticks" id="sticks">🥢🥢🥢🥢</div><p class="big center" id="res" style="font-size:1.8rem;min-height:1.3em"></p></div><p class="center note" id="pnl"></p><div class="pcsb" id="pick" hidden></div><button class="btn" id="th" type="button" hidden>🥢 윷 던지기</button><div id="rules"></div><p class="center note" id="sc"></p><button class="btn ghost sm" id="again" type="button" hidden>새 판</button></div>
+  <div class="card"><p class="center" id="st"></p><div id="brd"></div><div class="center"><div class="sticks" id="sticks"><img class="yready" src="yut-img/yut_ready.svg" alt="윷가락 네 개" draggable="false"></div><p class="big center" id="res" style="font-size:1.8rem;min-height:1.3em"></p></div><p class="center note" id="pnl"></p><div class="pcsb" id="pick" hidden></div><button class="btn" id="th" type="button" hidden>윷 던지기</button><div id="rules"></div><p class="center note" id="sc"></p><button class="btn ghost sm" id="again" type="button" hidden>새 판</button></div>
   <p class="muted">일반 규칙 윷놀이예요. 말 4개를 먼저 모두 도착시키면 이겨요. 지름길(5번·10번·가운데), 업기, 빽도, 잡기가 있고 윷·모·잡기는 한 번 더 던져요. 던지고 나면 움직일 말을 골라요(초록 칸을 눌러도 돼요). 규칙은 화면 맨 아래에 있어요.</p>
 </main>
 <script src="yut-core.js"></script>
@@ -152,7 +152,7 @@ function yOpt(m, sd) { // 움직임 하나를 글로: "3번 칸의 말 2개(업�
 }
 const YIMG = { "-1": "backdo", 1: "do", 2: "gae", 3: "geol", 4: "yut", 5: "mo" };   // 결과 카드 그림: yut-img/yut_*.svg (사용자가 만든 그림)
 Object.values(YIMG).forEach(k => { const im = new Image(); im.src = "yut-img/yut_" + k + ".svg"; });   // 던질 때 늦게 뜨지 않게 미리 불러와요
-const yCard = n => YIMG[n] ? `<img class="ycard" src="yut-img/yut_${YIMG[n]}.svg" alt="${Y.NAMES[n]}" draggable="false">` : "🥢🥢🥢🥢";
+const yCard = n => YIMG[n] ? `<img class="ycard" src="yut-img/yut_${YIMG[n]}.svg" alt="${Y.NAMES[n]}" draggable="false">` : `<img class="yready" src="yut-img/yut_ready.svg" alt="윷가락 네 개" draggable="false">`;
 function yPanel(sd, mark) { return `${mark} 출발 전 ${sd.w} · 도착 ${sd.done}/4` + (sd.stacks.length ? " · 판 위 " + sd.stacks.map(s => yNode(s.at) + (s.n > 1 ? " ×" + s.n : "")).join(", ") : ""); }
 const yRules = () => `<details open><summary>📘 윷놀이 규칙 (일반 규칙)</summary><div class="note" style="margin-top:6px">
   <b>목표</b>: 내 말 <b>4개</b>를 먼저 모두 한 바퀴 돌려 <b>도착</b>시키면 이겨요.<br>

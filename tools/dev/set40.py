@@ -40,7 +40,7 @@ function yOpt(m, sd) { // 움직임 하나를 글로: "3번 칸의 말 2개(업�
 }
 const YIMG = { "-1": "backdo", 1: "do", 2: "gae", 3: "geol", 4: "yut", 5: "mo" };   // 결과 카드 그림: yut-img/yut_*.svg (사용자가 만든 그림)
 Object.values(YIMG).forEach(k => { const im = new Image(); im.src = "yut-img/yut_" + k + ".svg"; });   // 던질 때 늦게 뜨지 않게 미리 불러와요
-const yCard = n => YIMG[n] ? `<img class="ycard" src="yut-img/yut_${YIMG[n]}.svg" alt="${Y.NAMES[n]}" draggable="false">` : "🥢🥢🥢🥢";
+const yCard = n => YIMG[n] ? `<img class="ycard" src="yut-img/yut_${YIMG[n]}.svg" alt="${Y.NAMES[n]}" draggable="false">` : `<img class="yready" src="yut-img/yut_ready.svg" alt="윷가락 네 개" draggable="false">`;
 function yPanel(sd, mark) { return `${mark} 출발 전 ${sd.w} · 도착 ${sd.done}/4` + (sd.stacks.length ? " · 판 위 " + sd.stacks.map(s => yNode(s.at) + (s.n > 1 ? " ×" + s.n : "")).join(", ") : ""); }
 const yRules = () => `<details open><summary>📘 윷놀이 규칙 (일반 규칙)</summary><div class="note" style="margin-top:6px">
   <b>목표</b>: 내 말 <b>4개</b>를 먼저 모두 한 바퀴 돌려 <b>도착</b>시키면 이겨요.<br>
@@ -67,7 +67,7 @@ CSS = r'''
 .yb .yn{font-size:9px;fill:#7A4A1E;pointer-events:none;font-family:var(--font-body)}.yb .yn.b{font-size:11px;font-weight:700}.yb .yn.s{font-size:8px}.yb .yn.w{fill:#fff;font-weight:700}.yb .yn.l{fill:#5b3a1a;font-size:9.5px}
 .yb .yt{pointer-events:none}.yb .ytn{font-size:15px;font-weight:800;fill:#fff;pointer-events:none}
 .sticks{font-size:2rem;display:flex;justify-content:center;gap:10px;min-height:1.4em}.sticks .sf{color:#c78a3b}.sticks .sr{color:#8a5a22}.sticks .mk{outline:2px dashed #d6453a;outline-offset:2px;border-radius:4px}
-.sticks{min-height:0}.ycard{height:190px;width:auto;max-width:100%;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.35);animation:ythrow .65s cubic-bezier(.2,.9,.3,1.2)}
+.yready{height:130px;width:auto;max-width:100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}.sticks{min-height:0}.ycard{height:190px;width:auto;max-width:100%;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.35);animation:ythrow .65s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes ythrow{0%{transform:translateY(-70px) rotate(-14deg) scale(.55);opacity:0}55%{transform:translateY(8px) rotate(3deg) scale(1.06);opacity:1}100%{transform:none}}
 .yth{height:56px;width:auto;border-radius:6px;display:block}
 @media(prefers-reduced-motion:reduce){.ycard{animation:none}}
@@ -80,9 +80,9 @@ details summary{cursor:pointer;font-weight:700}.note{font-size:.85rem;color:var(
 # ── 혼자 하기(컴퓨터와): 시작 화면 윷놀이
 SOLO_BODY = r'''  <div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><small>나 도착</small><b id="d1">0/4</b></div><div class="stat"><small>차례</small><b id="turn" style="font-size:1.1rem">나</b></div><div class="stat"><small>컴퓨터</small><b id="d2">0/4</b></div><div class="stat"><small>승리</small><b id="wins">0</b></div></div>
   <div id="brd"></div>
-  <div class="card center"><div class="sticks" id="sticks">🥢🥢🥢🥢</div><p class="big" id="res" style="font-size:2rem;min-height:1.3em"></p><p class="muted" id="msg" style="min-height:2.6em">윷을 던져 보세요!</p><p class="note" id="pnl"></p></div>
+  <div class="card center"><div class="sticks" id="sticks"><img class="yready" src="yut-img/yut_ready.svg" alt="윷가락 네 개" draggable="false"></div><p class="big" id="res" style="font-size:2rem;min-height:1.3em"></p><p class="muted" id="msg" style="min-height:2.6em">윷을 던져 보세요!</p><p class="note" id="pnl"></p></div>
   <div class="pcsb" id="pick" hidden></div>
-  <div class="row"><button class="btn" id="throw" type="button">🥢 윷 던지기</button></div>
+  <div class="row"><button class="btn" id="throw" type="button">윷 던지기</button></div>
   <div class="card res" id="fin" hidden></div>
   <div class="card" id="rules"></div>'''
 SOLO_JS = SHARED + r'''
@@ -115,7 +115,7 @@ function resolve(w, k) {
 function cpuLater() { busy = true; render(); setTimeout(() => { busy = false; if (!over) doThrow(1); }, 900); }
 function win(w) {
   if (w === 0) { wins++; sv(KEY, wins); $("wins").textContent = wins; }
-  $("fin").innerHTML = `<h2>${w === 0 ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요"}</h2><p class="note">${w === 0 ? "말 4개를 먼저 모두 도착시켰어요." : "컴퓨터가 말 4개를 먼저 도착시켰어요. 다시 도전해요!"}</p><button class="btn" id="again" type="button">🥢 한 판 더</button>`; $("fin").hidden = false; $("again").onclick = newGame; render();
+  $("fin").innerHTML = `<h2>${w === 0 ? "🎉 내가 이겼어요!" : "😢 컴퓨터가 이겼어요"}</h2><p class="note">${w === 0 ? "말 4개를 먼저 모두 도착시켰어요." : "컴퓨터가 말 4개를 먼저 도착시켰어요. 다시 도전해요!"}</p><button class="btn" id="again" type="button">🔁 한 판 더</button>`; $("fin").hidden = false; $("again").onclick = newGame; render();
 }
 $("throw").onclick = () => { if (turn !== 0 || over || busy || roll !== null) return; doThrow(0); };
 $("pick").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b && roll !== null && turn === 0 && !over) resolve(0, +b.dataset.k); });
@@ -130,7 +130,7 @@ make("out/yut-nori.html", "윷놀이", '<img src="yut-img/yut_icon.svg" alt="" s
 # ── 같이 하기(2명): 방장이 🔵, 들어온 사람이 🔴. 던진 결과는 바로 사용. 방장이 판정해 모두에게 보내요.
 duo("net-yut.html", "윷놀이 (같이 하기)", '<img src="yut-img/yut_icon.svg" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:4px">', 25, "net-yut-v1",
     "일반 규칙 윷놀이예요. 말 4개를 먼저 모두 도착시키면 이겨요. 지름길(5번·10번·가운데), 업기, 빽도, 잡기가 있고 윷·모·잡기는 한 번 더 던져요. 던지고 나면 움직일 말을 골라요(초록 칸을 눌러도 돼요). 규칙은 화면 맨 아래에 있어요.",
-    '<p class="center" id="st"></p><div id="brd"></div><div class="center"><div class="sticks" id="sticks">🥢🥢🥢🥢</div><p class="big center" id="res" style="font-size:1.8rem;min-height:1.3em"></p></div><p class="center note" id="pnl"></p><div class="pcsb" id="pick" hidden></div><button class="btn" id="th" type="button" hidden>🥢 윷 던지기</button><div id="rules"></div>',
+    '<p class="center" id="st"></p><div id="brd"></div><div class="center"><div class="sticks" id="sticks"><img class="yready" src="yut-img/yut_ready.svg" alt="윷가락 네 개" draggable="false"></div><p class="big center" id="res" style="font-size:1.8rem;min-height:1.3em"></p></div><p class="center note" id="pnl"></p><div class="pcsb" id="pick" hidden></div><button class="btn" id="th" type="button" hidden>윷 던지기</button><div id="rules"></div>',
     SHARED + r'''
 function newRound() { return { ph: "play", s: { [P.a]: Y.newSide(), [P.b]: Y.newSide() }, turn: P.first, roll: null, msg: "", tf: null, tn: "", tr: 0, tk: 0 }; }
 const mk = id => id === P.a ? "🔵" : "🔴", colOf = id => id === P.a ? YCOL[0] : YCOL[1];

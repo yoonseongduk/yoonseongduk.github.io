@@ -28,7 +28,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .pl{display:flex;align-items:center;gap:10px}.pl i{width:20px;height:20px;border-radius:50%;flex:none}.pl span{flex:1}.pl button{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.9rem}
 .players{display:flex;gap:6px;flex-wrap:wrap}.chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:3px 12px;font-size:.88rem}.chip i{width:14px;height:14px;border-radius:50%}.chip.cur{border-color:var(--accent);font-weight:700}
 .wrap{border-radius:12px;overflow:hidden;border:2px solid var(--line)}canvas{width:100%;display:block;aspect-ratio:1}
-.dice{display:flex;align-items:center;gap:12px}.dice .d{font-size:3rem;line-height:1;min-width:1.2em;text-align:center}.msg{flex:1;min-height:3em}
+.dice{display:flex;align-items:center;gap:14px}.die{flex:none;width:68px;height:68px;border-radius:16px;background:#fffdf6;border:3px solid var(--dc,#555);box-shadow:0 5px 0 rgba(0,0,0,.2),inset 0 -4px 0 rgba(0,0,0,.07);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:10px}.die i{width:12px;height:12px;border-radius:50%;background:#2a2a2a;place-self:center;box-shadow:inset 0 -2px 0 rgba(255,255,255,.25)}.die.v1 i{width:19px;height:19px;background:#d2342a}.die.q{display:flex;align-items:center;justify-content:center;font:700 2rem var(--font-display);color:#999}.die.tumble{animation:tum .48s linear infinite}@keyframes tum{0%{transform:rotate(0) translateY(0)}25%{transform:rotate(95deg) translateY(-10px)}50%{transform:rotate(190deg) translateY(0)}75%{transform:rotate(285deg) translateY(-7px)}100%{transform:rotate(360deg) translateY(0)}}@media (prefers-reduced-motion:reduce){.die.tumble{animation:none}}.msg{flex:1;min-height:3em}
 .btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:13px;font-family:var(--font-display);font-size:1.3rem}.btn:disabled{opacity:.5;cursor:default}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}
 .res{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}.res b{font-family:var(--font-display);font-weight:400;font-size:1.5rem}
 </style>
@@ -46,14 +46,15 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
   <section id="game" hidden>
     <div class="players" id="chips"></div>
     <div class="wrap" style="margin-top:10px"><canvas id="cv" aria-label="뱀 사다리 판"></canvas></div>
-    <div class="dice" style="margin-top:10px"><div class="d" id="die">🎲</div><p class="msg" id="msg" aria-live="polite"></p></div>
+    <div class="dice" style="margin-top:10px"><div class="die q" id="die" role="img" aria-label="주사위">?</div><p class="msg" id="msg" aria-live="polite"></p></div>
     <button class="btn" id="roll" type="button" style="margin-top:10px;width:100%">주사위 굴리기</button>
     <div class="res" id="res" hidden style="margin-top:10px"></div>
     <button class="btn ghost" id="home" type="button" style="margin-top:10px;width:100%">처음으로</button>
   </section>
 </main>
 <script>
-const COLORS = ["#e8453c", "#2f6fd0", "#e2a800", "#1f9d62"], NAMES = ["빨강", "파랑", "노랑", "초록"], FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+const COLORS = ["#e8453c", "#2f6fd0", "#e2a800", "#1f9d62"], NAMES = ["빨강", "파랑", "노랑", "초록"], PIPS = [[], [4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]]; /* 주사위 눈이 놓이는 칸(3×3 중 번호) */
+function setDie(v) { const d = $("die"); d.className = "die" + (v ? " v" + v : " q"); d.innerHTML = v ? Array.from({ length: 9 }, (_, k) => PIPS[v].includes(k) ? "<i></i>" : "<span></span>").join("") : "?"; d.setAttribute("aria-label", v ? "주사위 " + v : "주사위"); d.style.setProperty("--dc", typeof turn === "number" && COLORS[turn] ? COLORS[turn] : "#555"); }
 const BASE_L = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91 }, BASE_S = { 17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78 };
 let LADDERS = BASE_L, SNAKES = BASE_S;
 /* 판 모양: base=기본 고정판, today=오늘의 판(날짜가 씨앗이라 가족 모두 같은 판), random=한 판마다 새로 섞기. 난이도 = [사다리 수, 뱀 수] */
@@ -99,14 +100,18 @@ function drawSetup() {
   $("layoutInfo").textContent = cfg.mode === "base" ? "언제나 같은 판이에요. (사다리 8개 · 뱀 8개)" : (cfg.mode === "today" ? "오늘 날짜로 정해져서 하루 동안은 가족 모두 같은 판이에요. " : "게임을 시작할 때마다(한 판 더 포함) 사다리와 뱀 자리가 새로 섞여요. ") + `(사다리 ${lv[2]}개 · 뱀 ${lv[3]}개)`;
   $("pl").innerHTML = Array.from({ length: cfg.n }, (_, i) => `<div class="pl" style="margin:6px 0"><i style="background:${COLORS[i]}"></i><span>${NAMES[i]}</span><button type="button" data-i="${i}" aria-label="${NAMES[i]} 사람 또는 컴퓨터 바꾸기">${cfg.cpu[i] ? "🤖 컴퓨터" : "👤 사람"}</button></div>`).join("");
 }
-function begin() { sv(KEY, cfg); applyLayout(); pos = Array(cfg.n).fill(0); turn = 0; over = false; busy = false; $("setup").hidden = true; $("game").hidden = false; $("res").hidden = true; $("die").textContent = "🎲"; $("msg").textContent = ""; render(); next(); }
+function begin() { sv(KEY, cfg); applyLayout(); pos = Array(cfg.n).fill(0); turn = 0; over = false; busy = false; $("setup").hidden = true; $("game").hidden = false; $("res").hidden = true; setDie(0); $("msg").textContent = ""; render(); next(); }
 function next() {
-  if (over) return; render();
+  if (over) return; render(); $("die").style.setProperty("--dc", COLORS[turn]);
   if (cfg.cpu[turn]) { busy = true; $("roll").disabled = true; setTimeout(roll, 800 * tempo); } else { busy = false; $("roll").disabled = false; $("msg").textContent = `${NAMES[turn]} 차례예요. 주사위를 굴리세요!`; }
 }
 function roll() {
   if (over) return; busy = true; $("roll").disabled = true;
-  const v = 1 + Math.floor(Math.random() * 6); $("die").textContent = FACES[v - 1]; const p = turn, from = pos[p]; let to = from + v;
+  const v = 1 + Math.floor(Math.random() * 6), p = turn; setDie(1); const dEl = $("die"), iv = setInterval(() => { const k = 1 + Math.floor(Math.random() * 6); dEl.className = "die tumble v" + k; dEl.innerHTML = Array.from({ length: 9 }, (_, j) => PIPS[k].includes(j) ? "<i></i>" : "<span></span>").join(""); }, 80);
+  dEl.classList.add("tumble"); setTimeout(() => { clearInterval(iv); if (over) return; setDie(v); moveAfterRoll(p, v); }, 520 * tempo);
+}
+function moveAfterRoll(p, v) {
+  const from = pos[p]; let to = from + v;
   if (to > 100) { $("msg").textContent = `${NAMES[p]}: ${v}이(가) 나왔지만 100을 넘어서 제자리에 있어요.`; return setTimeout(endTurn, 700 * tempo); }
   $("msg").textContent = `${NAMES[p]}: ${v}칸 이동!`; let cur = from;
   const step = () => { cur++; pos[p] = cur; render(); if (cur < to) return setTimeout(step, 130 * tempo); settle(p, to); };
@@ -118,7 +123,7 @@ function settle(p, to) {
 }
 function finishOrNext(p) { if (pos[p] === 100) return win(p); setTimeout(endTurn, 500 * tempo); }
 function endTurn() { turn = (turn + 1) % cfg.n; next(); }
-function win(p) { over = true; $("roll").disabled = true; $("res").innerHTML = `<b>🎉 ${NAMES[p]} 승리!</b><p class="muted">${cfg.cpu[p] ? "컴퓨터" : "사람"}이 가장 먼저 100번 칸에 도착했어요.</p><button class="btn" id="again" type="button" style="margin-top:8px;width:100%">한 판 더</button>`; $("res").hidden = false; $("again").onclick = begin; render(); }
+function win(p) { over = true; $("roll").disabled = true; $("res").innerHTML = `<b>🎉 ${NAMES[p]} 승리!</b><p class="muted">${cfg.cpu[p] ? "컴퓨터가" : "사람이"} 가장 먼저 100번 칸에 도착했어요.</p><button class="btn" id="again" type="button" style="margin-top:8px;width:100%">한 판 더</button>`; $("res").hidden = false; $("again").onclick = begin; render(); }
 
 function render() {
   const cv = $("cv"), w = cv.clientWidth, dpr = window.devicePixelRatio || 1; if (!w) return; cv.width = cv.height = Math.round(w * dpr);

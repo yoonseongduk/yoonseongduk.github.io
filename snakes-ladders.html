@@ -46,13 +46,14 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
   <section id="setup" class="card">
     <div class="step"><h2>참가 인원</h2><div><button id="minus" type="button" aria-label="한 명 줄이기">−</button><b id="n">2</b><button id="plus" type="button" aria-label="한 명 늘리기">＋</button></div></div>
     <div id="pl"></div>
-    <div class="opt"><h2>판 모양</h2><div id="modes" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><div id="lvs" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><p class="muted" id="layoutInfo" style="margin:4px 0 10px"></p></div>
+    <div class="opt"><h2>판 모양</h2><div id="modes" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><div id="lvs" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><button type="button" class="cb" id="spBtn" style="margin:2px 0 4px"></button><p class="muted" id="layoutInfo" style="margin:4px 0 10px"></p></div>
     <button class="btn" id="start" type="button">게임 시작</button>
-    <p class="muted">주사위를 굴려 100번 칸에 먼저 도착하면 이겨요. 🪜 사다리 아래칸에 서면 위로 올라가고, 🐍 뱀 꼬리 칸에 서면 뱀을 타고 머리가 있는 아래 칸으로 미끄러져요. 100에는 <b>딱 맞게</b> 도착해야 해요. 사람 대신 컴퓨터가 굴리게 정할 수도 있어요.</p>
+    <p class="muted">주사위를 굴려 100번 칸에 먼저 도착하면 이겨요. 🪜 사다리 아래칸에 서면 위로 올라가고, 🐍 뱀 꼬리 칸에 서면 뱀을 타고 머리가 있는 아래 칸으로 미끄러져요. 🎲 칸에 서면 주사위를 <b>한 번 더</b>, 💤 칸에 서면 <b>다음 차례를 쉬어요</b>(시작 화면에서 끌 수 있어요). 100에는 <b>딱 맞게</b> 도착해야 해요. 사람 대신 컴퓨터가 굴리게 정할 수도 있어요.</p>
   </section>
   <section id="game" hidden>
     <div class="players" id="chips"></div>
     <div class="wrap" style="margin-top:10px"><canvas id="cv" aria-label="뱀 사다리 판"></canvas></div>
+    <p class="muted" id="legend" style="margin:6px 0 0;font-size:.85rem">🪜 올라가요 · 🐍 내려가요 · 🎲 한 번 더 · 💤 한 판 쉬기</p>
     <div class="dice" style="margin-top:10px"><div class="die" id="die" role="img" aria-label="주사위"></div><p class="msg" id="msg" aria-live="polite"></p></div>
     <button class="btn" id="roll" type="button" style="margin-top:10px;width:100%">주사위 굴리기</button>
     <div class="res" id="res" hidden style="margin-top:10px"></div>
@@ -70,10 +71,13 @@ function setDie(v, roll) { const d = $("die"); if (!d.firstChild) d.innerHTML = 
 const BASE_L = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91 }, BASE_S = { 17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78 };
 let LADDERS = BASE_L, SNAKES = BASE_S;
 /* 판 모양: base=기본 고정판, today=오늘의 판(날짜가 씨앗이라 가족 모두 같은 판), random=한 판마다 새로 섞기. 난이도 = [사다리 수, 뱀 수] */
-const MODES = [["base", "📌 기본 판"], ["today", "📅 오늘의 판"], ["random", "🎲 매번 새로"]], LVS = [["easy", "😊 쉬움", 10, 6], ["mid", "🙂 보통", 8, 8], ["hard", "🔥 어려움", 6, 11]];
+const MODES = [["base", "📌 기본 판"], ["today", "📅 오늘의 판"], ["random", "🎲 매번 새로"]], LVS = [["easy", "😊 쉬움", 10, 6, 5, 2], ["mid", "🙂 보통", 8, 8, 4, 3], ["hard", "🔥 어려움", 6, 11, 3, 5]]; /* [id, 이름, 사다리, 뱀, 한 번 더 칸, 한 판 쉬기 칸] */
+/* 특수 칸: again=🎲 한 번 더(주사위를 한 번 더 굴림), rest=💤 한 판 쉬기(다음 내 차례를 건너뜀). 사다리·뱀 끝 칸과는 겹치지 않는다 */
+const BASE_P = { 12: "again", 36: "again", 47: "again", 69: "again", 22: "rest", 45: "rest", 88: "rest" };
+let SPECIAL = {}, rest = [];
 const rng = a => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 /* 규칙에 맞는 사다리·뱀을 만든다: 같은 칸을 두 번 쓰지 않고, 1·100번 칸은 비우고, 사다리는 1~6줄 위로 · 뱀은 1~5줄 아래로, 뱀 머리가 4칸 이상 연달아 놓이지 않게 */
-function genLayout(seed, nl, ns) {
+function genLayout(seed, nl, ns, na = 4, nr = 3) {
   const R = rng(seed), used = new Set([1, 100]), L = {}, S = {}, row = n => Math.floor((n - 1) / 10), pick = (lo, hi) => lo + Math.floor(R() * (hi - lo + 1));
   const run = (S, h) => { let k = 1; for (let x = h - 1; S[x]; x--) k++; for (let x = h + 1; S[x]; x++) k++; return k; }, ok = (a, b) => a !== b && !used.has(a) && !used.has(b);
   /* 뱀 한 마리 놓기: 밟는 칸 h를 lo~hi 사이에서 고르고, 도착 칸(머리)은 1~5줄 아래. 성공하면 true */
@@ -82,13 +86,16 @@ function genLayout(seed, nl, ns) {
   let ds = 0; for (const [lo, hi] of [[81, 90], [81, 90], [91, 99], [91, 99]]) if (addSnake(lo, hi)) ds++;
   for (let i = 0, g = 0; i < nl && g < 3000; g++) { const a = pick(2, 89), rb = pick(row(a) + 1, Math.min(9, row(a) + 6)), b = rb * 10 + pick(1, 10); if (b <= 99 && ok(a, b)) { L[a] = b; used.add(a); used.add(b); i++; } }
   for (let i = ds; i < ns; i++) if (!addSnake(12, 98)) break;
-  return { L, S };
+  const P = {}; /* 특수 칸: 1·100번과 사다리·뱀 끝 칸을 뺀 빈 칸에 놓는다 */
+  for (const [kind, cnt] of [["again", na], ["rest", nr]]) for (let i = 0, g = 0; i < cnt && g < 3000; g++) { const c = pick(3, 99); if (!used.has(c)) { P[c] = kind; used.add(c); i++; } }
+  return { L, S, P };
 }
 function applyLayout() {
-  const lv = LVS.find(x => x[0] === cfg.lv) || LVS[1];
-  if (cfg.mode === "today") { const d = new Date(), seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); ({ L: LADDERS, S: SNAKES } = genLayout(seed * 7 + lv[2], lv[2], lv[3])); }
-  else if (cfg.mode === "random") ({ L: LADDERS, S: SNAKES } = genLayout((Math.random() * 4294967296) >>> 0, lv[2], lv[3]));
-  else { LADDERS = BASE_L; SNAKES = BASE_S; }
+  const lv = LVS.find(x => x[0] === cfg.lv) || LVS[1]; let P = {};
+  if (cfg.mode === "today") { const d = new Date(), seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); ({ L: LADDERS, S: SNAKES, P } = genLayout(seed * 7 + lv[2], lv[2], lv[3], lv[4], lv[5])); }
+  else if (cfg.mode === "random") ({ L: LADDERS, S: SNAKES, P } = genLayout((Math.random() * 4294967296) >>> 0, lv[2], lv[3], lv[4], lv[5]));
+  else { LADDERS = BASE_L; SNAKES = BASE_S; P = BASE_P; }
+  SPECIAL = cfg.sp ? P : {}; rest = Array(4).fill(0); $("legend").textContent = cfg.sp ? "🪜 올라가요 · 🐍 내려가요 · 🎲 한 번 더 · 💤 한 판 쉬기" : "🪜 올라가요 · 🐍 내려가요";
 }
 const SKCOL = [["#d2452f", "#f2a08f"], ["#e08a1e", "#f8d08a"], ["#8a4fc2", "#d2b6ee"], ["#2e86c1", "#acd5f0"], ["#c23b7a", "#f2b4d2"]]; /* 뱀 색깔(몸, 무늬) */
 const arrow = (c, x, y, ang, sz, col) => { c.save(); c.translate(x, y); c.rotate(ang); c.fillStyle = col; c.strokeStyle = "rgba(40,20,10,.9)"; c.lineWidth = 1.5; c.lineJoin = "round"; c.beginPath(); c.moveTo(sz, 0); c.lineTo(-sz * .6, -sz * .8); c.lineTo(-sz * .6, sz * .8); c.closePath(); c.fill(); c.stroke(); c.restore(); }; /* 가는 방향 화살표 */
@@ -97,7 +104,7 @@ const KEY = "snakes-v1", $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
 const sv = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 let cfg = ld(KEY) || { n: 2, cpu: [false, true, true, true] }, pos = [], turn = 0, over = false, busy = false, tempo = 1;
-cfg.n = Math.min(4, Math.max(2, cfg.n || 2)); if (!MODES.some(m => m[0] === cfg.mode)) cfg.mode = "base"; if (!LVS.some(m => m[0] === cfg.lv)) cfg.lv = "mid";
+cfg.n = Math.min(4, Math.max(2, cfg.n || 2)); if (!MODES.some(m => m[0] === cfg.mode)) cfg.mode = "base"; if (!LVS.some(m => m[0] === cfg.lv)) cfg.lv = "mid"; if (typeof cfg.sp !== "boolean") cfg.sp = true;
 
 // 칸 번호 → 판 위의 좌표. 아래줄은 왼쪽→오른쪽, 그다음 줄은 오른쪽→왼쪽 (지그재그)
 const cell = n => { const r = Math.floor((n - 1) / 10), c = r % 2 === 0 ? (n - 1) % 10 : 9 - (n - 1) % 10; return { r, c }; };
@@ -108,13 +115,16 @@ function drawSetup() {
   const bt = (a, k, t, on) => `<button type="button" class="cb ${on ? "on" : ""}" data-${a}="${k}">${t}</button>`;
   $("modes").innerHTML = MODES.map(m => bt("mode", m[0], m[1], cfg.mode === m[0])).join("");
   $("lvs").innerHTML = cfg.mode === "base" ? "" : LVS.map(m => bt("lv", m[0], m[1], cfg.lv === m[0])).join("");
+  $("spBtn").textContent = cfg.sp ? "✨ 특수 칸 켜짐" : "✨ 특수 칸 꺼짐"; $("spBtn").className = "cb" + (cfg.sp ? " on" : "");
   const lv = LVS.find(x => x[0] === cfg.lv);
-  $("layoutInfo").textContent = cfg.mode === "base" ? "언제나 같은 판이에요. (사다리 8개 · 뱀 8개)" : (cfg.mode === "today" ? "오늘 날짜로 정해져서 하루 동안은 가족 모두 같은 판이에요. " : "게임을 시작할 때마다(한 판 더 포함) 사다리와 뱀 자리가 새로 섞여요. ") + `(사다리 ${lv[2]}개 · 뱀 ${lv[3]}개)`;
+  $("layoutInfo").textContent = cfg.mode === "base" ? "언제나 같은 판이에요. (사다리 8개 · 뱀 8개)" + (cfg.sp ? " 🎲 한 번 더 4칸 · 💤 한 판 쉬기 3칸이 있어요." : "") : (cfg.mode === "today" ? "오늘 날짜로 정해져서 하루 동안은 가족 모두 같은 판이에요. " : "게임을 시작할 때마다(한 판 더 포함) 사다리와 뱀 자리가 새로 섞여요. ") + `(사다리 ${lv[2]}개 · 뱀 ${lv[3]}개)` + (cfg.sp ? ` 🎲 한 번 더 ${cfg.mode === "base" ? 4 : lv[4]}칸 · 💤 한 판 쉬기 ${cfg.mode === "base" ? 3 : lv[5]}칸이 있어요.` : "");
   $("pl").innerHTML = Array.from({ length: cfg.n }, (_, i) => `<div class="pl" style="margin:6px 0"><i style="background:${COLORS[i]}"></i><span>${NAMES[i]}</span><button type="button" data-i="${i}" aria-label="${NAMES[i]} 사람 또는 컴퓨터 바꾸기">${cfg.cpu[i] ? "🤖 컴퓨터" : "👤 사람"}</button></div>`).join("");
 }
 function begin() { sv(KEY, cfg); applyLayout(); pos = Array(cfg.n).fill(0); turn = 0; over = false; busy = false; $("setup").hidden = true; $("game").hidden = false; $("res").hidden = true; setDie(0); $("msg").textContent = ""; render(); next(); }
 function next() {
-  if (over) return; render(); $("die").classList.add("idle"); /* 새 굴림 전에는 이전 결과라 흐리게 */
+  if (over) return;
+  if (rest[turn] > 0) { rest[turn]--; $("msg").textContent = `${NAMES[turn]}: 💤 쉬는 차례예요. 건너뛰어요.`; render(); return setTimeout(endTurn, 1100 * tempo); }
+  render(); $("die").classList.add("idle"); /* 새 굴림 전에는 이전 결과라 흐리게 */
   if (cfg.cpu[turn]) { busy = true; $("roll").disabled = true; setTimeout(roll, 800 * tempo); } else { busy = false; $("roll").disabled = false; $("msg").textContent = `${NAMES[turn]} 차례예요. 주사위를 굴리세요!`; }
 }
 function roll() {
@@ -132,7 +142,13 @@ function settle(p, to) {
   const d = dest(to);
   if (d !== to) { $("msg").textContent = `${NAMES[p]}: ${LADDERS[to] ? "🪜 사다리를 타고 올라가요! " + to + " → " + d : "🐍 뱀에게 미끄러져요! " + to + " → " + d}`; setTimeout(() => { pos[p] = d; render(); finishOrNext(p); }, 600 * tempo); } else finishOrNext(p);
 }
-function finishOrNext(p) { if (pos[p] === 100) return win(p); setTimeout(endTurn, 500 * tempo); }
+function finishOrNext(p) {
+  if (pos[p] === 100) return win(p);
+  const sp = SPECIAL[pos[p]];
+  if (sp === "again") { $("msg").textContent = `${NAMES[p]}: 🎲 한 번 더! 주사위를 또 굴려요.`; return setTimeout(next, 1000 * tempo); } /* 차례를 넘기지 않음 */
+  if (sp === "rest") { rest[p] = 1; $("msg").textContent = `${NAMES[p]}: 💤 한 판 쉬어요. 다음 차례는 건너뛰어요.`; render(); return setTimeout(endTurn, 1100 * tempo); }
+  setTimeout(endTurn, 500 * tempo);
+}
 function endTurn() { turn = (turn + 1) % cfg.n; next(); }
 function win(p) { over = true; $("roll").disabled = true; $("res").innerHTML = `<b>🎉 ${NAMES[p]} 승리!</b><p class="muted">${cfg.cpu[p] ? "컴퓨터가" : "사람이"} 가장 먼저 100번 칸에 도착했어요.</p><button class="btn" id="again" type="button" style="margin-top:8px;width:100%">한 판 더</button>`; $("res").hidden = false; $("again").onclick = begin; render(); }
 
@@ -141,7 +157,7 @@ function render() {
   const c = cv.getContext("2d"), u = w / 10, css = getComputedStyle(document.documentElement); c.scale(dpr, dpr);
   const xy = n => { const { r, c: cc } = cell(n); return [(cc + .5) * u, w - (r + .5) * u]; };
   const bg = BG.ok; if (bg) c.drawImage(BG.img, 0, 0, w, w); /* 민화 배경 그림(없으면 단색 칸) */
-  for (let n = 1; n <= 100; n++) { const { r, c: cc } = cell(n), x0 = cc * u, y0 = w - (r + 1) * u; c.globalAlpha = bg ? .55 : 1; c.fillStyle = (r + cc) % 2 ? "#f3ecd6" : "#e5efd3"; if (LADDERS[n]) c.fillStyle = "#cfe9c4"; if (SNAKES[n]) c.fillStyle = "#f4cfc8"; if (n === 100) c.fillStyle = "#ffe08a"; c.fillRect(x0, y0, u, u); c.globalAlpha = 1;
+  for (let n = 1; n <= 100; n++) { const { r, c: cc } = cell(n), x0 = cc * u, y0 = w - (r + 1) * u; c.globalAlpha = bg ? .55 : 1; c.fillStyle = (r + cc) % 2 ? "#f3ecd6" : "#e5efd3"; if (LADDERS[n]) c.fillStyle = "#cfe9c4"; if (SNAKES[n]) c.fillStyle = "#f4cfc8"; if (SPECIAL[n] === "again") c.fillStyle = "#ffeaa0"; if (SPECIAL[n] === "rest") c.fillStyle = "#cfe0f6"; if (n === 100) c.fillStyle = "#ffe08a"; c.fillRect(x0, y0, u, u); c.globalAlpha = 1;
     if (bg) { c.strokeStyle = "rgba(120,100,70,.35)"; c.lineWidth = 1; c.strokeRect(x0 + .5, y0 + .5, u - 1, u - 1); }
   }
   /* 나무 사다리: 갈색 기둥 두 개 + 발판. 기둥은 어두운 테두리 위에 밝은 나무색을 겹쳐 입체감을 낸다 */
@@ -164,6 +180,7 @@ function render() {
     c.fillStyle = "rgba(40,20,10,.85)"; c.beginPath(); c.ellipse(u * .02, 0, u * .185, u * .15, 0, 0, 7); c.fill(); c.fillStyle = pal[0]; c.beginPath(); c.ellipse(u * .02, 0, u * .165, u * .13, 0, 0, 7); c.fill();
     for (const sg of [-1, 1]) { c.fillStyle = "#fff"; c.beginPath(); c.arc(u * .07, sg * u * .075, u * .045, 0, 7); c.fill(); c.fillStyle = "#222"; c.beginPath(); c.arc(u * .085, sg * u * .075, u * .022, 0, 7); c.fill(); }
     c.restore(); });
+  c.textAlign = "center"; c.textBaseline = "middle"; c.font = `${Math.max(12, u * .42)}px sans-serif`; for (const n in SPECIAL) { const { r, c: cc } = cell(+n); c.fillText(SPECIAL[n] === "again" ? "🎲" : "💤", (cc + .62) * u, w - (r + .38) * u); } /* 특수 칸 그림 */
   /* 숫자는 뱀·사다리 위에 그려서 절대 가려지지 않게 */
   for (let n = 1; n <= 100; n++) { const { r, c: cc } = cell(n), x0 = cc * u, y0 = w - (r + 1) * u;
     c.font = `bold ${Math.max(9, u * .26)}px sans-serif`; c.textAlign = "left"; c.textBaseline = "top"; const t = n === 100 ? "🏁100" : n;
@@ -171,9 +188,10 @@ function render() {
     c.fillStyle = "#4a5446"; c.fillText(t, x0 + 3, y0 + 2); }
   pos.forEach((p, i) => { const n = p || 0; const [x, y] = n ? xy(n) : [u * .3 + i * u * .4, w + 0]; if (!n) return; const off = [[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]][i];
     c.fillStyle = COLORS[i]; c.strokeStyle = "#fff"; c.lineWidth = 2; c.beginPath(); c.arc(x + off[0] * u, y + off[1] * u, u * .17, 0, 7); c.fill(); c.stroke(); });
-  $("chips").innerHTML = pos.map((p, i) => `<span class="chip ${i === turn && !over ? "cur" : ""}"><i style="background:${COLORS[i]}"></i>${NAMES[i]}${cfg.cpu[i] ? "🤖" : ""} <b>${p || "출발"}</b></span>`).join("");
+  $("chips").innerHTML = pos.map((p, i) => `<span class="chip ${i === turn && !over ? "cur" : ""}"><i style="background:${COLORS[i]}"></i>${NAMES[i]}${cfg.cpu[i] ? "🤖" : ""}${rest[i] ? "💤" : ""} <b>${p || "출발"}</b></span>`).join("");
 }
 $("minus").onclick = () => { if (cfg.n > 2) { cfg.n--; drawSetup(); } }; $("plus").onclick = () => { if (cfg.n < 4) { cfg.n++; drawSetup(); } };
+$("spBtn").onclick = () => { cfg.sp = !cfg.sp; sv(KEY, cfg); drawSetup(); };
 $("setup").addEventListener("click", e => { const b = e.target.closest("[data-mode],[data-lv]"); if (!b) return; if (b.dataset.mode) cfg.mode = b.dataset.mode; if (b.dataset.lv) cfg.lv = b.dataset.lv; sv(KEY, cfg); drawSetup(); });
 $("pl").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b) { cfg.cpu[+b.dataset.i] = !cfg.cpu[+b.dataset.i]; drawSetup(); } });
 $("start").onclick = begin; $("roll").onclick = () => { if (!busy && !over && !cfg.cpu[turn]) roll(); };

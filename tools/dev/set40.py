@@ -59,7 +59,8 @@ const yRules = () => `<details open><summary>📘 윷놀이 규칙 (일반 규�
   <b>이 앱의 약속</b>: 던진 결과는 <b>바로 사용</b>해요(모아 두지 않아요). 움직일 수 있는 말이 하나뿐이면 자동으로 움직여요.</div></details>`;
 '''
 
-CSS = r'''
+CSS = r'''.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent);color:var(--accent-fg);border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}
+
 .yb{width:100%;max-width:360px;margin:0 auto;display:block;touch-action:manipulation;filter:drop-shadow(0 3px 8px rgba(0,0,0,.28))}
 .yb .yl{fill:none;stroke:#C9A56A;stroke-width:8;stroke-linejoin:round;stroke-linecap:round}.yb .yl.d{stroke:#DDC391;stroke-width:5}
 .yb .yc{fill:#FFF8E6;stroke:#7A4A1E;stroke-width:2}.yb .yc.big{fill:#F2C14E;stroke:#7A4A1E;stroke-width:3}.yb .yc.go{fill:#C0392B;stroke:#7A1F14}
@@ -79,7 +80,8 @@ details summary{cursor:pointer;font-weight:700}.note{font-size:.85rem;color:var(
 '''
 
 # ── 혼자 하기(컴퓨터와): 시작 화면 윷놀이
-SOLO_BODY = r'''  <div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><small>나 도착</small><b id="d1">0/4</b></div><div class="stat"><small>차례</small><b id="turn" style="font-size:1.1rem">나</b></div><div class="stat"><small>컴퓨터</small><b id="d2">0/4</b></div><div class="stat"><small>승리</small><b id="wins">0</b></div></div>
+SOLO_BODY = r'''  <div class="card" id="modeSel"><b>🎮 누구와 할까요?</b><div class="modes"><span class="on">🤖 컴퓨터와 1:1 <small>(지금 화면)</small></span><a href="play-together.html?play=net-yut.html&amp;bots=2">🤖 컴퓨터 2명 · 3인</a><a href="play-together.html?play=net-yut.html&amp;bots=3">🤖 컴퓨터 3명 · 4인</a><a href="play-together.html?play=net-yut.html">👫 가족·친구와 폰으로</a></div><p class="muted" style="margin:6px 0 0;font-size:.85rem">여러 명이 하면 '같이 하기' 화면이 열려요. 방장이 ▶ 시작하기를 눌러요.</p></div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><small>나 도착</small><b id="d1">0/4</b></div><div class="stat"><small>차례</small><b id="turn" style="font-size:1.1rem">나</b></div><div class="stat"><small>컴퓨터</small><b id="d2">0/4</b></div><div class="stat"><small>승리</small><b id="wins">0</b></div></div>
   <div id="brd"></div>
   <div class="card center"><div class="sticks" id="sticks"><img class="yready" src="yut-img/yut_ready.svg" alt="윷가락 네 개" draggable="false"></div><p class="big" id="res" style="font-size:2rem;min-height:1.3em"></p><p class="muted" id="msg" style="min-height:2.6em">윷을 던져 보세요!</p><p class="note" id="pnl"></p></div>
   <div class="pcsb" id="pick" hidden></div>

@@ -562,6 +562,14 @@ addEventListener("popstate", () => { if (!trapped) return;
 addEventListener("beforeunload", e => { if (isLinked() && !leaving) { e.preventDefault(); e.returnValue = ""; } });
 $("buzz").onclick = () => { if (role === "host") bcast({ t: "buzz", from: S.name }); else gsend({ t: "buzz" }); flash("📳 보냈어요"); };
 
+// 다른 게임 화면에서 바로 열기: ?play=net-yut.html&bots=2 → 컴퓨터 2명과 연습으로 시작, ?play=net-yut.html → 방(초대 QR)을 만들고 게임 목록을 그 게임만 보이게(사람들이 들어오면 누르면 돼요)
+(() => {
+  const q = new URLSearchParams(location.search), g = q.get("play"), n = Math.min(5, Math.max(0, +q.get("bots") || 0));
+  if (!g || !GAMES.some(x => x[0] === g)) return;
+  try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+  if (n) { botN = n; soloStart(); pickGame(g); }
+  else { const t = GAMES.find(x => x[0] === g)[2]; $("gq").value = t; hostStart().then(() => flash("👫 사람들이 들어오면 아래에서 '" + t + "'을 눌러 시작해요")).catch(() => {}); }   // 방(QR)을 먼저 만들고, 게임 목록은 그 게임만 보이게
+})();
 // 카메라 앱으로 QR을 찍어 이 화면이 열렸을 때: #j=초대(참가하기) / #r=답장(방 만든 화면으로 전달)
 (() => {
   const h = location.hash, k = h.slice(1, 3), c = pickCode(h.slice(3)); if (!c) return;

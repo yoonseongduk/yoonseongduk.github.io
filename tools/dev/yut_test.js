@@ -58,6 +58,24 @@ for (let g = 0; g < 3000; g++) {
   }
   maxTurns = Math.max(maxTurns, turns);
 }
+// ── 3·4명 대결(같이 하기): 상대가 여러 편이어도 말 수가 보존되고, 서로 다른 편이 한 칸을 같이 쓰지 않고, 잡기는 그 칸의 모든 상대 말을 잡는지
+let multiMax = 0, capMulti = 0;
+for (let g = 0; g < 600; g++) {
+  const N = 3 + g % 2, S = Array.from({ length: N }, () => Y.newSide()); let t = 0, turns = 0;
+  while (!S.some(Y.won) && turns < 4000) {
+    let more = true;
+    while (more && !S.some(Y.won)) {
+      const roll = Y.toss().n, opp = S.filter((x, i) => i !== t), ops = Y.options(S[t], opp, roll); more = roll >= 4; turns++;
+      if (ops.length) { const k = (g + t) % 3 === 0 ? Y.aiPick(S[t], opp, roll) : Math.floor(Math.random() * ops.length), before = opp.reduce((a, x) => a + x.w, 0), expectCap = ops[k].cap, rr = Y.apply(S[t], opp, ops[k], roll);
+        ok(rr.cap === expectCap, "options의 잡기 수와 apply의 잡기 수가 같아야 함"); ok(opp.reduce((a, x) => a + x.w, 0) === before + rr.cap, "잡힌 말은 모두 출발 전으로"); if (rr.cap && opp.filter(x => true).length > 1) capMulti++; more = rr.extra; }
+      S.forEach(x => ok(Y.count(x) === 4, "말 수 보존(" + N + "명)"));
+      const owner = {}; S.forEach((x, i) => x.stacks.forEach(st => { if (st.at !== 0) { ok(owner[st.at] === undefined || owner[st.at] === i, "서로 다른 편이 같은 칸을 같이 씀 " + st.at); owner[st.at] = i; } }));
+    }
+    t = (t + 1) % N;
+  }
+  ok(S.some(Y.won), "3·4명 판이 끝나지 않음"); multiMax = Math.max(multiMax, turns);
+}
+ok(capMulti > 0, "여러 상대가 있는 판에서 잡기가 한 번도 안 나옴");
 for (let n = 1; n <= 28; n++) ok(seen.has(n), "방문 못 한 칸 " + n);
-console.log(bad ? "실패 " + bad + "건" : "✅ 윷놀이 엔진 시험 통과 (3000판, 가장 긴 판 " + maxTurns + "차례)");
+console.log(bad ? "실패 " + bad + "건" : "✅ 윷놀이 엔진 시험 통과 (2명 3000판 + 3·4명 600판, 가장 긴 판 " + maxTurns + "/" + multiMax + "차례)");
 process.exit(bad ? 1 : 0);

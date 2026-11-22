@@ -9,53 +9,7 @@ TOPICS = dict(re.findall(r'"([^"]+)": "([^"]+)"', _wt[_wt.index("const TOPICS"):
 
 # ── 원카드: 같은 무늬·숫자 내기, 2=+2·A=+3(같은 숫자로 막으면 더해져 넘어감), J·Q·K=한 번 더, 7=무늬 바꾸기, 먼저 다 내면 승리, 15장이 되면 짐.
 #   카드 번호 = 무늬×13 + 숫자(0=A, 1=2 … 10=J, 11=Q, 12=K). 패는 방장만 알고 각자에게 privTo로 보내요.
-duo("net-onecard.html", "원카드 (같이 하기)", TI("cJ"), 0, "net-onecard-v1",
-    "같은 무늬나 같은 숫자의 카드를 내서 손에 든 카드를 먼저 모두 없애면 이겨요. 낼 카드가 없으면 '카드 받기'. 특별 카드: 2=상대 +2장, A=상대 +3장(같은 숫자로 막으면 더해져 넘어가요), J·Q·K=한 번 더, 7=무늬 바꾸기. 카드가 15장이 되면 져요! 내 카드는 내 폰에만 보여요.",
-    '<p class="center" id="st"></p><div class="stats" id="cnt"></div><div class="big" id="top"></div><p class="center" id="info"></p><div class="row" id="suits" hidden></div><button class="btn ghost" id="draw" type="button" hidden>카드 받기</button><div class="hand" id="hand"></div>',
-    r'''
-const SU = ["♠", "♥", "♦", "♣"], RK = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"], red = s => s === 1 || s === 2;
-const cs = c => Math.floor(c / 13), cr = c => c % 13, label = c => SU[cs(c)] + RK[cr(c)];
-let hand = [], seven = null;
-function newRound() { H.deck = shuf(Array.from({ length: 52 }, (_, i) => i)); H.hands = { [P.a]: H.deck.splice(0, 7), [P.b]: H.deck.splice(0, 7) }; let top = H.deck.pop(); while (cr(top) === 0 || cr(top) === 1 || cr(top) === 6 || cr(top) >= 10) { H.deck.unshift(top); top = H.deck.pop(); } H.pile = [top];
-  return { ph: "play", top, suit: cs(top), pen: 0, turn: P.first, cnt: { [P.a]: 7, [P.b]: 7 }, deckN: H.deck.length, msg: "" }; }
-function afterPush() { if (H.hands) [P.a, P.b].forEach(id => privTo(id, { hand: H.hands[id] })); }
-function onPriv(d) { if (Array.isArray(d.hand)) { hand = d.hand.slice().sort((x, y) => cs(x) - cs(y) || cr(x) - cr(y)); render(); } }
-const playable = c => P.pen ? cr(c) === cr(P.top) && (cr(c) === 0 || cr(c) === 1) : cs(c) === P.suit || cr(c) === cr(P.top);
-function take(id, n) { for (let i = 0; i < n; i++) { if (!H.deck.length) { const t = H.pile.pop(); H.deck = shuf(H.pile); H.pile = [t]; } if (!H.deck.length) break; H.hands[id].push(H.deck.pop()); } }
-function onAct(from, d) {
-  if (P.ph === "play" && from === P.turn && d.t === "play") { const c = +d.c, k = H.hands[from].indexOf(c); if (k < 0 || !playable(c)) return;
-    H.hands[from].splice(k, 1); H.pile.push(c); P.top = c; P.suit = cr(c) === 6 && d.suit >= 0 && d.suit < 4 ? +d.suit : cs(c); const r = cr(c), nmF = nameOf(from);
-    if (r === 1) P.pen += 2; if (r === 0) P.pen += 3;
-    P.msg = r === 1 || r === 0 ? `${nmF}: ${label(c)} 공격! 받을 카드 ${P.pen}장` : r >= 10 ? `${nmF}: ${label(c)} 한 번 더!` : r === 6 ? `${nmF}: 무늬를 ${SU[P.suit]}로 바꿨어요` : "";
-    if (!H.hands[from].length) finish(from); else if (r < 10) P.turn = oppOf(from); }
-  else if (P.ph === "play" && from === P.turn && d.t === "draw") { const n = P.pen || 1; take(from, n); P.msg = `${nameOf(from)}가 카드 ${n}장을 받았어요`; P.pen = 0; if (H.hands[from].length >= 15) { P.msg = `${nameOf(from)} 카드가 15장이 됐어요!`; finish(oppOf(from)); } else P.turn = oppOf(from); }
-  else if (d.t === "again" && P.ph === "end") { round(true); }
-  else return;
-  if (H.hands) { P.cnt = { [P.a]: H.hands[P.a].length, [P.b]: H.hands[P.b].length }; P.deckN = H.deck.length; } pushS();
-}
-function changed(was) {}
-function cardHtml(c, big) { return `<span class="cd tr${big ? " bg" : ""}" style="background-image:url(cards-trump/${"shdc"[cs(c)]}${RK[cr(c)]}.webp)" aria-label="${SU[cs(c)]}${RK[cr(c)]}">${SU[cs(c)]}<b>${RK[cr(c)]}</b></span>`; }
-function render() {
-  if (!P || P.top === undefined) { $("st").textContent = !P ? "연결을 기다리는 중…" : "상대가 들어오면 시작해요"; $("hand").innerHTML = ""; $("draw").hidden = true; if (P) common(); return; }
-  const pl = amPlayer(), can = P.ph === "play" && P.turn === me;
-  $("st").textContent = P.ph === "end" ? endText() : (P.msg ? P.msg + " · " : "") + (!pl ? `구경 중 · ${nm(P.turn)} 차례` : can ? (P.pen ? `공격받았어요! 같은 숫자로 막거나 ${P.pen}장 받기` : "내 차례! 낼 카드를 골라요") : "상대 차례예요…");
-  $("cnt").innerHTML = [P.a, P.b].map(id => `<div class="stat"><small>${esc(nm(id))}</small><b>${P.cnt[id]}장</b></div>`).join("") + `<div class="stat"><small>더미</small><b>${P.deckN}</b></div>`;
-  $("top").innerHTML = cardHtml(P.top, true); $("info").textContent = `지금 무늬: ${SU[P.suit]}${P.pen ? ` · 공격 ${P.pen}장` : ""}`;
-  $("draw").hidden = !(pl && can); $("draw").textContent = P.pen ? `😵 카드 ${P.pen}장 받기` : "🂠 카드 받기";
-  $("hand").innerHTML = pl ? hand.map(c => `<button type="button" data-c="${c}"${can && playable(c) ? "" : " disabled"}>${cardHtml(c)}</button>`).join("") : '<p class="note center">두 사람이 대결 중이에요</p>';
-  $("hand").querySelectorAll("button:not([disabled])").forEach(b => b.onclick = () => { const c = +b.dataset.c; if (cr(c) === 6) { seven = c; $("suits").hidden = false; return; } act({ t: "play", c }); });
-  $("suits").innerHTML = SU.map((x, i) => `<button type="button" class="btn ghost sm" data-s="${i}" style="${red(i) ? "color:#d6453a" : ""}">${x}</button>`).join("");
-  $("suits").style.gridTemplateColumns = "repeat(4,1fr)"; if (!can) $("suits").hidden = true;
-  $("suits").querySelectorAll("[data-s]").forEach(b => b.onclick = () => { $("suits").hidden = true; act({ t: "play", c: seven, suit: +b.dataset.s }); });
-  common();
-}
-$("draw").onclick = () => act({ t: "draw" });
-render();
-''', '''
-.hand{--cw:clamp(62px,19vw,78px);display:flex;flex-wrap:wrap;gap:4px;justify-content:center}.hand button{border:0;background:none;padding:0}.hand:has(> :nth-child(6)){padding-right:calc(var(--cw)*.3)}.hand:has(> :nth-child(6)) > *{margin-right:calc(var(--cw)*-.3)}.hand:has(> :nth-child(12)){--cw:clamp(52px,16vw,64px)}.hand:has(> :nth-child(12)){padding-right:calc(var(--cw)*.45)}.hand:has(> :nth-child(12)) > *{margin-right:calc(var(--cw)*-.45)}.hand button[disabled]{filter:brightness(.6) saturate(.75)}.hand button:not([disabled]){position:relative;z-index:1}
-.cd{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;--w:var(--cw,clamp(62px,19vw,78px));width:var(--w);height:calc(var(--w)*1.4);border-radius:8px;border:1px solid var(--line);background:#fff;color:#1c2233;font-size:.9rem;line-height:1.1}.cd b{font-family:var(--font-display);font-size:1.2rem}.cd.rd{color:#d6453a}
-.cd.bg{--w:clamp(92px,28vw,120px);font-size:1.4rem}.cd.bg b{font-size:2rem}
-.cd.tr,.cd.tr.bk{background-color:transparent;background-size:100% 100%;background-repeat:no-repeat;border:0;box-shadow:0 1px 3px rgba(0,0,0,.4);font-size:0!important;color:transparent}.cd.tr b{font-size:0!important}''')
+# 원카드(net-onecard.html)는 2~4명이 할 수 있게 바뀌어 set34.py 의 여러 명 카드 틀(card)로 만들어요.
 
 # ── 체커: 8×8 어두운 칸, 대각선 앞으로 한 칸, 뛰어넘어 잡기(잡을 수 있으면 반드시, 이어서 잡기), 끝줄에 닿으면 왕(뒤로도). 상대 말을 다 잡거나 못 움직이게 하면 승리.
 #   먼저 하는 사람 🔵은 아래(6~8줄)에서 위로, 🔴는 위에서 아래로. 각자 화면에서는 내 말이 아래쪽에 보여요. 칸 값: 1 🔵, 2 🔴, 3 🔵왕, 4 🔴왕.

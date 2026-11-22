@@ -136,6 +136,53 @@ render();
 # ── 대통령 게임(2~6명): 카드를 모두 나누고 ♣3을 가진 사람부터. 세기는 3 < 4 < … < K < A < 2. 같은 숫자 1~4장을 내고,
 #   다음 사람은 같은 장수로 더 센 숫자를 내거나 패스. 패스하면 그 바닥에서는 다시 낼 수 없어요. 모두 패스하면 마지막에 낸 사람이 새로 내요.
 #   먼저 다 낸 순서대로 대통령·부통령·평민…, 마지막 사람이 거지.
+# ── 원카드(2~4명): 같은 무늬·숫자 내기. 2=+2·A=+3(같은 숫자로 막으면 더해져 다음 사람에게 넘어가요), J=다음 사람 건너뛰기, Q=방향 바꾸기, K=한 번 더, 7=무늬 바꾸기.
+#   손에 든 카드를 먼저 모두 없애면 승리, 카드가 15장이 되면 탈락(마지막 한 명이 남으면 그 사람이 승리). 2명일 때는 J·Q·K 모두 '한 번 더'와 같아서 예전과 똑같아요.
+card("net-onecard.html", "원카드 (같이 하기)", TI("cJ"), 0, "net-onecard-v1",
+     "2~4명이 해요. 같은 무늬나 같은 숫자의 카드를 내서 손에 든 카드를 먼저 모두 없애면 이겨요. 낼 카드가 없으면 '카드 받기'. 특별 카드: 2=다음 사람 +2장, A=다음 사람 +3장(같은 숫자로 막으면 더해져 넘어가요), J=다음 사람 건너뛰기, Q=방향 바꾸기, K=한 번 더, 7=무늬 바꾸기. 카드가 15장이 되면 탈락해요! 내 카드는 내 폰에만 보여요.",
+     r'''
+const SUN = ["♠", "♥", "♦", "♣"];
+function initState() { return { ph: "wait", rno: 0, ord: [], cnt: {}, out: [], tot: {}, turn: null, top: null, suit: 0, pen: 0, dir: 1, deckN: 0, win: null, msg: "" }; }
+const live = id => !P.out.includes(id);
+const playable = c => P.pen ? cr(c) === cr(P.top) && (cr(c) === 0 || cr(c) === 1) : cs(c) === P.suit || cr(c) === cr(P.top);
+const stepFrom = id => nextIn(P.dir === 1 ? P.ord : [...P.ord].reverse(), id, live);   // 지금 방향으로 다음 사람(탈락한 사람은 건너뜀)
+function take(id, n) { for (let i = 0; i < n; i++) { if (!H.deck.length) { const t = H.pile.pop(); H.deck = shuf(H.pile); H.pile = [t]; } if (!H.deck.length) break; H.hands[id].push(H.deck.pop()); } }
+function endBy(id, text) { P.ph = "end"; P.win = id; P.tot[id] = (P.tot[id] || 0) + 1; P.msg = text; }
+function onAct(from, d) {
+  if (d.t === "start" && from === "host" && P.ph !== "play") { const ps = canStart(2, 4); if (!ps) return; H.deck = deck52(); H.hands = {}; ps.forEach(id => H.hands[id] = H.deck.splice(0, 7));
+    let top = H.deck.pop(); while (cr(top) === 0 || cr(top) === 1 || cr(top) === 6 || cr(top) >= 10) { H.deck.unshift(top); top = H.deck.pop(); } H.pile = [top];
+    Object.assign(P, { ph: "play", rno: P.rno + 1, ord: ps, out: [], win: null, top, suit: cs(top), pen: 0, dir: 1, msg: "7장씩 받았어요. 같은 무늬나 숫자를 내요" }); P.turn = ps[(P.rno - 1) % ps.length]; }
+  else if (d.t === "play" && P.ph === "play" && from === P.turn && live(from)) { const c = +d.c, k = H.hands[from].indexOf(c); if (k < 0 || !playable(c)) return;
+    H.hands[from].splice(k, 1); H.pile.push(c); P.top = c; P.suit = cr(c) === 6 && d.suit >= 0 && d.suit < 4 ? +d.suit : cs(c); const r = cr(c), who = nmOf(from), alive = P.ord.filter(live).length;
+    if (r === 1) P.pen += 2; if (r === 0) P.pen += 3;
+    let nx; P.msg = "";
+    if (r === 1 || r === 0) { nx = stepFrom(from); P.msg = `${who}: ${label(c)} 공격! 받을 카드 ${P.pen}장`; }
+    else if (r === 12) { nx = from; P.msg = `${who}: ${label(c)} 한 번 더!`; }
+    else if (r === 10) { const n1 = stepFrom(from); nx = alive <= 2 ? from : stepFrom(n1); P.msg = alive <= 2 ? `${who}: ${label(c)} 한 번 더!` : `${who}: ${label(c)} ${nmOf(n1)} 건너뛰기!`; }
+    else if (r === 11) { if (alive <= 2) { nx = from; P.msg = `${who}: ${label(c)} 한 번 더!`; } else { P.dir = -P.dir; nx = stepFrom(from); P.msg = `${who}: ${label(c)} 방향이 바뀌었어요 ${P.dir === 1 ? "↻" : "↺"}`; } }
+    else { nx = stepFrom(from); if (r === 6) P.msg = `${who}: 무늬를 ${SUN[P.suit]}로 바꿨어요`; }
+    if (!H.hands[from].length) endBy(from, `${who}: 카드를 모두 냈어요!`); else P.turn = nx; }
+  else if (d.t === "draw" && P.ph === "play" && from === P.turn && live(from)) { const n = P.pen || 1; take(from, n); P.msg = `${nmOf(from)}: 카드 ${n}장을 받았어요`; P.pen = 0;
+    if (H.hands[from].length >= 15) { P.out.push(from); H.deck = shuf([...H.deck, ...H.hands[from]]); H.hands[from] = []; P.msg = `${nmOf(from)}: 카드가 15장이 돼서 탈락했어요!`; const L = P.ord.filter(live); if (L.length === 1) endBy(L[0], P.msg + ` ${nmOf(L[0])} 승리!`); else P.turn = stepFrom(from); }
+    else P.turn = stepFrom(from); }
+  else return;
+  P.deckN = H.deck.length; sync(); pushS();
+}
+let seven = null;
+function render() {
+  if (!P) { $("st").textContent = "연결을 기다리는 중…"; return; }
+  goBtn(); if (P.ph === "wait") { $("st").textContent = waitText(2, 4); idle(); return; }
+  const h = myHand().sort((x, y) => cs(x) - cs(y) || cr(x) - cr(y)), inG = P.ord.includes(me), mine = P.ph === "play" && P.turn === me && live(me);
+  if (!mine) seven = null;
+  $("st").textContent = P.ph === "end" ? (P.win === me ? "🎉 이겼어요!" : `🎉 ${pn(P.win)} 승리!`) : (P.msg ? P.msg + " · " : "") + (!inG ? `구경 중 · ${pn(P.turn)} 차례` : !live(me) ? "탈락했어요. 구경해요" : mine ? (P.pen ? `공격받았어요! 같은 숫자로 막거나 ${P.pen}장 받기` : "내 차례! 낼 카드를 골라요") : `${pn(P.turn)} 차례예요…`);
+  $("tbl").innerHTML = seats(id => P.out.includes(id) ? "💥 탈락" : P.ph === "end" && P.win === id ? "🏆 승리" : `${P.cnt[id]}장`) + `<div class="tb">${cardHtml(P.top, "bg")}</div><p class="note center">지금 무늬: ${SUN[P.suit]}${P.pen ? ` · 공격 ${P.pen}장` : ""} · 방향 ${P.dir === 1 ? "↻" : "↺"} · 더미 ${P.deckN}장</p>` + totHtml();
+  $("hand").innerHTML = handBox(h, mine ? playable : null); bindHand(c => { if (cr(c) === 6) { seven = c; render(); } else { seven = null; act({ t: "play", c }); } });
+  $("acts").innerHTML = !mine ? "" : seven !== null ? SUN.map((x, i) => `<button type="button" class="btn ghost" data-s="${i}" style="${i === 1 || i === 2 ? "color:#d6453a" : ""}">${x}</button>`).join("") + '<button type="button" class="btn ghost" id="sx">취소</button>' : `<button class="btn" id="dr" type="button">${P.pen ? `😵 카드 ${P.pen}장 받기` : "🂠 카드 받기"}</button>`;
+  if (mine) { if ($("dr")) $("dr").onclick = () => act({ t: "draw" }); $("acts").querySelectorAll("[data-s]").forEach(b => b.onclick = () => { const c = seven; seven = null; act({ t: "play", c, suit: +b.dataset.s }); }); if ($("sx")) $("sx").onclick = () => { seven = null; render(); }; }
+}
+render();
+''')
+
 card("net-president.html", "대통령 게임 (같이 하기)", TI("sK"), 45, "net-president-v1",
      "카드를 모두 나눠 갖고 ♣3을 가진 사람부터 시작해요. 같은 숫자 카드를 1~4장 내고, 다음 사람은 같은 장수로 더 센 숫자를 내거나 '패스'해요. 세기는 3이 가장 약하고 … K < A < 2 (2가 가장 세요). 모두 패스하면 마지막에 낸 사람이 아무 카드나 새로 내요. 카드를 먼저 다 낸 사람이 대통령, 마지막 사람은 거지! 카드를 눌러 고르고 '내기'를 눌러요.",
      r'''

@@ -56,11 +56,11 @@
   }
   // 이번 던지기(roll)로 할 수 있는 움직임 목록. 각 {from(-1 = 출발 전 말, 그 밖에는 stacks 번호), to(칸 번호 | "end" | "home"), n(움직이는 말 수), cap(잡는 말 수), stack(업는지)}
   function options(me, opp, roll) {
-    var out = [];
+    var out = [], opps = [].concat(opp);   // 상대는 한 편 또는 여러 편(3~4명 대결)
     function add(from, st) {
       var r = advance(st, roll); if (!r) return;
       var n = st ? st.n : 1, m = { from: from, n: n, to: r.end ? END : r.home ? HOME : r.at, cap: 0, stack: false };
-      if (!r.end && !r.home) { opp.stacks.forEach(function (o) { if (o.at === r.at) m.cap += o.n; }); me.stacks.forEach(function (s, i) { if (s.at === r.at && i !== from) m.stack = true; }); }
+      if (!r.end && !r.home) { opps.forEach(function (op) { op.stacks.forEach(function (o) { if (o.at === r.at) m.cap += o.n; }); }); me.stacks.forEach(function (s, i) { if (s.at === r.at && i !== from) m.stack = true; }); }
       out.push(m);
     }
     if (roll > 0 && me.w > 0) add(-1, null);
@@ -69,12 +69,12 @@
   }
   // 움직임을 실제로 적용(me, opp 를 고쳐요). 반환 {cap, fin, stack, home, extra} — extra: 한 번 더 던지기(윷·모·잡기)
   function apply(me, opp, mv, roll) {
-    var st = mv.from < 0 ? null : me.stacks[mv.from], n = st ? st.n : 1, res = { cap: 0, fin: 0, stack: false, home: false, extra: false }, r, j, same;
+    var opps = [].concat(opp), st = mv.from < 0 ? null : me.stacks[mv.from], n = st ? st.n : 1, res = { cap: 0, fin: 0, stack: false, home: false, extra: false }, r, j, same;
     r = advance(st, roll);
     if (st) me.stacks.splice(mv.from, 1); else me.w--;
     if (r.home) { me.w += n; res.home = true; return res; }
     if (r.end) { me.done += n; res.fin = n; res.extra = roll >= 4; return res; }
-    for (j = opp.stacks.length - 1; j >= 0; j--) if (opp.stacks[j].at === r.at) { res.cap += opp.stacks[j].n; opp.w += opp.stacks[j].n; opp.stacks.splice(j, 1); }
+    opps.forEach(function (op) { for (j = op.stacks.length - 1; j >= 0; j--) if (op.stacks[j].at === r.at) { res.cap += op.stacks[j].n; op.w += op.stacks[j].n; op.stacks.splice(j, 1); } });   // 그 칸에 있는 모든 상대 말을 잡아요
     same = me.stacks.filter(function (s) { return s.at === r.at; })[0];
     if (same) { same.n += n; same.lane = r.lane; same.trail = r.trail; res.stack = true; } else me.stacks.push({ at: r.at, lane: r.lane, n: n, trail: r.trail });
     res.extra = roll >= 4 || res.cap > 0;
@@ -83,7 +83,7 @@
   var won = function (s) { return s.done >= 4; };
   // 컴퓨터가 고르는 움직임(options 의 번호). 도착 > 잡기 > 지름길·업기 > 앞으로 나가기, 잡힐 곳은 피해요
   function aiPick(me, opp, roll) {
-    var ops = options(me, opp, roll); if (!ops.length) return -1;
+    var ops = options(me, opp, roll), opps = [].concat(opp); if (!ops.length) return -1;
     var best = -1, bs = -1e9;
     ops.forEach(function (m, i) {
       var s = Math.random() * 2 - 1;
@@ -92,8 +92,8 @@
         s += 60 * m.cap + (m.to === 0 ? 8 * m.n : 0) + (m.stack ? 6 : 0) + (m.to === 5 || m.to === 10 || m.to === 22 ? 7 : 0) + (m.to >= 20 ? 4 : 0);
         s += 0.4 * (m.to === 0 ? 0 : (m.to >= 20 ? m.to - 10 : m.to)) * m.n;
         var danger = 0; // 이 칸에 서면 상대가 다음에 잡을 수 있나(상대 말이 1~5칸 뒤에 있나)
-        opp.stacks.forEach(function (o) { for (var k = 1; k <= 5; k++) { var r = advance(o, k); if (r && r.at === m.to) danger = 1; } });
-        if (opp.w > 0) for (var q = 1; q <= 5; q++) { var r2 = advance(null, q); if (r2 && r2.at === m.to) danger = Math.max(danger, 0.5); }
+        opps.forEach(function (op) { op.stacks.forEach(function (o) { for (var k = 1; k <= 5; k++) { var r = advance(o, k); if (r && r.at === m.to) danger = 1; } });
+          if (op.w > 0) for (var q = 1; q <= 5; q++) { var r2 = advance(null, q); if (r2 && r2.at === m.to) danger = Math.max(danger, 0.5); } });
         s -= 14 * danger * m.n;
       }
       if (m.from < 0 && m.to !== END) s += 1.5; // 출발 전 말도 적당히 내보내요

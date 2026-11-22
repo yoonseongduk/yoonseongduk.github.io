@@ -48,17 +48,33 @@ textarea.code{min-height:70px;font-size:.75rem;word-break:break-all}.inhub body{
 .big{font-family:var(--font-display);font-size:clamp(2rem,12vw,3.4rem);text-align:center;line-height:1.2}
 .choice{display:grid;gap:8px}.choice button{padding:14px 8px;border-radius:14px;border:1px solid var(--line);background:var(--soft);font-family:var(--font-display);font-size:1.3rem}.choice button[disabled]{opacity:.4}
 .li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}.li:last-child{border-bottom:0}
-.hand{--cw:clamp(62px,19vw,78px);display:flex;flex-wrap:wrap;gap:4px;justify-content:center}.hand button{border:0;background:none;padding:0}.hand:has(> :nth-child(6)){padding-right:calc(var(--cw)*.3)}.hand:has(> :nth-child(6)) > *{margin-right:calc(var(--cw)*-.3)}.hand:has(> :nth-child(12)){--cw:clamp(52px,16vw,64px)}.hand:has(> :nth-child(12)){padding-right:calc(var(--cw)*.45)}.hand:has(> :nth-child(12)) > *{margin-right:calc(var(--cw)*-.45)}.hand button[disabled]{filter:brightness(.6) saturate(.75)}.hand button:not([disabled]){position:relative;z-index:1}
-.cd{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;--w:var(--cw,clamp(62px,19vw,78px));width:var(--w);height:calc(var(--w)*1.4);border-radius:8px;border:1px solid var(--line);background:#fff;color:#1c2233;font-size:.9rem;line-height:1.1}.cd b{font-family:var(--font-display);font-size:1.2rem}.cd.rd{color:#d6453a}
-.cd.bg{--w:clamp(92px,28vw,120px);font-size:1.4rem}.cd.bg b{font-size:2rem}
+#tbl{display:grid;gap:8px}#acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}#acts .btn{flex:1 1 140px}
+.inhub .card{padding:8px 4px}   /* 같이 하기 화면 안에서는 바깥 여백을 줄여 카드를 더 크게 */
+.hand{--cw:clamp(72px,22vw,96px);display:flex;flex-wrap:wrap;gap:4px;justify-content:center}.hand button{border:0;background:none;padding:0;transition:transform .1s}.hand button[disabled]{filter:brightness(.6) saturate(.75)}.hand button:not([disabled]){position:relative;z-index:1}   /* 낼 수 없는 카드는 어둡게(반투명이면 겹친 카드가 비쳐 보여요), 낼 수 있는 카드는 맨 위로 */
+.hand button.on{transform:translateY(-8px)}.hand button.on .cd{outline:3px solid var(--accent)}
+.cd{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;--w:var(--cw,clamp(72px,22vw,96px));width:var(--w);height:calc(var(--w)*1.4);border-radius:7px;border:1px solid #c9c2b4;background:#fff;color:#1c2233;font-size:.85rem;line-height:1.05;flex:none}
+.cd b{font-family:var(--font-display);font-size:1.15rem;font-weight:400}.cd.rd{color:#d6453a}.cd.jk{color:#7a3fd0}
+.cd.bk{background:repeating-linear-gradient(45deg,#3d5fb8 0 6px,#2f4c99 6px 12px);border-color:#22397a}.cd.e{opacity:.25}
+.cd.bg{--w:clamp(92px,28vw,124px);font-size:1.2rem}.cd.bg b{font-size:1.7rem}
 .cd.tr,.cd.tr.bk{background-color:transparent;background-size:100% 100%;background-repeat:no-repeat;border:0;box-shadow:0 1px 3px rgba(0,0,0,.4);font-size:0!important;color:transparent}.cd.tr b{font-size:0!important}
+.hand.sm{--cw:clamp(58px,17.5vw,74px);gap:3px}.hand.sm .cd{font-size:.7rem}
+.hand:not(.sm):has(> :nth-child(5)){padding-right:calc(var(--cw)*.3)}.hand:not(.sm):has(> :nth-child(5)) > *{margin-right:calc(var(--cw)*-.3)}   /* 카드가 5장 이상이면 조금씩 겹쳐 놓아 큰 카드를 유지 */
+.hand:not(.sm):has(> :nth-child(14)){--cw:clamp(62px,19vw,80px)}.hand:not(.sm):has(> :nth-child(14)){padding-right:calc(var(--cw)*.5)}.hand:not(.sm):has(> :nth-child(14)) > *{margin-right:calc(var(--cw)*-.5)}.hand.sm .cd b{font-size:.9rem}
+.seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px}.seat{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:6px 8px;text-align:center;min-width:0}
+.seat small{display:block;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.seat b{font-size:.9rem;font-weight:700}.seat.cur{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.tb{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;min-height:90px}.tb small{color:var(--muted);width:100%;text-align:center}
+.pile{display:flex;gap:18px;justify-content:center}.pile>div{display:flex;flex-direction:column;align-items:center;gap:2px}.pile small{color:var(--muted);font-size:.75rem}
+.meld{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 0;border-bottom:1px solid var(--line)}.meld small{min-width:44px;color:var(--muted)}.meld .hand{justify-content:flex-start;flex:1}
+.sv{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:2px;font-size:.7rem;text-align:center;margin-bottom:2px}.sv b{font-size:.9rem}.sv span{background:#fff;color:#1c2233;border-radius:4px;padding:3px 0;border:1px solid #c9c2b4}
+.sv span.rd{color:#d6453a}.sv span.e{background:transparent;border:1px dashed var(--line)}
+.bjr{display:grid;gap:4px;padding:4px 0;border-bottom:1px solid var(--line)}.bjr .hand{justify-content:flex-start}
 </style>
 </head>
 <body>
 <main>
   <h1>원카드 (같이 하기) <img src="cards-trump/cJ.webp" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.35)"></h1>
-  <div class="card"><p class="center" id="st"></p><div class="stats" id="cnt"></div><div class="big" id="top"></div><p class="center" id="info"></p><div class="row" id="suits" hidden></div><button class="btn ghost" id="draw" type="button" hidden>카드 받기</button><div class="hand" id="hand"></div><p class="center note" id="sc"></p><button class="btn ghost sm" id="again" type="button" hidden>새 판</button></div>
-  <p class="muted">같은 무늬나 같은 숫자의 카드를 내서 손에 든 카드를 먼저 모두 없애면 이겨요. 낼 카드가 없으면 '카드 받기'. 특별 카드: 2=상대 +2장, A=상대 +3장(같은 숫자로 막으면 더해져 넘어가요), J·Q·K=한 번 더, 7=무늬 바꾸기. 카드가 15장이 되면 져요! 내 카드는 내 폰에만 보여요.</p>
+  <div class="card"><p class="center" id="st"></p><div id="tbl"></div><div class="hand" id="hand"></div><div id="acts"></div><button class="btn" id="go" type="button" hidden>▶ 시작하기</button></div>
+  <p class="muted">2~4명이 해요. 같은 무늬나 같은 숫자의 카드를 내서 손에 든 카드를 먼저 모두 없애면 이겨요. 낼 카드가 없으면 '카드 받기'. 특별 카드: 2=다음 사람 +2장, A=다음 사람 +3장(같은 숫자로 막으면 더해져 넘어가요), J=다음 사람 건너뛰기, Q=방향 바꾸기, K=한 번 더, 7=무늬 바꾸기. 카드가 15장이 되면 탈락해요! 내 카드는 내 폰에만 보여요.</p>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -83,66 +99,84 @@ const NET = (() => {
 const nameOf = id => { const p = (NET.info && NET.info.players || []).find(x => x.id === id); return p ? p.name : "?"; };
 if (!NET.inHub) document.addEventListener("DOMContentLoaded", () => { document.querySelector("main").insertAdjacentHTML("afterbegin", '<div class="card"><p>이 게임은 <b>👫 같이 하기</b> 화면 안에서 폰 여러 대를 연결해 해요.</p><a class="btn" style="text-align:center;text-decoration:none" href="play-together.html">같이 하기 열기</a></div>'); });
 
-let me = null, isHost = false, P = null;
+let me = null, isHost = false, P = null, players = [];
 const H = {};
-const amPlayer = () => !!P && (me === P.a || me === P.b);
-const oppOf = id => id === P.a ? P.b : P.a;
-const nm = id => id === me ? "나" : id === P.a ? P.na : P.nb;
-function round(keep) {
-  const a = P ? P.a : "host", b = P ? P.b : null, opt = P ? P.opt : {}, sc = keep && P ? P.sc : {}, first = keep && P && b ? (P.first === a ? b : a) : a;
-  Object.keys(H).forEach(k => delete H[k]); P = { a, b, opt, sc, first, win: null, ph: "wait" }; if (b) Object.assign(P, newRound());
-}
-function pickB(ps) { if (P.b && ps.some(p => p.id === P.b)) return false; const nx = ps.find(p => p.id !== "host"); P.b = nx ? nx.id : null; round(false); return true; }
-// afterPush(있으면): 상태를 보낸 뒤 할 일(예: 각자 비밀 패 보내기). privTo: 한 사람에게만 보내는 말(받는 쪽 onPriv)
-function pushS() { if (!isHost) return; P.na = nameOf(P.a); P.nb = P.b ? nameOf(P.b) : ""; NET.send("*", { t: "state", P }); render(); if (typeof afterPush === "function") afterPush(); }
+function pushS() { if (!isHost) return; P.nm = Object.fromEntries(players.map(p => [p.id, p.name])); NET.send("*", { t: "state", P }); render(); if (typeof afterPush === "function") afterPush(); }
+const act = d => { if (isHost) onAct("host", d); else NET.send("host", d); };
 const privTo = (id, d) => { d.t = "priv"; if (id === me) onPriv(d); else NET.send(id, d); };
-function finish(w) { P.ph = "end"; P.win = w; P.sc[w] = (P.sc[w] || 0) + 1; }
-const act = d => { if (isHost) { if (P && (P.a === "host" || P.b === "host")) onAct("host", d); } else NET.send("host", d); };
-NET.on("init", m => { me = m.me.id; isHost = m.isHost; if (isHost) { round(false); pickB(m.players); pushS(); } else NET.send("host", { t: "hello" }); render(); });
-NET.on("roster", ps => { if (isHost && P) { pickB(ps); pushS(); } else render(); });
-NET.on("msg", (from, d) => { if (isHost) { if (d.t === "hello") pushS(); else if (P && (from === P.a || from === P.b)) onAct(from, d); } else if (d.t === "state") { const was = P && P.ph; P = d.P; changed(was); render(); } else if (d.t === "priv" && typeof onPriv === "function") onPriv(d); });
-const scoreLine = () => P && P.b ? `${P.na} ${P.sc[P.a] || 0} : ${P.sc[P.b] || 0} ${P.nb}${P.sc.D ? " · 무승부 " + P.sc.D : ""}` : "";
-const endText = () => P.win === "D" ? "비겼어요!" : P.win === me ? "🎉 이겼어요!" : amPlayer() ? "😢 졌어요… 다음 판에 다시!" : `🎉 ${nm(P.win)} 승리!`;
-function common() { $("again").hidden = !(amPlayer() && P.ph === "end"); $("sc").textContent = scoreLine(); }
-$("again").onclick = () => act({ t: "again" });
+const pn = id => id === me ? "나" : (P && P.nm && P.nm[id]) || "?";
+const ids = () => players.map(p => p.id);
+NET.on("init", m => { me = m.me.id; isHost = m.isHost; players = m.players; if (isHost) { P = initState(); pushS(); } else NET.send("host", { t: "hello" }); render(); });
+NET.on("roster", ps => { players = ps; if (isHost && P) { onRoster(); pushS(); } else render(); });
+NET.on("msg", (from, d) => { if (isHost) { if (d.t === "hello") pushS(); else onAct(from, d); } else if (d.t === "state") { const was = P; P = d.P; changed(was); render(); } else if (d.t === "priv") onPriv(d); });
+const buzzV = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 
-const SU = ["♠", "♥", "♦", "♣"], RK = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"], red = s => s === 1 || s === 2;
-const cs = c => Math.floor(c / 13), cr = c => c % 13, label = c => SU[cs(c)] + RK[cr(c)];
-let hand = [], seven = null;
-function newRound() { H.deck = shuf(Array.from({ length: 52 }, (_, i) => i)); H.hands = { [P.a]: H.deck.splice(0, 7), [P.b]: H.deck.splice(0, 7) }; let top = H.deck.pop(); while (cr(top) === 0 || cr(top) === 1 || cr(top) === 6 || cr(top) >= 10) { H.deck.unshift(top); top = H.deck.pop(); } H.pile = [top];
-  return { ph: "play", top, suit: cs(top), pen: 0, turn: P.first, cnt: { [P.a]: 7, [P.b]: 7 }, deckN: H.deck.length, msg: "" }; }
-function afterPush() { if (H.hands) [P.a, P.b].forEach(id => privTo(id, { hand: H.hands[id] })); }
-function onPriv(d) { if (Array.isArray(d.hand)) { hand = d.hand.slice().sort((x, y) => cs(x) - cs(y) || cr(x) - cr(y)); render(); } }
+const SU = ["♠", "♥", "♦", "♣"], RK = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+const cs = c => Math.floor(c / 13), cr = c => c % 13, isRed = c => c < 52 && (cs(c) === 1 || cs(c) === 2);
+const label = c => c === 52 ? "조커" : SU[cs(c)] + RK[cr(c)];
+// 카드 그림은 cards-trump/ 의 트럼프 그림(무늬 s·h·d·c + 숫자, 조커 joker-c, 뒷면 back). 글자는 읽어 주기용으로만 두고 화면에서는 숨긴다.
+function cardHtml(c, x) { x = x ? " " + x : ""; const j = c === 52, b = c === null || c === undefined || c < 0, k = j ? "joker-c" : b ? "back" : "shdc"[cs(c)] + RK[cr(c)]; return `<span class="cd tr${j ? " jk" : ""}${b ? " bk" : ""}${x}" style="background-image:url(cards-trump/${k}.webp)"${b ? "" : ` aria-label="${label(c)}"`}>${j ? "<b>JK</b>" : b ? "" : SU[cs(c)] + "<b>" + RK[cr(c)] + "</b>"}</span>`; }
+const deck52 = () => shuf(Array.from({ length: 52 }, (_, i) => i));
+const nmOf = id => { const p = players.find(q => q.id === id); return p ? p.name : (P && P.nm && P.nm[id]) || "?"; };
+let hand = [], myR = -1, sel = [];
+function sendHands() { if (H.hands && P.ord) P.ord.forEach(id => privTo(id, { rno: P.rno, hand: (H.hands[id] || []).slice() })); }
+function afterPush() { sendHands(); }
+function onPriv(d) { if (!Array.isArray(d.hand)) return; if (d.rno !== myR) sel = []; myR = d.rno; hand = d.hand; sel = sel.filter(c => hand.includes(c)); render(); }
+const myHand = () => (P && myR === P.rno && P.ord && P.ord.includes(me)) ? hand.slice() : [];
+function nextIn(list, id, ok) { const n = list.length; let k = list.indexOf(id); for (let s = 0; s < n; s++) { k = (k + 1) % n; if (ok(list[k])) return list[k]; } return null; }
+function onRoster() { if (P.ph === "play" && P.ord.some(id => !ids().includes(id))) { P.ph = "wait"; P.msg = "참가자가 나가서 이번 판을 멈췄어요. 방장이 새 판을 시작해 주세요."; H.hands = null; } }
+function sync() { if (H.hands && P.ord) P.cnt = Object.fromEntries(P.ord.map(id => [id, (H.hands[id] || []).length])); }
+function changed(was) { if (!was || was.rno !== P.rno) sel = []; }
+function canStart(min, max) { const n = ids().length; if (n < min) { alert(min + "명 이상 연결돼야 해요."); return null; } return ids().slice(0, max); }
+function goBtn() { const b = $("go"); b.hidden = !isHost || P.ph === "play"; b.textContent = P.rno ? `🔁 새 판 시작 (지금 ${ids().length}명)` : `▶ 시작하기 (지금 ${ids().length}명)`; }
+function waitText(min, max) { return (P.msg ? P.msg + " · " : "") + (isHost ? `${min}~${max}명이 할 수 있어요. ▶ 시작하기를 눌러요` : "방장이 시작하기를 기다려요…"); }
+function handBox(cards, ok) { return cards.map(c => ok ? `<button type="button" data-c="${c}" class="${sel.includes(c) ? "on" : ""}"${ok(c) ? "" : " disabled"}>${cardHtml(c)}</button>` : cardHtml(c)).join(""); }
+function bindHand(fn) { $("hand").querySelectorAll("button[data-c]:not([disabled])").forEach(b => b.onclick = () => fn(+b.dataset.c)); }
+function toggle(c, max) { if (sel.includes(c)) sel = sel.filter(x => x !== c); else if (!max || sel.length < max) sel = [...sel, c]; render(); }
+function seats(fn) { return '<div class="seats">' + P.ord.map(id => `<div class="seat${P.ph === "play" && id === P.turn ? " cur" : ""}"><small>${esc(pn(id))}</small><b>${fn(id)}</b></div>`).join("") + "</div>"; }
+function totHtml() { const t = P.tot || {}, ks = Object.keys(t); return ks.length ? `<p class="note center">누적 점수 · ${ks.map(id => `${esc(pn(id))} ${t[id] > 0 ? "+" : ""}${t[id]}`).join(" · ")}</p>` : ""; }
+function idle() { $("tbl").innerHTML = totHtml(); $("hand").innerHTML = ""; $("acts").innerHTML = ""; }
+$("go").onclick = () => act({ t: "start" });
+
+const SUN = ["♠", "♥", "♦", "♣"];
+function initState() { return { ph: "wait", rno: 0, ord: [], cnt: {}, out: [], tot: {}, turn: null, top: null, suit: 0, pen: 0, dir: 1, deckN: 0, win: null, msg: "" }; }
+const live = id => !P.out.includes(id);
 const playable = c => P.pen ? cr(c) === cr(P.top) && (cr(c) === 0 || cr(c) === 1) : cs(c) === P.suit || cr(c) === cr(P.top);
+const stepFrom = id => nextIn(P.dir === 1 ? P.ord : [...P.ord].reverse(), id, live);   // 지금 방향으로 다음 사람(탈락한 사람은 건너뜀)
 function take(id, n) { for (let i = 0; i < n; i++) { if (!H.deck.length) { const t = H.pile.pop(); H.deck = shuf(H.pile); H.pile = [t]; } if (!H.deck.length) break; H.hands[id].push(H.deck.pop()); } }
+function endBy(id, text) { P.ph = "end"; P.win = id; P.tot[id] = (P.tot[id] || 0) + 1; P.msg = text; }
 function onAct(from, d) {
-  if (P.ph === "play" && from === P.turn && d.t === "play") { const c = +d.c, k = H.hands[from].indexOf(c); if (k < 0 || !playable(c)) return;
-    H.hands[from].splice(k, 1); H.pile.push(c); P.top = c; P.suit = cr(c) === 6 && d.suit >= 0 && d.suit < 4 ? +d.suit : cs(c); const r = cr(c), nmF = nameOf(from);
+  if (d.t === "start" && from === "host" && P.ph !== "play") { const ps = canStart(2, 4); if (!ps) return; H.deck = deck52(); H.hands = {}; ps.forEach(id => H.hands[id] = H.deck.splice(0, 7));
+    let top = H.deck.pop(); while (cr(top) === 0 || cr(top) === 1 || cr(top) === 6 || cr(top) >= 10) { H.deck.unshift(top); top = H.deck.pop(); } H.pile = [top];
+    Object.assign(P, { ph: "play", rno: P.rno + 1, ord: ps, out: [], win: null, top, suit: cs(top), pen: 0, dir: 1, msg: "7장씩 받았어요. 같은 무늬나 숫자를 내요" }); P.turn = ps[(P.rno - 1) % ps.length]; }
+  else if (d.t === "play" && P.ph === "play" && from === P.turn && live(from)) { const c = +d.c, k = H.hands[from].indexOf(c); if (k < 0 || !playable(c)) return;
+    H.hands[from].splice(k, 1); H.pile.push(c); P.top = c; P.suit = cr(c) === 6 && d.suit >= 0 && d.suit < 4 ? +d.suit : cs(c); const r = cr(c), who = nmOf(from), alive = P.ord.filter(live).length;
     if (r === 1) P.pen += 2; if (r === 0) P.pen += 3;
-    P.msg = r === 1 || r === 0 ? `${nmF}: ${label(c)} 공격! 받을 카드 ${P.pen}장` : r >= 10 ? `${nmF}: ${label(c)} 한 번 더!` : r === 6 ? `${nmF}: 무늬를 ${SU[P.suit]}로 바꿨어요` : "";
-    if (!H.hands[from].length) finish(from); else if (r < 10) P.turn = oppOf(from); }
-  else if (P.ph === "play" && from === P.turn && d.t === "draw") { const n = P.pen || 1; take(from, n); P.msg = `${nameOf(from)}가 카드 ${n}장을 받았어요`; P.pen = 0; if (H.hands[from].length >= 15) { P.msg = `${nameOf(from)} 카드가 15장이 됐어요!`; finish(oppOf(from)); } else P.turn = oppOf(from); }
-  else if (d.t === "again" && P.ph === "end") { round(true); }
+    let nx; P.msg = "";
+    if (r === 1 || r === 0) { nx = stepFrom(from); P.msg = `${who}: ${label(c)} 공격! 받을 카드 ${P.pen}장`; }
+    else if (r === 12) { nx = from; P.msg = `${who}: ${label(c)} 한 번 더!`; }
+    else if (r === 10) { const n1 = stepFrom(from); nx = alive <= 2 ? from : stepFrom(n1); P.msg = alive <= 2 ? `${who}: ${label(c)} 한 번 더!` : `${who}: ${label(c)} ${nmOf(n1)} 건너뛰기!`; }
+    else if (r === 11) { if (alive <= 2) { nx = from; P.msg = `${who}: ${label(c)} 한 번 더!`; } else { P.dir = -P.dir; nx = stepFrom(from); P.msg = `${who}: ${label(c)} 방향이 바뀌었어요 ${P.dir === 1 ? "↻" : "↺"}`; } }
+    else { nx = stepFrom(from); if (r === 6) P.msg = `${who}: 무늬를 ${SUN[P.suit]}로 바꿨어요`; }
+    if (!H.hands[from].length) endBy(from, `${who}: 카드를 모두 냈어요!`); else P.turn = nx; }
+  else if (d.t === "draw" && P.ph === "play" && from === P.turn && live(from)) { const n = P.pen || 1; take(from, n); P.msg = `${nmOf(from)}: 카드 ${n}장을 받았어요`; P.pen = 0;
+    if (H.hands[from].length >= 15) { P.out.push(from); H.deck = shuf([...H.deck, ...H.hands[from]]); H.hands[from] = []; P.msg = `${nmOf(from)}: 카드가 15장이 돼서 탈락했어요!`; const L = P.ord.filter(live); if (L.length === 1) endBy(L[0], P.msg + ` ${nmOf(L[0])} 승리!`); else P.turn = stepFrom(from); }
+    else P.turn = stepFrom(from); }
   else return;
-  if (H.hands) { P.cnt = { [P.a]: H.hands[P.a].length, [P.b]: H.hands[P.b].length }; P.deckN = H.deck.length; } pushS();
+  P.deckN = H.deck.length; sync(); pushS();
 }
-function changed(was) {}
-function cardHtml(c, big) { return `<span class="cd tr${big ? " bg" : ""}" style="background-image:url(cards-trump/${"shdc"[cs(c)]}${RK[cr(c)]}.webp)" aria-label="${SU[cs(c)]}${RK[cr(c)]}">${SU[cs(c)]}<b>${RK[cr(c)]}</b></span>`; }
+let seven = null;
 function render() {
-  if (!P || P.top === undefined) { $("st").textContent = !P ? "연결을 기다리는 중…" : "상대가 들어오면 시작해요"; $("hand").innerHTML = ""; $("draw").hidden = true; if (P) common(); return; }
-  const pl = amPlayer(), can = P.ph === "play" && P.turn === me;
-  $("st").textContent = P.ph === "end" ? endText() : (P.msg ? P.msg + " · " : "") + (!pl ? `구경 중 · ${nm(P.turn)} 차례` : can ? (P.pen ? `공격받았어요! 같은 숫자로 막거나 ${P.pen}장 받기` : "내 차례! 낼 카드를 골라요") : "상대 차례예요…");
-  $("cnt").innerHTML = [P.a, P.b].map(id => `<div class="stat"><small>${esc(nm(id))}</small><b>${P.cnt[id]}장</b></div>`).join("") + `<div class="stat"><small>더미</small><b>${P.deckN}</b></div>`;
-  $("top").innerHTML = cardHtml(P.top, true); $("info").textContent = `지금 무늬: ${SU[P.suit]}${P.pen ? ` · 공격 ${P.pen}장` : ""}`;
-  $("draw").hidden = !(pl && can); $("draw").textContent = P.pen ? `😵 카드 ${P.pen}장 받기` : "🂠 카드 받기";
-  $("hand").innerHTML = pl ? hand.map(c => `<button type="button" data-c="${c}"${can && playable(c) ? "" : " disabled"}>${cardHtml(c)}</button>`).join("") : '<p class="note center">두 사람이 대결 중이에요</p>';
-  $("hand").querySelectorAll("button:not([disabled])").forEach(b => b.onclick = () => { const c = +b.dataset.c; if (cr(c) === 6) { seven = c; $("suits").hidden = false; return; } act({ t: "play", c }); });
-  $("suits").innerHTML = SU.map((x, i) => `<button type="button" class="btn ghost sm" data-s="${i}" style="${red(i) ? "color:#d6453a" : ""}">${x}</button>`).join("");
-  $("suits").style.gridTemplateColumns = "repeat(4,1fr)"; if (!can) $("suits").hidden = true;
-  $("suits").querySelectorAll("[data-s]").forEach(b => b.onclick = () => { $("suits").hidden = true; act({ t: "play", c: seven, suit: +b.dataset.s }); });
-  common();
+  if (!P) { $("st").textContent = "연결을 기다리는 중…"; return; }
+  goBtn(); if (P.ph === "wait") { $("st").textContent = waitText(2, 4); idle(); return; }
+  const h = myHand().sort((x, y) => cs(x) - cs(y) || cr(x) - cr(y)), inG = P.ord.includes(me), mine = P.ph === "play" && P.turn === me && live(me);
+  if (!mine) seven = null;
+  $("st").textContent = P.ph === "end" ? (P.win === me ? "🎉 이겼어요!" : `🎉 ${pn(P.win)} 승리!`) : (P.msg ? P.msg + " · " : "") + (!inG ? `구경 중 · ${pn(P.turn)} 차례` : !live(me) ? "탈락했어요. 구경해요" : mine ? (P.pen ? `공격받았어요! 같은 숫자로 막거나 ${P.pen}장 받기` : "내 차례! 낼 카드를 골라요") : `${pn(P.turn)} 차례예요…`);
+  $("tbl").innerHTML = seats(id => P.out.includes(id) ? "💥 탈락" : P.ph === "end" && P.win === id ? "🏆 승리" : `${P.cnt[id]}장`) + `<div class="tb">${cardHtml(P.top, "bg")}</div><p class="note center">지금 무늬: ${SUN[P.suit]}${P.pen ? ` · 공격 ${P.pen}장` : ""} · 방향 ${P.dir === 1 ? "↻" : "↺"} · 더미 ${P.deckN}장</p>` + totHtml();
+  $("hand").innerHTML = handBox(h, mine ? playable : null); bindHand(c => { if (cr(c) === 6) { seven = c; render(); } else { seven = null; act({ t: "play", c }); } });
+  $("acts").innerHTML = !mine ? "" : seven !== null ? SUN.map((x, i) => `<button type="button" class="btn ghost" data-s="${i}" style="${i === 1 || i === 2 ? "color:#d6453a" : ""}">${x}</button>`).join("") + '<button type="button" class="btn ghost" id="sx">취소</button>' : `<button class="btn" id="dr" type="button">${P.pen ? `😵 카드 ${P.pen}장 받기` : "🂠 카드 받기"}</button>`;
+  if (mine) { if ($("dr")) $("dr").onclick = () => act({ t: "draw" }); $("acts").querySelectorAll("[data-s]").forEach(b => b.onclick = () => { const c = seven; seven = null; act({ t: "play", c, suit: +b.dataset.s }); }); if ($("sx")) $("sx").onclick = () => { seven = null; render(); }; }
 }
-$("draw").onclick = () => act({ t: "draw" });
 render();
 
 </script>

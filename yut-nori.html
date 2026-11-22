@@ -75,13 +75,13 @@ const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j
 const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const KEY = "yutnori-best-v1";
 
-const Y = window.YutCore, YCOL = ["#3b6fd6", "#d6453a"];
+const Y = window.YutCore, YCOL = ["#3b6fd6", "#d6453a", "#2f9d62", "#8a4fc2"];   // 1~4번째 편 색(파랑·빨강·초록·보라)
 // 말판 그리기(한지 바탕에 붉은 테두리, 카드 그림과 같은 분위기). sides = [{s: 편 상태, c: 색, nm: 이름}], hl = 도착할 수 있는 칸 목록(눌러서 고르기)
 function yBoard(sides, hl) {
-  const X = Y.XY, hs = new Set(hl || []);
+  const X = Y.XY, hs = new Set(hl || []), ex = sides.length > 2 ? 44 : 0;   // 3~4명이면 아래 칸을 두 줄로 늘려요
   const L = (a, b, c) => `<line x1="${X[a][0]}" y1="${X[a][1]}" x2="${X[b][0]}" y2="${X[b][1]}" class="yl${c || ""}"/>`;
   let h = `<defs><radialGradient id="ygB" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#FBF3E1"/><stop offset="1" stop-color="#EBD9B0"/></radialGradient></defs>`
-    + `<rect x="2" y="2" width="316" height="356" rx="24" fill="#8E1F1F"/><rect x="8" y="8" width="304" height="344" rx="19" fill="url(#ygB)"/><rect x="13" y="13" width="294" height="334" rx="15" fill="none" stroke="#C9A56A" stroke-width="1" stroke-dasharray="2 4"/>`
+    + `<rect x="2" y="2" width="316" height="${356 + ex}" rx="24" fill="#8E1F1F"/><rect x="8" y="8" width="304" height="${344 + ex}" rx="19" fill="url(#ygB)"/><rect x="13" y="13" width="294" height="${334 + ex}" rx="15" fill="none" stroke="#C9A56A" stroke-width="1" stroke-dasharray="2 4"/>`
     + `<polygon points="${[0, 5, 10, 15].map(i => X[i].join(",")).join(" ")}" class="yl"/>` + L(5, 22, " d") + L(22, 15, " d") + L(10, 22, " d") + L(22, 0, " d")
     + `<polygon points="291,150 283,168 299,168" fill="#8E1F1F"/><text x="291" y="184" class="yn s" text-anchor="middle" fill="#8E1F1F">출발</text>`;   // 출발 방향(위쪽으로 올라가요)
   for (let n = 0; n < 29; n++) {
@@ -92,11 +92,12 @@ function yBoard(sides, hl) {
   sides.forEach(sd => sd.s.stacks.forEach(st => { const [x, y] = X[st.at];
     h += `<g class="yt" data-to="${st.at}"><circle cx="${x}" cy="${y}" r="14" fill="${sd.c}" stroke="#fff" stroke-width="2.5"/><circle cx="${x - 4}" cy="${y - 5}" r="5" fill="#fff" opacity=".35"/>${st.n > 1 ? `<text x="${x}" y="${y + 5}" text-anchor="middle" class="ytn">${st.n}</text>` : ""}</g>`; }));
   h += `<line x1="22" y1="296" x2="298" y2="296" stroke="#C9A56A" stroke-width="1.2"/>`;   // 아래 칸: 출발 전 말(대기)과 도착 수
-  sides.forEach((sd, i) => { const left = i === 0, w = sd.s.w;
-    for (let k = 0; k < 4; k++) { const x = left ? 36 + k * 28 : 284 - k * 28, on = k < w;
-      h += `<circle cx="${x}" cy="318" r="11" fill="${on ? sd.c : "none"}" stroke="${on ? "#fff" : sd.c}" stroke-width="${on ? 2.5 : 1.5}" ${on ? "" : 'stroke-dasharray="3 3" opacity=".6"'}/>${on ? `<circle cx="${x - 3}" cy="${y2(318)}" r="4" fill="#fff" opacity=".35"/>` : ""}`; }
-    h += `<text x="${left ? 24 : 296}" y="343" class="yn s l" text-anchor="${left ? "start" : "end"}">${esc(sd.nm || "")} · 출발 전 ${w} · 도착 ${sd.s.done}/4</text>`; });
-  return `<svg class="yb" viewBox="0 0 320 360" role="img" aria-label="윷놀이 말판">${h}</svg>`;
+  const many = sides.length > 2;
+  sides.forEach((sd, i) => { const left = many ? i % 2 === 0 : i === 0, w = sd.s.w, row = many ? Math.floor(i / 2) : 0, cy = 318 + row * 44, gap = many ? 24 : 28, r = many ? 9 : 11;
+    for (let k = 0; k < 4; k++) { const x = left ? 34 + k * gap : 286 - k * gap, on = k < w;
+      h += `<circle cx="${x}" cy="${cy}" r="${r}" fill="${on ? sd.c : "none"}" stroke="${on ? "#fff" : sd.c}" stroke-width="${on ? 2.5 : 1.5}" ${on ? "" : 'stroke-dasharray="3 3" opacity=".6"'}/>${on ? `<circle cx="${x - 3}" cy="${cy - 4}" r="${r * .36}" fill="#fff" opacity=".35"/>` : ""}`; }
+    h += `<text x="${left ? 24 : 296}" y="${cy + 25}" class="yn s l" text-anchor="${left ? "start" : "end"}">${esc(sd.nm || "")} · ${many ? "전" : "출발 전"} ${w} · 도착 ${sd.s.done}/4</text>`; });
+  return `<svg class="yb" viewBox="0 0 320 ${360 + ex}" role="img" aria-label="윷놀이 말판">${h}</svg>`;
 }
 const y2 = v => v - 4;
 const yNode = n => n === 0 ? "출발·도착 칸" : n === 22 ? "가운데(22번)" : (n === 5 || n === 10 || n === 15 ? n + "번(모서리)" : n + "번 칸");

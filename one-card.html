@@ -35,6 +35,7 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .table{display:flex;gap:12px;align-items:center;justify-content:center}.oc{width:78px;height:109px;border-radius:10px;border:2px solid var(--line);background:#fff;color:#111;font-size:1.1rem;padding:0;display:inline-flex;align-items:center;justify-content:center;position:relative;min-width:0}.oc.red{color:#d6453a}.oc.back{background:repeating-linear-gradient(45deg,#2f6fdf,#2f6fdf 6px,#1f4fa0 6px,#1f4fa0 12px);color:#fff;font-size:1.8rem}.oc.back small{position:absolute;bottom:2px;right:6px;font-size:.9rem;background:var(--bad);border-radius:8px;padding:0 4px}.oh{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.oh .oc{width:70px;height:98px}.oh .oc.can{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 3px 0 var(--accent)}.oh .oc:disabled{opacity:1}.want{font-weight:700;min-width:80px}.oc.tr{background-size:100% 100%;background-repeat:no-repeat;background-color:transparent;border:0;font-size:0;color:transparent;box-shadow:0 1px 3px rgba(0,0,0,.4)}.oc.tr b{font-size:0}.oc.back.tr small{font-size:1.1rem;color:#fff;font-weight:800;text-shadow:0 1px 3px #000;position:absolute;right:5px;bottom:4px}
 .modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent,var(--grass,#2f6f4f));color:var(--accent-fg,var(--grass-fg,#fff));border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}
+.last{margin:8px 0 0;padding:8px 11px;border-radius:12px;background:var(--surface,var(--soft,transparent));border:1px solid var(--line);font-size:.92rem;line-height:1.45;min-height:2.9em}.last b{font-family:var(--font-display)}
 </style>
 </head>
 <body>
@@ -44,6 +45,7 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
   <div class="stats"><div class="stat"><small>컴퓨터 카드</small><b id="cn">0</b></div><div class="stat"><small>내 카드</small><b id="mn">0</b></div><div class="stat"><small>누적 승리</small><b id="wins">0</b></div></div>
   <div class="table"><button type="button" class="oc back tr" style="background-image:url(cards-trump/back.webp)" id="deckb" aria-label="카드 받기">🂠<small id="atk"></small></button><div class="oc" id="top"></div><div class="want" id="want"></div></div>
   <p class="center" id="msg" style="min-height:1.5em;font-weight:700"></p>
+  <p class="last" id="last" aria-live="polite"></p>
   <div class="oh" id="hand"></div>
   <div class="seg" id="suits" style="--n:4" hidden></div>
   <div class="res" id="res" hidden></div>
@@ -59,15 +61,17 @@ const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j
 const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const KEY = "onecard-best-v1";
 const SU = ["♠", "♥", "♦", "♣"], RK = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+let cl = [], cpuRun = false;   // 컴퓨터의 방금 차례(내가 낼 때까지 계속 보여 줌)
+function showLast() { $("last").innerHTML = cl.length ? "📣 <b>컴퓨터의 방금 차례</b> " + cl.join(" → ") : '📣 <span class="muted">컴퓨터의 기록이 아직 없어요</span>'; }
 let deck = [], disc = [], mine = [], cpu = [], turn = 0, over = false, busy = false, atk = 0, atkRank = -1, want = -1, wins = ld(KEY) || 0, tempo = 1, pickSuit = false;
 const red = c => c.s === 1 || c.s === 2, nm = c => RK[c.r] + SU[c.s];
 function mk() { return shuf(Array.from({ length: 52 }, (_, k) => ({ r: k % 13, s: Math.floor(k / 13) }))); }
 function draw(n) { const out = []; for (let k = 0; k < n; k++) { if (!deck.length) { const t = disc.pop(); deck = shuf(disc); disc = [t]; } if (deck.length) out.push(deck.pop()); } return out; }
-function newGame() { deck = mk(); mine = deck.splice(0, 7); cpu = deck.splice(0, 7); disc = [deck.pop()]; while ([0, 1, 6, 10, 11, 12].includes(disc[0].r)) { deck.unshift(disc.pop()); disc = [deck.pop()]; } turn = 0; over = false; busy = false; atk = 0; atkRank = -1; want = -1; pickSuit = false; $("res").hidden = true; $("suits").hidden = true; $("msg").textContent = "내 차례! 낼 카드를 고르세요"; render(); }
+function newGame() { cl = []; cpuRun = false; deck = mk(); mine = deck.splice(0, 7); cpu = deck.splice(0, 7); disc = [deck.pop()]; while ([0, 1, 6, 10, 11, 12].includes(disc[0].r)) { deck.unshift(disc.pop()); disc = [deck.pop()]; } turn = 0; over = false; busy = false; atk = 0; atkRank = -1; want = -1; pickSuit = false; $("res").hidden = true; $("suits").hidden = true; $("msg").textContent = "내 차례! 낼 카드를 고르세요"; render(); }
 const topCard = () => disc[disc.length - 1];
 function canPlay(c) { if (atk > 0) return c.r === atkRank; const t = topCard(), s = want >= 0 ? want : t.s; return c.r === t.r || c.s === s || (c.r === 6 && false); }
 function render() {
-  const t = topCard(); $("top").className = "oc tr" + (red(t) ? " red" : ""); $("top").style.backgroundImage = `url(cards-trump/${"shdc"[t.s]}${RK[t.r]}.webp)`; $("top").innerHTML = `<b>${nm(t)}</b>`; $("want").textContent = want >= 0 ? `바뀐 무늬: ${SU[want]}` : ""; $("atk").textContent = atk ? "+" + atk : "";
+  showLast(); const t = topCard(); $("top").className = "oc tr" + (red(t) ? " red" : ""); $("top").style.backgroundImage = `url(cards-trump/${"shdc"[t.s]}${RK[t.r]}.webp)`; $("top").innerHTML = `<b>${nm(t)}</b>`; $("want").textContent = want >= 0 ? `바뀐 무늬: ${SU[want]}` : ""; $("atk").textContent = atk ? "+" + atk : "";
   $("hand").innerHTML = mine.map((c, k) => `<button type="button" style="background-image:url(cards-trump/${"shdc"[c.s]}${RK[c.r]}.webp)" class="oc tr${red(c) ? " red" : ""}${turn === 0 && !over && !busy && canPlay(c) ? " can" : ""}" data-k="${k}" ${turn !== 0 || over || busy || pickSuit ? "disabled" : ""}><b>${nm(c)}</b></button>`).join("");
   $("cn").textContent = cpu.length; $("mn").textContent = mine.length; $("wins").textContent = wins; $("deckb").disabled = turn !== 0 || over || busy || pickSuit;
 }
@@ -78,16 +82,17 @@ function playCard(hand, k, who) {
   if (!hand.length) { finish(who === 0); return "end"; } return { again, seven: c.r === 6 };
 }
 async function after(who, res) {
-  if (res === "end") return; if (res.seven) { if (who === 0) { pickSuit = true; $("suits").hidden = false; $("suits").innerHTML = SU.map((s, k) => `<button type="button" data-s="${k}">${s}</button>`).join(""); render(); return; } want = cpuSuit(); $("msg").textContent = `컴퓨터가 무늬를 ${SU[want]}(으)로 바꿨어요`; }
+  if (res === "end") return; if (res.seven) { if (who === 0) { pickSuit = true; $("suits").hidden = false; $("suits").innerHTML = SU.map((s, k) => `<button type="button" data-s="${k}">${s}</button>`).join(""); render(); return; } want = cpuSuit(); cl.push(`무늬를 ${SU[want]}로 바꿈`); $("msg").textContent = `컴퓨터가 무늬를 ${SU[want]}(으)로 바꿨어요`; }
   endTurn(who, res.again);
 }
-function endTurn(who, again) { if (over) return; if (!again) turn = 1 - turn; render(); if (turn === 1 && !over) { busy = true; render(); setTimeout(cpuMove, 900 * tempo); } else if (turn === 0) { busy = false; $("msg").textContent = again ? "한 번 더 내세요!" : atk ? `공격 받았어요! 같은 숫자로 막거나 카드 ${atk}장을 받으세요` : "내 차례!"; render(); } }
+function endTurn(who, again) { if (over) return; if (!again) turn = 1 - turn; render(); if (turn === 1 && !over) { busy = true; render(); setTimeout(cpuMove, 900 * tempo); } else if (turn === 0) { busy = false; cpuRun = false; $("msg").textContent = again ? "한 번 더 내세요!" : atk ? `공격 받았어요! 같은 숫자로 막거나 카드 ${atk}장을 받으세요` : "내 차례!"; render(); } }
 function takeCards(who) { const hand = who === 0 ? mine : cpu, n = atk || 1; hand.push(...draw(n)); atk = 0; atkRank = -1; if (hand.length >= 15) { finish(who === 1); return true; } return false; }
 function cpuSuit() { const cnt = [0, 0, 0, 0]; cpu.forEach(c => cnt[c.s]++); return cnt.indexOf(Math.max(...cnt)); }
 async function cpuMove() {
+  if (!cpuRun) { cl = []; cpuRun = true; }
   const pl = cpu.map((c, k) => [c, k]).filter(([c]) => canPlay(c)); busy = true;
-  if (!pl.length) { const n = atk || 1; if (takeCards(1)) return; $("msg").textContent = `컴퓨터가 카드 ${n}장을 받았어요`; turn = 0; busy = false; if (atk === 0 && n > 1) $("msg").textContent += " — 내 차례!"; render(); return; }
-  pl.sort((a, b) => (b[0].r === 1 || b[0].r === 0 ? 2 : b[0].r >= 10 ? 1 : 0) - (a[0].r === 1 || a[0].r === 0 ? 2 : a[0].r >= 10 ? 1 : 0) + (Math.random() - .5)); const [c, k] = pl[0]; const res = playCard(cpu, k, 1); $("msg").textContent = `컴퓨터가 ${nm(c)}를 냈어요${res !== "end" && res.again ? " (한 번 더)" : ""}`; render(); if (res === "end") return;
+  if (!pl.length) { const n = atk || 1; if (takeCards(1)) return; $("msg").textContent = `컴퓨터가 카드 ${n}장을 받았어요`; cl.push(`카드 ${n}장 받았어요`); cpuRun = false; turn = 0; busy = false; if (atk === 0 && n > 1) $("msg").textContent += " — 내 차례!"; render(); return; }
+  pl.sort((a, b) => (b[0].r === 1 || b[0].r === 0 ? 2 : b[0].r >= 10 ? 1 : 0) - (a[0].r === 1 || a[0].r === 0 ? 2 : a[0].r >= 10 ? 1 : 0) + (Math.random() - .5)); const [c, k] = pl[0]; const res = playCard(cpu, k, 1); cl.push(`${nm(c)} 냈어요${c.r === 1 || c.r === 0 ? " · 공격! 받을 카드 " + atk + "장" : ""}${res !== "end" && res.again ? " · 한 번 더" : ""}${res === "end" ? " · 마지막 카드!" : ""}`); $("msg").textContent = `컴퓨터가 ${nm(c)}를 냈어요${res !== "end" && res.again ? " (한 번 더)" : ""}`; render(); if (res === "end") return;
   if (res.again) { setTimeout(() => after(1, res), 700 * tempo); } else after(1, res);
 }
 $("hand").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (!b || turn !== 0 || over || busy) return; const k = +b.dataset.k; if (!canPlay(mine[k])) { $("msg").textContent = "그 카드는 낼 수 없어요"; return; } const res = playCard(mine, k, 0); render(); after(0, res); });

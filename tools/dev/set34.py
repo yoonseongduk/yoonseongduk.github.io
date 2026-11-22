@@ -56,7 +56,8 @@ CARD_CSS = '''
 .meld{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 0;border-bottom:1px solid var(--line)}.meld small{min-width:44px;color:var(--muted)}.meld .hand{justify-content:flex-start;flex:1}
 .sv{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:2px;font-size:.7rem;text-align:center;margin-bottom:2px}.sv b{font-size:.9rem}.sv span{background:#fff;color:#1c2233;border-radius:4px;padding:3px 0;border:1px solid #c9c2b4}
 .sv span.rd{color:#d6453a}.sv span.e{background:transparent;border:1px dashed var(--line)}
-.bjr{display:grid;gap:4px;padding:4px 0;border-bottom:1px solid var(--line)}.bjr .hand{justify-content:flex-start}'''
+.bjr{display:grid;gap:4px;padding:4px 0;border-bottom:1px solid var(--line)}.bjr .hand{justify-content:flex-start}
+.lastb{padding:8px 11px;border-radius:12px;background:var(--soft);border:1px solid var(--line);font-size:.9rem;line-height:1.45;margin:8px 0}.lastb .ln{display:block}'''
 
 def card(fn, title, emoji, hue, key, help_, js):
     party(fn, title, emoji, hue, key, help_, BODY, CARD_JS + js, CARD_CSS)
@@ -142,7 +143,8 @@ card("net-onecard.html", "원카드 (같이 하기)", TI("cJ"), 0, "net-onecard-
      "2~4명이 해요. 같은 무늬나 같은 숫자의 카드를 내서 손에 든 카드를 먼저 모두 없애면 이겨요. 낼 카드가 없으면 '카드 받기'. 특별 카드: 2=다음 사람 +2장, A=다음 사람 +3장(같은 숫자로 막으면 더해져 넘어가요), J=다음 사람 건너뛰기, Q=방향 바꾸기, K=한 번 더, 7=무늬 바꾸기. 카드가 15장이 되면 탈락해요! 내 카드는 내 폰에만 보여요.",
      r'''
 const SUN = ["♠", "♥", "♦", "♣"];
-function initState() { return { ph: "wait", rno: 0, ord: [], cnt: {}, out: [], tot: {}, turn: null, top: null, suit: 0, pen: 0, dir: 1, deckN: 0, win: null, msg: "" }; }
+function initState() { return { ph: "wait", rno: 0, ord: [], cnt: {}, out: [], tot: {}, turn: null, top: null, suit: 0, pen: 0, dir: 1, deckN: 0, win: null, msg: "", log: [] }; }
+const logAdd = (id, t) => { P.log = [...(P.log || []), { w: id, t }].slice(-40); };   // 모두에게 보이는 행동 기록(상대의 방금 차례 요약용)
 const live = id => !P.out.includes(id);
 const playable = c => P.pen ? cr(c) === cr(P.top) && (cr(c) === 0 || cr(c) === 1) : cs(c) === P.suit || cr(c) === cr(P.top);
 const stepFrom = id => nextIn(P.dir === 1 ? P.ord : [...P.ord].reverse(), id, live);   // 지금 방향으로 다음 사람(탈락한 사람은 건너뜀)
@@ -151,7 +153,7 @@ function endBy(id, text) { P.ph = "end"; P.win = id; P.tot[id] = (P.tot[id] || 0
 function onAct(from, d) {
   if (d.t === "start" && from === "host" && P.ph !== "play") { const ps = canStart(2, 4); if (!ps) return; H.deck = deck52(); H.hands = {}; ps.forEach(id => H.hands[id] = H.deck.splice(0, 7));
     let top = H.deck.pop(); while (cr(top) === 0 || cr(top) === 1 || cr(top) === 6 || cr(top) >= 10) { H.deck.unshift(top); top = H.deck.pop(); } H.pile = [top];
-    Object.assign(P, { ph: "play", rno: P.rno + 1, ord: ps, out: [], win: null, top, suit: cs(top), pen: 0, dir: 1, msg: "7장씩 받았어요. 같은 무늬나 숫자를 내요" }); P.turn = ps[(P.rno - 1) % ps.length]; }
+    Object.assign(P, { ph: "play", rno: P.rno + 1, ord: ps, out: [], win: null, top, suit: cs(top), pen: 0, dir: 1, log: [], msg: "7장씩 받았어요. 같은 무늬나 숫자를 내요" }); P.turn = ps[(P.rno - 1) % ps.length]; }
   else if (d.t === "play" && P.ph === "play" && from === P.turn && live(from)) { const c = +d.c, k = H.hands[from].indexOf(c); if (k < 0 || !playable(c)) return;
     H.hands[from].splice(k, 1); H.pile.push(c); P.top = c; P.suit = cr(c) === 6 && d.suit >= 0 && d.suit < 4 ? +d.suit : cs(c); const r = cr(c), who = nmOf(from), alive = P.ord.filter(live).length;
     if (r === 1) P.pen += 2; if (r === 0) P.pen += 3;
@@ -161,21 +163,28 @@ function onAct(from, d) {
     else if (r === 10) { const n1 = stepFrom(from); nx = alive <= 2 ? from : stepFrom(n1); P.msg = alive <= 2 ? `${who}: ${label(c)} 한 번 더!` : `${who}: ${label(c)} ${nmOf(n1)} 건너뛰기!`; }
     else if (r === 11) { if (alive <= 2) { nx = from; P.msg = `${who}: ${label(c)} 한 번 더!`; } else { P.dir = -P.dir; nx = stepFrom(from); P.msg = `${who}: ${label(c)} 방향이 바뀌었어요 ${P.dir === 1 ? "↻" : "↺"}`; } }
     else { nx = stepFrom(from); if (r === 6) P.msg = `${who}: 무늬를 ${SUN[P.suit]}로 바꿨어요`; }
-    if (!H.hands[from].length) endBy(from, `${who}: 카드를 모두 냈어요!`); else P.turn = nx; }
-  else if (d.t === "draw" && P.ph === "play" && from === P.turn && live(from)) { const n = P.pen || 1; take(from, n); P.msg = `${nmOf(from)}: 카드 ${n}장을 받았어요`; P.pen = 0;
-    if (H.hands[from].length >= 15) { P.out.push(from); H.deck = shuf([...H.deck, ...H.hands[from]]); H.hands[from] = []; P.msg = `${nmOf(from)}: 카드가 15장이 돼서 탈락했어요!`; const L = P.ord.filter(live); if (L.length === 1) endBy(L[0], P.msg + ` ${nmOf(L[0])} 승리!`); else P.turn = stepFrom(from); }
+    logAdd(from, r === 6 ? label(c) + " · " + P.msg.replace(who + ": ", "") : (P.msg.replace(who + ": ", "") || label(c) + " 냈어요"));
+    if (!H.hands[from].length) { logAdd(from, "마지막 카드! 모두 냈어요"); endBy(from, `${who}: 카드를 모두 냈어요!`); } else P.turn = nx; }
+  else if (d.t === "draw" && P.ph === "play" && from === P.turn && live(from)) { const n = P.pen || 1; take(from, n); P.msg = `${nmOf(from)}: 카드 ${n}장을 받았어요`; P.pen = 0; logAdd(from, `카드 ${n}장 받았어요`);
+    if (H.hands[from].length >= 15) { P.out.push(from); H.deck = shuf([...H.deck, ...H.hands[from]]); H.hands[from] = []; P.msg = `${nmOf(from)}: 카드가 15장이 돼서 탈락했어요!`; logAdd(from, "카드가 15장이 돼서 탈락!"); const L = P.ord.filter(live); if (L.length === 1) endBy(L[0], P.msg + ` ${nmOf(L[0])} 승리!`); else P.turn = stepFrom(from); }
     else P.turn = stepFrom(from); }
   else return;
   P.deckN = H.deck.length; sync(); pushS();
 }
 let seven = null;
+function lastBox() { // 내가 마지막으로 낸 뒤 움직인 상대들을 한 사람당 한 줄로(구경하는 사람은 최근 3명)
+  const L = P.log || [], gs = [];
+  for (let i = L.length - 1; i >= 0 && L[i].w !== me; i--) { const g = gs[0]; if (g && g.w === L[i].w) g.items.unshift(L[i].t); else gs.unshift({ w: L[i].w, items: [L[i].t] }); }
+  const show = gs.slice(-3); if (!show.length) return '<div class="lastb">📣 <span class="muted">' + (L.length ? "방금 냈어요. 상대 차례가 아직 오지 않았어요" : "상대의 기록이 아직 없어요") + "</span></div>";
+  return '<div class="lastb">📣 <b>상대의 방금 차례</b>' + show.map(g => `<span class="ln"><b>${esc(pn(g.w))}</b> ${g.items.slice(-3).map(esc).join(" → ")}</span>`).join("") + "</div>";
+}
 function render() {
   if (!P) { $("st").textContent = "연결을 기다리는 중…"; return; }
   goBtn(); if (P.ph === "wait") { $("st").textContent = waitText(2, 4); idle(); return; }
   const h = myHand().sort((x, y) => cs(x) - cs(y) || cr(x) - cr(y)), inG = P.ord.includes(me), mine = P.ph === "play" && P.turn === me && live(me);
   if (!mine) seven = null;
   $("st").textContent = P.ph === "end" ? (P.win === me ? "🎉 이겼어요!" : `🎉 ${pn(P.win)} 승리!`) : (P.msg ? P.msg + " · " : "") + (!inG ? `구경 중 · ${pn(P.turn)} 차례` : !live(me) ? "탈락했어요. 구경해요" : mine ? (P.pen ? `공격받았어요! 같은 숫자로 막거나 ${P.pen}장 받기` : "내 차례! 낼 카드를 골라요") : `${pn(P.turn)} 차례예요…`);
-  $("tbl").innerHTML = seats(id => P.out.includes(id) ? "💥 탈락" : P.ph === "end" && P.win === id ? "🏆 승리" : `${P.cnt[id]}장`) + `<div class="tb">${cardHtml(P.top, "bg")}</div><p class="note center">지금 무늬: ${SUN[P.suit]}${P.pen ? ` · 공격 ${P.pen}장` : ""} · 방향 ${P.dir === 1 ? "↻" : "↺"} · 더미 ${P.deckN}장</p>` + totHtml();
+  $("tbl").innerHTML = seats(id => P.out.includes(id) ? "💥 탈락" : P.ph === "end" && P.win === id ? "🏆 승리" : `${P.cnt[id]}장`) + `<div class="tb">${cardHtml(P.top, "bg")}</div><p class="note center">지금 무늬: ${SUN[P.suit]}${P.pen ? ` · 공격 ${P.pen}장` : ""} · 방향 ${P.dir === 1 ? "↻" : "↺"} · 더미 ${P.deckN}장</p>` + lastBox() + totHtml();
   $("hand").innerHTML = handBox(h, mine ? playable : null); bindHand(c => { if (cr(c) === 6) { seven = c; render(); } else { seven = null; act({ t: "play", c }); } });
   $("acts").innerHTML = !mine ? "" : seven !== null ? SUN.map((x, i) => `<button type="button" class="btn ghost" data-s="${i}" style="${i === 1 || i === 2 ? "color:#d6453a" : ""}">${x}</button>`).join("") + '<button type="button" class="btn ghost" id="sx">취소</button>' : `<button class="btn" id="dr" type="button">${P.pen ? `😵 카드 ${P.pen}장 받기` : "🂠 카드 받기"}</button>`;
   if (mine) { if ($("dr")) $("dr").onclick = () => act({ t: "draw" }); $("acts").querySelectorAll("[data-s]").forEach(b => b.onclick = () => { const c = seven; seven = null; act({ t: "play", c, suit: +b.dataset.s }); }); if ($("sx")) $("sx").onclick = () => { seven = null; render(); }; }

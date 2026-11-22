@@ -59,7 +59,7 @@ const yRules = () => `<details open><summary>📘 윷놀이 규칙 (일반 규�
   <b>이 앱의 약속</b>: 던진 결과는 <b>바로 사용</b>해요(모아 두지 않아요). 움직일 수 있는 말이 하나뿐이면 자동으로 움직여요.</div></details>`;
 '''
 
-CSS = r'''.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent);color:var(--accent-fg);border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}
+CSS = r'''.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent,var(--grass,#2f6f4f));color:var(--accent-fg,var(--grass-fg,#fff));border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}
 
 .yb{width:100%;max-width:360px;margin:0 auto;display:block;touch-action:manipulation;filter:drop-shadow(0 3px 8px rgba(0,0,0,.28))}
 .yb .yl{fill:none;stroke:#C9A56A;stroke-width:8;stroke-linejoin:round;stroke-linecap:round}.yb .yl.d{stroke:#DDC391;stroke-width:5}

@@ -34,11 +34,13 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 .big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .table{display:flex;align-items:center;justify-content:center;gap:16px}.slot{width:90px;height:120px;border-radius:14px;border:2px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:3rem}.vs{font-family:var(--font-display);color:var(--muted)}.hand{--cw:clamp(72px,22vw,96px);display:flex;flex-wrap:wrap;justify-content:center;gap:6px 0;padding-right:calc(var(--cw)*.3)}.pc{aspect-ratio:3/4;border-radius:10px;border:2px solid var(--accent);background:var(--surface);font-family:var(--font-display);font-size:1.6rem;padding:0;min-width:0}.pc.used{visibility:hidden}.slot{width:120px;height:168px;padding:0;border:0;background:none}.slot img,.pc img{width:100%;height:100%;display:block;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.45)}.pc{aspect-ratio:5/7;border:0;background:none;width:var(--cw);flex:none;margin-right:calc(var(--cw)*-.3)}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent,var(--grass,#2f6f4f));color:var(--accent-fg,var(--grass-fg,#fff));border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}.modesel{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--surface,transparent)}
 </style>
 </head>
 <body>
 <main>
   <h1>하이카드 대결 <img src="cards-trump/sA.webp" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.35)"></h1>
+  <div class="modesel" id="playSel" data-modesel="1"><b>🎮 누구와 할까요?</b><div class="modes"><span class="on">📱 지금 화면 <small>(이 폰에서)</small></span><a href="play-together.html?play=net-highcard.html">👫 가족·친구와 각자 폰으로 <small>(2명)</small></a></div><p class="muted" style="margin:6px 0 0;font-size:.85rem">각자 폰으로 할 때는 '같이 하기' 화면이 열려 QR로 폰을 연결해요.</p></div>
   <div class="stats"><div class="stat"><small>나</small><b id="s1">0</b></div><div class="stat"><small>판</small><b id="rd">1/10</b></div><div class="stat"><small>컴퓨터</small><b id="s2">0</b></div></div>
   <div class="table"><div class="slot" id="cpuc">?</div><span class="vs">VS</span><div class="slot" id="myc">?</div></div>
   <p class="center" id="msg" style="min-height:1.5em;font-weight:700">낼 카드를 고르세요</p>

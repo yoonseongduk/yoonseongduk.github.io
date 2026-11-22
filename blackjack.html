@@ -31,11 +31,13 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
 .msg{text-align:center;font-family:var(--font-display);font-size:1.3rem;min-height:1.8em;padding:6px 0}
 .bets{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}.bets input{width:6.5em;padding:8px 10px;border-radius:999px;border:2px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;font-family:var(--font-display);font-size:1.1rem;text-align:center}.chip:disabled{opacity:.4}.chip{background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:8px 16px;font-family:var(--font-display);font-size:1.15rem}.chip.on{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
 .row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:14px;padding:12px;font-family:var(--font-display);font-size:1.25rem}.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-family:var(--font-body);font-size:1rem;font-weight:700}.btn:disabled{opacity:.4;cursor:default}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent,var(--grass,#2f6f4f));color:var(--accent-fg,var(--grass-fg,#fff));border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}.modesel{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--surface,transparent)}
 </style>
 </head>
 <body>
 <main>
   <h1>블랙잭 <img src="cards-trump/sA.webp" alt="" style="height:1.1em;vertical-align:-.15em;border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.35)"></h1>
+  <div class="modesel" id="playSel" data-modesel="1"><b>🎮 누구와 할까요?</b><div class="modes"><span class="on">📱 지금 화면 <small>(이 폰에서)</small></span><a href="play-together.html?play=net-21.html&amp;bots=2">🤖 컴퓨터 2명과 연습 · 3인</a><a href="play-together.html?play=net-21.html&amp;bots=3">🤖 컴퓨터 3명과 연습 · 4인</a><a href="play-together.html?play=net-21.html">👫 가족·친구와 각자 폰으로 <small>(1~6명)</small></a></div><p class="muted" style="margin:6px 0 0;font-size:.85rem">각자 폰으로 할 때는 '같이 하기' 화면이 열려 QR로 폰을 연결해요. 컴퓨터와 연습은 혼자서 여러 명 게임을 해 볼 수 있어요.</p></div>
   <div class="stats"><div class="stat"><small>내 포인트</small><b id="chips">0</b></div><div class="stat"><small>판돈</small><b id="bet">10</b></div><div class="stat"><small>오늘 손익</small><b id="best">0</b></div></div>
   <div class="table">
     <div class="hand"><h2><span>딜러</span><span id="dv"></span></h2><div class="cards" id="dealer"></div></div>

@@ -34,11 +34,13 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 .big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .hx{width:100%;max-width:400px;margin:0 auto;display:block;touch-action:manipulation}.hc{stroke:var(--fg);stroke-width:1.5;cursor:pointer}.hc.c0{fill:var(--surface)}.hc.c1{fill:#2f6fdf}.hc.c2{fill:#e4572e}.hc.c0:hover{fill:var(--soft)}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent,var(--grass,#2f6f4f));color:var(--accent-fg,var(--grass-fg,#fff));border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}.modesel{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--surface,transparent)}
 </style>
 </head>
 <body>
 <main>
   <h1>헥스 ⬢</h1>
+  <div class="modesel" id="playSel" data-modesel="1"><b>🎮 누구와 할까요?</b><div class="modes"><span class="on">📱 지금 화면 <small>(이 폰에서)</small></span><a href="play-together.html?play=net-hex.html">👫 가족·친구와 각자 폰으로 <small>(2명)</small></a></div><p class="muted" style="margin:6px 0 0;font-size:.85rem">각자 폰으로 할 때는 '같이 하기' 화면이 열려 QR로 폰을 연결해요.</p></div>
   <div class="seg" id="lv" style="--n:2"><button type="button" data-l="easy" class="on">쉬움<small>5×5</small></button><button type="button" data-l="hard">보통<small>7×7</small></button></div>
   <div class="stats"><div class="stat"><small>차례</small><b id="turn" style="font-size:1.1rem">🔵 나</b></div><div class="stat"><small>누적 승리</small><b id="wins">0</b></div><div class="stat"><small>놓은 돌</small><b id="cnt">0</b></div></div>
   <svg class="hx" id="svg"></svg>

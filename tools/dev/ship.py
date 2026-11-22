@@ -4,6 +4,8 @@
 import os
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 import sys, json, re, shutil, subprocess
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import modesel
 R = REPO + "/"
 HEAD = '<link rel="manifest" href="manifest.webmanifest">\n<meta name="theme-color" content="#c4552b">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="가족 게임">\n<link rel="apple-touch-icon" href="apple-touch-icon.png">\n<link rel="icon" type="image/png" href="favicon-48.png">\n'
 REG = '<script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>\n'
@@ -24,6 +26,7 @@ for f, *_ in games:
     if "med-notify.js" not in s and not f.endswith("med-check.html") and not f.startswith("net-"): s = s.replace("</body>", '<script src="med-notify.js" defer></script>\n</body>', 1)
     # 🏠 처음으로 버튼(공용 home.js) — 시작 화면과 net-* 제외
     if "home.js" not in s and f != "index.html" and not f.startswith("net-"): s = s.replace("</body>", '<script src="home.js" defer></script>\n</body>', 1)
+    s = modesel.apply(s, f)   # 같이 하기 짝이 있는 혼자 하기 게임에 '누구와 할까요?' 선택 카드(이미 있으면 그대로)
     assert "googleapis" not in s and 'rel="manifest"' in s and 'register("sw.js")' in s, f
     open(R + f, "w", encoding="utf-8").write(s)
 subprocess.run([sys.executable, "addgames.py", json.dumps([g for g in games if g[4] != "-"], ensure_ascii=False)], check=True)  # 분류 "-"는 시작 화면에 등록하지 않음(같이 하기 안에서만 여는 게임 등)

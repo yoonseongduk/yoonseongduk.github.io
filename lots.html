@@ -34,11 +34,13 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 .big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .grid{display:grid;gap:10px}.tk{aspect-ratio:1.1;border:2px dashed var(--line);border-radius:16px;background:var(--surface);font-family:var(--font-display);font-size:1.6rem;padding:4px;overflow-wrap:anywhere;line-height:1.2}.tk.win{background:var(--accent);color:var(--accent-fg);border:2px solid var(--accent);font-size:1.3rem}.tk.lose{background:var(--soft);color:var(--muted);border:2px solid var(--line);font-size:1.2rem}.tk:active{transform:scale(.96)}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent,var(--grass,#2f6f4f));color:var(--accent-fg,var(--grass-fg,#fff));border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}.modesel{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--surface,transparent)}
 </style>
 </head>
 <body>
 <main>
   <h1>제비뽑기 🎟️</h1>
+  <div class="modesel" id="playSel" data-modesel="1"><b>🎮 누구와 할까요?</b><div class="modes"><span class="on">📱 지금 화면 <small>(이 폰에서)</small></span><a href="play-together.html?play=net-lots.html">👫 가족·친구와 각자 폰으로 <small>(여러 명)</small></a></div><p class="muted" style="margin:6px 0 0;font-size:.85rem">각자 폰으로 할 때는 '같이 하기' 화면이 열려 QR로 폰을 연결해요.</p></div>
   <section class="card" id="setup">
     <div class="step"><h2>인원(카드 수)</h2><div><button id="nMinus" type="button" aria-label="줄이기">−</button><b id="n">6</b><button id="nPlus" type="button" aria-label="늘리기">＋</button></div></div>
     <div class="step"><h2>당첨 수</h2><div><button id="wMinus" type="button" aria-label="줄이기">−</button><b id="w">1</b><button id="wPlus" type="button" aria-label="늘리기">＋</button></div></div>

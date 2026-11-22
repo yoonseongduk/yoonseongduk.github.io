@@ -34,11 +34,13 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 .big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .step button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.4rem;line-height:1}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent,var(--grass,#2f6f4f));color:var(--accent-fg,var(--grass-fg,#fff));border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}.modesel{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--surface,transparent)}
 </style>
 </head>
 <body>
 <main>
   <h1>역할 뽑기 (마피아) 🕵️</h1>
+  <div class="modesel" id="playSel" data-modesel="1"><b>🎮 누구와 할까요?</b><div class="modes"><span class="on">📱 지금 화면 <small>(이 폰에서)</small></span><a href="play-together.html?play=net-mafia.html">👫 가족·친구와 각자 폰으로 <small>(여러 명)</small></a></div><p class="muted" style="margin:6px 0 0;font-size:.85rem">각자 폰으로 할 때는 '같이 하기' 화면이 열려 QR로 폰을 연결해요.</p></div>
   <div class="card" id="setup"><div class="step"><span>참가 인원</span><div><button type="button" id="minus">−</button><b id="pn">6</b><button type="button" id="plus">+</button></div></div><p class="muted" id="plan"></p><button class="btn" id="go" type="button">역할 나눠 주기</button></div>
   <div class="card center" id="deal" hidden><p class="muted" id="who"></p><p class="big" id="role" style="min-height:1.6em">?</p><p class="muted" id="desc" style="min-height:3em"></p><button class="btn" id="show" type="button">내 역할 보기</button><button class="btn ghost" id="hide" type="button" hidden>숨기기 → 다음 사람</button></div>
   <div class="res" id="res" hidden></div>

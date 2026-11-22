@@ -79,11 +79,13 @@ details summary{cursor:pointer;font-weight:700}
 .next{margin-top:2px}.next details{margin-top:2px}.next summary{font-size:.78rem;font-weight:600;color:var(--muted)}
 @media(prefers-reduced-motion:reduce){.gc.new,.field .gc.pick{animation:none}}
 
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent,var(--grass,#2f6f4f));color:var(--accent-fg,var(--grass-fg,#fff));border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}.modesel{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--surface,transparent)}
 </style>
 </head>
 <body>
 <main>
   <h1>맞고 (고스톱) 🎴</h1>
+  <div class="modesel" id="playSel" data-modesel="1"><b>🎮 누구와 할까요?</b><div class="modes"><span class="on">📱 지금 화면 <small>(이 폰에서)</small></span><a href="play-together.html?play=net-gostop.html">👫 가족·친구와 각자 폰으로 <small>(2~3명)</small></a></div><p class="muted" style="margin:6px 0 0;font-size:.85rem">각자 폰으로 할 때는 '같이 하기' 화면이 열려 QR로 폰을 연결해요.</p></div>
   <div class="bar" id="bar"></div>
   <div class="card tight"><div class="cap" id="cap"></div></div>
   <div class="card tight"><div class="board"><div class="field" id="field" aria-label="바닥"></div><div class="pile" id="pile"></div></div></div>

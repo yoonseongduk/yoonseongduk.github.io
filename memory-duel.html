@@ -34,11 +34,13 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 .big{font-family:var(--font-display);font-size:clamp(1.8rem,9vw,2.6rem);line-height:1.3;overflow-wrap:anywhere}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .mg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.mc{aspect-ratio:1;border-radius:12px;border:2px solid var(--line);background:var(--accent);padding:0;font-size:clamp(1.6rem,9vw,2.4rem);display:flex;align-items:center;justify-content:center;min-width:0}.mc.up{background:var(--surface)}.mc.done{background:var(--surface);opacity:.75}.mc.done0{border-color:#2f6fdf}.mc.done1{border-color:#e4572e}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.modes span{border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.92rem;color:var(--fg);text-decoration:none;background:transparent}.modes span.on{background:var(--accent,var(--grass,#2f6f4f));color:var(--accent-fg,var(--grass-fg,#fff));border-color:transparent;font-weight:700}.modes small{opacity:.85;font-weight:400}.modesel{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--surface,transparent)}
 </style>
 </head>
 <body>
 <main>
   <h1>카드 짝 대결 (2인) 🂠</h1>
+  <div class="modesel" id="playSel" data-modesel="1"><b>🎮 누구와 할까요?</b><div class="modes"><span class="on">📱 지금 화면 <small>(이 폰에서)</small></span><a href="play-together.html?play=net-memory.html">👫 가족·친구와 각자 폰으로 <small>(2명)</small></a></div><p class="muted" style="margin:6px 0 0;font-size:.85rem">각자 폰으로 할 때는 '같이 하기' 화면이 열려 QR로 폰을 연결해요.</p></div>
   <div class="stats"><div class="stat"><small id="n1">🔵 1번</small><b id="s1">0</b></div><div class="stat"><small>차례</small><b id="turn" style="font-size:1.1rem">🔵</b></div><div class="stat"><small id="n2">🔴 2번</small><b id="s2">0</b></div></div>
   <div class="mg" id="grid"></div>
   <div class="res" id="res" hidden></div>

@@ -87,15 +87,12 @@ def ia_candidates(title):
         if len(out) >= 4: break
     return out
 def analyze(c):
-    """앞부분을 잠깐 받아 20초를 분석: 소리 크기 변화폭(dB)과 높은 소리가 남아 있는지(98% 에너지 주파수). 파일은 바로 지워요."""
+    """앞부분을 받아 20초를 분석: 소리 크기 변화폭(dB)과 높은 소리가 남아 있는지(98% 에너지 주파수).
+    받은 내용은 디스크에 쓰지 않고 메모리에서 바로 ffmpeg 로 넘겨요(클라우드에 음원 파일이 생기지 않아요). 남기는 건 숫자 두 개뿐이에요."""
     ext = os.path.splitext(c["f"].lower())[1]; n = 3_500_000 if ext not in LOSSY else 1_600_000
-    if os.environ.get("PC_ANALYZE") != "1": return None   # 파일을 받는 단계는 사용자 PC에서만(클라우드에는 음원 파일을 두지 않아요)
     d = get(c["url"], binary=True, rng=f"bytes=0-{n - 1}")
     if not d or len(d) < 50_000: return None
-    os.makedirs(TMP, exist_ok=True); p = os.path.join(TMP, "an" + ext); open(p, "wb").write(d)
-    r = subprocess.run(["ffmpeg", "-v", "error", "-i", p, "-t", "20", "-ac", "1", "-ar", "22050", "-f", "s16le", "-"], capture_output=True)
-    try: os.remove(p)
-    except Exception: pass
+    r = subprocess.run(["ffmpeg", "-v", "error", "-i", "pipe:0", "-t", "20", "-ac", "1", "-ar", "22050", "-f", "s16le", "-"], input=d, capture_output=True); d = None
     x = np.frombuffer(r.stdout, dtype=np.int16).astype(np.float64) / 32768
     if len(x) < 22050 * 6: return None
     fr = 1102; m = len(x) // fr; e = np.sqrt((x[:m * fr].reshape(m, fr) ** 2).mean(1)) + 1e-9; db = 20 * np.log10(e); db = db[db > -80]
@@ -106,7 +103,7 @@ def analyze(c):
     return {"dyn": round(dyn, 1), "roll": round(roll)}
 def good(a): return a is not None and a["dyn"] >= 22 and a["roll"] >= 3000
 def main():
-    a = sys.argv[1:]; screen = "--no-screen" not in a and os.environ.get("PC_ANALYZE") == "1"; only = a[a.index("--only") + 1] if "--only" in a else None; limit = int(a[a.index("--limit") + 1]) if "--limit" in a else None
+    a = sys.argv[1:]; screen = "--no-screen" not in a; only = a[a.index("--only") + 1] if "--only" in a else None; limit = int(a[a.index("--limit") + 1]) if "--limit" in a else None
     st = json.load(open(STATE, encoding="utf-8")) if os.path.exists(STATE) else {}
     if "--ia" in a:   # 인터넷 아카이브 후보를 더하는 단계(커먼즈 단계 뒤에 실행)
         works = [t for t in AUDIO if not only or t == only]

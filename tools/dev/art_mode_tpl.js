@@ -103,7 +103,7 @@
             .then(function () { saved[t] = { src: r.src, page: r.page, title: r.title, license: r.license }; okc++; })
             .catch(function (e) { bad++; if (e && e.name === "QuotaExceededError") stop = true; });
         }).then(function () { dl.msg = "저장 중… " + (okc + bad) + "/" + todo.length + " (저장 " + okc + "장, 건너뜀 " + bad + ")"; if ((okc + bad) % 5 === 0) { lsSet(SAVED, JSON.stringify(saved)); drawBar(); } });
-      }, 3);
+      }, 2);
     }).catch(function () {}).then(function () {
       lsSet(SAVED, JSON.stringify(saved)); dl.running = false;
       dl.msg = (dl.cancel ? "멈췄어요. " : "끝났어요. ") + "저장 " + okc + "장" + (bad ? ", 건너뜀 " + bad + "장(저작권 표시·작가 확인을 통과하지 못했거나 불러오지 못한 그림)" : "") + ".";

@@ -6,7 +6,7 @@
    검증(통과한 것만 저장): ① 위키백과 항목 설명에 작가 이름이 있다 ② 그림 파일이 위키미디어 커먼즈에 있고 라이선스 표시가 공개 도메인(PD)·CC0 이다.
    저작권이 남아 있을 수 있는 작가(art_wiki.NO_IMAGE)는 처음부터 제외. 끝나면 `py set43.py`·`py ship.py ...`(art-quiz·art-gallery)·`py ..\\make-sw.py` 후 올리면 앱에서 '📦 내장 그림'이 켜져요.
    테스트용: 환경 변수 ART_MOCK=http://localhost:포트 를 주면 위키 주소 대신 그 서버(/en /ko /commons /upload)를 써요."""
-import os, re, sys, json, time, zlib, unicodedata, urllib.request, urllib.parse
+import os, re, sys, json, time, zlib, unicodedata, urllib.request, urllib.error, urllib.parse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from art_data import ARTISTS
 from art_wiki import WIKI, NO_IMAGE, tokens
@@ -22,33 +22,49 @@ def url_for(u):
     for host, pre in (("https://en.wikipedia.org", "/en"), ("https://ko.wikipedia.org", "/ko"), ("https://commons.wikimedia.org", "/commons"), ("https://upload.wikimedia.org", "/upload")):
         if u.startswith(host): return MOCK + pre + u[len(host):]
     return u
-def get(u, binary=False, tries=2):
-    for t in range(tries):
+LAST = {"status": 0}   # 마지막 요청 결과(404 = 진짜 없음, 0 = 접속 오류, 429 = 요청 제한이 계속됨)
+def get(u, binary=False, tries=7):
+    """위키 서버가 '요청이 너무 많다'(429)고 하면 알려 준 시간만큼 기다렸다가 다시 시도해요. 404 는 바로 없음으로 처리."""
+    for n in range(tries):
         try:
             with urllib.request.urlopen(urllib.request.Request(url_for(u), headers={"User-Agent": UA}), timeout=25) as r:
-                data = r.read(); return data if binary else json.loads(data.decode("utf-8"))
-        except Exception as e:
-            err = e; time.sleep(1.5)
+                data = r.read(); LAST["status"] = 200; time.sleep(PACE)
+                return data if binary else json.loads(data.decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            LAST["status"] = e.code
+            if e.code == 404: return None
+            if e.code in (429, 500, 502, 503, 504):
+                try: ra = int(e.headers.get("Retry-After", "10"))
+                except Exception: ra = 10
+                time.sleep(min(ra, 40) + 1 + n); continue
+            return None
+        except Exception:
+            LAST["status"] = 0; time.sleep(2 + n)
     return None
+PACE = float(os.environ.get("ART_PACE", "0.6"))   # 요청 사이 쉬는 시간(초): 위키 서버의 속도 제한을 피해요
+def img_url(u):
+    """위키백과 요약의 그림 주소(thumb.wikimedia.org + ?utm_…)를 upload.wikimedia.org 의 꼬리표 없는 주소로."""
+    m = re.match(r"https://(?:upload|thumb)\.wikimedia\.org/(.*?)(?:\?.*)?$", u or "")
+    return "https://upload.wikimedia.org/" + m.group(1) if m else ""
 def file_of(u):
     m = re.search(r"/commons/(?:thumb/)?[0-9a-f]/[0-9a-f]{2}/([^/]+)", u or ""); return urllib.parse.unquote(m.group(1)) if m else None
 
-def check(keys, toks):
-    """작품 하나 검증. 통과하면 (정보 dict, None), 아니면 (None, 이유)."""
-    why = "후보 항목 없음"
-    for k in keys:
-        lang, title = k.split(":", 1)
-        s = get(f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(title.replace(" ", "_"), safe="()"))
-        if not s or s.get("type") != "standard": why = "항목을 못 찾음"; continue
-        th = (s.get("thumbnail") or {}).get("source", "")
-        if not th.startswith("https://upload.wikimedia.org/"): why = "대표 그림 없음"; continue
-        text = norm((s.get("description") or "") + " " + (s.get("extract") or ""))
-        if not any(norm(t) in text for t in toks): why = "항목 설명에 작가 이름이 없음(다른 항목일 수 있음)"; continue
-        f = file_of(th)
-        if not f: why = "그림 파일 이름을 못 읽음"; continue
-        c = get("https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&iiprop=extmetadata&titles=" + urllib.parse.quote("File:" + f))
-        pages = (c or {}).get("query", {}).get("pages", {}); p = next(iter(pages.values()), {}) if pages else {}
-        md = ((p.get("imageinfo") or [{}])[0]).get("extmetadata", {}); lic = (md.get("LicenseShortName") or {}).get("value", "")
+SUMC = {}; LIC = {}
+def summary(lang, title):
+    k = (lang, title)
+    if k not in SUMC: SUMC[k] = (get(f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/" + urllib.parse.quote(title.replace(" ", "_"), safe="()")), LAST["status"])
+    LAST["status"] = SUMC[k][1]; return SUMC[k][0]
+def prefetch_lic(works):
+    """모든 후보 그림 파일의 라이선스를 커먼즈에서 40개씩 한꺼번에 물어봐요(요청 수를 줄여 속도 제한을 피함)."""
+    files = []
+    for _, _, _, title in works:
+        for k in WIKI[title]:
+            lang, t = k.split(":", 1); s = summary(lang, t)
+            f = file_of(img_url(((s or {}).get("thumbnail") or {}).get("source", "")))
+            if f and f not in LIC and f not in files: files.append(f)
+    for i in range(0, len(files), 40):
+        chunk = files[i:i + 40]
+        lic = LIC.get(f.replace(" ", "_"), "")
         if not lic or not PD.search(lic): why = f"공개 도메인 표시가 아님({lic or '라이선스 정보 없음'})"; continue
         page = ((s.get("content_urls") or {}).get("desktop") or {}).get("page") or f"https://{lang}.wikipedia.org/wiki/" + urllib.parse.quote(title)
         return {"src": th, "p": page, "t": s.get("title") or title, "l": lic, "file": f}, None
@@ -63,6 +79,7 @@ def main():
     if only: works = [x for x in works if x[3] == only]
     if limit: works = works[:limit]
     ok = skip = 0; fails = []
+    prefetch_lic([w for w in works if refresh or w[3] not in idx or not os.path.exists(os.path.join(OUT, idx[w[3]]["f"]))])
     for n, (aid, name, en, title) in enumerate(works, 1):
         if not refresh and title in idx and os.path.exists(os.path.join(OUT, idx[title]["f"])): skip += 1; continue
         info, why = check(WIKI[title], tokens(aid, en, name))
@@ -74,7 +91,8 @@ def main():
         fn = f"{aid}-{zlib.crc32(title.encode('utf-8')) % 100000:05d}{ext}"
         open(os.path.join(OUT, fn), "wb").write(data)
         idx[title] = {"f": fn, "p": info["p"], "t": info["t"], "l": info["l"], "src": info["file"]}; ok += 1
-        print(f"[{n}/{len(works)}] ✓ {title} ← {info['t']} ({info['l']}, {len(data)//1024}KB)"); time.sleep(0.4)
+        json.dump(idx, open(idx_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print(f"[{n}/{len(works)}] ✓ {title} ← {info['t']} ({info['l']}, {len(data)//1024}KB)", flush=True); time.sleep(0.4)
     if not dry:
         json.dump(idx, open(idx_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         open(os.path.join(OUT, "LICENSE.txt"), "w", encoding="utf-8").write(

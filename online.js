@@ -12,14 +12,22 @@
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   var cache = {}; try { cache = JSON.parse(get(CK) || "{}") || {}; } catch (e) { cache = {}; }
   function saveCache() { var ks = Object.keys(cache); if (ks.length > 400) ks.slice(0, ks.length - 400).forEach(function (k) { delete cache[k]; }); set(CK, JSON.stringify(cache)); }
-  function json(url, ms) {
+  // 위키 서버가 "요청이 너무 많다"(429·503)고 하면 잠깐 기다렸다가 최대 3번 다시 시도해요
+  function json(url, ms, tries) {
     if (!ENABLED || navigator.onLine === false) return Promise.resolve(null);
-    var ctl = typeof AbortController === "function" ? new AbortController() : null, t = ctl ? setTimeout(function () { ctl.abort(); }, ms || 8000) : null;
+    tries = tries === undefined ? 3 : tries;
+    var ctl = typeof AbortController === "function" ? new AbortController() : null, t = ctl ? setTimeout(function () { ctl.abort(); }, ms || 12000) : null;
     return fetch(url, { signal: ctl ? ctl.signal : undefined, credentials: "omit", referrerPolicy: "no-referrer" })
-      .then(function (r) { if (t) clearTimeout(t); return r.ok ? r.json() : null; }).catch(function () { if (t) clearTimeout(t); return null; });
+      .then(function (r) {
+        if (t) clearTimeout(t);
+        if ((r.status === 429 || r.status === 503) && tries > 0) { var ra = parseInt(r.headers.get("retry-after"), 10); var wait = (isNaN(ra) ? 6 : Math.min(ra, 20)) * 1000 + Math.random() * 800; return new Promise(function (res) { setTimeout(res, wait); }).then(function () { return json(url, ms, tries - 1); }); }
+        return r.ok ? r.json() : null;
+      }).catch(function () { if (t) clearTimeout(t); return null; });
   }
   // 허용된 그림 파일 주소만(위키미디어 서버)
-  function okImg(u) { return typeof u === "string" && /^https:\/\/upload\.wikimedia\.org\//.test(u); }
+  // 위키백과 요약은 그림 주소를 thumb.wikimedia.org(+?utm_…)로 줘요. 같은 경로를 upload.wikimedia.org 에서 꼬리표 없이 받아요.
+  function okImg(u) { return typeof u === "string" && /^https:\/\/(upload|thumb)\.wikimedia\.org\//.test(u); }
+  function imgUrl(u) { return okImg(u) ? u.replace(/^https:\/\/thumb\.wikimedia\.org\//, "https://upload.wikimedia.org/").replace(/\?.*$/, "") : null; }
   function fileOf(u) { var m = /\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^\/]+)/.exec(u || ""); return m ? decodeURIComponent(m[1]) : null; }
   var PD = /public domain|^pd\b|^pd-|cc0|cc-zero/i;
   function norm(t) { return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }   // 악센트·대소문자를 맞춰서 비교(Cézanne = cezanne)
@@ -34,13 +42,13 @@
         if (!s || s.type !== "standard" || !s.thumbnail || !okImg(s.thumbnail.source)) return next();
         var text = norm((s.description || "") + " " + (s.extract || ""));
         if (!(tokens || []).some(function (t) { return t && text.indexOf(norm(t)) >= 0; })) return next();   // 작품·작가가 다르면 버려요
-        var f = fileOf(s.thumbnail.source); if (!f) return next();
+        var src = imgUrl(s.thumbnail.source), f = fileOf(src); if (!f) return next();
         return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata&titles=" + encodeURIComponent("File:" + f)).then(function (c) {
           var pages = c && c.query && c.query.pages, p = pages && pages[Object.keys(pages)[0]], md = p && p.imageinfo && p.imageinfo[0] && p.imageinfo[0].extmetadata;
           var lic = md && md.LicenseShortName && md.LicenseShortName.value;
           if (!lic || !PD.test(lic)) return next();                                                                                 // 공개 도메인 표시가 없으면 버려요
           var url = s.content_urls && s.content_urls.desktop && s.content_urls.desktop.page || ("https://" + m[1] + ".wikipedia.org/wiki/" + encodeURIComponent(m[2]));
-          var res = { src: s.thumbnail.source, page: url, title: s.title || m[2], license: lic };
+          var res = { src: src, page: url, title: s.title || m[2], license: lic };
           cache[id] = res; saveCache(); return res;
         });
       });
@@ -56,6 +64,6 @@
       if (ok) set(KEY, "1"); return ok;
     },
     off: function () { try { localStorage.removeItem(KEY); } catch (e) {} },
-    json: json, wikiImage: wikiImage, okImg: okImg, fileOf: fileOf, norm: norm
+    json: json, wikiImage: wikiImage, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
   };
 })();

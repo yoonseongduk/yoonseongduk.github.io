@@ -13,28 +13,40 @@
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var shuffle = function (a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i], a2 = a[j]; a[i] = a2; a[j] = t; } return a; };
-  var CONSENT = "🌐 온라인 듣기를 켜요.\n\n· 인터넷에서 저작권이 끝난(공개 도메인·CC0) 클래식 녹음만 찾아서 들려줘요.\n· 찾고 들을 때 이 기기의 인터넷 주소가 위키미디어 서버에 전달돼요(이 앱은 개인 정보를 보내지 않아요).\n· 들은 곡의 앞부분(약 1MB 이하)은 이 폰에 저장해서, 다음부터는 인터넷 없이도 들을 수 있어요(설정에서 지울 수 있어요).\n· 조건에 맞는 녹음이 없으면 그 곡은 글로만 나와요.\n\n켤까요?";
+  var CONSENT = "🌐 온라인 듣기를 켜요.\n\n· 인터넷에서 저작권이 끝난(공개 도메인·CC0) 클래식 녹음만 찾아서 들려줘요.\n· 찾고 들을 때 이 기기의 인터넷 주소가 위키미디어 또는 인터넷 아카이브 서버에 전달돼요(이 앱은 개인 정보를 보내지 않아요).\n· 들은 곡의 앞부분(약 1MB 이하)은 이 폰에 저장해서, 다음부터는 인터넷 없이도 들을 수 있어요(설정에서 지울 수 있어요).\n· 조건에 맞는 녹음이 없으면 그 곡은 글로만 나와요.\n\n켤까요?";
   var online = function () { return !!window.fgOnline && fgOnline.enabled && fgOnline.on() && navigator.onLine !== false; };
   var badList = function () { try { var a = JSON.parse(lsGet(BADK) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
   var isBad = function (name) { return badList().indexOf(name) >= 0; };
   var savedCount = function () { return saved ? Object.keys(saved).length : 0; };
-  var credit = function (e) { return '🎧 음원: <a href="' + esc(e.page) + '" target="_blank" rel="noopener noreferrer">위키미디어 커먼즈 「' + esc(e.title) + "」</a> (" + esc(e.license) + ")"; };
+  var credit = function (e) { return '🎧 음원: <a href="' + esc(e.page) + '" target="_blank" rel="noopener noreferrer">' + esc(e.label || '위키미디어 커먼즈') + ' 「' + esc(e.title) + "」</a> (" + esc(e.license) + ")"; };
   var inCache = function (cb) { return "caches" in window ? caches.open(CACHE).then(cb).catch(function () { return null; }) : Promise.resolve(null); };
 
   // ── 음원 하나 얻기: ① 폰에 저장된 것 → ② 온라인에서 찾기 (통과하면 {src, page, title, license, kind}, 아니면 null)
   var blobUrls = {};
   function fromSaved(t) {
     var e = saved && saved[t]; if (!e || isBad(e.title)) return Promise.resolve(null);
-    if (blobUrls[t]) return Promise.resolve({ src: blobUrls[t], page: e.page, title: e.title, license: e.license, kind: "saved", remote: e.src });
+    if (blobUrls[t]) return Promise.resolve({ src: blobUrls[t], page: e.page, title: e.title, license: e.license, kind: "saved", label: e.label, remote: e.src });
     return inCache(function (c) { return c.match(e.src); }).then(function (r) { return r ? r.blob() : null; }).then(function (b) {
-      if (!b) return null; blobUrls[t] = URL.createObjectURL(b); return { src: blobUrls[t], page: e.page, title: e.title, license: e.license, kind: "saved", remote: e.src };
+      if (!b) return null; blobUrls[t] = URL.createObjectURL(b); return { src: blobUrls[t], page: e.page, title: e.title, license: e.license, kind: "saved", label: e.label, remote: e.src };
     }).catch(function () { return null; });
+  }
+  // 소리가 실제로 나올 수 있는지 잠깐 확인(메타데이터만 받아 봐요). 9초 안에 안 되면 다음 후보(다른 서버)로 넘어가요
+  function playable(src) {
+    return new Promise(function (ok) {
+      var a = new Audio(), done = false, t = setTimeout(function () { f(false); }, 9000);
+      function f(v) { if (done) return; done = true; clearTimeout(t); try { a.removeAttribute("src"); a.load(); } catch (e) {} ok(v); }
+      a.preload = "metadata"; a.addEventListener("loadedmetadata", function () { f(true); }); a.addEventListener("error", function () { f(false); }); a.src = src;
+    });
   }
   function fromOnline(t) {
     var names = DATA.P[t]; if (!names || !online()) return Promise.resolve(null);
-    return fgOnline.commonsFiles(names, 80000000).then(function (list) {
-      var r = (list || []).filter(function (x) { return !isBad(x.title); })[0];
-      return r ? { src: r.src, page: r.page, title: r.title, license: r.license, size: r.size, kind: "online", remote: r.src } : null;
+    return fgOnline.audioFiles(names, 80000000).then(function (list) {
+      list = (list || []).filter(function (x) { return !isBad(x.title); }); var k = 0;
+      function next() {
+        if (k >= list.length) return null; var r = list[k++];
+        return playable(r.src).then(function (okp) { return okp ? r : next(); });
+      }
+      return next().then(function (r) { r = r || list[0]; return r ? { src: r.src, page: r.page, title: r.title, license: r.license, label: r.label, size: r.size, kind: "online", remote: r.src } : null; });
     });
   }
   function getAudio(t) { return fromSaved(t).then(function (r) { return r || fromOnline(t); }); }
@@ -51,7 +63,7 @@
     }).then(function (x) {
       if (!x.b.size || x.b.size < 20000) throw 0;
       return inCache(function (c) { return c.put(r.src, new Response(x.b, { status: 200, headers: { "Content-Type": x.type } })); }).then(function () {
-        saved = saved || {}; saved[t] = { src: r.src, page: r.page, title: r.title, license: r.license }; lsSet(SAVED, JSON.stringify(saved)); if (bar) drawBar();
+        saved = saved || {}; saved[t] = { src: r.src, page: r.page, title: r.title, license: r.license, label: r.label }; lsSet(SAVED, JSON.stringify(saved)); if (bar) drawBar();
       });
     }).catch(function () {});
   }
@@ -93,7 +105,7 @@
       '<button type="button" data-m="mix" class="' + (mode === "mix" ? "on" : "") + '">🔀 섞어서(한 판 최대 3개)</button>' +
       '<button type="button" data-m="only" class="' + (mode === "only" ? "on" : "") + '">🎧 듣기 문제만</button></div>';
     h += "<small>" + (mode === "off" ? "듣기 문제를 풀려면 아래에서 골라요. 처음 한 번은 인터넷이 필요하고, 들은 곡은 이 폰에 저장돼서 다음부터는 인터넷 없이도 들려요." :
-      (on ? "인터넷에서 저작권이 끝난 녹음을 찾아 들려줘요(위키미디어 서버에 이 기기의 주소가 전달돼요). 선택한 시간(" + LIMIT + "초) 동안 들려요." : (n ? "지금은 인터넷이 없어서 이 폰에 저장된 음원(" + n + "곡)만 나와요." : "지금은 인터넷이 없고 저장된 음원도 없어서 글로만 나와요."))) + " · 저장된 음원 " + n + " / 듣기 가능 " + Object.keys(DATA.P).length + "곡 · <a href=\"offline-media.html\">📊 저장 현황</a></small>";
+      (on ? "인터넷에서 저작권이 끝난 녹음을 찾아 들려줘요(위키미디어·인터넷 아카이브 서버에 이 기기의 주소가 전달돼요). 선택한 시간(" + LIMIT + "초) 동안 들려요." : (n ? "지금은 인터넷이 없어서 이 폰에 저장된 음원(" + n + "곡)만 나와요." : "지금은 인터넷이 없고 저장된 음원도 없어서 글로만 나와요."))) + " · 저장된 음원 " + n + " / 듣기 가능 " + Object.keys(DATA.P).length + "곡 · <a href=\"offline-media.html\">📊 저장 현황</a></small>";
     h += '<div class="row"><small>듣기 시간:</small>' + [15, 30, 60].map(function (s) { return '<button type="button" class="sm' + (LIMIT === s ? " on" : "") + '" data-m="lim" data-s="' + s + '">' + s + "초</button>"; }).join("") + "<small>(모음 화면과 정답 뒤에는 끝까지 들어요)</small></div>";
     h += '<div class="row"><button type="button" class="sm" data-m="fullsave">📦 전곡 저장: ' + (lsGet(FS) === "1" ? "켜짐" : "꺼짐") + "</button><small>켜면 곡 전체를 저장해요(한 곡 수 MB~수십 MB, 와이파이 권장). 끄면 앞부분만 저장해요.</small></div>";
     h += '<div class="row"><button type="button" class="sm" data-m="auto">💾 들은 곡 자동 저장: ' + (lsGet(AS) === "1" ? "켜짐" : "꺼짐") + "</button>" + (n ? '<button type="button" class="sm" data-m="clear">🗑️ 저장한 음원 지우기</button>' : "") + "</div>";

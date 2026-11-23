@@ -140,6 +140,30 @@
       cache[id] = out; saveCache(); return out;
     });
   }
+  // 인터넷 아카이브(archive.org) 음원: 이름이 "ia:항목/파일" 꼴. 항목 정보(metadata)에 공개 도메인·CC0 라이선스 표시가 있고 파일이 실제로 있을 때만 써요
+  var IALIC = /publicdomain|zero/i;
+  function iaFile(n, maxBytes) {
+    var m = /^ia:([^\/]+)\/(.+)$/.exec(n); if (!m) return Promise.resolve(null);
+    var id = "i|" + n; if (cache[id] !== undefined) return Promise.resolve(cache[id]);
+    return json("https://archive.org/metadata/" + encodeURIComponent(m[1])).then(function (d) {
+      if (!d) return null;                                                                   // 서버가 안 되면 저장하지 않고 다음에 다시 시도해요
+      var lic = d.metadata && d.metadata.licenseurl, f = (d.files || []).filter(function (x) { return x.name === m[2]; })[0], size = f ? parseInt(f.size, 10) || 0 : 0, res = null;
+      if (f && IALIC.test(String(lic || "")) && size <= (maxBytes || 80000000))
+        res = { src: "https://archive.org/download/" + encodeURIComponent(m[1]) + "/" + m[2].split("/").map(encodeURIComponent).join("/"), page: "https://archive.org/details/" + encodeURIComponent(m[1]), title: m[2], license: "공개 도메인·CC0(인터넷 아카이브 표시)", size: size, label: "인터넷 아카이브" };
+      cache[id] = res; saveCache(); return res;
+    });
+  }
+  // 미리 골라 둔 음원 이름들(좋은 순서, 커먼즈 파일 이름 또는 "ia:…")을 확인해 순서를 지킨 채 돌려줘요. 한쪽 서버가 느리거나 안 돼도 다른 쪽이 나오게 두 출처를 따로 물어봐요
+  function audioFiles(names, maxBytes) {
+    names = names || []; var com = names.filter(function (n) { return !/^ia:/.test(n); }), ia = names.filter(function (n) { return /^ia:/.test(n); });
+    return Promise.all([com.length ? commonsFiles(com, maxBytes).catch(function () { return []; }) : [], Promise.all(ia.map(function (n) { return iaFile(n, maxBytes).catch(function () { return null; }); }))]).then(function (r) {
+      var cm = {}; (r[0] || []).forEach(function (x) { cm[x.title] = x; }); var iam = {}; ia.forEach(function (n, i) { if (r[1][i]) iam[n] = r[1][i]; });
+      var out = []; names.forEach(function (n) { var x = /^ia:/.test(n) ? iam[n] : cm[n]; if (x) out.push(x); });
+      // 출처가 둘 다 있으면 번갈아 놓아서 첫 후보가 안 나와도 곧바로 다른 서버를 써 보게 해요
+      var a = out.filter(function (x) { return x.label !== "인터넷 아카이브"; }), b = out.filter(function (x) { return x.label === "인터넷 아카이브"; });
+      if (!a.length || !b.length) return out; var mix = []; while (a.length || b.length) { if (a.length) mix.push(a.shift()); if (b.length) mix.push(b.shift()); } return mix;
+    });
+  }
   // 미리 골라 둔 커먼즈 사진 파일 이름들(좋은 순서)에서 라이선스(공개 도메인·CC0, cc면 CC BY·BY-SA까지)가 맞는 첫 사진을 돌려줘요. 사진 주소는 500px 미리보기예요.
   function commonsPhoto(names, cc) {
     var id = "p|" + (names || []).join("|") + (cc ? "|cc" : ""); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
@@ -165,6 +189,6 @@
       if (ok) set(KEY, "1"); return ok;
     },
     off: function () { try { localStorage.removeItem(KEY); } catch (e) {} },
-    json: json, wikiImage: wikiImage, commonsAudio: commonsAudio, commonsFiles: commonsFiles, commonsPhoto: commonsPhoto, imageFallback: fallback, _src: { commons: srcCommons, cma: srcCMA }, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
+    json: json, wikiImage: wikiImage, commonsAudio: commonsAudio, commonsFiles: commonsFiles, audioFiles: audioFiles, commonsPhoto: commonsPhoto, imageFallback: fallback, _src: { commons: srcCommons, cma: srcCMA }, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
   };
 })();

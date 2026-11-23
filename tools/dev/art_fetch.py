@@ -64,11 +64,10 @@ def prefetch_lic(works):
             if f and f not in LIC and f not in files: files.append(f)
     for i in range(0, len(files), 40):
         chunk = files[i:i + 40]
-        lic = LIC.get(f.replace(" ", "_"), "")
-        if not lic or not PD.search(lic): why = f"공개 도메인 표시가 아님({lic or '라이선스 정보 없음'})"; continue
-        page = ((s.get("content_urls") or {}).get("desktop") or {}).get("page") or f"https://{lang}.wikipedia.org/wiki/" + urllib.parse.quote(title)
-        return {"src": th, "p": page, "t": s.get("title") or title, "l": lic, "file": f}, None
-    return None, why
+        c = get("https://commons.wikimedia.org/w/api.php?action=query&format=json&prop=imageinfo&iiprop=extmetadata&titles=" + urllib.parse.quote("|".join("File:" + f for f in chunk)))
+        for p in ((c or {}).get("query", {}).get("pages", {}) or {}).values():
+            md = ((p.get("imageinfo") or [{}])[0]).get("extmetadata", {}); LIC[p.get("title", "")[5:].replace(" ", "_")] = (md.get("LicenseShortName") or {}).get("value", "")
+        print(f"  라이선스 확인 {min(i+40,len(files))}/{len(files)}", flush=True)
 
 def check(keys, toks):
     """작품 하나 검증. 통과하면 (정보 dict, None), 아니면 (None, 이유)."""

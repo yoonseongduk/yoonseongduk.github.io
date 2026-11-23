@@ -113,6 +113,15 @@ def main():
     a = sys.argv[1:]; screen = "--no-screen" not in a and "--ia" not in a; only = a[a.index("--only") + 1] if "--only" in a else None; limit = int(a[a.index("--limit") + 1]) if "--limit" in a else None
     works = [t for t in AUDIO if not only or t == only]
     if limit: works = works[:limit]
+    if "--cands-only" in a:   # 음질 분석 없이 후보만으로 곡 목록(music_pick.json)을 만들어요: 위키 1개 + 아카이브 1개 + 다음 순위 1개(최대 3개, 한쪽 서버가 안 될 때 다른 쪽을 쓰게)
+        st = load(STATE); ia = load(IAF); res = {}
+        for t in works:
+            com = sorted(st.get(t, {}).get("cands", []), key=lambda c: -c["score"]); iac = sorted(ia.get(t, {}).get("cands", []), key=lambda c: -c["score"]); pick = []
+            for lst in (com, iac):
+                if lst: pick.append(lst[0])
+            rest = [c for c in com[1:] + iac[1:] if c not in pick]; rest.sort(key=lambda c: -c["score"]); pick += rest[:max(0, 3 - len(pick))]
+            if pick: res[t] = [{"f": c["f"], "lic": c["lic"], "kbps": c["kbps"], "scr": None} for c in pick]
+        save(OUT, res); print(f"후보만으로 만든 곡 {len(res)} / {len(works)} (음질 분석 전)"); return
     if "--ia" in a:   # 2단계: 인터넷 아카이브 후보(다른 서버라 1단계와 동시에 돌려도 돼요)
         ia = load(IAF)
         for n, t in enumerate(works, 1):

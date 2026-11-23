@@ -5,6 +5,7 @@
 import sys, json, random, os, re
 sys.path.insert(0, ".")
 from orch_data import INSTR, GENERAL, PIECES, SEATS, FAMILIES
+from orch_specs import SPECS
 from orch_svg import ICONS, icon, seating, size_compare, STR_SIZES
 from mkquiz import make as make_quiz
 from mkpage import make as make_page
@@ -133,7 +134,7 @@ make_quiz(H + "orchestra-quiz.html", "오케스트라 퀴즈", "🎻", 20, "orch
           "오케스트라 악기와 연주 이야기를 맞혀 보세요. 모든 악기는 <a href=\"orchestra-gallery.html\">🎷 오케스트라 악기 도감</a>에서 볼 수 있어요.", data, label="오케스트라 퀴즈")
 
 # ───────── 모드 스크립트 orch-mode.js (그림·사진·정답 카드·힌트)
-INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "how": a["how"], "rng": a["rng"], "desc": a["desc"], "use": a["use"], "wiki": a["wiki"], "tok": a["tok"], "ko": ALT_KO.get(i), "de": ALT_DE.get(i)} for i, a in I.items()}
+INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "how": a["how"], "rng": a["rng"], "desc": a["desc"], "use": a["use"], "wiki": a["wiki"], "tok": a["tok"], "ko": ALT_KO.get(i), "de": ALT_DE.get(i), "spec": SPECS[i]} for i, a in I.items()}
 DATA = {"I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {i: size_compare(i, False) for i, _, _ in STR_SIZES}, "CMPN": {i: size_compare(i, True) for i, _, _ in STR_SIZES}}
 tpl = open("orch_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../orch-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
@@ -150,7 +151,7 @@ CSS = re.search(r"CSS = '''(.*?)'''", open("set43.py", encoding="utf-8").read(),
 .ar .cmp svg{width:100%;max-width:340px;height:auto;display:block;margin-top:4px}.ar .cmp small{color:var(--muted);font-size:.78rem}.ar .ic{width:72px;height:72px;flex:none;border-radius:12px;overflow:hidden;background:#f6efe0}.ar .ic img{width:72px;height:72px;object-fit:cover;display:block}.ar .cr{color:var(--muted);font-size:.74rem;line-height:1.4}.ar .top{display:flex;gap:12px;align-items:center}.ar .top h2{margin:0}.ar dl{margin:4px 0 0;display:grid;grid-template-columns:5.4em 1fr;gap:2px 8px;font-size:.92rem}.ar dt{color:var(--muted)}.ar dd{margin:0}'''
 BODY = '''  <div class="card"><div class="chips" id="eras"></div><div class="chips" id="lvs"></div><p class="muted" id="lvp"></p><input type="text" id="q" placeholder="악기 이름·악기군·소리 찾기 (예: 바이올린, 금관, 낮은)" aria-label="찾기"><p class="muted" id="cnt"></p><a class="btn" id="goq" href="orchestra-quiz.html" style="text-align:center;text-decoration:none">🎻 오케스트라 퀴즈 풀기</a></div>
   <div id="list"></div>'''
-AR = [dict(id=a["id"], n=a["n"], nm=a["name"], e=a["en"], f=a["fam"], h=a["how"], r=a["rng"], d=a["desc"], u=a["use"], l=a["fame"], svg=ICONS[a["id"]] and icon(a["id"]), cmp=(size_compare(a["id"], True) if a["id"] in {x[0] for x in STR_SIZES} else "")) for a in I.values()]
+AR = [dict(id=a["id"], n=a["n"], nm=a["name"], e=a["en"], f=a["fam"], h=a["how"], r=a["rng"], d=a["desc"], u=a["use"], l=a["fame"], sp=SPECS[a["id"]], svg=ICONS[a["id"]] and icon(a["id"]), cmp=(size_compare(a["id"], True) if a["id"] in {x[0] for x in STR_SIZES} else "")) for a in I.values()]
 JS = '''const AR = ''' + json.dumps(AR, ensure_ascii=False) + ''', FAMS = ''' + json.dumps(["전체"] + FAMILIES, ensure_ascii=False) + ''';
 let fam = ld(KEY + "-fam") || "전체", lvf = +ld(KEY + "-lv") || 0; if (!(lvf >= 0 && lvf <= 3)) lvf = 0;
 const LVN = ["모든 난이도", "🌱 초급", "🌿 중급", "🌳 고급"], LVD = ["", "누구나 아는 악기예요.", "알려진 악기예요.", "마니아가 좋아하는 악기예요."];
@@ -160,10 +161,10 @@ function render() {
   AR.forEach(a => {
     if (fam !== "전체" && a.f !== fam) return;
     if (lvf && a.l !== lvf) return;
-    if (q && !norm([a.nm, a.e, a.f, a.h, a.r, a.d, a.u].join(" ")).includes(q)) return;
+    if (q && !norm([a.nm, a.e, a.f, a.h, a.r, a.d, a.u, ...(a.sp || []).map(x => x[1])].join(" ")).includes(q)) return;
     if (a.f !== last) { last = a.f; html += `<p class="era">${esc(a.f)}</p>`; }
     n++;
-    html += `<article class="ar" data-id="${a.id}"><div class="top"><div class="ic">${a.svg}</div><div><h2>${a.l === 1 ? '<span class="st" aria-label="대표 악기">★</span> ' : ""}${esc(a.nm)} <span class="en">${esc(a.e)}</span></h2><div class="meta"><span>도감 ${a.n}번</span><span class="tag">${esc(a.f)}</span></div></div></div><p class="bio">${esc(a.d)}</p><dl><dt>소리 높이</dt><dd>${esc(a.r)} 소리</dd><dt>연주 방법</dt><dd>${esc(a.h)}</dd><dt>쓰임</dt><dd>${esc(a.u)}</dd></dl>${a.cmp ? `<div class="cmp"><small>크기 비교 (주황 색이 이 악기)</small>${a.cmp}</div>` : ""}</article>`;
+    html += `<article class="ar" data-id="${a.id}"><div class="top"><div class="ic">${a.svg}</div><div><h2>${a.l === 1 ? '<span class="st" aria-label="대표 악기">★</span> ' : ""}${esc(a.nm)} <span class="en">${esc(a.e)}</span></h2><div class="meta"><span>도감 ${a.n}번</span><span class="tag">${esc(a.f)}</span></div></div></div><p class="bio">${esc(a.d)}</p><dl><dt>소리 높이</dt><dd>${esc(a.r)} 소리</dd><dt>연주 방법</dt><dd>${esc(a.h)}</dd><dt>쓰임</dt><dd>${esc(a.u)}</dd>${(a.sp || []).map(x => `<dt>${esc(x[0])}</dt><dd>${esc(x[1])}</dd>`).join("")}</dl>${a.cmp ? `<div class="cmp"><small>크기 비교 (주황 색이 이 악기)</small>${a.cmp}</div>` : ""}</article>`;
   });
   box.innerHTML = html || '<p class="muted center">찾는 악기가 없어요</p>';
   $("lvs").innerHTML = LVN.map((t, k) => `<button type="button" class="chip${k === lvf ? " on" : ""}" data-l="${k}">${t}${k ? ` <small>${AR.filter(a => a.l === k).length}</small>` : ""}</button>`).join(""); $("lvp").textContent = LVD[lvf];

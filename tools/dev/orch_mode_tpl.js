@@ -20,7 +20,7 @@
     st.textContent = ".amode{background:var(--surface,#fff);border:1px solid var(--line,#ccc);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}.amode .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}" +
       ".amode button{border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:8px 12px;font-size:.92rem}.amode button.sm{padding:6px 10px;font-size:.85rem}.amode button.on{background:var(--accent,#c4552b);color:var(--accent-fg,#fff);border-color:transparent;font-weight:700}.amode small{color:var(--muted,#666)}" +
       ".oimg{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 10px}.oimg svg,.oimg img{width:min(240px,74vw);height:auto;border-radius:12px;display:block}.oimg img{max-height:280px;object-fit:contain;background:#f6efe0}.prow{display:flex;align-items:flex-end;justify-content:center;gap:6px;width:100%}.prow figure{margin:0;text-align:center;min-width:0;display:flex;flex-direction:column;align-items:center}.prow img,.prow svg{height:auto;width:auto;max-width:none;background:#f6efe0;border-radius:8px;display:block}.prow figcaption{max-width:90px}.prow .hl img,.prow .hl svg{outline:3px solid #e8742a}.prow figcaption{font-size:.7rem;line-height:1.3;color:var(--muted,#666)}.prows details{font-size:.72rem;color:var(--muted,#666);text-align:left;width:100%}.prows details a{word-break:break-all}.oimg.cmp{align-self:stretch;width:100%}.oimg.cmp svg{width:100%;max-width:330px;height:auto;border-radius:12px}.acard .oimg{align-self:stretch}.oimg small{color:var(--muted,#666);font-size:.76rem;text-align:center;line-height:1.4}" +
-      ".acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}" +
+      ".spec{display:grid;grid-template-columns:4.2em 1fr;gap:2px 8px;font-size:.84rem;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line,#ccc);text-align:left}.spec dt{color:var(--muted,#666)}.spec dd{margin:0}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}" +
       ".ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}";
     document.head.appendChild(st);
   }
@@ -108,26 +108,29 @@
       wrap.appendChild(row); var d = document.createElement("details"); d.innerHTML = "<summary>📷 사진 출처 " + cr.length + "건</summary>" + cr.map(function (x) { return "<div>" + x + "</div>"; }).join(""); wrap.appendChild(d); return wrap;
     });
   }
+  var specHtml = function (a) { return a.spec && a.spec.length ? '<dl class="spec">' + a.spec.map(function (x) { return "<dt>" + esc(x[0]) + "</dt><dd>" + esc(x[1]) + "</dd>"; }).join("") + "</dl>" : ""; };
   function decorate() {
     var cur = qs && qs[i]; hintUsed = false; if (!cur) return; var q = document.getElementById("q"), key = cur.d[0], m = DATA.IMG[key], showId = DATA.SHOW[key]; if (!q) return;
     if (m && m[0] === "s") { var f0 = document.createElement("div"); f0.className = "oimg"; f0.innerHTML = DATA.SEAT[String(m[1])]; q.insertBefore(f0, q.firstChild); }
     else if (m || showId) {   // 그림 문제(이름 맞히기) 또는 이름이 나온 악기의 그림·사진
       var fig = document.createElement("div"); fig.className = "oimg"; q.insertBefore(fig, q.firstChild);
-      var sid = m ? m[1] : showId; paint(fig, sid, function () { return qs && qs[i] && qs[i].d[0] === key; });
+      var sid = m ? m[1] : showId;
+      if (!m && showId) { var sp0 = document.createElement("div"); sp0.className = "acard"; sp0.innerHTML = "<b>📐 사양</b>" + specHtml(DATA.I[showId]); q.insertBefore(sp0, q.children[1] || null); }
+      paint(fig, sid, function () { return qs && qs[i] && qs[i].d[0] === key; });
       if (DATA.CMP[sid]) { var cf2 = document.createElement("div"); cf2.className = "oimg cmp"; cf2.innerHTML = DATA.CMP[sid] + "<small>📏 크기 비교: 주황 점이 이 악기예요(비슷하게 생긴 현악기끼리, 사람 키와 함께)</small>"; fig.insertAdjacentElement("afterend", cf2); photoRow(sid, false, function () { return qs && qs[i] && qs[i].d[0] === key; }).then(function (w) { if (w && cf2.isConnected) { var lab = document.createElement("small"); lab.textContent = "📷 실제 사진(높이를 실제 길이에 맞춰 보여 줘요, 주황 테두리가 이 악기)"; var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); box.appendChild(lab); cf2.insertAdjacentElement("afterend", box); fitRow(w); } }); }
     }
     var iid = DATA.INFO[key];
     if (iid && m && m[0] === "i") {   // 힌트는 그림 문제에만: 악기군 → 연주 방법
       var ins2 = DATA.I[iid], hb = document.createElement("div"); hb.className = "ahint"; hb.innerHTML = '<button type="button">💡 힌트 (쓰면 맞혀도 0.5점)</button><div hidden></div>';
       var btn = hb.querySelector("button"), out = hb.querySelector("div"), lvl = 0;
-      btn.addEventListener("click", function () { if (locked) return; hintUsed = true; lvl++; out.hidden = false; out.textContent = lvl === 1 ? "악기군: " + ins2.fam : "악기군: " + ins2.fam + " · 연주 방법: " + ins2.how; if (lvl >= 2) btn.disabled = true; else btn.textContent = "💡 힌트 한 번 더"; });
+      btn.addEventListener("click", function () { if (locked) return; hintUsed = true; lvl++; out.hidden = false; out.textContent = lvl === 1 ? "악기군: " + ins2.fam : lvl === 2 ? "악기군: " + ins2.fam + " · 연주 방법: " + ins2.how : "악기군: " + ins2.fam + " · 연주 방법: " + ins2.how + " · 사양: " + (ins2.spec || []).slice(0, 2).map(function (x) { return x[0] + " " + x[1]; }).join(" / "); if (lvl >= 3) btn.disabled = true; else btn.textContent = "💡 힌트 한 번 더"; });
       q.appendChild(hb);
     }
   }
   function addCard(cur) {
     var key = cur.d[0], id = DATA.INFO[key]; if (!id) return; var a = DATA.I[id], q = document.getElementById("q");
     var n = q.querySelector(".note"); if (n) n.remove(); var h = q.querySelector(".ahint"); if (h) h.remove();
-    q.insertAdjacentHTML("beforeend", '<div class="acard"><div class="oimg"></div><b>' + esc(a.name) + " <small>(" + esc(a.en) + ")</small></b><span>" + esc(a.fam) + " · " + esc(a.rng) + " 소리 · 도감 " + a.n + "번</span><span>🎼 " + esc(a.how) + "</span><span>" + esc(a.desc) + "</span><span>🎵 " + esc(a.use) + "</span>" + (DATA.CMPN[id] ? '<div class="oimg cmp">' + DATA.CMPN[id] + "<small>📏 실제 크기 비교(약 길이)</small></div>" : "") + "</div>");
+    q.insertAdjacentHTML("beforeend", '<div class="acard"><div class="oimg"></div><b>' + esc(a.name) + " <small>(" + esc(a.en) + ")</small></b><span>" + esc(a.fam) + " · " + esc(a.rng) + " 소리 · 도감 " + a.n + "번</span><span>🎼 " + esc(a.how) + "</span><span>" + esc(a.desc) + "</span><span>🎵 " + esc(a.use) + "</span>" + specHtml(a) + (DATA.CMPN[id] ? '<div class="oimg cmp">' + DATA.CMPN[id] + "<small>📏 실제 크기 비교(약 길이)</small></div>" : "") + "</div>");
     if (DATA.CMPN[id]) { var cardEl = q.querySelector(".acard"); photoRow(id, true, function () { return qs && qs[i] && qs[i].d[0] === key; }).then(function (w) { if (w && cardEl.isConnected) { var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); var lab = document.createElement("small"); lab.textContent = "📷 사진 높이를 실제 길이에 맞춰 보여 줘요(대략)"; box.appendChild(lab); cardEl.appendChild(box); fitRow(w); } }); }
     var cf = q.querySelector(".acard .oimg"), already = q.querySelector(":scope > .oimg");
     if (already && DATA.IMG[key] && DATA.IMG[key][0] === "i") cf.remove();   // 그림 문제는 위에 이미 그림이 있어요

@@ -22,6 +22,7 @@
       ".oimg{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 10px}.oimg svg,.oimg img{width:min(240px,74vw);height:auto;border-radius:12px;display:block}.oimg img{max-height:280px;object-fit:contain;background:#f6efe0}.prow{display:flex;align-items:flex-end;justify-content:center;gap:6px;width:100%}.prow figure{margin:0;text-align:center;min-width:0;display:flex;flex-direction:column;align-items:center}.prow img,.prow svg{height:auto;width:auto;max-width:none;background:#f6efe0;border-radius:8px;display:block}.prow figcaption{max-width:90px}.prow .hl img,.prow .hl svg{outline:3px solid #e8742a}.prow figcaption{font-size:.7rem;line-height:1.3;color:var(--muted,#666)}.prows details{font-size:.72rem;color:var(--muted,#666);text-align:left;width:100%}.prows details a{word-break:break-all}.oimg.cmp{align-self:stretch;width:100%}.oimg.cmp svg{width:100%;max-width:330px;height:auto;border-radius:12px}.acard .oimg{align-self:stretch}.oimg small{color:var(--muted,#666);font-size:.76rem;text-align:center;line-height:1.4}" +
       ".spec{display:grid;grid-template-columns:4.2em 1fr;gap:2px 8px;font-size:.84rem;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line,#ccc);text-align:left}.spec dt{color:var(--muted,#666)}.spec dd{margin:0}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}" +
       ".ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}";
+    st.textContent += ".oimg img,.oimg svg,.prow img,.prow svg,.ar .ic img,.ar .ic svg{cursor:zoom-in}" + "#aview{position:fixed;inset:0;z-index:9999;background:#000e;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}#aview .vb{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px}#aview .vb button{border:0;border-radius:999px;padding:8px 13px;font-size:.95rem;background:#fff;color:#111}#aview .vz{color:#fff;font-size:.85rem;min-width:3.2em;text-align:center}#aview .vi{flex:1;overflow:hidden;position:relative;touch-action:none;display:flex;align-items:center;justify-content:center}#aview .vi img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;will-change:transform;cursor:grab}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}#aview .vh{color:#ccc}";
     document.head.appendChild(st);
   }
   var bar;
@@ -172,6 +173,73 @@
       im.src = r.src;
     });
   }
+
+
+  // ── 그림·사진 크게 보기: 누르면 전체 화면으로 열려요. 두 손가락 벌리기·＋/－·마우스 휠·두 번 누르기로 확대(최대 8배), 끌어서 이동, 확대하면 더 큰 사진(1280px)으로 바뀌어요.
+  var ZMAX = 8;
+  function bigSrc(src) {
+    if (/\/\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src)) return src.replace(/\/\d+px-([^\/]+)$/, "/1280px-$1");
+    if (/^https:\/\/www\.artic\.edu\/iiif\/.*\/full\/\d+,\//.test(src || "")) return src.replace(/\/full\/\d+,\//, "/full/1200,/");
+    return null;
+  }
+  function openViewer(src, cap) {
+    var old = document.getElementById("aview"); if (old) old.remove();
+    var v = document.createElement("div"); v.id = "aview"; v.setAttribute("role", "dialog"); v.setAttribute("aria-label", "그림 크게 보기");
+    v.innerHTML = '<div class="vb"><button type="button" data-v="in" aria-label="확대">＋</button><button type="button" data-v="out" aria-label="축소">－</button><button type="button" data-v="rs">⟲ 처음 크기</button><span class="vz">100%</span><button type="button" data-v="fs" hidden>⛶ 전체 화면</button><button type="button" data-v="x">✖ 닫기</button></div><div class="vi"><img alt="작품 그림" draggable="false"></div><div class="vc"></div>';
+    var stage = v.querySelector(".vi"), img = stage.querySelector("img"), zl = v.querySelector(".vz"), vc = v.querySelector(".vc");
+    vc.innerHTML = (cap || "") + '<br><small class="vh">두 손가락으로 벌리면 확대, 끌면 이동, 두 번 누르면 확대·축소</small>';
+    var S = 1, X = 0, Y = 0, ptrs = {}, last = null, lastTap = 0;
+    function box() { return { w: stage.clientWidth, h: stage.clientHeight }; }
+    function clamp() { var b = box(), iw = img.clientWidth * S, ih = img.clientHeight * S, mx = Math.max(0, (iw - b.w) / 2) + 40, my = Math.max(0, (ih - b.h) / 2) + 40; X = Math.max(-mx, Math.min(mx, X)); Y = Math.max(-my, Math.min(my, Y)); }
+    function apply() { clamp(); img.style.transform = "translate(" + X + "px," + Y + "px) scale(" + S + ")"; zl.textContent = Math.round(S * 100) + "%"; if (S > 1.4) loadBig(); }
+    function zoomAt(ns, cx, cy) {   // 화면 위의 한 점(cx,cy)을 고정한 채 배율 바꾸기
+      ns = Math.max(1, Math.min(ZMAX, ns)); var b = box(), px = cx - b.w / 2, py = cy - b.h / 2; X = px - (px - X) * ns / S; Y = py - (py - Y) * ns / S; S = ns; if (S === 1) { X = 0; Y = 0; } apply();
+    }
+    var bigDone = false;
+    function loadBig() {
+      if (bigDone) return; bigDone = true; var bs = bigSrc(src); if (!bs || navigator.onLine === false) return;
+      var t = new Image(); t.onload = function () { if (document.getElementById("aview") === v) { img.src = bs; vc.querySelector(".vh").textContent = "고화질 그림으로 바뀌었어요"; } }; t.src = bs;
+    }
+    img.src = src;
+    v.querySelector("[data-v=fs]").hidden = !(v.requestFullscreen && document.fullscreenEnabled);
+    v.addEventListener("click", function (e) {
+      var b = e.target.closest("button"), k = b && b.dataset.v, c = box();
+      if (k === "x" || e.target === v || e.target === vc) { if (document.fullscreenElement) { try { document.exitFullscreen(); } catch (x) {} } v.remove(); }
+      else if (k === "in") zoomAt(S * 1.6, c.w / 2, c.h / 2); else if (k === "out") zoomAt(S / 1.6, c.w / 2, c.h / 2);
+      else if (k === "rs") zoomAt(1, c.w / 2, c.h / 2);
+      else if (k === "fs") { try { if (document.fullscreenElement) document.exitFullscreen(); else v.requestFullscreen(); } catch (x) {} }
+    });
+    stage.addEventListener("wheel", function (e) { e.preventDefault(); var r = stage.getBoundingClientRect(); zoomAt(S * (e.deltaY < 0 ? 1.25 : 0.8), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+    stage.addEventListener("pointerdown", function (e) {
+      stage.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; last = null;
+      var now = Date.now(); if (Object.keys(ptrs).length === 1 && now - lastTap < 300) { var r = stage.getBoundingClientRect(); zoomAt(S > 1.5 ? 1 : 3, e.clientX - r.left, e.clientY - r.top); lastTap = 0; } else lastTap = now;
+    });
+    stage.addEventListener("pointermove", function (e) {
+      if (!ptrs[e.pointerId]) return; var ids = Object.keys(ptrs), prev = ptrs[e.pointerId]; ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (ids.length === 1) { if (S > 1) { X += e.clientX - prev.x; Y += e.clientY - prev.y; apply(); } }
+      else if (ids.length === 2) {
+        var a = ptrs[ids[0]], b = ptrs[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, r = stage.getBoundingClientRect();
+        if (last) { X += mx - last.mx; Y += my - last.my; zoomAt(S * d / last.d, mx - r.left, my - r.top); } last = { d: d, mx: mx, my: my };
+      }
+    });
+    function up(e) { delete ptrs[e.pointerId]; last = null; }
+    stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
+    document.body.appendChild(v); apply();
+  }
+  document.addEventListener("keydown", function (e) {
+    var v = document.getElementById("aview"); if (!v) return;
+    if (e.key === "Escape") v.remove(); else if (e.key === "+" || e.key === "=") v.querySelector("[data-v=in]").click(); else if (e.key === "-") v.querySelector("[data-v=out]").click();
+  });
+  document.addEventListener("click", function (e) {
+    var el = e.target.closest && e.target.closest(".oimg img, .oimg svg, .prow img, .prow svg, .ar .ic img, .ar .ic svg"); if (!el || el.closest("#aview")) return;
+    var src, cap = "", oi = el.closest(".oimg"), card = el.closest(".ar"), sm = oi ? oi.querySelector("small") : (card ? card.querySelector(".cr") : null), cname = card && card.querySelector("h2") ? card.querySelector("h2").childNodes[card.querySelector("h2").childNodes.length - 2].textContent.replace("★", "").trim() : "";
+    if (el.tagName.toLowerCase() === "img") src = el.currentSrc || el.src;
+    else { var cl = el.cloneNode(true), vb = el.viewBox && el.viewBox.baseVal; cl.setAttribute("width", 900); cl.setAttribute("height", vb && vb.width ? Math.round(900 * vb.height / vb.width) : 900); src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(cl)); }
+    if (!src) return;
+    var fig = el.closest("figure"), name = fig && fig.querySelector("figcaption") ? fig.querySelector("figcaption").textContent : "";
+    cap = ((name || cname) ? "<b>" + esc(name || cname) + "</b><br>" : "") + (sm && !fig ? sm.innerHTML : (el.getAttribute("alt") || el.getAttribute("aria-label") || ""));
+    openViewer(src, cap);
+  });
 
   function boot() {
     try { saved = JSON.parse(lsGet(SV) || "null"); if (!saved || typeof saved !== "object" || !Object.keys(saved).length) saved = null; } catch (e) { saved = null; }

@@ -89,8 +89,9 @@ def main():
                 if c["f"] in s["scr"]: continue
                 s["scr"][c["f"]] = analyze(c); tried += 1
                 if good(s["scr"][c["f"]]): picked.append(c)
-        elif not screen: picked = s["cands"][:2]
         json.dump(st, open(STATE, "w", encoding="utf-8"), ensure_ascii=False)
+        if not screen:   # 1단계만: 후보 목록(state)만 저장하고, 음질 확인 전이라 music_pick.json 은 건드리지 않아요
+            print(f"[{n}/{len(works)}] 후보 {len(s['cands'])}개: " + ", ".join(c["f"][:40] for c in s["cands"][:2]), flush=True); continue
         res = json.load(open(OUT, encoding="utf-8")) if os.path.exists(OUT) else {}
         if picked: res[t] = [{"f": c["f"], "lic": c["lic"], "kbps": c["kbps"], "scr": (s.get("scr") or {}).get(c["f"])} for c in picked[:2]]
         else: res.pop(t, None)

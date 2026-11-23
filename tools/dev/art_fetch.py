@@ -90,7 +90,9 @@ def check(keys, toks):
     return None, why
 
 def main():
-    args = sys.argv[1:]; dry = "--dry-run" in args; refresh = "--refresh" in args; only = args[args.index("--only") + 1] if "--only" in args else None
+    args = sys.argv[1:]; dry = "--dry-run" in args
+    if not dry: print("그림 파일은 클라우드·저장소에 저장하지 않아요(2026-11-23 사용자 결정). --dry-run(주소·라이선스 점검)만 쓸 수 있어요."); return 1
+    refresh = "--refresh" in args; only = args[args.index("--only") + 1] if "--only" in args else None
     limit = int(args[args.index("--limit") + 1]) if "--limit" in args else None
     os.makedirs(OUT, exist_ok=True)
     idx_path = os.path.join(OUT, "index.json"); idx = json.load(open(idx_path, encoding="utf-8")) if os.path.exists(idx_path) else {}

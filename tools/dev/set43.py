@@ -121,7 +121,7 @@ for a in A.values():
     tk = _tokens(a["id"], a["en"], a["name"])
     for w in sorted(a["works"], key=lambda z: z["fame"]):
         if w["t"] not in WIKI: continue
-        W[w["t"]] = {"k": WIKI[w["t"]], "a": a["id"], "t": tk}
+        W[w["t"]] = {"k": WIKI[w["t"]], "a": a["id"], "t": tk, "kd": w["kind"]}
         G.setdefault(a["id"], w["t"])
         QI.append(["이 그림의 작가는 누구일까요?", a["name"], pick_artists(a, w["fame"], ban=AMBIG.get(w["t"], ())), a["era"], w["fame"], w["t"], f"‘{w['t']}’ — " + info(a, w), [w["y"], w["place"] or "", J[w["kind"]], a["name"], a["years"], a["country"]]])
 DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}}

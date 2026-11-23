@@ -68,7 +68,9 @@ def clip(src, dst):
     p = subprocess.run(cmd, capture_output=True, text=True)
     return (p.returncode == 0 and os.path.exists(dst) and os.path.getsize(dst) > 3000), p.stderr[-120:]
 def main():
-    a = sys.argv[1:]; dry = "--dry-run" in a; refresh = "--refresh" in a; only = a[a.index("--only") + 1] if "--only" in a else None
+    a = sys.argv[1:]; dry = "--dry-run" in a
+    if not dry: print("음원 파일은 클라우드·저장소에 저장하지 않아요(2026-11-23 사용자 결정). --dry-run(주소·라이선스 점검)만 쓸 수 있어요."); return 1
+    refresh = "--refresh" in a; only = a[a.index("--only") + 1] if "--only" in a else None
     limit = int(a[a.index("--limit") + 1]) if "--limit" in a else None
     os.makedirs(OUT, exist_ok=True); os.makedirs(TMP, exist_ok=True)
     ip = os.path.join(OUT, "index.json"); idx = json.load(open(ip, encoding="utf-8")) if os.path.exists(ip) else {}

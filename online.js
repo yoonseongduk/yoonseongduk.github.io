@@ -27,16 +27,60 @@
   // 허용된 그림 파일 주소만(위키미디어 서버)
   // 위키백과 요약은 그림 주소를 thumb.wikimedia.org(+?utm_…)로 줘요. 같은 경로를 upload.wikimedia.org 에서 꼬리표 없이 받아요.
   function okImg(u) { return typeof u === "string" && /^https:\/\/(upload|thumb)\.wikimedia\.org\//.test(u); }
+  function okMuseum(u) { return typeof u === "string" && /^https:\/\/(www\.artic\.edu\/iiif\/|openaccess-cdn\.clevelandart\.org\/)/.test(u); }
   function imgUrl(u) { return okImg(u) ? u.replace(/^https:\/\/thumb\.wikimedia\.org\//, "https://upload.wikimedia.org/").replace(/\?.*$/, "") : null; }
   function fileOf(u) { var m = /\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^\/]+)/.exec(u || ""); return m ? decodeURIComponent(m[1]) : null; }
   var PD = /public domain|^pd\b|^pd-|cc0|cc-zero/i;
   function norm(t) { return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }   // 악센트·대소문자를 맞춰서 비교(Cézanne = cezanne)
+  // ── 대체 출처(Plan B·C): 위키백과 항목에 그림이 없거나 공개 도메인 표시가 없을 때 차례로 시도해요. 모두 작가 이름 확인 + 공개 도메인·CC0 표시 확인을 거쳐요.
+  function words(t) { return String(t || "").replace(/_/g, " ").replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter(function (w) { return w.length > 2 && ["the", "and", "with", "von", "van", "del", "della", "des", "les"].indexOf(w.toLowerCase()) < 0; }); }
+  var NOTSAME = /\b(study|studies|sketch|drawing|print|etching|copy|after|detail|fragment|variant|replica|miniature)\b/i;   // 습작·스케치·판화·모사작은 같은 작품이 아니라서 거르기
+  function sameTitle(a, b) { if (NOTSAME.test(b) && !NOTSAME.test(a)) return false; return sameTitle0(a, b); }
+  function sameTitle0(a, b) {   // 두 제목의 낱말이 많이 겹치면 같은 작품으로 봐요(출처마다 영어 제목이 조금씩 달라서): 짧은 쪽 낱말의 75% 이상, 최소 2개
+    var wa = words(norm(a)), wb = words(norm(b)); if (!wa.length || !wb.length) return false;
+    var short = wa.length <= wb.length ? wa : wb, long = (wa.length <= wb.length ? wb : wa).join(" ");
+    var hit = short.filter(function (w) { return long.indexOf(w) >= 0; }).length;
+    return hit >= Math.min(2, short.length) && hit / short.length >= 0.75;
+  }
+  function hasTok(text, toks) { var t = norm(text); return (toks || []).some(function (k) { return k && t.indexOf(norm(k)) >= 0; }); }
+  var KINDRE = { "그림": /painting|oil|tempera|panel|canvas/i, "벽화": /mural|fresco|painting/i, "서화": /painting|scroll|ink/i, "판화": /print|etching|woodcut|engraving/i, "드로잉": /drawing/i, "조각": /sculpture/i };
+  function kindOk(kind, type) { return !kind || !KINDRE[kind] || KINDRE[kind].test(String(type || "")); }   // 작품 종류(그림·판화·조각…)가 같아야 같은 작품으로 봐요
+  function srcCommons(en, toks) {   // B: 위키미디어 커먼즈 그림 파일 직접 검색
+    return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8&gsrsearch=" + encodeURIComponent(en + " painting filetype:bitmap") + "&prop=imageinfo&iiprop=extmetadata|url&iiurlwidth=330").then(function (d) {
+      var pages = (d && d.query && d.query.pages) || {}, ks = Object.keys(pages).sort(function (a, b) { return (pages[a].index || 0) - (pages[b].index || 0); });
+      for (var i = 0; i < ks.length; i++) {
+        var p = pages[ks[i]], ii = p.imageinfo && p.imageinfo[0]; if (!ii || !okImg(ii.thumburl)) continue;
+        var md = ii.extmetadata || {}, lic = md.LicenseShortName && md.LicenseShortName.value, who = ((md.Artist && md.Artist.value) || "") + " " + ((md.ObjectName && md.ObjectName.value) || "") + " " + ((md.ImageDescription && md.ImageDescription.value) || "") + " " + p.title;
+        if (!lic || !PD.test(lic) || !sameTitle(en, p.title + " " + who) || !hasTok(who, toks)) continue;
+        return { src: imgUrl(ii.thumburl), page: ii.descriptionurl, title: p.title.replace(/^File:/, ""), license: lic, label: "위키미디어 커먼즈" };
+      }
+      return null;
+    });
+  }
+  function srcCMA(en, toks, kind) {   // D: 클리블랜드 미술관(CC0 표시)
+    return json("https://openaccess-api.clevelandart.org/api/artworks/?cc0=1&has_image=1&limit=6&q=" + encodeURIComponent(en)).then(function (d) {
+      var list = (d && d.data) || [];
+      for (var i = 0; i < list.length; i++) { var a = list[i], who = (a.creators || []).map(function (c) { return c.description || ""; }).join(" "), u = a.images && a.images.web && a.images.web.url;
+        if (!u || !okMuseum(u) || !kindOk(kind, a.type) || !sameTitle(en, a.title) || !hasTok(who, toks)) continue;
+        return { src: u, page: a.url || "https://www.clevelandart.org/art/" + a.accession_number, title: a.title, license: "CC0(클리블랜드 미술관 표시)", label: "클리블랜드 미술관" };
+      }
+      return null;
+    });
+  }
+  var CHAIN = [srcCommons, srcCMA];   // 시카고 미술관 API는 브라우저(CORS)에서 막혀 쓰지 않아요(2026-11-23 확인)
+  function fallback(en, toks, kind) {
+    var i = 0; function next() { if (i >= CHAIN.length) return Promise.resolve(null); var f = CHAIN[i++]; return f(en, toks, kind).then(function (r) { return r || next(); }).catch(function () { return next(); }); }
+    return next();
+  }
   // keys: ["en:Mona_Lisa", ...] 후보를 차례로 시도. tokens: 설명·요약에 하나 이상 들어 있어야 하는 작가 이름(소문자·한글)
-  function wikiImage(keys, tokens) {
-    var id = (keys || []).join("|"); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
+  function wikiImage(keys, tokens, kind) {
+    var id = (keys || []).join("|") + "|" + (kind || ""); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
     var i = 0;
     function next() {
-      if (i >= keys.length) { cache[id] = null; saveCache(); return Promise.resolve(null); }
+      if (i >= keys.length) {
+        var en = ((keys.filter(function (k) { return /^en:/.test(k); })[0] || keys[0] || "").replace(/^\w+:/, "")).replace(/_/g, " ");
+        return fallback(en, tokens, kind).then(function (r) { cache[id] = r || null; saveCache(); return r || null; });
+      }
       var k = keys[i++], m = /^(en|ko):(.+)$/.exec(k); if (!m) return next();
       return json("https://" + m[1] + ".wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(m[2].replace(/ /g, "_"))).then(function (s) {
         if (!s || s.type !== "standard" || !s.thumbnail || !okImg(s.thumbnail.source)) return next();
@@ -48,7 +92,7 @@
           var lic = md && md.LicenseShortName && md.LicenseShortName.value;
           if (!lic || !PD.test(lic)) return next();                                                                                 // 공개 도메인 표시가 없으면 버려요
           var url = s.content_urls && s.content_urls.desktop && s.content_urls.desktop.page || ("https://" + m[1] + ".wikipedia.org/wiki/" + encodeURIComponent(m[2]));
-          var res = { src: src, page: url, title: s.title || m[2], license: lic };
+          var res = { src: src, page: url, title: s.title || m[2], license: lic, label: "위키백과" };
           cache[id] = res; saveCache(); return res;
         });
       });
@@ -100,6 +144,6 @@
       if (ok) set(KEY, "1"); return ok;
     },
     off: function () { try { localStorage.removeItem(KEY); } catch (e) {} },
-    json: json, wikiImage: wikiImage, commonsAudio: commonsAudio, commonsFiles: commonsFiles, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
+    json: json, wikiImage: wikiImage, commonsAudio: commonsAudio, commonsFiles: commonsFiles, imageFallback: fallback, _src: { commons: srcCommons, cma: srcCMA }, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
   };
 })();

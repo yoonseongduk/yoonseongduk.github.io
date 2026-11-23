@@ -21,7 +21,7 @@
   // ── 그림 하나 얻기: 통과하면 {src, page, title, license}, 아니면 null
   function preload(src) { return new Promise(function (res) { var im = new Image(), t = setTimeout(function () { res(false); }, 9000); im.onload = function () { clearTimeout(t); res(true); }; im.onerror = function () { clearTimeout(t); res(false); }; im.src = src; }); }
   var blobUrls = {};
-  function fetchOnline(title) { var w = DATA.W[title]; return w && window.fgOnline && fgOnline.on() ? fgOnline.wikiImage(w.k, w.t.map(norm)) : Promise.resolve(null); }
+  function fetchOnline(title) { var w = DATA.W[title]; return w && window.fgOnline && fgOnline.on() ? fgOnline.wikiImage(w.k, w.t.map(norm), w.kd) : Promise.resolve(null); }
   function localInfo(title) {   // 오프라인에 있는 그림 정보(없으면 null): 앱에 든 것 → 폰에 저장한 것
     var e = local && local[title]; if (e) return { kind: "file", src: "art-img/" + e.f, page: e.p, title: e.t || title, license: e.l || "공개 도메인" };
     e = saved && saved[title]; return e ? { kind: "cache", src: e.src, page: e.page, title: e.title || title, license: e.license || "공개 도메인" } : null;
@@ -51,7 +51,7 @@
   var has = function (title) { return !!DATA.W[title] && (mode === "online" || (mode === "local" && !!localInfo(title))); };
   var localCount = function () { return titles.filter(function (t) { return !!localInfo(t); }).length; };
   var savedCount = function () { return saved ? Object.keys(saved).length : 0; };
-  var credit = function (r) { return '🖼️ 그림 출처: <a href="' + esc(r.page) + '" target="_blank" rel="noopener noreferrer">위키백과 「' + esc(r.title) + "」</a> (" + esc(r.license) + ")"; };
+  var credit = function (r) { return '🖼️ 그림 출처: <a href="' + esc(r.page) + '" target="_blank" rel="noopener noreferrer">' + esc(r.label || "위키백과") + ' 「' + esc(r.title) + "」</a> (" + esc(r.license) + ")"; };
   var CONSENT = "🌐 온라인 그림을 켜요.\n\n· 인터넷에서 저작권이 끝난 명화만 불러와요.\n· 불러올 때 이 기기의 인터넷 주소가 위키백과·위키미디어 서버에 전달돼요(이 앱은 개인 정보를 보내지 않아요).\n· 언제든 '글로만'으로 끌 수 있어요.\n\n켤까요?";
 
   // ── 화면 위 모드 선택
@@ -186,7 +186,11 @@
 
   // ── 그림 크게 보기: 전체 화면 + 확대(손가락 두 개로 벌리기·마우스 휠·＋/－·두 번 누르기) + 끌어서 이동. 확대하면 더 큰 그림(1280px)을 불러와 선명하게 보여요(보기를 연 경우에만 인터넷을 써요).
   var ZMAX = 8;
-  function bigSrc(src) { return /\/\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src) ? src.replace(/\/\d+px-([^\/]+)$/, "/1280px-$1") : null; }
+  function bigSrc(src) {
+    if (/\/\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src)) return src.replace(/\/\d+px-([^\/]+)$/, "/1280px-$1");
+    if (/^https:\/\/www\.artic\.edu\/iiif\/.*\/full\/\d+,\//.test(src || "")) return src.replace(/\/full\/\d+,\//, "/full/1200,/");
+    return null;
+  }
   function openViewer(src, cap) {
     var old = document.getElementById("aview"); if (old) old.remove();
     var v = document.createElement("div"); v.id = "aview"; v.setAttribute("role", "dialog"); v.setAttribute("aria-label", "그림 크게 보기");

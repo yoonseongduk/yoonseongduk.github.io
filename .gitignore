@@ -17,3 +17,14 @@ tools/dev/gemini_src/
 비공개_동기화.md
 tools/dev/gs_shot*.png
 tools/dev/index.png
+
+# 음원·그림 파일은 저장소에 올리지 않는다(2026-11-23 사용자 결정: 쓰는 폰에만 저장)
+art-img/
+classic-audio/
+*.ogg
+*.oga
+*.opus
+*.mp3
+*.flac
+*.wav
+*.m4a

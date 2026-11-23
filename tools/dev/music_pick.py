@@ -54,9 +54,42 @@ def candidates(title):
             score = (kbps if ext in LOSSY else 160) if kbps or ext not in LOSSY else 60
             out.append({"f": name[5:], "url": ii["url"], "lic": lic, "kbps": round(kbps) if kbps else None, "dur": round(dur) if dur else None, "size": size, "score": round(score)})
     out.sort(key=lambda c: -c["score"]); return out
+
+# ───────── 두 번째 후보 출처: 인터넷 아카이브(archive.org). 항목에 licenseurl(공개 도메인·CC0)이 있는 것만, 곡 낱말이 제목·식별자에 있어야 해요.
+IAFMT = {"Ogg Vorbis": 3, "VBR MP3": 2, "MP3": 2, "128Kbps MP3": 1, "64Kbps MP3": 0, "Flac": 2}
+def ia_candidates(title):
+    q, toks = AUDIO[title].split("|"); toks = [t.strip().lower() for t in toks.split(",")]
+    words = " ".join(w for w in re.sub(r"[^\w ]", " ", q).split() if len(w) > 2)
+    qq = f"({words}) AND mediatype:audio AND (licenseurl:*publicdomain* OR licenseurl:*zero*)"
+    d = get("https://archive.org/advancedsearch.php?" + urllib.parse.urlencode({"q": qq, "fl[]": ["identifier", "title", "licenseurl", "downloads"], "rows": 12, "sort[]": "downloads desc", "output": "json"}, doseq=True))
+    out = []
+    for doc in ((d or {}).get("response", {}).get("docs", []) or []):
+        ident = doc["identifier"]; ttl = (str(doc.get("title", "")) + " " + ident).lower()
+        if not all(any(a in ttl for a in t.split("/")) for t in toks) or BAD.search(ttl): continue
+        m = get("https://archive.org/metadata/" + urllib.parse.quote(ident))
+        if not m: continue
+        lic = (m.get("metadata", {}) or {}).get("licenseurl", "")
+        if not re.search(r"publicdomain|zero", str(lic)): continue
+        best = None
+        for f in m.get("files", []):
+            fmt = f.get("format"); 
+            if fmt not in IAFMT: continue
+            try: size = int(f.get("size", 0)); dur = float(f.get("length", 0))
+            except Exception: continue
+            if dur < 25 or size > 80_000_000: continue
+            kbps = size * 8 / dur / 1000
+            if fmt != "Flac" and kbps < 64: continue
+            key = (IAFMT[fmt], kbps)
+            if not best or key > best[0]: best = (key, f, size, dur, kbps)
+        if best:
+            _, f, size, dur, kbps = best
+            out.append({"f": "ia:" + ident + "/" + f["name"], "url": f"https://archive.org/download/{urllib.parse.quote(ident)}/{urllib.parse.quote(f['name'])}", "lic": "공개 도메인·CC0(인터넷 아카이브 표시)", "kbps": round(kbps), "dur": round(dur), "size": size, "score": round(kbps) + 5, "page": f"https://archive.org/details/{ident}"})
+        if len(out) >= 4: break
+    return out
 def analyze(c):
     """앞부분을 잠깐 받아 20초를 분석: 소리 크기 변화폭(dB)과 높은 소리가 남아 있는지(98% 에너지 주파수). 파일은 바로 지워요."""
     ext = os.path.splitext(c["f"].lower())[1]; n = 3_500_000 if ext not in LOSSY else 1_600_000
+    if os.environ.get("PC_ANALYZE") != "1": return None   # 파일을 받는 단계는 사용자 PC에서만(클라우드에는 음원 파일을 두지 않아요)
     d = get(c["url"], binary=True, rng=f"bytes=0-{n - 1}")
     if not d or len(d) < 50_000: return None
     os.makedirs(TMP, exist_ok=True); p = os.path.join(TMP, "an" + ext); open(p, "wb").write(d)
@@ -73,8 +106,19 @@ def analyze(c):
     return {"dyn": round(dyn, 1), "roll": round(roll)}
 def good(a): return a is not None and a["dyn"] >= 22 and a["roll"] >= 3000
 def main():
-    a = sys.argv[1:]; screen = "--no-screen" not in a; only = a[a.index("--only") + 1] if "--only" in a else None; limit = int(a[a.index("--limit") + 1]) if "--limit" in a else None
+    a = sys.argv[1:]; screen = "--no-screen" not in a and os.environ.get("PC_ANALYZE") == "1"; only = a[a.index("--only") + 1] if "--only" in a else None; limit = int(a[a.index("--limit") + 1]) if "--limit" in a else None
     st = json.load(open(STATE, encoding="utf-8")) if os.path.exists(STATE) else {}
+    if "--ia" in a:   # 인터넷 아카이브 후보를 더하는 단계(커먼즈 단계 뒤에 실행)
+        works = [t for t in AUDIO if not only or t == only]
+        if limit: works = works[:limit]
+        for n, t in enumerate(works, 1):
+            s = st.setdefault(t, {})
+            if s.get("ia_done"): continue
+            add = ia_candidates(t); have = {c["f"] for c in s.get("cands", [])}
+            s["cands"] = sorted(s.get("cands", []) + [c for c in add if c["f"] not in have], key=lambda c: -c["score"]); s["ia_done"] = True
+            json.dump(st, open(STATE, "w", encoding="utf-8"), ensure_ascii=False)
+            print(f"[{n}/{len(works)}] 인터넷 아카이브 후보 +{len(add)}: " + ", ".join(c["f"][3:50] for c in add[:2]), flush=True)
+        return
     works = [t for t in AUDIO if not only or t == only]
     if limit: works = works[:limit]
     for n, t in enumerate(works, 1):

@@ -2,7 +2,7 @@
 #   py music_pick.py              (1단계: 이름·라이선스·길이·비트레이트로 거르고 → 2단계: 앞 20초를 분석해 잡음·옛 녹음 티가 나는 것 제외)
 #   py music_pick.py --no-screen  (1단계만)   --only 곡제목   --limit N
 # 거르는 기준: 파일 이름에 옛 녹음(1900년대 초 음반·78회전)·MIDI·편곡·피아노 연주 같은 낱말이 없을 것, 공개 도메인·CC0 표시, 길이 25초 이상,
-#   손실 압축(ogg·mp3)은 96kbps 이상, 앞 20초 분석에서 ① 소리 크기 변화폭 22dB 이상 ② 높은 소리(6kHz 이상)가 남아 있을 것(잡음 많은 옛 녹음은 변화폭이 작고 고음이 잘려 있어요).
+#   손실 압축(ogg·mp3)은 64kbps 이상, 앞 20초 분석에서 ① 소리 크기 변화폭 22dB 이상 ② 높은 소리(6kHz 이상)가 남아 있을 것(잡음 많은 옛 녹음은 변화폭이 작고 고음이 잘려 있어요).
 import os, re, sys, json, time, subprocess, urllib.request, urllib.error, urllib.parse
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -49,7 +49,7 @@ def candidates(title):
             dur = meta(ii, "length") or meta(ii, "playtime_seconds")
             if dur is not None and dur < 25: continue
             kbps = size * 8 / dur / 1000 if dur else None
-            if ext in LOSSY and kbps is not None and kbps < 96: continue
+            if ext in LOSSY and kbps is not None and kbps < 64: continue
             if ext not in LOSSY and size > 80_000_000: continue
             score = (kbps if ext in LOSSY else 160) if kbps or ext not in LOSSY else 60
             out.append({"f": name[5:], "url": ii["url"], "lic": lic, "kbps": round(kbps) if kbps else None, "dur": round(dur) if dur else None, "size": size, "score": round(score)})
@@ -79,7 +79,7 @@ def main():
     if limit: works = works[:limit]
     for n, t in enumerate(works, 1):
         s = st.setdefault(t, {})
-        if "cands" not in s: s["cands"] = candidates(t)
+        if not s.get("cands"): s["cands"] = candidates(t)
         picked = [c for c in s["cands"] if screen and c["f"] in s.get("scr", {}) and good(s["scr"][c["f"]])]
         tried = 0
         if screen:

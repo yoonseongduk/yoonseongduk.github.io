@@ -106,9 +106,12 @@ make_page(H + "classic-gallery.html", "클래식 작곡가별 모음", "🎻", 2
           "작곡가와 대표곡의 이름·작곡 연도·갈래를 정리했어요. 작곡 연도는 자료마다 조금 다를 수 있어요(초연·출판 연도와 다를 수 있어요).", BODY, JS, CSS)
 
 # ───────── 듣고 맞히기 모드(classic-mode.js) 만들기 + 두 화면에 끼우기
+_pp = os.environ.get("PICK_FILE") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "music_pick.json")
+_pk = json.load(open(_pp, encoding="utf-8")) if os.path.exists(_pp) else {}
+PICK = {t: [x["f"] for x in v] for t, v in _pk.items() if t in AUDIO}   # 음질 선별을 통과한 곡만(파일 이름 목록, 음원 파일은 저장소에 없음)
 W = {w["t"]: [C[w["comp"]]["name"], w["y"], w["g"], C[w["comp"]]["era"], w["fame"], C[w["comp"]]["country"], w["comp"]] for w in ALLW}
 DATA = {"W": W, "C": [[c["name"], c["era"], c["id"]] for c in C.values()], "AMBIG": {t: sorted(s) for t, s in AMBIG.items()},
-        "A": {t: [v.split("|")[0], [x.strip().lower() for x in v.split("|")[1].split(",")]] for t, v in AUDIO.items() if t in W}}
+        "P": PICK}
 tpl = open("classic_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../classic-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):

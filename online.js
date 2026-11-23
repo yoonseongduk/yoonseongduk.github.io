@@ -75,6 +75,22 @@
       });
     });
   }
+  // 미리 골라 둔 커먼즈 음원 파일 이름들(좋은 순서)을 확인: 공개 도메인·CC0 표시가 있는 것만 순서대로 돌려줘요
+  function commonsFiles(names, maxBytes) {
+    var id = "f|" + (names || []).join("|"); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
+    if (!names || !names.length) return Promise.resolve([]);
+    return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata|url|size&titles=" + encodeURIComponent(names.map(function (n) { return "File:" + n; }).join("|"))).then(function (c) {
+      if (!c) return [];
+      var pages = (c.query && c.query.pages) || {}, by = {}; Object.keys(pages).forEach(function (k) { by[pages[k].title] = pages[k]; });
+      var out = []; names.forEach(function (n) {
+        var ii = by["File:" + n] && by["File:" + n].imageinfo && by["File:" + n].imageinfo[0]; if (!ii) return;
+        var lic = ii.extmetadata && ii.extmetadata.LicenseShortName && ii.extmetadata.LicenseShortName.value;
+        if (!lic || !PD.test(lic) || !okImg(ii.url) || (ii.size || 0) > (maxBytes || 80000000)) return;
+        out.push({ src: ii.url, page: ii.descriptionurl || ("https://commons.wikimedia.org/wiki/" + encodeURIComponent(("File:" + n).replace(/ /g, "_"))), title: n, license: lic, size: ii.size || 0 });
+      });
+      cache[id] = out; saveCache(); return out;
+    });
+  }
   window.fgOnline = {
     enabled: ENABLED,
     on: function () { return ENABLED && get(KEY) === "1"; },
@@ -84,6 +100,6 @@
       if (ok) set(KEY, "1"); return ok;
     },
     off: function () { try { localStorage.removeItem(KEY); } catch (e) {} },
-    json: json, wikiImage: wikiImage, commonsAudio: commonsAudio, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
+    json: json, wikiImage: wikiImage, commonsAudio: commonsAudio, commonsFiles: commonsFiles, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
   };
 })();

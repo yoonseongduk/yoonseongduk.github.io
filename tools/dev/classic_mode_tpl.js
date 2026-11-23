@@ -93,7 +93,7 @@
       '<button type="button" data-m="mix" class="' + (mode === "mix" ? "on" : "") + '">🔀 섞어서(한 판 최대 3개)</button>' +
       '<button type="button" data-m="only" class="' + (mode === "only" ? "on" : "") + '">🎧 듣기 문제만</button></div>';
     h += "<small>" + (mode === "off" ? "듣기 문제를 풀려면 아래에서 골라요. 처음 한 번은 인터넷이 필요하고, 들은 곡은 이 폰에 저장돼서 다음부터는 인터넷 없이도 들려요." :
-      (on ? "인터넷에서 저작권이 끝난 녹음을 찾아 들려줘요(위키미디어 서버에 이 기기의 주소가 전달돼요). 선택한 시간(" + LIMIT + "초) 동안 들려요." : (n ? "지금은 인터넷이 없어서 이 폰에 저장된 음원(" + n + "곡)만 나와요." : "지금은 인터넷이 없고 저장된 음원도 없어서 글로만 나와요."))) + " · 저장된 음원 " + n + "곡</small>";
+      (on ? "인터넷에서 저작권이 끝난 녹음을 찾아 들려줘요(위키미디어 서버에 이 기기의 주소가 전달돼요). 선택한 시간(" + LIMIT + "초) 동안 들려요." : (n ? "지금은 인터넷이 없어서 이 폰에 저장된 음원(" + n + "곡)만 나와요." : "지금은 인터넷이 없고 저장된 음원도 없어서 글로만 나와요."))) + " · 저장된 음원 " + n + " / 듣기 가능 " + Object.keys(DATA.P).length + "곡 · <a href=\"offline-media.html\">📊 저장 현황</a></small>";
     h += '<div class="row"><small>듣기 시간:</small>' + [15, 30, 60].map(function (s) { return '<button type="button" class="sm' + (LIMIT === s ? " on" : "") + '" data-m="lim" data-s="' + s + '">' + s + "초</button>"; }).join("") + "<small>(모음 화면과 정답 뒤에는 끝까지 들어요)</small></div>";
     h += '<div class="row"><button type="button" class="sm" data-m="fullsave">📦 전곡 저장: ' + (lsGet(FS) === "1" ? "켜짐" : "꺼짐") + "</button><small>켜면 곡 전체를 저장해요(한 곡 수 MB~수십 MB, 와이파이 권장). 끄면 앞부분만 저장해요.</small></div>";
     h += '<div class="row"><button type="button" class="sm" data-m="auto">💾 들은 곡 자동 저장: ' + (lsGet(AS) === "1" ? "켜짐" : "꺼짐") + "</button>" + (n ? '<button type="button" class="sm" data-m="clear">🗑️ 저장한 음원 지우기</button>' : "") + "</div>";

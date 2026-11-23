@@ -29,7 +29,7 @@
   function drawBar() {
     var on = online(), n = savedCount();
     var h = '<b>📷 악기 그림 보기</b><div class="row"><button type="button" data-p="1" class="' + (photo ? "on" : "") + '"' + (window.fgOnline && fgOnline.enabled ? "" : " disabled") + '>📷 실제 사진(온라인)</button><button type="button" data-p="0" class="' + (photo ? "" : "on") + '">🎨 그림</button></div><small>' +
-      (photo ? (on ? "인터넷에서 악기 실제 사진을 불러와요(사진가·라이선스를 사진 아래에 보여 줘요). 맞는 사진이 없으면 그림이 나와요." : (n ? "지금은 인터넷이 없어서 이 폰에 저장된 사진(" + n + "장)만 나오고, 나머지는 그림이에요." : "지금은 인터넷이 없어서 그림으로 나와요.")) : "직접 그린 단순한 그림이에요. 인터넷이 필요 없어요.") + " · 저장된 사진 " + n + "장</small>";
+      (photo ? (on ? "인터넷에서 악기 실제 사진을 불러와요(사진가·라이선스를 사진 아래에 보여 줘요). 맞는 사진이 없으면 그림이 나와요." : (n ? "지금은 인터넷이 없어서 이 폰에 저장된 사진(" + n + "장)만 나오고, 나머지는 그림이에요." : "지금은 인터넷이 없어서 그림으로 나와요.")) : "직접 그린 단순한 그림이에요. 인터넷이 필요 없어요.") + " · 저장된 사진 " + n + " / 전체 " + Object.keys(DATA.I).length + "종 · <a href=\"offline-media.html\">📊 저장 현황</a></small>";
     if (photo && window.fgOnline && fgOnline.enabled) h += '<div class="row"><button type="button" class="sm" data-p="auto">💾 본 사진 자동 저장: ' + (lsGet(AS) === "1" ? "켜짐" : "꺼짐") + "</button>" + (n ? '<button type="button" class="sm" data-p="clear">🗑️ 저장한 사진 지우기</button>' : "") + "<small>끄면 저장 없이 보기만 해요.</small></div>";
     bar.innerHTML = h;
   }

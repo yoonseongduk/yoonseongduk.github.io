@@ -81,7 +81,7 @@
     h += '<small id="artnote">' + esc(note) + "</small>";
     if (isQuiz && mode !== "text") h += '<div class="row"><small>그림 문제:</small><button type="button" class="sm' + (onlyImg ? "" : " on") + '" data-o="0">섞어서 (한 판에 최대 3개)</button><button type="button" class="sm' + (onlyImg ? " on" : "") + '" data-o="1">그림 문제만</button></div>';
     if (online) {
-      h += '<div class="sub"><div class="row"><button type="button" class="sm" data-s="auto">💾 본 그림 자동 저장: ' + (lsGet(AS) === "1" ? "켜짐" : "꺼짐") + '</button><small>끄면 저장 없이 보기만 해요.</small></div><small>' + esc(dl.msg || (ns ? "이 폰에 그림 " + ns + "장 저장됨(인터넷 없이도 '저장한 그림'으로 볼 수 있어요)." : "그림을 이 폰에 저장해 두면 인터넷이 없어도 볼 수 있어요.")) + '</small><div class="row">' +
+      h += '<div class="sub"><div class="row"><button type="button" class="sm" data-s="auto">💾 본 그림 자동 저장: ' + (lsGet(AS) === "1" ? "켜짐" : "꺼짐") + '</button><small>끄면 저장 없이 보기만 해요.</small></div><small>' + esc(dl.msg || (ns ? "이 폰에 그림 " + ns + " / 전체 " + titles.length + "점 저장됨(인터넷 없이도 '저장한 그림'으로 볼 수 있어요)." : "그림을 이 폰에 저장해 두면 인터넷이 없어도 볼 수 있어요.")) + '</small><div class="row">' +
         (canSave ? '<button type="button" class="sm" data-s="save"' + (!dl.running && ns && !left ? " disabled" : "") + '>' + (dl.running ? "⏹ 멈추기" : ns ? (left ? "📥 그림 더 저장하기" : "✅ 모두 저장됨") : "📥 그림 저장하기(오프라인용)") + "</button>" : "<small>이 브라우저는 그림 저장을 지원하지 않아요.</small>") +
         (ns && !dl.running ? '<button type="button" class="sm" data-s="clear">🗑️ 저장한 그림 지우기</button>' : "") + "</div></div>";
     }

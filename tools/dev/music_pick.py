@@ -102,43 +102,51 @@ def analyze(c):
     roll = float(np.searchsorted(cs, 0.98) * 22050 / 2048)
     return {"dyn": round(dyn, 1), "roll": round(roll)}
 def good(a): return a is not None and a["dyn"] >= 22 and a["roll"] >= 3000
+IAF = os.path.join(HERE, "music_pick_ia.json"); SCRF = os.path.join(HERE, "music_pick_scr.json")
+def load(p): return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}
+def save(p, d): json.dump(d, open(p, "w", encoding="utf-8"), ensure_ascii=False)
 def main():
-    a = sys.argv[1:]; screen = "--no-screen" not in a; only = a[a.index("--only") + 1] if "--only" in a else None; limit = int(a[a.index("--limit") + 1]) if "--limit" in a else None
-    st = json.load(open(STATE, encoding="utf-8")) if os.path.exists(STATE) else {}
-    if "--ia" in a:   # 인터넷 아카이브 후보를 더하는 단계(커먼즈 단계 뒤에 실행)
-        works = [t for t in AUDIO if not only or t == only]
-        if limit: works = works[:limit]
-        for n, t in enumerate(works, 1):
-            s = st.setdefault(t, {})
-            if s.get("ia_done"): continue
-            add = ia_candidates(t); have = {c["f"] for c in s.get("cands", [])}
-            s["cands"] = sorted(s.get("cands", []) + [c for c in add if c["f"] not in have], key=lambda c: -c["score"]); s["ia_done"] = True
-            json.dump(st, open(STATE, "w", encoding="utf-8"), ensure_ascii=False)
-            print(f"[{n}/{len(works)}] 인터넷 아카이브 후보 +{len(add)}: " + ", ".join(c["f"][3:50] for c in add[:2]), flush=True)
-        return
+    """세 단계를 동시에 돌려도 서로 기록을 덮어쓰지 않게 단계마다 자기 기록 파일을 써요:
+    1단계=music_pick_state.json(커먼즈 후보), 2단계=music_pick_ia.json(아카이브 후보), 3단계=music_pick_scr.json(음질 숫자)+music_pick.json(결과).
+    3단계는 후보가 준비된 곡부터 바로 분석하고(--follow 면 1·2단계가 끝날 때까지 되풀이)."""
+    import time
+    a = sys.argv[1:]; screen = "--no-screen" not in a and "--ia" not in a; only = a[a.index("--only") + 1] if "--only" in a else None; limit = int(a[a.index("--limit") + 1]) if "--limit" in a else None
     works = [t for t in AUDIO if not only or t == only]
     if limit: works = works[:limit]
-    for n, t in enumerate(works, 1):
-        s = st.setdefault(t, {})
-        if not s.get("cands"): s["cands"] = candidates(t)
-        picked = [c for c in s["cands"] if screen and c["f"] in s.get("scr", {}) and good(s["scr"][c["f"]])]
-        tried = 0
-        if screen:
-            s.setdefault("scr", {})
-            for c in s["cands"]:
+    if "--ia" in a:   # 2단계: 인터넷 아카이브 후보(다른 서버라 1단계와 동시에 돌려도 돼요)
+        ia = load(IAF)
+        for n, t in enumerate(works, 1):
+            if ia.get(t, {}).get("done"): continue
+            add = ia_candidates(t); ia[t] = {"cands": add, "done": True}; save(IAF, ia)
+            print(f"[{n}/{len(works)}] 인터넷 아카이브 후보 +{len(add)}: " + ", ".join(c["f"][3:50] for c in add[:2]), flush=True)
+        return
+    if not screen:   # 1단계: 커먼즈 후보
+        st = load(STATE)
+        for n, t in enumerate(works, 1):
+            s = st.setdefault(t, {})
+            if not s.get("cands"): s["cands"] = candidates(t)
+            save(STATE, st)
+            print(f"[{n}/{len(works)}] 후보 {len(s['cands'])}개: " + ", ".join(c["f"][:40] for c in s["cands"][:2]), flush=True)
+        return
+    follow = "--follow" in a   # 3단계: 음질 분석
+    while True:
+        st = load(STATE); ia = load(IAF); scr = load(SCRF); res = load(OUT); did = 0
+        for n, t in enumerate(works, 1):
+            if "cands" not in st.get(t, {}): continue   # 아직 1단계가 안 한 곡은 다음 바퀴에
+            cands = sorted(st[t]["cands"] + [c for c in ia.get(t, {}).get("cands", []) if c["f"] not in {x["f"] for x in st[t]["cands"]}], key=lambda c: -c["score"])
+            sc = scr.setdefault(t, {}); picked = [c for c in cands if c["f"] in sc and good(sc[c["f"]])]; tried = 0
+            for c in cands:
                 if len(picked) >= 2 or tried >= 4: break
-                if c["f"] in s["scr"]: continue
-                s["scr"][c["f"]] = analyze(c); tried += 1
-                if good(s["scr"][c["f"]]): picked.append(c)
-        json.dump(st, open(STATE, "w", encoding="utf-8"), ensure_ascii=False)
-        if not screen:   # 1단계만: 후보 목록(state)만 저장하고, 음질 확인 전이라 music_pick.json 은 건드리지 않아요
-            print(f"[{n}/{len(works)}] 후보 {len(s['cands'])}개: " + ", ".join(c["f"][:40] for c in s["cands"][:2]), flush=True); continue
-        res = json.load(open(OUT, encoding="utf-8")) if os.path.exists(OUT) else {}
-        if picked: res[t] = [{"f": c["f"], "lic": c["lic"], "kbps": c["kbps"], "scr": (s.get("scr") or {}).get(c["f"])} for c in picked[:2]]
-        else: res.pop(t, None)
-        json.dump(res, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-        top = picked[0] if picked else None
-        print(f"[{n}/{len(works)}] {'✓' if top else '✗'} {t}: 후보 {len(s['cands'])}개" + (f" → {top['f'][:60]} ({top['kbps']}kbps, {(s.get('scr') or {}).get(top['f'])})" if top else " → 쓸 만한 녹음 없음(글로만)"), flush=True)
-    res = json.load(open(OUT, encoding="utf-8")) if os.path.exists(OUT) else {}
+                if c["f"] in sc: continue
+                sc[c["f"]] = analyze(c); tried += 1; did += 1; save(SCRF, scr)
+                if good(sc[c["f"]]): picked.append(c)
+            if picked: res[t] = [{"f": c["f"], "lic": c["lic"], "kbps": c["kbps"], "scr": sc.get(c["f"])} for c in picked[:2]]
+            else: res.pop(t, None)
+            save(OUT, res)
+            if tried: print(f"[{n}/{len(works)}] {'✓' if picked else '✗'} {t}: 후보 {len(cands)}개" + (f" → {picked[0]['f'][:60]} ({picked[0]['kbps']}kbps, {sc.get(picked[0]['f'])})" if picked else " → 쓸 만한 녹음 없음(글로만)"), flush=True)
+        ready = all("cands" in st.get(t, {}) and ia.get(t, {}).get("done") for t in works)
+        if not follow or (ready and did == 0): break
+        time.sleep(60 if did == 0 else 1)
+    res = load(OUT)
     print(f"\n음질 확인을 통과한 곡 {len(res)} / {len(works)}")
 if __name__ == "__main__": main()

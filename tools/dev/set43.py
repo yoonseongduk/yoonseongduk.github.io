@@ -6,6 +6,7 @@
 import sys, json, random, os
 sys.path.insert(0, ".")
 from art_data import ARTISTS, ERAS
+from art_wiki import WIKI, NO_IMAGE, tokens as _tokens
 from mkquiz import make as make_quiz
 from mkpage import make as make_page
 H = "out/"
@@ -111,6 +112,27 @@ json.dump(level, open("qlevel/art-quiz.json", "w", encoding="utf-8"), ensure_asc
 cnt = {1: 0, 2: 0, 3: 0}
 for v in level.values(): cnt[v] += 1
 print("퀴즈 문제", len(data), "초급/중급/고급", cnt[1], cnt[2], cnt[3])
+# ───────── 그림 모드(온라인·내장) 자료: 저작권이 끝난 작가의 작품 중 위키백과 대응이 있는 것만
+alltitles = {w["t"] for w in ALLW}
+missing = [t for t in WIKI if t not in alltitles]; assert not missing, "WIKI 대응표의 제목이 art_data 에 없어요: " + str(missing)
+W, QI, G = {}, [], {}
+for a in A.values():
+    if a["id"] in NO_IMAGE: continue
+    tk = _tokens(a["id"], a["en"], a["name"])
+    for w in sorted(a["works"], key=lambda z: z["fame"]):
+        if w["t"] not in WIKI: continue
+        W[w["t"]] = {"k": WIKI[w["t"]], "a": a["id"], "t": tk}
+        G.setdefault(a["id"], w["t"])
+        QI.append(["이 그림의 작가는 누구일까요?", a["name"], pick_artists(a, w["fame"], ban=AMBIG.get(w["t"], ())), a["era"], w["fame"], w["t"], f"‘{w['t']}’ — " + info(a, w)])
+DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}}
+tpl = open("art_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
+open("../../art-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
+print("그림 모드: 작품 대응", len(W), "| 그림 문제", len(QI), "| 대표작 있는 작가", len(G), "| 그림 제외 작가", len(NO_IMAGE))
+def hook(path):
+    t = open(path, encoding="utf-8").read()
+    if 'src="art-mode.js"' not in t:
+        t = t.replace("</body>", '<script src="online.js"></script>\n<script src="art-mode.js" defer></script>\n</body>', 1); open(path, "w", encoding="utf-8").write(t)
+
 make_quiz(H + "art-quiz.html", "명화 작가 퀴즈", "🖼️", 20, "art-quiz-best-v1",
           "세계 명화의 작가와 작품, 시대·화풍을 맞혀 보세요. 모든 작가와 대표작은 <a href=\"art-gallery.html\">🎨 명화 작가별 모음</a>에서 볼 수 있어요.", data, label="명화 작가 퀴즈")
 
@@ -145,3 +167,4 @@ $("q").addEventListener("input", render); render();'''
 make_page(H + "art-gallery.html", "명화 작가별 모음", "🎨", 20, "art-gallery-v1",
           "그림 이미지는 담지 않고 작가와 대표작의 이름·연도·소장처만 정리했어요. 소장처와 제작 연도는 여러 자료와 달라질 수 있어요. 오래된 작품은 '경'(대략)으로 적었어요.",
           BODY, JS, CSS)
+hook(H + "art-quiz.html"); hook(H + "art-gallery.html")

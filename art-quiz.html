@@ -113,6 +113,8 @@ $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"
 $("next").onclick = () => { if (i === qs.length - 1) finish(); else { i++; show(); } };
 start();
 </script>
+<script src="online.js"></script>
+<script src="art-mode.js" defer></script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="wrong-hook.js"></script>
 <script src="med-notify.js" defer></script>

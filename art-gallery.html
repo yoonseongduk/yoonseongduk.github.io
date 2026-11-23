@@ -74,6 +74,8 @@ $("eras").innerHTML = ERAS.map(e => `<button type="button" class="chip${e === er
 $("eras").addEventListener("click", ev => { const b = ev.target.closest("[data-e]"); if (!b) return; era = b.dataset.e; sv(KEY + "-era", era); $("eras").querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c === b)); render(); });
 $("q").addEventListener("input", render); render();
 </script>
+<script src="online.js"></script>
+<script src="art-mode.js" defer></script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="med-notify.js" defer></script>
 <script src="home.js" defer></script>

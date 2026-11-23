@@ -19,7 +19,7 @@
     var st = document.createElement("style");
     st.textContent = ".amode{background:var(--surface,#fff);border:1px solid var(--line,#ccc);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}.amode .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}" +
       ".amode button{border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:8px 12px;font-size:.92rem}.amode button.sm{padding:6px 10px;font-size:.85rem}.amode button.on{background:var(--accent,#c4552b);color:var(--accent-fg,#fff);border-color:transparent;font-weight:700}.amode small{color:var(--muted,#666)}" +
-      ".oimg{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 10px}.oimg svg,.oimg img{width:min(240px,74vw);height:auto;border-radius:12px;display:block}.oimg img{max-height:280px;object-fit:contain;background:#f6efe0}.oimg.cmp{align-self:stretch;width:100%}.oimg.cmp svg{width:100%;max-width:330px;height:auto;border-radius:12px}.acard .oimg{align-self:stretch}.oimg small{color:var(--muted,#666);font-size:.76rem;text-align:center;line-height:1.4}" +
+      ".oimg{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 10px}.oimg svg,.oimg img{width:min(240px,74vw);height:auto;border-radius:12px;display:block}.oimg img{max-height:280px;object-fit:contain;background:#f6efe0}.prow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%}.prow figure{margin:0;text-align:center;min-width:0}.prow img,.prow svg{width:100%;aspect-ratio:3/4;object-fit:contain;background:#f6efe0;border-radius:8px;display:block}.prow .hl img,.prow .hl svg{outline:3px solid #e8742a}.prow figcaption{font-size:.7rem;line-height:1.3;color:var(--muted,#666)}.prows details{font-size:.72rem;color:var(--muted,#666);text-align:left;width:100%}.prows details a{word-break:break-all}.oimg.cmp{align-self:stretch;width:100%}.oimg.cmp svg{width:100%;max-width:330px;height:auto;border-radius:12px}.acard .oimg{align-self:stretch}.oimg small{color:var(--muted,#666);font-size:.76rem;text-align:center;line-height:1.4}" +
       ".acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}" +
       ".ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}";
     document.head.appendChild(st);
@@ -84,13 +84,29 @@
       im.src = r.src;
     });
   }
+
+  // ── 현악기 네 가지 사진을 같은 크기 칸에 나란히(모양 비교). 크기 비율은 위의 비교 그림이 맡고, 사진은 자르거나 고치지 않고 그대로 보여 줘요.
+  var STRS = [["violin", 60], ["viola", 67], ["cello", 120], ["doublebass", 180]];
+  function photoRow(hl, names, still) {
+    if (!photo) return Promise.resolve(null);
+    return Promise.all(STRS.map(function (s) { return getPhoto(s[0]).then(function (r) { return r ? new Promise(function (res) { var im = new Image(); im.alt = DATA.I[s[0]].name + " 사진"; im.onload = function () { res({ id: s[0], cm: s[1], im: im, r: r }); }; im.onerror = function () { res(null); }; im.src = r.src; }) : null; }); })).then(function (rows) {
+      if (!still() || rows.every(function (x) { return !x; })) return null;
+      var wrap = document.createElement("div"); wrap.className = "prows"; var row = document.createElement("div"); row.className = "prow"; var cr = [];
+      STRS.forEach(function (s, k) {
+        var f = document.createElement("figure"); if (s[0] === hl) f.className = "hl"; var x = rows[k];
+        if (x) { f.appendChild(x.im); cr.push((names ? DATA.I[s[0]].name + ": " : (k + 1) + "번: ") + credit(x.r.e).replace("📷 사진: ", "")); saveOne(s[0], x.r); } else f.innerHTML = DATA.SVG[s[0]];
+        var c = document.createElement("figcaption"); c.textContent = names ? DATA.I[s[0]].name + " 약 " + s[1] + "cm" : (s[0] === hl ? "이 악기" : "·"); f.appendChild(c); row.appendChild(f);
+      });
+      wrap.appendChild(row); var d = document.createElement("details"); d.innerHTML = "<summary>📷 사진 출처 " + cr.length + "건</summary>" + cr.map(function (x) { return "<div>" + x + "</div>"; }).join(""); wrap.appendChild(d); return wrap;
+    });
+  }
   function decorate() {
     var cur = qs && qs[i]; hintUsed = false; if (!cur) return; var q = document.getElementById("q"), key = cur.d[0], m = DATA.IMG[key], showId = DATA.SHOW[key]; if (!q) return;
     if (m && m[0] === "s") { var f0 = document.createElement("div"); f0.className = "oimg"; f0.innerHTML = DATA.SEAT[String(m[1])]; q.insertBefore(f0, q.firstChild); }
     else if (m || showId) {   // 그림 문제(이름 맞히기) 또는 이름이 나온 악기의 그림·사진
       var fig = document.createElement("div"); fig.className = "oimg"; q.insertBefore(fig, q.firstChild);
       var sid = m ? m[1] : showId; paint(fig, sid, function () { return qs && qs[i] && qs[i].d[0] === key; });
-      if (DATA.CMP[sid]) { var cf2 = document.createElement("div"); cf2.className = "oimg cmp"; cf2.innerHTML = DATA.CMP[sid] + "<small>📏 크기 비교: 주황 점이 이 악기예요(비슷하게 생긴 현악기끼리, 사람 키와 함께)</small>"; fig.insertAdjacentElement("afterend", cf2); }
+      if (DATA.CMP[sid]) { var cf2 = document.createElement("div"); cf2.className = "oimg cmp"; cf2.innerHTML = DATA.CMP[sid] + "<small>📏 크기 비교: 주황 점이 이 악기예요(비슷하게 생긴 현악기끼리, 사람 키와 함께)</small>"; fig.insertAdjacentElement("afterend", cf2); photoRow(sid, false, function () { return qs && qs[i] && qs[i].d[0] === key; }).then(function (w) { if (w && cf2.isConnected) { var lab = document.createElement("small"); lab.textContent = "📷 실제 사진(주황 테두리가 이 악기)"; var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); box.appendChild(lab); cf2.insertAdjacentElement("afterend", box); } }); }
     }
     var iid = DATA.INFO[key];
     if (iid && m && m[0] === "i") {   // 힌트는 그림 문제에만: 악기군 → 연주 방법
@@ -104,6 +120,7 @@
     var key = cur.d[0], id = DATA.INFO[key]; if (!id) return; var a = DATA.I[id], q = document.getElementById("q");
     var n = q.querySelector(".note"); if (n) n.remove(); var h = q.querySelector(".ahint"); if (h) h.remove();
     q.insertAdjacentHTML("beforeend", '<div class="acard"><div class="oimg"></div><b>' + esc(a.name) + " <small>(" + esc(a.en) + ")</small></b><span>" + esc(a.fam) + " · " + esc(a.rng) + " 소리 · 도감 " + a.n + "번</span><span>🎼 " + esc(a.how) + "</span><span>" + esc(a.desc) + "</span><span>🎵 " + esc(a.use) + "</span>" + (DATA.CMPN[id] ? '<div class="oimg cmp">' + DATA.CMPN[id] + "<small>📏 실제 크기 비교(약 길이)</small></div>" : "") + "</div>");
+    if (DATA.CMPN[id]) { var cardEl = q.querySelector(".acard"); photoRow(id, true, function () { return qs && qs[i] && qs[i].d[0] === key; }).then(function (w) { if (w && cardEl.isConnected) { var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); var lab = document.createElement("small"); lab.textContent = "📷 현악기 네 가지의 실제 모습(사진마다 찍은 거리가 달라 크기는 위 그림이 정확해요)"; box.appendChild(lab); cardEl.appendChild(box); } }); }
     var cf = q.querySelector(".acard .oimg"), already = q.querySelector(":scope > .oimg");
     if (already && DATA.IMG[key] && DATA.IMG[key][0] === "i") cf.remove();   // 그림 문제는 위에 이미 그림이 있어요
     else paint(cf, id, function () { return qs && qs[i] && qs[i].d[0] === key; });
@@ -137,7 +154,8 @@
     });
   }
   function fillCard(c) {
-    var id = c.dataset.id; getPhoto(id).then(function (r) {
+    var id = c.dataset.id;
+    if (DATA.CMP[id]) photoRow(id, true, function () { return c.isConnected && photo; }).then(function (w) { if (w && c.isConnected && !c.querySelector(".prows")) c.appendChild(w); }); getPhoto(id).then(function (r) {
       if (!r || !c.isConnected || !photo) return; var im = new Image(); im.alt = DATA.I[id].name + " 사진";
       im.onload = function () { var ic = c.querySelector(".ic"); if (!ic || !c.isConnected) return; ic.innerHTML = ""; ic.appendChild(im); var cr = document.createElement("small"); cr.className = "cr"; cr.innerHTML = credit(r.e); c.appendChild(cr); saveOne(id, r); };
       im.src = r.src;

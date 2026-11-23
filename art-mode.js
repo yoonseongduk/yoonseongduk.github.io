@@ -60,7 +60,7 @@
     st.textContent = ".amode{background:var(--surface,#fff);border:1px solid var(--line,#ccc);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}.amode .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}" +
       ".amode button{border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:8px 12px;font-size:.92rem}.amode button.on{background:var(--accent,#c4552b);color:var(--accent-fg,#fff);border-color:transparent;font-weight:700}.amode button:disabled{opacity:.45;cursor:default}" +
       ".amode button.sm{padding:6px 10px;font-size:.85rem}.amode small{color:var(--muted,#666)}.amode .sub{border-top:1px dashed var(--line,#ccc);padding-top:8px;display:flex;flex-direction:column;gap:6px}" +
-      ".aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.aimg img,.gf img{cursor:zoom-in}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}.ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}#aview{position:fixed;inset:0;z-index:9999;background:#000d;display:flex;flex-direction:column}#aview .vb{display:flex;gap:8px;justify-content:flex-end;padding:10px 12px}#aview .vb button{border:0;border-radius:999px;padding:8px 14px;font-size:.95rem;background:#fff;color:#111}#aview .vi{flex:1;overflow:auto;display:flex;touch-action:pan-x pan-y pinch-zoom}#aview .vi img{margin:auto;max-width:100%;max-height:100%;object-fit:contain}#aview .vi.big img{max-width:none;max-height:none;width:220%}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}";
+      ".aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.aimg img,.gf img{cursor:zoom-in}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}.ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}#aview{position:fixed;inset:0;z-index:9999;background:#000e;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}#aview .vb{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px}#aview .vb button{border:0;border-radius:999px;padding:8px 13px;font-size:.95rem;background:#fff;color:#111}#aview .vz{color:#fff;font-size:.85rem;min-width:3.2em;text-align:center}#aview .vi{flex:1;overflow:hidden;position:relative;touch-action:none;display:flex;align-items:center;justify-content:center}#aview .vi img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;will-change:transform;cursor:grab}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}#aview .vh{color:#ccc}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}";
     document.head.appendChild(st);
   }
   var bar, dl = { running: false, cancel: false, msg: "" };
@@ -184,23 +184,60 @@
   }
 
 
-  // ── 그림 크게 보기(누르면 화면 가득, 🔍로 더 크게)
+  // ── 그림 크게 보기: 전체 화면 + 확대(손가락 두 개로 벌리기·마우스 휠·＋/－·두 번 누르기) + 끌어서 이동. 확대하면 더 큰 그림(1280px)을 불러와 선명하게 보여요(보기를 연 경우에만 인터넷을 써요).
+  var ZMAX = 8;
+  function bigSrc(src) { return /\/\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src) ? src.replace(/\/\d+px-([^\/]+)$/, "/1280px-$1") : null; }
   function openViewer(src, cap) {
-    var v = document.getElementById("aview"); if (v) v.remove();
-    v = document.createElement("div"); v.id = "aview"; v.setAttribute("role", "dialog"); v.setAttribute("aria-label", "그림 크게 보기");
-    v.innerHTML = '<div class="vb"><button type="button" data-v="z">🔍 더 크게</button><button type="button" data-v="x">✖ 닫기</button></div><div class="vi"><img alt="작품 그림"></div><div class="vc">' + (cap || "") + "</div>";
-    v.querySelector("img").src = src;
+    var old = document.getElementById("aview"); if (old) old.remove();
+    var v = document.createElement("div"); v.id = "aview"; v.setAttribute("role", "dialog"); v.setAttribute("aria-label", "그림 크게 보기");
+    v.innerHTML = '<div class="vb"><button type="button" data-v="in" aria-label="확대">＋</button><button type="button" data-v="out" aria-label="축소">－</button><button type="button" data-v="rs">⟲ 처음 크기</button><span class="vz">100%</span><button type="button" data-v="fs" hidden>⛶ 전체 화면</button><button type="button" data-v="x">✖ 닫기</button></div><div class="vi"><img alt="작품 그림" draggable="false"></div><div class="vc"></div>';
+    var stage = v.querySelector(".vi"), img = stage.querySelector("img"), zl = v.querySelector(".vz"), vc = v.querySelector(".vc");
+    vc.innerHTML = (cap || "") + '<br><small class="vh">두 손가락으로 벌리면 확대, 끌면 이동, 두 번 누르면 확대·축소</small>';
+    var S = 1, X = 0, Y = 0, ptrs = {}, last = null, lastTap = 0;
+    function box() { return { w: stage.clientWidth, h: stage.clientHeight }; }
+    function clamp() { var b = box(), iw = img.clientWidth * S, ih = img.clientHeight * S, mx = Math.max(0, (iw - b.w) / 2) + 40, my = Math.max(0, (ih - b.h) / 2) + 40; X = Math.max(-mx, Math.min(mx, X)); Y = Math.max(-my, Math.min(my, Y)); }
+    function apply() { clamp(); img.style.transform = "translate(" + X + "px," + Y + "px) scale(" + S + ")"; zl.textContent = Math.round(S * 100) + "%"; if (S > 1.4) loadBig(); }
+    function zoomAt(ns, cx, cy) {   // 화면 위의 한 점(cx,cy)을 고정한 채 배율 바꾸기
+      ns = Math.max(1, Math.min(ZMAX, ns)); var b = box(), px = cx - b.w / 2, py = cy - b.h / 2; X = px - (px - X) * ns / S; Y = py - (py - Y) * ns / S; S = ns; if (S === 1) { X = 0; Y = 0; } apply();
+    }
+    var bigDone = false;
+    function loadBig() {
+      if (bigDone) return; bigDone = true; var bs = bigSrc(src); if (!bs || navigator.onLine === false) return;
+      var t = new Image(); t.onload = function () { if (document.getElementById("aview") === v) { img.src = bs; vc.querySelector(".vh").textContent = "고화질 그림으로 바뀌었어요"; } }; t.src = bs;
+    }
+    img.src = src;
+    v.querySelector("[data-v=fs]").hidden = !(v.requestFullscreen && document.fullscreenEnabled);
     v.addEventListener("click", function (e) {
-      var b = e.target.closest("button");
-      if (b && b.dataset.v === "z") { var vi = v.querySelector(".vi"); vi.classList.toggle("big"); b.textContent = vi.classList.contains("big") ? "🔎 줄이기" : "🔍 더 크게"; }
-      else if ((b && b.dataset.v === "x") || e.target === v || e.target.classList.contains("vc")) v.remove();
+      var b = e.target.closest("button"), k = b && b.dataset.v, c = box();
+      if (k === "x" || e.target === v || e.target === vc) { if (document.fullscreenElement) { try { document.exitFullscreen(); } catch (x) {} } v.remove(); }
+      else if (k === "in") zoomAt(S * 1.6, c.w / 2, c.h / 2); else if (k === "out") zoomAt(S / 1.6, c.w / 2, c.h / 2);
+      else if (k === "rs") zoomAt(1, c.w / 2, c.h / 2);
+      else if (k === "fs") { try { if (document.fullscreenElement) document.exitFullscreen(); else v.requestFullscreen(); } catch (x) {} }
     });
-    document.body.appendChild(v);
+    stage.addEventListener("wheel", function (e) { e.preventDefault(); var r = stage.getBoundingClientRect(); zoomAt(S * (e.deltaY < 0 ? 1.25 : 0.8), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+    stage.addEventListener("pointerdown", function (e) {
+      stage.setPointerCapture(e.pointerId); ptrs[e.pointerId] = { x: e.clientX, y: e.clientY }; last = null;
+      var now = Date.now(); if (Object.keys(ptrs).length === 1 && now - lastTap < 300) { var r = stage.getBoundingClientRect(); zoomAt(S > 1.5 ? 1 : 3, e.clientX - r.left, e.clientY - r.top); lastTap = 0; } else lastTap = now;
+    });
+    stage.addEventListener("pointermove", function (e) {
+      if (!ptrs[e.pointerId]) return; var ids = Object.keys(ptrs), prev = ptrs[e.pointerId]; ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (ids.length === 1) { if (S > 1) { X += e.clientX - prev.x; Y += e.clientY - prev.y; apply(); } }
+      else if (ids.length === 2) {
+        var a = ptrs[ids[0]], b = ptrs[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, r = stage.getBoundingClientRect();
+        if (last) { X += mx - last.mx; Y += my - last.my; zoomAt(S * d / last.d, mx - r.left, my - r.top); } last = { d: d, mx: mx, my: my };
+      }
+    });
+    function up(e) { delete ptrs[e.pointerId]; last = null; }
+    stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
+    document.body.appendChild(v); apply();
   }
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { var v = document.getElementById("aview"); if (v) v.remove(); } });
+  document.addEventListener("keydown", function (e) {
+    var v = document.getElementById("aview"); if (!v) return;
+    if (e.key === "Escape") v.remove(); else if (e.key === "+" || e.key === "=") v.querySelector("[data-v=in]").click(); else if (e.key === "-") v.querySelector("[data-v=out]").click();
+  });
   document.addEventListener("click", function (e) {
     var im = e.target.closest && e.target.closest(".aimg img, .gf img"); if (!im || !im.src) return;
-    var f = im.closest(".gf"), cap = f ? (f.querySelector("figcaption") || {}).innerHTML : (document.querySelector("#q .note a") ? "" : "");
+    var f = im.closest(".gf"), cap = f ? (f.querySelector("figcaption") || {}).innerHTML : "";
     var cur = isQuiz && qs && qs[i]; if (cur && cur.d.img) cap = credit(cur.d.img);
     openViewer(im.src, cap);
   });

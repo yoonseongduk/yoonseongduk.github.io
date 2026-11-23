@@ -52,7 +52,7 @@
     st.textContent = ".amode{background:var(--surface,#fff);border:1px solid var(--line,#ccc);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}.amode .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}" +
       ".amode button{border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:8px 12px;font-size:.92rem}.amode button.on{background:var(--accent,#c4552b);color:var(--accent-fg,#fff);border-color:transparent;font-weight:700}.amode button:disabled{opacity:.45;cursor:default}" +
       ".amode button.sm{padding:6px 10px;font-size:.85rem}.amode small{color:var(--muted,#666)}.amode .sub{border-top:1px dashed var(--line,#ccc);padding-top:8px;display:flex;flex-direction:column;gap:6px}" +
-      ".aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}";
+      ".aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.aimg img,.gf img{cursor:zoom-in}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}.ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}#aview{position:fixed;inset:0;z-index:9999;background:#000d;display:flex;flex-direction:column}#aview .vb{display:flex;gap:8px;justify-content:flex-end;padding:10px 12px}#aview .vb button{border:0;border-radius:999px;padding:8px 14px;font-size:.95rem;background:#fff;color:#111}#aview .vi{flex:1;overflow:auto;display:flex;touch-action:pan-x pan-y pinch-zoom}#aview .vi img{margin:auto;max-width:100%;max-height:100%;object-fit:contain}#aview .vi.big img{max-width:none;max-height:none;width:220%}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}";
     document.head.appendChild(st);
   }
   var bar, dl = { running: false, cancel: false, msg: "" };
@@ -77,6 +77,7 @@
         (canSave ? '<button type="button" class="sm" data-s="save"' + (!dl.running && ns && !left ? " disabled" : "") + '>' + (dl.running ? "⏹ 멈추기" : ns ? (left ? "📥 그림 더 저장하기" : "✅ 모두 저장됨") : "📥 그림 저장하기(오프라인용)") + "</button>" : "<small>이 브라우저는 그림 저장을 지원하지 않아요.</small>") +
         (ns && !dl.running ? '<button type="button" class="sm" data-s="clear">🗑️ 저장한 그림 지우기</button>' : "") + "</div></div>";
     }
+    if (isQuiz && wrongList.length && mode !== "text") h += '<div class="row"><button type="button" class="sm" id="artreview" data-s="review">' + reviewLabel() + "</button><small>틀린 그림만 다시 풀어요. 맞히면 목록에서 빠져요.</small></div>";
     bar.innerHTML = h;
   }
   function setMode(m) {
@@ -124,7 +125,7 @@
       var b = e.target.closest("button"); if (!b || b.disabled) return;
       if (b.dataset.m) setMode(b.dataset.m);
       else if (b.dataset.o) { onlyImg = b.dataset.o === "1"; lsSet(ONLY, onlyImg ? "1" : "0"); drawBar(); if (isQuiz) start(); }
-      else if (b.dataset.s === "save") saveAll(); else if (b.dataset.s === "clear") clearSaved();
+      else if (b.dataset.s === "review") startReview(); else if (b.dataset.s === "save") saveAll(); else if (b.dataset.s === "clear") clearSaved();
     });
     drawBar();
   }
@@ -140,7 +141,7 @@
       var slots = []; for (var k = i + 1; k < qs.length; k++) slots.push(k);
       slots = shuffle(slots).slice(0, Math.min(want, ok.length));
       slots.forEach(function (pos, n) {
-        var q = ok[n].q, d = [q[0], q[1], q[2], q[3], q[6]]; d.img = ok[n].r; d.alt = "‘" + q[5] + "’의 작가는 누구일까요?";
+        var q = ok[n].q, d = mkItem(q); d.img = ok[n].r;
         qs[pos] = { d: d, opts: options(d) };
       });
     });
@@ -172,15 +173,82 @@
     });
   }
 
+
+  // ── 그림 크게 보기(누르면 화면 가득, 🔍로 더 크게)
+  function openViewer(src, cap) {
+    var v = document.getElementById("aview"); if (v) v.remove();
+    v = document.createElement("div"); v.id = "aview"; v.setAttribute("role", "dialog"); v.setAttribute("aria-label", "그림 크게 보기");
+    v.innerHTML = '<div class="vb"><button type="button" data-v="z">🔍 더 크게</button><button type="button" data-v="x">✖ 닫기</button></div><div class="vi"><img alt="작품 그림"></div><div class="vc">' + (cap || "") + "</div>";
+    v.querySelector("img").src = src;
+    v.addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (b && b.dataset.v === "z") { var vi = v.querySelector(".vi"); vi.classList.toggle("big"); b.textContent = vi.classList.contains("big") ? "🔎 줄이기" : "🔍 더 크게"; }
+      else if ((b && b.dataset.v === "x") || e.target === v || e.target.classList.contains("vc")) v.remove();
+    });
+    document.body.appendChild(v);
+  }
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { var v = document.getElementById("aview"); if (v) v.remove(); } });
+  document.addEventListener("click", function (e) {
+    var im = e.target.closest && e.target.closest(".aimg img, .gf img"); if (!im || !im.src) return;
+    var f = im.closest(".gf"), cap = f ? (f.querySelector("figcaption") || {}).innerHTML : (document.querySelector("#q .note a") ? "" : "");
+    var cur = isQuiz && qs && qs[i]; if (cur && cur.d.img) cap = credit(cur.d.img);
+    openViewer(im.src, cap);
+  });
+
+  // ── 힌트(그림 문제): 시대·나라 → 그려진 때. 쓰면 맞혀도 0.5점
+  var hintUsed = false;
+  function addHint() {
+    var cur = qs && qs[i]; hintUsed = false; if (!cur || !cur.d.img || !cur.d.meta) return;
+    var q = document.getElementById("q"), m = cur.d.meta, era = cur.d[3], lvl = 0;
+    var box = document.createElement("div"); box.className = "ahint"; box.innerHTML = '<button type="button">💡 힌트 (쓰면 맞혀도 0.5점)</button><div hidden></div>';
+    var btn = box.querySelector("button"), out = box.querySelector("div");
+    btn.addEventListener("click", function () {
+      if (locked) return; hintUsed = true; lvl++; out.hidden = false;
+      out.textContent = lvl === 1 ? "시대·화풍: " + era + " · 작가의 나라: " + m[5] : "시대·화풍: " + era + " · 나라: " + m[5] + " · 그려진 때: " + m[0];
+      if (lvl >= 2) btn.disabled = true; else btn.textContent = "💡 힌트 한 번 더";
+    });
+    q.appendChild(box);
+  }
+  // ── 정답 뒤 작품 설명 카드
+  function addCard() {
+    var cur = qs && qs[i]; if (!cur || !cur.d.img || !cur.d.meta) return; var m = cur.d.meta, q = document.getElementById("q");
+    var n = q.querySelector(".note"); if (n) n.remove(); var h = q.querySelector(".ahint"); if (h) h.remove();
+    q.insertAdjacentHTML("beforeend", '<div class="acard"><b>‘' + esc(cur.d.tt) + "’</b><span>" + esc(m[3]) + " (" + esc(m[4]) + " · " + esc(m[5]) + ")</span><span>" + esc(cur.d[3]) + " · " + esc(m[2]) + " · " + esc(m[0]) + "</span>" + (m[1] ? "<span>📍 " + esc(m[1]) + "</span>" : "") + "</div>");
+  }
+  // ── 틀린 그림 복습: 틀린 그림 제목을 기억해 두고 다시 풀어요(맞히면 목록에서 빠져요)
+  var WK = "art-wrong-v1", wrongList = [], reviewing = false;
+  function loadWrong() { try { var a = JSON.parse(lsGet(WK) || "[]"); wrongList = Array.isArray(a) ? a.filter(function (t) { return DATA.W[t]; }) : []; } catch (e) { wrongList = []; } }
+  function saveWrong() { lsSet(WK, JSON.stringify(wrongList.slice(-60))); }
+  function recordResult(cur, ok) {
+    if (!cur || !cur.d.tt) return; var k = wrongList.indexOf(cur.d.tt);
+    if (ok) { if (k >= 0) wrongList.splice(k, 1); } else if (k < 0) wrongList.push(cur.d.tt); else { wrongList.splice(k, 1); wrongList.push(cur.d.tt); }
+    saveWrong(); var b = document.getElementById("artreview"); if (b) b.textContent = reviewLabel();
+  }
+  var reviewLabel = function () { return "🔁 틀린 그림 복습 (" + wrongList.length + ")"; };
+  function mkItem(q) { var d = [q[0], q[1], q[2], q[3], q[6]]; d.alt = "‘" + q[5] + "’의 작가는 누구일까요?"; d.tt = q[5]; d.meta = q[7]; return d; }
+  function startReview() {
+    if (!wrongList.length) return; var picks = shuffle(wrongList).slice(0, 10);
+    start(); roundId++;   // 일반 문제 섞기를 멈추고
+    var items = picks.map(function (t) { return DATA.Q.filter(function (q) { return q[5] === t; })[0]; }).filter(Boolean);
+    pmap(items, function (q) { return getImage(q[5]); }, 4).then(function (imgs) {
+      qs = items.map(function (q, n) { var d = mkItem(q); if (imgs[n]) d.img = imgs[n]; else d[0] = d.alt; return { d: d, opts: options(d) }; });
+      i = 0; score = 0; reviewing = true; show();
+    });
+  }
+
   // ── 시작
   function boot() {
     try { saved = JSON.parse(lsGet(SAVED) || "null"); if (!saved || typeof saved !== "object" || !Object.keys(saved).length) saved = null; } catch (e) { saved = null; }
-    onlyImg = lsGet(ONLY) === "1"; buildBar();
+    onlyImg = lsGet(ONLY) === "1"; loadWrong(); buildBar();
     if (isQuiz) {
       var oS = start, oShow = show, oPick = pick;
-      start = function () { oS(); if (mode !== "text") mix(); };
-      show = function () { oShow(); decorateQ(); };
-      pick = function (k) { oPick(k); creditQ(); };
+      start = function () { reviewing = false; oS(); if (mode !== "text") mix(); };
+      show = function () { oShow(); decorateQ(); addHint(); };
+      pick = function (k) {
+        if (locked) return; var cur = qs && qs[i], ok = cur && cur.opts[k] === cur.d[1], hu = hintUsed; oPick(k);
+        if (ok && hu && cur.d.img) { score -= 0.5; document.getElementById("score").textContent = score; }
+        recordResult(cur, ok); addCard(); creditQ();
+      };
     } else if (isGal) {
       new MutationObserver(function () { decorateAll(false); }).observe(document.getElementById("list"), { childList: true });
     }

@@ -55,6 +55,26 @@
     }
     return next();
   }
+  // 커먼즈의 음원 파일 찾기: 검색어로 찾고 ① 파일 이름에 곡 낱말이 모두 있고 ② 라이선스가 공개 도메인·CC0 표시이고 ③ 크기가 한도 이하인 첫 파일만 돌려줘요
+  var AEXT = /\.(ogg|oga|opus|mp3|flac|wav)$/i;
+  function commonsAudio(query, toks, maxBytes) {
+    var id = "a|" + query; if (cache[id] !== undefined) return Promise.resolve(cache[id]);
+    return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&list=search&srnamespace=6&srlimit=25&srsearch=" + encodeURIComponent(query + " filetype:audio")).then(function (d) {
+      var names = ((d && d.query && d.query.search) || []).map(function (r) { return r.title; }).filter(function (t) { var f = t.toLowerCase(); return AEXT.test(t) && (toks || []).every(function (alt) { return alt.split("/").some(function (a) { return f.indexOf(a) >= 0; }); }); }).slice(0, 12);
+      if (!names.length) { cache[id] = null; saveCache(); return null; }
+      return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata|url|size&titles=" + encodeURIComponent(names.join("|"))).then(function (c) {
+        var pages = (c && c.query && c.query.pages) || {}, by = {}; Object.keys(pages).forEach(function (k) { by[pages[k].title] = pages[k]; });
+        for (var i = 0; i < names.length; i++) {
+          var ii = by[names[i]] && by[names[i]].imageinfo && by[names[i]].imageinfo[0]; if (!ii) continue;
+          var lic = ii.extmetadata && ii.extmetadata.LicenseShortName && ii.extmetadata.LicenseShortName.value;
+          if (!lic || !PD.test(lic) || !okImg(ii.url) || (ii.size || 0) > (maxBytes || 60000000)) continue;
+          var res = { src: ii.url, page: ii.descriptionurl || ("https://commons.wikimedia.org/wiki/" + encodeURIComponent(names[i].replace(/ /g, "_"))), title: names[i].replace(/^File:/, ""), license: lic, size: ii.size || 0 };
+          cache[id] = res; saveCache(); return res;
+        }
+        cache[id] = null; saveCache(); return null;
+      });
+    });
+  }
   window.fgOnline = {
     enabled: ENABLED,
     on: function () { return ENABLED && get(KEY) === "1"; },
@@ -64,6 +84,6 @@
       if (ok) set(KEY, "1"); return ok;
     },
     off: function () { try { localStorage.removeItem(KEY); } catch (e) {} },
-    json: json, wikiImage: wikiImage, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
+    json: json, wikiImage: wikiImage, commonsAudio: commonsAudio, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
   };
 })();

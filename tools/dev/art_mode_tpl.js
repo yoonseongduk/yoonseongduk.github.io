@@ -6,7 +6,7 @@
 (function () {
   "use strict";
   var DATA = /*DATA*/null;
-  var MK = "art-img-mode-v1", ONLY = "art-img-only-v1", SAVED = "art-saved-v1", CACHE = "fg-art-saved-v1";
+  var AS = "art-autosave-v1", MK = "art-img-mode-v1", ONLY = "art-img-only-v1", SAVED = "art-saved-v1", CACHE = "fg-art-saved-v1";
   var mode = "text", local = null, saved = null, onlyImg = false;
   var isQuiz = !!document.getElementById("opts") && typeof start === "function", isGal = !!document.getElementById("list") && !isQuiz;
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -38,7 +38,15 @@
   function getImage(title) {
     if (!DATA.W[title]) return Promise.resolve(null);
     var p = mode === "local" ? resolveLocal(title) : mode === "online" ? fetchOnline(title) : Promise.resolve(null);
-    return p.then(function (r) { return r ? preload(r.src).then(function (ok) { return ok ? r : null; }) : null; });
+    return p.then(function (r) { return r ? preload(r.src).then(function (ok) { if (ok && mode === "online") autoSave(title, r); return ok ? r : null; }) : null; });
+  }
+  // 온라인으로 본 그림은 이 폰에 저절로 저장해요(다음부터는 인터넷 없이도 보임). 저장소 서버(GitHub)에는 그림을 두지 않아요.
+  function autoSave(title, r) {
+    if (lsGet(AS) !== "1" || (saved && saved[title]) || !("caches" in window) || !r || !r.src) return;   // 저장은 사용자가 고른 경우에만
+    saved = saved || {}; saved[title] = { src: r.src, page: r.page, title: r.title, license: r.license, pending: 1 };
+    fetch(r.src, { credentials: "omit", referrerPolicy: "no-referrer" }).then(function (resp) { if (!resp.ok) throw 0; return caches.open(CACHE).then(function (c) { return c.put(r.src, resp); }); })
+      .then(function () { delete saved[title].pending; lsSet(SAVED, JSON.stringify(saved)); })
+      .catch(function () { if (saved && saved[title] && saved[title].pending) delete saved[title]; });
   }
   var has = function (title) { return !!DATA.W[title] && (mode === "online" || (mode === "local" && !!localInfo(title))); };
   var localCount = function () { return titles.filter(function (t) { return !!localInfo(t); }).length; };
@@ -73,7 +81,7 @@
     h += '<small id="artnote">' + esc(note) + "</small>";
     if (isQuiz && mode !== "text") h += '<div class="row"><small>그림 문제:</small><button type="button" class="sm' + (onlyImg ? "" : " on") + '" data-o="0">섞어서 (한 판에 최대 3개)</button><button type="button" class="sm' + (onlyImg ? " on" : "") + '" data-o="1">그림 문제만</button></div>';
     if (online) {
-      h += '<div class="sub"><small>' + esc(dl.msg || (ns ? "이 폰에 그림 " + ns + "장 저장됨(인터넷 없이도 '저장한 그림'으로 볼 수 있어요)." : "그림을 이 폰에 저장해 두면 인터넷이 없어도 볼 수 있어요.")) + '</small><div class="row">' +
+      h += '<div class="sub"><div class="row"><button type="button" class="sm" data-s="auto">💾 본 그림 자동 저장: ' + (lsGet(AS) === "1" ? "켜짐" : "꺼짐") + '</button><small>끄면 저장 없이 보기만 해요.</small></div><small>' + esc(dl.msg || (ns ? "이 폰에 그림 " + ns + "장 저장됨(인터넷 없이도 '저장한 그림'으로 볼 수 있어요)." : "그림을 이 폰에 저장해 두면 인터넷이 없어도 볼 수 있어요.")) + '</small><div class="row">' +
         (canSave ? '<button type="button" class="sm" data-s="save"' + (!dl.running && ns && !left ? " disabled" : "") + '>' + (dl.running ? "⏹ 멈추기" : ns ? (left ? "📥 그림 더 저장하기" : "✅ 모두 저장됨") : "📥 그림 저장하기(오프라인용)") + "</button>" : "<small>이 브라우저는 그림 저장을 지원하지 않아요.</small>") +
         (ns && !dl.running ? '<button type="button" class="sm" data-s="clear">🗑️ 저장한 그림 지우기</button>' : "") + "</div></div>";
     }
@@ -82,6 +90,7 @@
   }
   function setMode(m) {
     if (m === "online" && !(window.fgOnline && fgOnline.ask(CONSENT))) return;
+    if (m === "online" && lsGet(AS) === null) { var yes = false; try { yes = window.confirm("📥 본 그림을 이 폰에 저장할까요?\n\n· 저장하면 다음부터 인터넷 없이도 볼 수 있어요(그림 1장 약 50KB).\n· 저장하지 않으면 볼 때마다 인터넷이 필요해요.\n· 나중에 언제든 바꾸거나 지울 수 있어요.\n\n[확인] 저장해요   [취소] 저장하지 않고 보기만 해요"); } catch (e) {} lsSet(AS, yes ? "1" : "0"); }
     mode = m; lsSet(MK, m); drawBar(); if (isQuiz) start(); else decorateAll(true);
   }
 
@@ -125,7 +134,7 @@
       var b = e.target.closest("button"); if (!b || b.disabled) return;
       if (b.dataset.m) setMode(b.dataset.m);
       else if (b.dataset.o) { onlyImg = b.dataset.o === "1"; lsSet(ONLY, onlyImg ? "1" : "0"); drawBar(); if (isQuiz) start(); }
-      else if (b.dataset.s === "review") startReview(); else if (b.dataset.s === "save") saveAll(); else if (b.dataset.s === "clear") clearSaved();
+      else if (b.dataset.s === "review") startReview(); else if (b.dataset.s === "auto") { lsSet(AS, lsGet(AS) === "1" ? "0" : "1"); drawBar(); } else if (b.dataset.s === "save") saveAll(); else if (b.dataset.s === "clear") clearSaved();
     });
     drawBar();
   }

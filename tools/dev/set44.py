@@ -7,6 +7,7 @@ sys.path.insert(0, ".")
 from music_data import COMPOSERS, ERAS, GENRES, AMBIG, NO_COUNTRY, NO_ERA
 from mkquiz import make as make_quiz
 from mkpage import make as make_page
+from music_audio import AUDIO
 H = "out/"
 R = random.Random(20261124)
 C = {c[0]: dict(id=c[0], name=c[1], en=c[2], years=c[3], country=c[4], era=c[5], bio=c[6], works=[dict(t=w[0], y=w[1], g=w[2], fame=w[3]) for w in c[7]]) for c in COMPOSERS}
@@ -106,12 +107,13 @@ make_page(H + "classic-gallery.html", "클래식 작곡가별 모음", "🎻", 2
 
 # ───────── 듣고 맞히기 모드(classic-mode.js) 만들기 + 두 화면에 끼우기
 W = {w["t"]: [C[w["comp"]]["name"], w["y"], w["g"], C[w["comp"]]["era"], w["fame"], C[w["comp"]]["country"], w["comp"]] for w in ALLW}
-DATA = {"W": W, "C": [[c["name"], c["era"], c["id"]] for c in C.values()], "AMBIG": {t: sorted(s) for t, s in AMBIG.items()}}
+DATA = {"W": W, "C": [[c["name"], c["era"], c["id"]] for c in C.values()], "AMBIG": {t: sorted(s) for t, s in AMBIG.items()},
+        "A": {t: [v.split("|")[0], [x.strip().lower() for x in v.split("|")[1].split(",")]] for t, v in AUDIO.items() if t in W}}
 tpl = open("classic_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../classic-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):
     t = open(path, encoding="utf-8").read()
     if 'src="classic-mode.js"' not in t:
-        t = t.replace("</body>", '<script src="classic-mode.js" defer></script>\n</body>', 1); open(path, "w", encoding="utf-8").write(t)
+        t = t.replace("</body>", '<script src="online.js"></script>\n<script src="classic-mode.js" defer></script>\n</body>', 1); open(path, "w", encoding="utf-8").write(t)
 hook(H + "classic-quiz.html"); hook(H + "classic-gallery.html")
 print("듣기 모드 자료: 곡", len(W))

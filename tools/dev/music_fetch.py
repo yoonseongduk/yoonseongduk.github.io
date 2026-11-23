@@ -45,6 +45,19 @@ def find(title):
         if (ii.get("size") or 0) > 20_000_000: why = "파일이 너무 큼"; continue
         return {"file": fn, "url": ii.get("url"), "lic": lic, "page": ii.get("descriptionurl") or ("https://commons.wikimedia.org/wiki/" + urllib.parse.quote(fn.replace(" ", "_")))}, None
     return None, why
+def probe(url):
+    """실제로 재생되는 주소인지: 앞 2KB만 요청(Range)해서 상태·형식을 확인해요(파일은 저장하지 않아요)."""
+    for n in range(4):
+        try:
+            rq = urllib.request.Request(url, headers={"User-Agent": UA, "Range": "bytes=0-2047"})
+            with urllib.request.urlopen(rq, timeout=40) as r:
+                ct = r.headers.get("Content-Type", ""); d = r.read(); time.sleep(PACE)
+                return (r.status in (200, 206) and len(d) > 500 and ("audio" in ct or "ogg" in ct or "octet" in ct)), f"{r.status} {ct} {len(d)}B"
+        except urllib.error.HTTPError as e:
+            if e.code == 429: time.sleep(min(int(e.headers.get("Retry-After", "10")), 150) + 1 + n); continue
+            return False, f"HTTP {e.code}"
+        except Exception as e: time.sleep(3 + n)
+    return False, "접속 오류"
 def clip(src, dst):
     """앞쪽 무음을 걷어 내고 CLIP 초만 가져와 모노 Opus(약 40kbps)로 저장."""
     r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", src], capture_output=True, text=True)
@@ -61,12 +74,16 @@ def main():
     ip = os.path.join(OUT, "index.json"); idx = json.load(open(ip, encoding="utf-8")) if os.path.exists(ip) else {}
     works = [t for t in AUDIO if not only or t == only]
     if limit: works = works[:limit]
-    ok = skip = 0; fails = []
+    ok = skip = 0; fails = []; check = {}
     for n, t in enumerate(works, 1):
         if not refresh and t in idx and os.path.exists(os.path.join(OUT, idx[t]["f"])): skip += 1; continue
         info, why = find(t)
         if not info: fails.append((t, why)); print(f"[{n}/{len(works)}] ✗ {t}: {why}", flush=True); continue
-        if dry: ok += 1; print(f"[{n}/{len(works)}] ✓ {t} ← {info['file'][5:70]} ({info['lic']})", flush=True); continue
+        if dry:
+            good, msg = probe(info["url"])
+            if not good: fails.append((t, "주소를 재생할 수 없음: " + msg)); print(f"[{n}/{len(works)}] ✗ {t}: 재생 확인 실패({msg})", flush=True); continue
+            ok += 1; check[t] = {"file": info["file"][5:], "page": info["page"], "license": info["lic"], "url": info["url"]}
+            print(f"[{n}/{len(works)}] ✓ {t} ← {info['file'][5:70]} ({info['lic']}, {msg})", flush=True); continue
         ext = os.path.splitext(info["file"])[1].lower(); tmp = os.path.join(TMP, "in" + ext)
         data = get(info["url"], binary=True)
         if not data: fails.append((t, "내려받기 실패")); print(f"[{n}/{len(works)}] ✗ {t}: 내려받기 실패", flush=True); continue
@@ -76,6 +93,7 @@ def main():
         idx[t] = {"f": fn, "p": info["page"], "t": info["file"][5:], "l": info["lic"]}; ok += 1
         json.dump(idx, open(ip, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         print(f"[{n}/{len(works)}] ✓ {t} ← {info['file'][5:60]} ({info['lic']}, {os.path.getsize(dst)//1024}KB)", flush=True)
+    if dry: json.dump(check, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'music_check.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     if not dry:
         open(os.path.join(OUT, "LICENSE.txt"), "w", encoding="utf-8").write("이 폴더의 음원은 위키미디어 커먼즈 녹음 파일의 앞부분 약 20초이며, 파일마다 공개 도메인·CC0 표시를 확인한 것만 담았어요.\n곡 이름·원본 파일 이름·출처 주소·라이선스 표시는 index.json 에 있어요. 권리자께서 삭제를 요청하시면 확인 후 바로 지워요.\n")
     print(f"\n통과 {ok} · 건너뜀 {skip} · 걸러짐 {len(fails)} (전체 {len(works)}){' · 검증만(dry-run)' if dry else ''}")

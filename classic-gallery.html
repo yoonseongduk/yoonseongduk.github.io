@@ -78,6 +78,8 @@ $("eras").addEventListener("click", ev => { const b = ev.target.closest("[data-e
 $("lvs").addEventListener("click", ev => { const b = ev.target.closest("[data-l]"); if (!b) return; lvf = +b.dataset.l; sv(KEY + "-lv", lvf); render(); });
 $("q").addEventListener("input", render); render();
 </script>
+<script src="online.js"></script>
+<script src="classic-mode.js" defer></script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="med-notify.js" defer></script>
 <script src="home.js" defer></script>

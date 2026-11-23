@@ -138,12 +138,13 @@
     if (!pool.length) return;
     pmap(pool, function (q) { return getImage(q[5]).then(function (r) { return r ? { q: q, r: r } : null; }); }, 6).then(function (all) {
       var ok = all.filter(Boolean); if (id !== roundId || !ok.length || !qs || qs.length < 2) return;
-      var slots = []; for (var k = i + 1; k < qs.length; k++) slots.push(k);
-      slots = shuffle(slots).slice(0, Math.min(want, ok.length));
+      var first = i === 0 && !locked, slots = []; for (var k = first ? 0 : i + 1; k < qs.length; k++) slots.push(k);   // 아직 답하지 않은 첫 문제도 그림으로 바꿔요
+      slots = (first ? [0].concat(shuffle(slots.slice(1))) : shuffle(slots)).slice(0, Math.min(want, ok.length));   // 첫 문제는 꼭 그림으로
       slots.forEach(function (pos, n) {
         var q = ok[n].q, d = mkItem(q); d.img = ok[n].r;
         qs[pos] = { d: d, opts: options(d) };
       });
+      if (first && slots.indexOf(0) >= 0) show();
     });
   }
   function decorateQ() {

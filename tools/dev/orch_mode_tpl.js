@@ -73,21 +73,25 @@
     return "📷 사진: " + (e.artist ? esc(e.artist) + " · " : "") + lic + ' · <a href="' + esc(e.page) + '" target="_blank" rel="noopener noreferrer">원본 보기(' + esc(e.label || "위키미디어") + ")</a>";
   }
 
+  // 악기 그림 한 칸을 그려요: 기본은 직접 그린 그림, 사진 모드면 사진으로 바꾸고 출처를 붙여요
+  function paint(fig, id, still) {
+    fig.innerHTML = DATA.SVG[id];
+    if (!photo) return;
+    getPhoto(id).then(function (r) {
+      if (!r || !fig.isConnected || !still()) return;
+      var im = new Image(); im.alt = "악기 사진";
+      im.onload = function () { if (!fig.isConnected || !still()) return; fig.innerHTML = ""; fig.appendChild(im); var c = document.createElement("small"); c.innerHTML = credit(r.e); fig.appendChild(c); saveOne(id, r); };
+      im.src = r.src;
+    });
+  }
   function decorate() {
-    var cur = qs && qs[i]; hintUsed = false; if (!cur) return; var q = document.getElementById("q"), m = DATA.IMG[cur.d[0]]; if (!q) return;
-    if (m) {
-      var fig = document.createElement("div"); fig.className = "oimg"; fig.innerHTML = m[0] === "i" ? DATA.SVG[m[1]] : DATA.SEAT[String(m[1])]; q.insertBefore(fig, q.firstChild);
-      if (m[0] === "i" && photo) {
-        var id = m[1], myQ = cur.d[0];
-        getPhoto(id).then(function (r) {
-          if (!r || !qs || !qs[i] || qs[i].d[0] !== myQ || !fig.isConnected) return;
-          var im = new Image(); im.alt = "악기 사진";
-          im.onload = function () { if (!fig.isConnected) return; fig.innerHTML = ""; fig.appendChild(im); var c = document.createElement("small"); c.innerHTML = credit(r.e); fig.appendChild(c); saveOne(id, r); };
-          im.src = r.src;
-        });
-      }
+    var cur = qs && qs[i]; hintUsed = false; if (!cur) return; var q = document.getElementById("q"), key = cur.d[0], m = DATA.IMG[key], showId = DATA.SHOW[key]; if (!q) return;
+    if (m && m[0] === "s") { var f0 = document.createElement("div"); f0.className = "oimg"; f0.innerHTML = DATA.SEAT[String(m[1])]; q.insertBefore(f0, q.firstChild); }
+    else if (m || showId) {   // 그림 문제(이름 맞히기) 또는 이름이 나온 악기의 그림·사진
+      var fig = document.createElement("div"); fig.className = "oimg"; q.insertBefore(fig, q.firstChild);
+      paint(fig, m ? m[1] : showId, function () { return qs && qs[i] && qs[i].d[0] === key; });
     }
-    var iid = DATA.INFO[cur.d[0]];
+    var iid = DATA.INFO[key];
     if (iid && m && m[0] === "i") {   // 힌트는 그림 문제에만: 악기군 → 연주 방법
       var ins2 = DATA.I[iid], hb = document.createElement("div"); hb.className = "ahint"; hb.innerHTML = '<button type="button">💡 힌트 (쓰면 맞혀도 0.5점)</button><div hidden></div>';
       var btn = hb.querySelector("button"), out = hb.querySelector("div"), lvl = 0;
@@ -96,11 +100,29 @@
     }
   }
   function addCard(cur) {
-    var id = DATA.INFO[cur.d[0]]; if (!id) return; var a = DATA.I[id], q = document.getElementById("q");
+    var key = cur.d[0], id = DATA.INFO[key]; if (!id) return; var a = DATA.I[id], q = document.getElementById("q");
     var n = q.querySelector(".note"); if (n) n.remove(); var h = q.querySelector(".ahint"); if (h) h.remove();
-    q.insertAdjacentHTML("beforeend", '<div class="acard"><b>' + esc(a.name) + " <small>(" + esc(a.en) + ")</small></b><span>" + esc(a.fam) + " · " + esc(a.rng) + " 소리 · 도감 " + a.n + "번</span><span>🎼 " + esc(a.how) + "</span><span>" + esc(a.desc) + "</span><span>🎵 " + esc(a.use) + "</span></div>");
+    q.insertAdjacentHTML("beforeend", '<div class="acard"><div class="oimg"></div><b>' + esc(a.name) + " <small>(" + esc(a.en) + ")</small></b><span>" + esc(a.fam) + " · " + esc(a.rng) + " 소리 · 도감 " + a.n + "번</span><span>🎼 " + esc(a.how) + "</span><span>" + esc(a.desc) + "</span><span>🎵 " + esc(a.use) + "</span></div>");
+    var cf = q.querySelector(".acard .oimg"), already = q.querySelector(":scope > .oimg");
+    if (already && DATA.IMG[key] && DATA.IMG[key][0] === "i") cf.remove();   // 그림 문제는 위에 이미 그림이 있어요
+    else paint(cf, id, function () { return qs && qs[i] && qs[i].d[0] === key; });
   }
 
+  // 한 판(10문제)에 그림 문제가 모자라면 그림 문제를 더 섞어 넣어요(최소 4개)
+  var MINIMG = 4;
+  function biasImages() {
+    if (!qs || qs.length < 2 || typeof D === "undefined") return;
+    var isImg = function (d) { var m = DATA.IMG[d[0]]; return !!m && m[0] === "i"; };
+    var have = qs.filter(function (x) { return isImg(x.d); }).length; if (have >= MINIMG) return;
+    var used = {}; qs.forEach(function (x) { used[x.d[0]] = 1; });
+    var pool = D.filter(function (d, n) { return isImg(d) && !used[d[0]] && (!lv || lvOf(n) === lv) && !isFlag(d[0]) && (cat === "전체" || d[3] === cat); });
+    if (!pool.length) return;
+    var slots = []; qs.forEach(function (x, k) { if (!isImg(x.d)) slots.push(k); });
+    for (var k = slots.length - 1; k > 0; k--) { var j = Math.floor(Math.random() * (k + 1)), tmp = slots[k]; slots[k] = slots[j]; slots[j] = tmp; }
+    for (var k2 = pool.length - 1; k2 > 0; k2--) { var j2 = Math.floor(Math.random() * (k2 + 1)), t2 = pool[k2]; pool[k2] = pool[j2]; pool[j2] = t2; }
+    for (var x = 0; x < Math.min(MINIMG - have, pool.length, slots.length); x++) qs[slots[x]] = { d: pool[x], opts: options(pool[x]) };
+    show();
+  }
 
   // ── 악기 도감: 카드의 그림을 사진으로 바꿔요(보이는 카드만 불러와요)
   var io = null;
@@ -129,13 +151,14 @@
     } else photo = pref === "1" && !!(window.fgOnline && fgOnline.on());
     buildBar();
     if (isGal) { new MutationObserver(function () { decorateGal(false); }).observe(document.getElementById("list"), { childList: true }); decorateGal(false); return; }
-    var oShow = show, oPick = pick;
+    var oShow = show, oPick = pick, oStart = start;
+    start = function () { oStart(); biasImages(); };
     show = function () { oShow(); decorate(); };
     pick = function (k) {
       if (locked) return; var c = qs && qs[i], ok = c && c.opts[k] === c.d[1], hu = hintUsed; oPick(k);
       if (c) { if (ok && hu) { score -= 0.5; document.getElementById("score").textContent = score; } addCard(c); }
     };
-    if (qs && qs.length) show();
+    if (qs && qs.length) { biasImages(); show(); }
   }
   addEventListener("online", function () { if (bar) drawBar(); }); addEventListener("offline", function () { if (bar) drawBar(); });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();

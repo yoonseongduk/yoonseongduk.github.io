@@ -27,7 +27,7 @@ CLUE = {
 ALT_KO = {"violin": "바이올린", "viola": "비올라", "cello": "첼로", "doublebass": "콘트라베이스", "harp": "하프", "flute": "플루트", "piccolo": "피콜로", "oboe": "오보에", "englishhorn": "잉글리시 호른", "clarinet": "클라리넷", "bassoon": "바순", "contrabassoon": "콘트라바순", "trumpet": "트럼펫", "horn": "호른", "trombone": "트롬본", "tuba": "튜바", "timpani": "팀파니", "snaredrum": "스네어 드럼", "bassdrum": "베이스 드럼", "cymbals": "심벌즈", "triangle": "트라이앵글", "xylophone": "실로폰", "glockenspiel": "글로켄슈필", "gong": "징", "tambourine": "탬버린", "castanets": "캐스터네츠", "piano": "피아노", "celesta": "첼레스타", "organ": "파이프 오르간"}
 ALT_DE = {"violin": "Violine", "viola": "Bratsche", "cello": "Violoncello", "doublebass": "Kontrabass", "harp": "Harfe", "flute": "Querflöte", "piccolo": "Piccoloflöte", "oboe": "Oboe", "englishhorn": "Englischhorn", "clarinet": "Klarinette", "bassoon": "Fagott", "contrabassoon": "Kontrafagott", "trumpet": "Trompete", "horn": "Waldhorn", "trombone": "Posaune", "tuba": "Tuba", "timpani": "Pauke", "snaredrum": "Kleine Trommel", "bassdrum": "Große Trommel", "cymbals": "Becken (Musikinstrument)", "xylophone": "Xylophon", "gong": "Gong", "tambourine": "Tamburin", "castanets": "Kastagnetten", "piano": "Klavier", "celesta": "Celesta", "organ": "Orgel"}
 assert set(CLUE) == set(ORDER), set(ORDER) ^ set(CLUE)
-data, level, seen, IMG, INFO = [], {}, set(), {}, {}
+data, level, seen, IMG, INFO, SHOW = [], {}, set(), {}, {}, {}
 def add(q, ans, wrong, cat, expl, lv):
     if q in seen: return False
     wrong = [w for w in dict.fromkeys(wrong) if w != ans][:3]
@@ -50,13 +50,15 @@ for i in ORDER:
 for i in ORDER:
     a = I[i]
     if a["fam"] not in CORE: continue
-    add(f"‘{a['name']}’은(는) 어느 악기군에 속할까요?", a["fam"], [f for f in CORE if f != a["fam"]], a["fam"], f"{a['name']}은(는) {a['fam']}예요. {a['how']}.", a["fame"])
+    q2 = f"‘{a['name']}’은(는) 어느 악기군에 속할까요?"
+    if add(q2, a["fam"], [f for f in CORE if f != a["fam"]], a["fam"], f"{a['name']}은(는) {a['fam']}예요. {a['how']}.", a["fame"]): SHOW[q2] = i; INFO[q2] = i
 # ④ 같은 악기군 짝: ‘X’와 같은 악기군인 것은?
 for i in ORDER:
     a = I[i]
     if a["fam"] not in CORE: continue
     mates = [x for x in BY_FAM[a["fam"]] if x != i]; m = R.choice(mates); wrong = [x for x in ORDER if I[x]["fam"] != a["fam"] and I[x]["fam"] in CORE]
-    add(f"‘{a['name']}’과(와) 같은 악기군에 속하는 악기는?", I[m]["name"], names(R.sample(wrong, 3)), a["fam"], f"{a['name']}과(와) {I[m]['name']}은(는) 모두 {a['fam']}예요.", max(1, min(3, a["fame"])))
+    q4 = f"‘{a['name']}’과(와) 같은 악기군에 속하는 악기는?"
+    if add(q4, I[m]["name"], names(R.sample(wrong, 3)), a["fam"], f"{a['name']}과(와) {I[m]['name']}은(는) 모두 {a['fam']}예요.", max(1, min(3, a["fame"]))): SHOW[q4] = i; INFO[q4] = m
 # ⑤ 높낮이 비교(같은 악기군 안에서 분명한 것만)
 for q, ans, ws, fam, ex, lv in [
     ("현악기 중 가장 낮은 소리를 내는 악기는?", "콘트라베이스", ["바이올린", "비올라", "첼로"], "현악기", "콘트라베이스가 현악기 중 가장 크고 가장 낮아요.", 1),
@@ -132,7 +134,7 @@ make_quiz(H + "orchestra-quiz.html", "오케스트라 퀴즈", "🎻", 20, "orch
 
 # ───────── 모드 스크립트 orch-mode.js (그림·사진·정답 카드·힌트)
 INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "how": a["how"], "rng": a["rng"], "desc": a["desc"], "use": a["use"], "wiki": a["wiki"], "tok": a["tok"], "ko": ALT_KO.get(i), "de": ALT_DE.get(i)} for i, a in I.items()}
-DATA = {"I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO}
+DATA = {"I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW}
 tpl = open("orch_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../orch-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):

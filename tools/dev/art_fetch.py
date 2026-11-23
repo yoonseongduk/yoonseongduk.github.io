@@ -70,6 +70,26 @@ def prefetch_lic(works):
         return {"src": th, "p": page, "t": s.get("title") or title, "l": lic, "file": f}, None
     return None, why
 
+def check(keys, toks):
+    """작품 하나 검증. 통과하면 (정보 dict, None), 아니면 (None, 이유)."""
+    why = "후보 항목 없음"
+    for k in keys:
+        lang, title = k.split(":", 1)
+        s = summary(lang, title)
+        if not s: why = "항목을 못 찾음" if LAST["status"] == 404 else "접속 오류·요청 제한(나중에 다시 실행)"; continue
+        if s.get("type") != "standard": why = "항목이 아님(동음이의어 등)"; continue
+        th = img_url((s.get("thumbnail") or {}).get("source", ""))
+        if not th: why = "대표 그림 없음"; continue
+        text = norm((s.get("description") or "") + " " + (s.get("extract") or ""))
+        if not any(norm(t) in text for t in toks): why = "항목 설명에 작가 이름이 없음(다른 항목일 수 있음)"; continue
+        f = file_of(th)
+        if not f: why = "그림 파일 이름을 못 읽음"; continue
+        lic = LIC.get(f.replace(" ", "_"), "")
+        if not lic or not PD.search(lic): why = f"공개 도메인 표시가 아님({lic or '라이선스 정보 없음'})"; continue
+        page = ((s.get("content_urls") or {}).get("desktop") or {}).get("page") or f"https://{lang}.wikipedia.org/wiki/" + urllib.parse.quote(title)
+        return {"src": th, "p": page, "t": s.get("title") or title, "l": lic, "file": f}, None
+    return None, why
+
 def main():
     args = sys.argv[1:]; dry = "--dry-run" in args; refresh = "--refresh" in args; only = args[args.index("--only") + 1] if "--only" in args else None
     limit = int(args[args.index("--limit") + 1]) if "--limit" in args else None

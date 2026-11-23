@@ -36,7 +36,7 @@ def get(u, binary=False, tries=7):
             if e.code in (429, 500, 502, 503, 504):
                 try: ra = int(e.headers.get("Retry-After", "10"))
                 except Exception: ra = 10
-                time.sleep(min(ra, 40) + 1 + n); continue
+                time.sleep(min(ra, 150) + 1 + n); continue
             return None
         except Exception:
             LAST["status"] = 0; time.sleep(2 + n)

@@ -140,6 +140,22 @@
       cache[id] = out; saveCache(); return out;
     });
   }
+  // 미리 골라 둔 커먼즈 사진 파일 이름들(좋은 순서)에서 라이선스(공개 도메인·CC0, cc면 CC BY·BY-SA까지)가 맞는 첫 사진을 돌려줘요. 사진 주소는 500px 미리보기예요.
+  function commonsPhoto(names, cc) {
+    var id = "p|" + (names || []).join("|") + (cc ? "|cc" : ""); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
+    if (!names || !names.length) return Promise.resolve(null);
+    return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata|url&iiurlwidth=500&titles=" + encodeURIComponent(names.map(function (n) { return "File:" + n; }).join("|"))).then(function (c) {
+      if (!c) return null;
+      var pages = (c.query && c.query.pages) || {}, by = {}; Object.keys(pages).forEach(function (k) { by[(pages[k].title || "").replace(/^File:/, "").replace(/_/g, " ")] = pages[k]; });
+      for (var i = 0; i < names.length; i++) {
+        var pg = by[names[i].replace(/_/g, " ")], ii = pg && pg.imageinfo && pg.imageinfo[0]; if (!ii || !okImg(ii.thumburl)) continue;
+        var md = ii.extmetadata || {}, lic = md.LicenseShortName && md.LicenseShortName.value; if (!okLic(lic, cc)) continue;
+        var res = { src: imgUrl(ii.thumburl), page: ii.descriptionurl, filePage: ii.descriptionurl, title: names[i], license: lic, licenseUrl: md.LicenseUrl && md.LicenseUrl.value, artist: plain(md.Artist && md.Artist.value), label: "위키미디어 커먼즈" };
+        cache[id] = res; saveCache(); return res;
+      }
+      cache[id] = null; saveCache(); return null;
+    });
+  }
   window.fgOnline = {
     enabled: ENABLED,
     on: function () { return ENABLED && get(KEY) === "1"; },
@@ -149,6 +165,6 @@
       if (ok) set(KEY, "1"); return ok;
     },
     off: function () { try { localStorage.removeItem(KEY); } catch (e) {} },
-    json: json, wikiImage: wikiImage, commonsAudio: commonsAudio, commonsFiles: commonsFiles, imageFallback: fallback, _src: { commons: srcCommons, cma: srcCMA }, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
+    json: json, wikiImage: wikiImage, commonsAudio: commonsAudio, commonsFiles: commonsFiles, commonsPhoto: commonsPhoto, imageFallback: fallback, _src: { commons: srcCommons, cma: srcCMA }, okImg: okImg, imgUrl: imgUrl, fileOf: fileOf, norm: norm
   };
 })();

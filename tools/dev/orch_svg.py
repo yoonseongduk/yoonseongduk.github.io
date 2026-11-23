@@ -96,3 +96,22 @@ def size_compare(hl, names=False):
         x += 2 * bw + 18
     if names: body += f'<text x="{px}" y="{base+10}" font-size="7.2" text-anchor="middle" fill="#6b747d">사람</text><text x="{px}" y="{base+19}" font-size="6.8" text-anchor="middle" fill="#6b747d">약 170cm</text>'
     return f'<svg viewBox="0 0 {W} {Hh}" role="img" aria-label="현악기 크기 비교" xmlns="http://www.w3.org/2000/svg"><rect width="{W}" height="{Hh}" rx="14" fill="#f6efe0"/>{body}</svg>'
+
+
+# ───────── 목관악기 크기 비교(길이를 가로 막대로, 실제 길이 비율): 피콜로·플루트·오보에·클라리넷·잉글리시 호른·바순·콘트라바순
+WIND_SIZES = [("piccolo", "피콜로", 32), ("flute", "플루트", 67), ("oboe", "오보에", 62), ("clarinet", "클라리넷", 66), ("englishhorn", "잉글리시 호른", 80), ("bassoon", "바순", 134), ("contrabassoon", "콘트라바순", 150)]
+def winds_compare(hl, names=False):
+    """hl: 강조할 악기 id. 막대 길이가 실제 길이(바순·콘트라바순은 접은 높이)에 비례해요. names=True면 이름과 길이를 적어요."""
+    K = 0.84 if names else 1.3; x0 = 78 if names else 14; rowh = 17; W = 252; H = 14 + rowh * len(WIND_SIZES)
+    body = ""; y = 8
+    for iid, nm, cm in WIND_SIZES:
+        on = (hl is None) or iid == hl; L = cm * K
+        col = {"piccolo": WOOD, "flute": SILVER, "oboe": DARK, "clarinet": DARK, "englishhorn": DARK, "bassoon": WOOD, "contrabassoon": WOOD}[iid] if on else "#cdc4b3"
+        edge = ("#555" if iid in ("oboe", "clarinet", "englishhorn") else (WOOD2 if iid in ("piccolo", "bassoon", "contrabassoon") else SILVER2)) if on else "#a89c86"
+        th = 9 if iid in ("bassoon", "contrabassoon") else 6 if iid != "piccolo" else 5
+        body += f'<rect x="{x0}" y="{y+(rowh-th)/2-2:.1f}" width="{L:.1f}" height="{th}" rx="{th/2:.1f}" fill="{col}" stroke="{edge}" stroke-width="1"/>'
+        if iid in ("oboe", "clarinet", "englishhorn"): body += f'<ellipse cx="{x0+L-3:.1f}" cy="{y+rowh/2-2:.1f}" rx="{3.6 if iid != "englishhorn" else 5}" ry="{5 if iid != "englishhorn" else 5.5}" fill="{col}" stroke="{edge}" stroke-width="1"/>'
+        if on and hl: body += f'<circle cx="{x0+L+7:.1f}" cy="{y+rowh/2-2:.1f}" r="3.6" fill="#e8742a"/>'
+        if names: body += f'<text x="{x0-6}" y="{y+rowh/2+1:.1f}" font-size="8.2" text-anchor="end" fill="#4a3f27" font-weight="{700 if iid==hl else 400}">{nm}</text><text x="{x0+L+(14 if (on and hl) else 5):.1f}" y="{y+rowh/2+1:.1f}" font-size="7.4" fill="#7b6a45">약 {cm}cm</text>'
+        y += rowh
+    return f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="목관악기 크기 비교" xmlns="http://www.w3.org/2000/svg"><rect width="{W}" height="{H}" rx="14" fill="#f6efe0"/>{body}</svg>'

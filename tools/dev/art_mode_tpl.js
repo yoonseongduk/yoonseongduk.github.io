@@ -187,7 +187,7 @@
   // ── 그림 크게 보기: 전체 화면 + 확대(손가락 두 개로 벌리기·마우스 휠·＋/－·두 번 누르기) + 끌어서 이동. 확대하면 더 큰 그림(1280px)을 불러와 선명하게 보여요(보기를 연 경우에만 인터넷을 써요).
   var ZMAX = 8;
   function bigSrc(src) {
-    if (/\/\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src)) return src.replace(/\/\d+px-([^\/]+)$/, "/1280px-$1");
+    if (/\/(?:lossy-page1-)?\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src)) return src.replace(/\/((?:lossy-page1-)?)\d+px-([^\/]+)$/, "/$11280px-$2");
     if (/^https:\/\/www\.artic\.edu\/iiif\/.*\/full\/\d+,\//.test(src || "")) return src.replace(/\/full\/\d+,\//, "/full/1200,/");
     return null;
   }

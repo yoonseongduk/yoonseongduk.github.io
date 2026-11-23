@@ -59,9 +59,11 @@
   }
   function fromOnline(id) {
     var ins = DATA.I[id]; if (!online()) return Promise.resolve(null);
+    var probe = function (src) { return new Promise(function (ok) { var im = new Image(), tm = setTimeout(function () { ok(false); }, 15000); im.onload = function () { clearTimeout(tm); ok(true); }; im.onerror = function () { clearTimeout(tm); ok(false); }; im.src = src; }); };
+    var viaFiles = ins.files && fgOnline.commonsPhoto ? fgOnline.commonsPhoto(ins.files, true).then(function (r) { return r ? probe(r.src).then(function (okLoad) { return okLoad ? r : null; }) : null; }).then(function (r) { return r ? { src: r.src, e: { src: r.src, page: r.filePage || r.page, title: r.title, license: r.license, licenseUrl: r.licenseUrl, artist: r.artist, label: r.label }, online: true } : null; }) : Promise.resolve(null);
     var keys = ["en:" + ins.wiki.replace(/ /g, "_")], toks = [ins.tok];   // A 영어 위키백과 → B 한국어 → C 독일어 → (이어서 커먼즈 검색·Openverse·클리블랜드)
     if (ins.ko) { keys.push("ko:" + ins.ko.replace(/ /g, "_")); toks.push(ins.ko); } if (ins.de) { keys.push("de:" + ins.de.replace(/ /g, "_")); toks.push(ins.de); }
-    return fgOnline.wikiImage(keys, toks, "악기", { cc: true }).then(function (r) { return r ? { src: r.src, e: { src: r.src, page: r.filePage || r.page, title: r.title, license: r.license, licenseUrl: r.licenseUrl, artist: r.artist, label: r.label }, online: true } : null; });
+    return viaFiles.then(function (pin) { if (pin) return pin; if (ins.files) return null; /* 사진을 직접 정해 둔 악기는 실패하면 그림을 보여 줘요(콜라주·악보 같은 엉뚱한 사진을 막아요) */ return fgOnline.wikiImage(keys, toks, "악기", { cc: true }).then(function (r) { return r ? { src: r.src, e: { src: r.src, page: r.filePage || r.page, title: r.title, license: r.license, licenseUrl: r.licenseUrl, artist: r.artist, label: r.label }, online: true } : null; }); });
   }
   function getPhoto(id) { return fromSaved(id).then(function (r) { return r || fromOnline(id); }); }
   function saveOne(id, r) {
@@ -96,6 +98,7 @@
     var avail = (wrap.clientWidth || 300) - 6 * 3, K = Math.min(1.05, avail / sum);
     items.forEach(function (x) { if (!x.el) return; x.el.style.height = Math.round(x.cm * K) + "px"; x.el.style.width = Math.round(x.cm * K * x.asp) + "px"; });
   }
+  var isStr = function (id) { return STRS.some(function (s) { return s[0] === id; }); };
   function photoRow(hl, names, still) {
     if (!photo) return Promise.resolve(null);
     return Promise.all(STRS.map(function (s) { return getPhoto(s[0]).then(function (r) { return r ? new Promise(function (res) { var im = new Image(); im.alt = DATA.I[s[0]].name + " 사진"; im.onload = function () { res({ id: s[0], cm: s[1], im: im, r: r }); }; im.onerror = function () { res(null); }; im.src = r.src; }) : null; }); })).then(function (rows) {
@@ -118,7 +121,7 @@
       var sid = m ? m[1] : showId;
       if (!m && showId) { var sp0 = document.createElement("div"); sp0.className = "acard"; sp0.innerHTML = "<b>📐 사양</b>" + specHtml(DATA.I[showId]); q.insertBefore(sp0, q.children[1] || null); }
       paint(fig, sid, function () { return qs && qs[i] && qs[i].d[0] === key; });
-      if (DATA.CMP[sid]) { var cf2 = document.createElement("div"); cf2.className = "oimg cmp"; cf2.innerHTML = DATA.CMP[sid] + "<small>📏 크기 비교: 주황 점이 이 악기예요(비슷하게 생긴 현악기끼리, 사람 키와 함께)</small>"; fig.insertAdjacentElement("afterend", cf2); photoRow(sid, false, function () { return qs && qs[i] && qs[i].d[0] === key; }).then(function (w) { if (w && cf2.isConnected) { var lab = document.createElement("small"); lab.textContent = "📷 실제 사진(높이를 실제 길이에 맞춰 보여 줘요, 주황 테두리가 이 악기)"; var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); box.appendChild(lab); cf2.insertAdjacentElement("afterend", box); fitRow(w); } }); }
+      if (DATA.CMP[sid]) { var cf2 = document.createElement("div"); cf2.className = "oimg cmp"; cf2.innerHTML = DATA.CMP[sid] + (isStr(sid) ? "<small>📏 크기 비교: 주황 점이 이 악기예요(비슷하게 생긴 현악기끼리, 사람 키와 함께)</small>" : "<small>📏 크기 비교: 주황 점이 이 악기예요(막대 길이가 실제 길이예요, 바순·콘트라바순은 접은 높이)</small>"); fig.insertAdjacentElement("afterend", cf2); (isStr(sid) ? photoRow(sid, false, function () { return qs && qs[i] && qs[i].d[0] === key; }) : Promise.resolve(null)).then(function (w) { if (w && cf2.isConnected) { var lab = document.createElement("small"); lab.textContent = "📷 실제 사진(높이를 실제 길이에 맞춰 보여 줘요, 주황 테두리가 이 악기)"; var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); box.appendChild(lab); cf2.insertAdjacentElement("afterend", box); fitRow(w); } }); }
     }
     var iid = DATA.INFO[key];
     if (iid && m && m[0] === "i") {   // 힌트는 그림 문제에만: 악기군 → 연주 방법
@@ -132,7 +135,7 @@
     var key = cur.d[0], id = DATA.INFO[key]; if (!id) return; var a = DATA.I[id], q = document.getElementById("q");
     var n = q.querySelector(".note"); if (n) n.remove(); var h = q.querySelector(".ahint"); if (h) h.remove();
     q.insertAdjacentHTML("beforeend", '<div class="acard"><div class="oimg"></div><b>' + esc(a.name) + " <small>(" + esc(a.en) + ")</small></b><span>" + esc(a.fam) + " · " + esc(a.rng) + " 소리 · 도감 " + a.n + "번</span><span>🎼 " + esc(a.how) + "</span><span>" + esc(a.desc) + "</span><span>🎵 " + esc(a.use) + "</span>" + specHtml(a) + (DATA.CMPN[id] ? '<div class="oimg cmp">' + DATA.CMPN[id] + "<small>📏 실제 크기 비교(약 길이)</small></div>" : "") + "</div>");
-    if (DATA.CMPN[id]) { var cardEl = q.querySelector(".acard"); photoRow(id, true, function () { return qs && qs[i] && qs[i].d[0] === key; }).then(function (w) { if (w && cardEl.isConnected) { var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); var lab = document.createElement("small"); lab.textContent = "📷 사진 높이를 실제 길이에 맞춰 보여 줘요(대략)"; box.appendChild(lab); cardEl.appendChild(box); fitRow(w); } }); }
+    if (DATA.CMPN[id] && isStr(id)) { var cardEl = q.querySelector(".acard"); photoRow(id, true, function () { return qs && qs[i] && qs[i].d[0] === key; }).then(function (w) { if (w && cardEl.isConnected) { var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); var lab = document.createElement("small"); lab.textContent = "📷 사진 높이를 실제 길이에 맞춰 보여 줘요(대략)"; box.appendChild(lab); cardEl.appendChild(box); fitRow(w); } }); }
     var cf = q.querySelector(".acard .oimg"), already = q.querySelector(":scope > .oimg");
     if (already && DATA.IMG[key] && DATA.IMG[key][0] === "i") cf.remove();   // 그림 문제는 위에 이미 그림이 있어요
     else paint(cf, id, function () { return qs && qs[i] && qs[i].d[0] === key; });
@@ -167,7 +170,7 @@
   }
   function fillCard(c) {
     var id = c.dataset.id;
-    if (DATA.CMP[id]) photoRow(id, true, function () { return c.isConnected && photo; }).then(function (w) { if (w && c.isConnected && !c.querySelector(".prows")) { c.appendChild(w); fitRow(w); } }); getPhoto(id).then(function (r) {
+    if (DATA.CMP[id] && isStr(id)) photoRow(id, true, function () { return c.isConnected && photo; }).then(function (w) { if (w && c.isConnected && !c.querySelector(".prows")) { c.appendChild(w); fitRow(w); } }); getPhoto(id).then(function (r) {
       if (!r || !c.isConnected || !photo) return; var im = new Image(); im.alt = DATA.I[id].name + " 사진";
       im.onload = function () { var ic = c.querySelector(".ic"); if (!ic || !c.isConnected) return; ic.innerHTML = ""; ic.appendChild(im); var cr = document.createElement("small"); cr.className = "cr"; cr.innerHTML = credit(r.e); c.appendChild(cr); saveOne(id, r); };
       im.src = r.src;
@@ -178,7 +181,7 @@
   // ── 그림·사진 크게 보기: 누르면 전체 화면으로 열려요. 두 손가락 벌리기·＋/－·마우스 휠·두 번 누르기로 확대(최대 8배), 끌어서 이동, 확대하면 더 큰 사진(1280px)으로 바뀌어요.
   var ZMAX = 8;
   function bigSrc(src) {
-    if (/\/\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src)) return src.replace(/\/\d+px-([^\/]+)$/, "/1280px-$1");
+    if (/\/(?:lossy-page1-)?\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src)) return src.replace(/\/((?:lossy-page1-)?)\d+px-([^\/]+)$/, "/$11280px-$2");
     if (/^https:\/\/www\.artic\.edu\/iiif\/.*\/full\/\d+,\//.test(src || "")) return src.replace(/\/full\/\d+,\//, "/full/1200,/");
     return null;
   }

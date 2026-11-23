@@ -6,7 +6,7 @@ import sys, json, random, os, re
 sys.path.insert(0, ".")
 from orch_data import INSTR, GENERAL, PIECES, SEATS, FAMILIES
 from orch_specs import SPECS
-from orch_svg import ICONS, icon, seating, size_compare, STR_SIZES
+from orch_svg import ICONS, icon, seating, size_compare, STR_SIZES, winds_compare, WIND_SIZES
 from mkquiz import make as make_quiz
 from mkpage import make as make_page
 H = "out/"; R = random.Random(20261125)
@@ -27,6 +27,8 @@ CLUE = {
 }
 ALT_KO = {"violin": "바이올린", "viola": "비올라", "cello": "첼로", "doublebass": "콘트라베이스", "harp": "하프", "flute": "플루트", "piccolo": "피콜로", "oboe": "오보에", "englishhorn": "잉글리시 호른", "clarinet": "클라리넷", "bassoon": "바순", "contrabassoon": "콘트라바순", "trumpet": "트럼펫", "horn": "호른", "trombone": "트롬본", "tuba": "튜바", "timpani": "팀파니", "snaredrum": "스네어 드럼", "bassdrum": "베이스 드럼", "cymbals": "심벌즈", "triangle": "트라이앵글", "xylophone": "실로폰", "glockenspiel": "글로켄슈필", "gong": "징", "tambourine": "탬버린", "castanets": "캐스터네츠", "piano": "피아노", "celesta": "첼레스타", "organ": "파이프 오르간"}
 ALT_DE = {"violin": "Violine", "viola": "Bratsche", "cello": "Violoncello", "doublebass": "Kontrabass", "harp": "Harfe", "flute": "Querflöte", "piccolo": "Piccoloflöte", "oboe": "Oboe", "englishhorn": "Englischhorn", "clarinet": "Klarinette", "bassoon": "Fagott", "contrabassoon": "Kontrafagott", "trumpet": "Trompete", "horn": "Waldhorn", "trombone": "Posaune", "tuba": "Tuba", "timpani": "Pauke", "snaredrum": "Kleine Trommel", "bassdrum": "Große Trommel", "cymbals": "Becken (Musikinstrument)", "xylophone": "Xylophon", "gong": "Gong", "tambourine": "Tamburin", "castanets": "Kastagnetten", "piano": "Klavier", "celesta": "Celesta", "organ": "Orgel"}
+# 위키백과 대표 사진이 이상한 악기는 커먼즈 사진 파일을 직접 정해 둬요(악기만 찍힌 사진, 좋은 순서)
+PHOTO_FILES = {"flute": ["Yamaha Flute YFL-482H.tif", "Yamaha Flute YFL-372H.tif"], "bassoon": ["Yamaha Bassoon YFG-812 II.tif"], "contrabassoon": ["Contrabassoon2.png", "Contrabassoon.jpg", "Contrabasson basson.JPG"]}
 assert set(CLUE) == set(ORDER), set(ORDER) ^ set(CLUE)
 data, level, seen, IMG, INFO, SHOW = [], {}, set(), {}, {}, {}
 def add(q, ans, wrong, cat, expl, lv):
@@ -134,8 +136,8 @@ make_quiz(H + "orchestra-quiz.html", "오케스트라 퀴즈", "🎻", 20, "orch
           "오케스트라 악기와 연주 이야기를 맞혀 보세요. 모든 악기는 <a href=\"orchestra-gallery.html\">🎷 오케스트라 악기 도감</a>에서 볼 수 있어요.", data, label="오케스트라 퀴즈")
 
 # ───────── 모드 스크립트 orch-mode.js (그림·사진·정답 카드·힌트)
-INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "how": a["how"], "rng": a["rng"], "desc": a["desc"], "use": a["use"], "wiki": a["wiki"], "tok": a["tok"], "ko": ALT_KO.get(i), "de": ALT_DE.get(i), "spec": SPECS[i]} for i, a in I.items()}
-DATA = {"I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {i: size_compare(i, False) for i, _, _ in STR_SIZES}, "CMPN": {i: size_compare(i, True) for i, _, _ in STR_SIZES}}
+INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "how": a["how"], "rng": a["rng"], "desc": a["desc"], "use": a["use"], "wiki": a["wiki"], "tok": a["tok"], "ko": ALT_KO.get(i), "de": ALT_DE.get(i), "spec": SPECS[i], "files": PHOTO_FILES.get(i)} for i, a in I.items()}
+DATA = {"I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {**{i: size_compare(i, False) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, False) for i, _, _ in WIND_SIZES}}, "CMPN": {**{i: size_compare(i, True) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, True) for i, _, _ in WIND_SIZES}}}
 tpl = open("orch_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../orch-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):
@@ -148,10 +150,10 @@ def hook_gal():
 
 # ───────── 악기 도감 화면
 CSS = re.search(r"CSS = '''(.*?)'''", open("set43.py", encoding="utf-8").read(), re.S).group(1) + '''
-.ar .cmp svg{width:100%;max-width:340px;height:auto;display:block;margin-top:4px}.ar .cmp small{color:var(--muted);font-size:.78rem}.ar .ic{width:72px;height:72px;flex:none;border-radius:12px;overflow:hidden;background:#f6efe0}.ar .ic img{width:72px;height:72px;object-fit:cover;display:block}.ar .cr{color:var(--muted);font-size:.74rem;line-height:1.4}.ar .top{display:flex;gap:12px;align-items:center}.ar .top h2{margin:0}.ar dl{margin:4px 0 0;display:grid;grid-template-columns:5.4em 1fr;gap:2px 8px;font-size:.92rem}.ar dt{color:var(--muted)}.ar dd{margin:0}'''
+.ar .cmp svg{width:100%;max-width:340px;height:auto;display:block;margin-top:4px}.ar .cmp small{color:var(--muted);font-size:.78rem}.ar .ic{width:72px;height:72px;flex:none;border-radius:12px;overflow:hidden;background:#f6efe0}.ar .ic img{width:72px;height:72px;object-fit:contain;display:block}.ar .cr{color:var(--muted);font-size:.74rem;line-height:1.4}.ar .top{display:flex;gap:12px;align-items:center}.ar .top h2{margin:0}.ar dl{margin:4px 0 0;display:grid;grid-template-columns:5.4em 1fr;gap:2px 8px;font-size:.92rem}.ar dt{color:var(--muted)}.ar dd{margin:0}'''
 BODY = '''  <div class="card"><div class="chips" id="eras"></div><div class="chips" id="lvs"></div><p class="muted" id="lvp"></p><input type="text" id="q" placeholder="악기 이름·악기군·소리 찾기 (예: 바이올린, 금관, 낮은)" aria-label="찾기"><p class="muted" id="cnt"></p><a class="btn" id="goq" href="orchestra-quiz.html" style="text-align:center;text-decoration:none">🎻 오케스트라 퀴즈 풀기</a></div>
   <div id="list"></div>'''
-AR = [dict(id=a["id"], n=a["n"], nm=a["name"], e=a["en"], f=a["fam"], h=a["how"], r=a["rng"], d=a["desc"], u=a["use"], l=a["fame"], sp=SPECS[a["id"]], svg=ICONS[a["id"]] and icon(a["id"]), cmp=(size_compare(a["id"], True) if a["id"] in {x[0] for x in STR_SIZES} else "")) for a in I.values()]
+AR = [dict(id=a["id"], n=a["n"], nm=a["name"], e=a["en"], f=a["fam"], h=a["how"], r=a["rng"], d=a["desc"], u=a["use"], l=a["fame"], sp=SPECS[a["id"]], svg=ICONS[a["id"]] and icon(a["id"]), cmp=(size_compare(a["id"], True) if a["id"] in {x[0] for x in STR_SIZES} else winds_compare(a["id"], True) if a["id"] in {x[0] for x in WIND_SIZES} else "")) for a in I.values()]
 JS = '''const AR = ''' + json.dumps(AR, ensure_ascii=False) + ''', FAMS = ''' + json.dumps(["전체"] + FAMILIES, ensure_ascii=False) + ''';
 let fam = ld(KEY + "-fam") || "전체", lvf = +ld(KEY + "-lv") || 0; if (!(lvf >= 0 && lvf <= 3)) lvf = 0;
 const LVN = ["모든 난이도", "🌱 초급", "🌿 중급", "🌳 고급"], LVD = ["", "누구나 아는 악기예요.", "알려진 악기예요.", "마니아가 좋아하는 악기예요."];

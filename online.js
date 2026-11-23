@@ -22,6 +22,7 @@
   function okImg(u) { return typeof u === "string" && /^https:\/\/upload\.wikimedia\.org\//.test(u); }
   function fileOf(u) { var m = /\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^\/]+)/.exec(u || ""); return m ? decodeURIComponent(m[1]) : null; }
   var PD = /public domain|^pd\b|^pd-|cc0|cc-zero/i;
+  function norm(t) { return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }   // 악센트·대소문자를 맞춰서 비교(Cézanne = cezanne)
   // keys: ["en:Mona_Lisa", ...] 후보를 차례로 시도. tokens: 설명·요약에 하나 이상 들어 있어야 하는 작가 이름(소문자·한글)
   function wikiImage(keys, tokens) {
     var id = (keys || []).join("|"); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
@@ -31,8 +32,8 @@
       var k = keys[i++], m = /^(en|ko):(.+)$/.exec(k); if (!m) return next();
       return json("https://" + m[1] + ".wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(m[2].replace(/ /g, "_"))).then(function (s) {
         if (!s || s.type !== "standard" || !s.thumbnail || !okImg(s.thumbnail.source)) return next();
-        var text = ((s.description || "") + " " + (s.extract || "")).toLowerCase();
-        if (!(tokens || []).some(function (t) { return t && text.indexOf(String(t).toLowerCase()) >= 0; })) return next();   // 작품·작가가 다르면 버려요
+        var text = norm((s.description || "") + " " + (s.extract || ""));
+        if (!(tokens || []).some(function (t) { return t && text.indexOf(norm(t)) >= 0; })) return next();   // 작품·작가가 다르면 버려요
         var f = fileOf(s.thumbnail.source); if (!f) return next();
         return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata&titles=" + encodeURIComponent("File:" + f)).then(function (c) {
           var pages = c && c.query && c.query.pages, p = pages && pages[Object.keys(pages)[0]], md = p && p.imageinfo && p.imageinfo[0] && p.imageinfo[0].extmetadata;
@@ -55,6 +56,6 @@
       if (ok) set(KEY, "1"); return ok;
     },
     off: function () { try { localStorage.removeItem(KEY); } catch (e) {} },
-    json: json, wikiImage: wikiImage, okImg: okImg, fileOf: fileOf
+    json: json, wikiImage: wikiImage, okImg: okImg, fileOf: fileOf, norm: norm
   };
 })();

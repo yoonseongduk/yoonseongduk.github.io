@@ -1,72 +1,144 @@
 /* 명화 그림 모드 — 명화 작가 퀴즈(art-quiz.html)와 명화 작가별 모음(art-gallery.html) 공용.
-   그림 보기 3가지: 📴 글로만(기본·오프라인) / 🌐 온라인(저작권이 끝난 명화만 위키백과에서 불러옴) / 📦 내장(art-img/ 에 받아 둔 그림).
+   그림 보기 3가지: 📴 글로만(기본·오프라인) / 🌐 온라인(저작권이 끝난 명화만 위키백과에서 불러옴) / 📦 저장한 그림(오프라인).
+   '저장한 그림' = ① 앱에 들어 있는 art-img/ (tools/dev/art_fetch.py 가 PC에서 받아 둠) + ② 이 폰에 📥 저장한 그림(Cache 저장소, 인터넷이 있을 때 한 번 저장하면 오프라인에서도 보임).
    이 파일은 tools/dev/set43.py 가 만들어요(직접 고치지 말고 tools/dev/art_mode_tpl.js 와 set43.py 를 고치세요).
-   안전장치: 온라인 그림은 ① 위키백과 항목 설명에 작가 이름이 있고 ② 그림 파일이 공개 도메인으로 표시돼 있을 때만 보여요. 하나라도 틀리면 그림 없이 글로 나와요. */
+   안전장치: 온라인·저장 모두 ① 위키백과 항목 설명에 작가 이름이 있고 ② 그림 파일이 공개 도메인으로 표시돼 있을 때만 써요. 하나라도 틀리면 그림 없이 글로 나와요. */
 (function () {
   "use strict";
   var DATA = /*DATA*/null;
-  var MK = "art-img-mode-v1", mode = "text", local = null;
+  var MK = "art-img-mode-v1", ONLY = "art-img-only-v1", SAVED = "art-saved-v1", CACHE = "fg-art-saved-v1";
+  var mode = "text", local = null, saved = null, onlyImg = false;
   var isQuiz = !!document.getElementById("opts") && typeof start === "function", isGal = !!document.getElementById("list") && !isQuiz;
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var norm = function (s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); };
   var shuffle = function (a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
+  var titles = Object.keys(DATA.W);
+  // 동시에 limit 개씩만 처리(위키 서버에 부담을 주지 않게)
+  function pmap(items, fn, limit) { var out = new Array(items.length), k = 0; function w() { if (k >= items.length) return Promise.resolve(); var n = k++; return Promise.resolve(fn(items[n], n)).then(function (r) { out[n] = r; return w(); }); } var ws = []; for (var i = 0; i < Math.min(limit, items.length); i++) ws.push(w()); return Promise.all(ws).then(function () { return out; }); }
 
   // ── 그림 하나 얻기: 통과하면 {src, page, title, license}, 아니면 null
   function preload(src) { return new Promise(function (res) { var im = new Image(), t = setTimeout(function () { res(false); }, 9000); im.onload = function () { clearTimeout(t); res(true); }; im.onerror = function () { clearTimeout(t); res(false); }; im.src = src; }); }
+  var blobUrls = {};
+  function fetchOnline(title) { var w = DATA.W[title]; return w && window.fgOnline && fgOnline.on() ? fgOnline.wikiImage(w.k, w.t.map(norm)) : Promise.resolve(null); }
+  function localInfo(title) {   // 오프라인에 있는 그림 정보(없으면 null): 앱에 든 것 → 폰에 저장한 것
+    var e = local && local[title]; if (e) return { kind: "file", src: "art-img/" + e.f, page: e.p, title: e.t || title, license: e.l || "공개 도메인" };
+    e = saved && saved[title]; return e ? { kind: "cache", src: e.src, page: e.page, title: e.title || title, license: e.license || "공개 도메인" } : null;
+  }
+  function resolveLocal(title) {
+    var e = localInfo(title); if (!e) return Promise.resolve(null);
+    if (e.kind === "file") return Promise.resolve(e);
+    if (blobUrls[title]) return Promise.resolve({ src: blobUrls[title], page: e.page, title: e.title, license: e.license });
+    if (!("caches" in window)) return Promise.resolve(null);
+    return caches.open(CACHE).then(function (c) { return c.match(e.src); }).then(function (r) { return r ? r.blob() : null; }).then(function (b) {
+      if (!b) return null; blobUrls[title] = URL.createObjectURL(b); return { src: blobUrls[title], page: e.page, title: e.title, license: e.license };
+    }).catch(function () { return null; });
+  }
   function getImage(title) {
-    var w = DATA.W[title]; if (!w) return Promise.resolve(null);
-    var p;
-    if (mode === "local") { var e = local && local[title]; p = Promise.resolve(e ? { src: "art-img/" + e.f, page: e.p, title: e.t || title, license: e.l || "공개 도메인" } : null); }
-    else if (mode === "online" && window.fgOnline && fgOnline.on()) p = fgOnline.wikiImage(w.k, w.t.map(norm));
-    else p = Promise.resolve(null);
+    if (!DATA.W[title]) return Promise.resolve(null);
+    var p = mode === "local" ? resolveLocal(title) : mode === "online" ? fetchOnline(title) : Promise.resolve(null);
     return p.then(function (r) { return r ? preload(r.src).then(function (ok) { return ok ? r : null; }) : null; });
   }
-  var has = function (title) { return !!DATA.W[title] && (mode === "online" || (mode === "local" && !!local && !!local[title])); };
+  var has = function (title) { return !!DATA.W[title] && (mode === "online" || (mode === "local" && !!localInfo(title))); };
+  var localCount = function () { return titles.filter(function (t) { return !!localInfo(t); }).length; };
+  var savedCount = function () { return saved ? Object.keys(saved).length : 0; };
   var credit = function (r) { return '🖼️ 그림 출처: <a href="' + esc(r.page) + '" target="_blank" rel="noopener noreferrer">위키백과 「' + esc(r.title) + "」</a> (" + esc(r.license) + ")"; };
+  var CONSENT = "🌐 온라인 그림을 켜요.\n\n· 인터넷에서 저작권이 끝난 명화만 불러와요.\n· 불러올 때 이 기기의 인터넷 주소가 위키백과·위키미디어 서버에 전달돼요(이 앱은 개인 정보를 보내지 않아요).\n· 언제든 '글로만'으로 끌 수 있어요.\n\n켤까요?";
 
   // ── 화면 위 모드 선택
   function injectCss() {
     var st = document.createElement("style");
-    st.textContent = ".amode{background:var(--surface,#fff);border:1px solid var(--line,#ccc);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}.amode .row{display:flex;gap:6px;flex-wrap:wrap}" +
+    st.textContent = ".amode{background:var(--surface,#fff);border:1px solid var(--line,#ccc);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}.amode .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}" +
       ".amode button{border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:8px 12px;font-size:.92rem}.amode button.on{background:var(--accent,#c4552b);color:var(--accent-fg,#fff);border-color:transparent;font-weight:700}.amode button:disabled{opacity:.45;cursor:default}" +
-      ".amode small{color:var(--muted,#666)}.aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}";
+      ".amode button.sm{padding:6px 10px;font-size:.85rem}.amode small{color:var(--muted,#666)}.amode .sub{border-top:1px dashed var(--line,#ccc);padding-top:8px;display:flex;flex-direction:column;gap:6px}" +
+      ".aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}";
     document.head.appendChild(st);
   }
-  var bar, note;
+  var bar, dl = { running: false, cancel: false, msg: "" };
+  function levelNote() {
+    var c = { 1: 0, 2: 0, 3: 0 }; DATA.Q.forEach(function (q) { if (has(q[5])) c[q[4]]++; });
+    return "그림 문제 " + (c[1] + c[2] + c[3]) + "개 (🌱 초급 " + c[1] + " · 🌿 중급 " + c[2] + " · 🌳 고급 " + c[3] + ")";
+  }
   function drawBar() {
-    var n = local ? Object.keys(local).length : 0, online = !!window.fgOnline && fgOnline.enabled;
-    bar.querySelector(".row").innerHTML =
+    var n = localCount(), ns = savedCount(), left = titles.length - n, online = !!window.fgOnline && fgOnline.enabled, canSave = online && "caches" in window;
+    var h = '<b>🖼️ 그림 보기</b><div class="row">' +
       '<button type="button" data-m="text" class="' + (mode === "text" ? "on" : "") + '">📴 글로만</button>' +
       '<button type="button" data-m="online" class="' + (mode === "online" ? "on" : "") + '"' + (online ? "" : " disabled") + ">🌐 온라인 그림</button>" +
-      '<button type="button" data-m="local" class="' + (mode === "local" ? "on" : "") + '"' + (n ? "" : " disabled") + ">📦 내장 그림" + (n ? " (" + n + "장)" : " (준비 중)") + "</button>";
-    note.textContent = mode === "text" ? "인터넷 없이 글로만 풀어요. 그림을 보려면 위에서 골라요." :
-      mode === "online" ? (navigator.onLine === false ? "지금은 인터넷이 없어서 글로만 나와요." : "인터넷에서 저작권이 끝난 명화만 불러와요(위키백과·위키미디어 서버에 이 기기의 주소가 전달돼요). 못 불러오면 글로 나와요.") :
-      "앱에 저장된 그림이에요. 그림 아래에 출처가 나와요.";
+      '<button type="button" data-m="local" class="' + (mode === "local" ? "on" : "") + '"' + (n ? "" : " disabled") + ">📦 저장한 그림" + (n ? " (" + n + "장)" : " (없음)") + "</button></div>";
+    var note = mode === "text" ? "인터넷 없이 글로만 풀어요. 그림을 보려면 위에서 골라요." :
+      (mode === "online" ? (navigator.onLine === false ? "지금은 인터넷이 없어서 글로만 나와요." : "인터넷에서 저작권이 끝난 명화만 불러와요(위키백과·위키미디어 서버에 이 기기의 주소가 전달돼요). 못 불러오면 글로 나와요.") :
+      "이 폰(앱)에 저장된 그림이에요. 인터넷 없이도 보여요. 그림 아래에 출처가 나와요.");
+    if (mode !== "text" && isQuiz) note += " · " + levelNote();
+    h += '<small id="artnote">' + esc(note) + "</small>";
+    if (isQuiz && mode !== "text") h += '<div class="row"><small>그림 문제:</small><button type="button" class="sm' + (onlyImg ? "" : " on") + '" data-o="0">섞어서 (한 판에 최대 3개)</button><button type="button" class="sm' + (onlyImg ? " on" : "") + '" data-o="1">그림 문제만</button></div>';
+    if (online) {
+      h += '<div class="sub"><small>' + esc(dl.msg || (ns ? "이 폰에 그림 " + ns + "장 저장됨(인터넷 없이도 '저장한 그림'으로 볼 수 있어요)." : "그림을 이 폰에 저장해 두면 인터넷이 없어도 볼 수 있어요.")) + '</small><div class="row">' +
+        (canSave ? '<button type="button" class="sm" data-s="save"' + (!dl.running && ns && !left ? " disabled" : "") + '>' + (dl.running ? "⏹ 멈추기" : ns ? (left ? "📥 그림 더 저장하기" : "✅ 모두 저장됨") : "📥 그림 저장하기(오프라인용)") + "</button>" : "<small>이 브라우저는 그림 저장을 지원하지 않아요.</small>") +
+        (ns && !dl.running ? '<button type="button" class="sm" data-s="clear">🗑️ 저장한 그림 지우기</button>' : "") + "</div></div>";
+    }
+    bar.innerHTML = h;
   }
   function setMode(m) {
-    if (m === "online" && !(window.fgOnline && fgOnline.ask("🌐 온라인 그림을 켜요.\n\n· 인터넷에서 저작권이 끝난 명화만 불러와요.\n· 불러올 때 이 기기의 인터넷 주소가 위키백과·위키미디어 서버에 전달돼요(이 앱은 개인 정보를 보내지 않아요).\n· 언제든 '글로만'으로 끌 수 있어요.\n\n켤까요?"))) return;
+    if (m === "online" && !(window.fgOnline && fgOnline.ask(CONSENT))) return;
     mode = m; lsSet(MK, m); drawBar(); if (isQuiz) start(); else decorateAll(true);
+  }
+
+  // ── 폰에 그림 저장 / 지우기
+  function saveAll() {
+    if (dl.running) { dl.cancel = true; dl.msg = "멈추는 중…"; drawBar(); return; }
+    if (!(window.fgOnline && fgOnline.ask(CONSENT)) || !("caches" in window)) return;
+    if (navigator.onLine === false) { dl.msg = "지금은 인터넷이 없어서 저장할 수 없어요."; drawBar(); return; }
+    var todo = titles.filter(function (t) { return !localInfo(t); });
+    if (!todo.length) { dl.msg = "저장할 그림이 없어요(모두 저장됨)."; drawBar(); return; }
+    var okc = 0, bad = 0, stop = false;
+    try { if (!window.confirm("그림 최대 " + todo.length + "장(약 " + Math.round(todo.length * 0.04 * 10) / 10 + "MB)을 이 폰에 저장해요. 인터넷이 켜진 상태에서 몇 분 걸릴 수 있어요.\n저작권이 끝난 명화만 저장하고, 아닌 것은 건너뛰어요.\n\n저장할까요?")) return; } catch (e) {}
+    dl.running = true; dl.cancel = false; saved = saved || {}; drawBar();
+    caches.open(CACHE).then(function (cache) {
+      return pmap(todo, function (t) {
+        if (dl.cancel || stop) return null;
+        return fetchOnline(t).then(function (r) {
+          if (!r) { bad++; return null; }
+          return fetch(r.src, { credentials: "omit", referrerPolicy: "no-referrer" }).then(function (resp) { if (!resp.ok) throw 0; return cache.put(r.src, resp); })
+            .then(function () { saved[t] = { src: r.src, page: r.page, title: r.title, license: r.license }; okc++; })
+            .catch(function (e) { bad++; if (e && e.name === "QuotaExceededError") stop = true; });
+        }).then(function () { dl.msg = "저장 중… " + (okc + bad) + "/" + todo.length + " (저장 " + okc + "장, 건너뜀 " + bad + ")"; if ((okc + bad) % 5 === 0) { lsSet(SAVED, JSON.stringify(saved)); drawBar(); } });
+      }, 3);
+    }).catch(function () {}).then(function () {
+      lsSet(SAVED, JSON.stringify(saved)); dl.running = false;
+      dl.msg = (dl.cancel ? "멈췄어요. " : "끝났어요. ") + "저장 " + okc + "장" + (bad ? ", 건너뜀 " + bad + "장(저작권 표시·작가 확인을 통과하지 못했거나 불러오지 못한 그림)" : "") + ".";
+      dl.cancel = false; drawBar();
+    });
+  }
+  function clearSaved() {
+    try { if (!window.confirm("이 폰에 저장한 그림 " + savedCount() + "장을 지울까요? (다시 저장할 수 있어요)")) return; } catch (e) {}
+    try { if ("caches" in window) caches.delete(CACHE); } catch (e) {}
+    try { localStorage.removeItem(SAVED); } catch (e) {} saved = null; blobUrls = {}; dl.msg = "저장한 그림을 지웠어요.";
+    if (mode === "local" && !localCount()) { mode = "text"; lsSet(MK, mode); }
+    drawBar(); if (isQuiz) start(); else decorateAll(true);
   }
   function buildBar() {
     injectCss(); bar = document.createElement("div"); bar.className = "amode"; bar.id = "artmode";
-    bar.innerHTML = "<b>🖼️ 그림 보기</b><div class=\"row\"></div><small id=\"artnote\"></small>"; note = bar.querySelector("#artnote");
     var h = document.querySelector("h1"); if (h) h.insertAdjacentElement("afterend", bar); else document.body.insertBefore(bar, document.body.firstChild);
-    bar.addEventListener("click", function (e) { var b = e.target.closest("[data-m]"); if (b && !b.disabled) setMode(b.dataset.m); });
+    bar.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b || b.disabled) return;
+      if (b.dataset.m) setMode(b.dataset.m);
+      else if (b.dataset.o) { onlyImg = b.dataset.o === "1"; lsSet(ONLY, onlyImg ? "1" : "0"); drawBar(); if (isQuiz) start(); }
+      else if (b.dataset.s === "save") saveAll(); else if (b.dataset.s === "clear") clearSaved();
+    });
     drawBar();
   }
 
-  // ── 퀴즈: 라운드에 그림 문제를 최대 3개 섞기
+  // ── 퀴즈: 라운드에 그림 문제 섞기(기본 최대 3개, '그림 문제만'이면 거의 전부)
   var roundId = 0;
   function mix() {
-    var id = ++roundId;
-    var pool = shuffle(DATA.Q.filter(function (q) { return (!lv || q[4] === lv) && (cat === "전체" || q[3] === cat) && has(q[5]); })).slice(0, 9);
+    var id = ++roundId, want = onlyImg ? 10 : 3;
+    var pool = shuffle(DATA.Q.filter(function (q) { return (!lv || q[4] === lv) && (cat === "전체" || q[3] === cat) && has(q[5]); })).slice(0, onlyImg ? 24 : 9);
     if (!pool.length) return;
-    Promise.all(pool.map(function (q) { return getImage(q[5]).then(function (r) { return r ? { q: q, r: r } : null; }); })).then(function (all) {
+    pmap(pool, function (q) { return getImage(q[5]).then(function (r) { return r ? { q: q, r: r } : null; }); }, 6).then(function (all) {
       var ok = all.filter(Boolean); if (id !== roundId || !ok.length || !qs || qs.length < 2) return;
       var slots = []; for (var k = i + 1; k < qs.length; k++) slots.push(k);
-      slots = shuffle(slots).slice(0, Math.min(3, ok.length));
+      slots = shuffle(slots).slice(0, Math.min(want, ok.length));
       slots.forEach(function (pos, n) {
         var q = ok[n].q, d = [q[0], q[1], q[2], q[3], q[6]]; d.img = ok[n].r; d.alt = "‘" + q[5] + "’의 작가는 누구일까요?";
         qs[pos] = { d: d, opts: options(d) };
@@ -102,7 +174,8 @@
 
   // ── 시작
   function boot() {
-    buildBar();
+    try { saved = JSON.parse(lsGet(SAVED) || "null"); if (!saved || typeof saved !== "object" || !Object.keys(saved).length) saved = null; } catch (e) { saved = null; }
+    onlyImg = lsGet(ONLY) === "1"; buildBar();
     if (isQuiz) {
       var oS = start, oShow = show, oPick = pick;
       start = function () { oS(); if (mode !== "text") mix(); };
@@ -111,10 +184,10 @@
     } else if (isGal) {
       new MutationObserver(function () { decorateAll(false); }).observe(document.getElementById("list"), { childList: true });
     }
-    var saved = lsGet(MK);
+    var savedMode = lsGet(MK);
     fetch("art-img/index.json").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (idx) {
       local = idx && typeof idx === "object" && Object.keys(idx).length ? idx : null;
-      if (saved === "local" && local) mode = "local"; else if (saved === "online" && window.fgOnline && fgOnline.on()) mode = "online";
+      if (savedMode === "local" && localCount()) mode = "local"; else if (savedMode === "online" && window.fgOnline && fgOnline.on()) mode = "online";
       drawBar(); if (mode !== "text") { if (isQuiz) start(); else decorateAll(false); }
     });
   }

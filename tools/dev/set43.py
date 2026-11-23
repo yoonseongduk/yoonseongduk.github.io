@@ -138,31 +138,35 @@ make_quiz(H + "art-quiz.html", "명화 작가 퀴즈", "🖼️", 20, "art-quiz-
 
 # ───────── 명화 작가별 모음 화면
 AR = [dict(id=a["id"], n=a["name"], e=a["en"], y=a["years"], c=a["country"], s=a["style"] or "", g=a["era"], b=a["bio"],
-           w=[[w["t"], w["y"], w["place"] or "", w["fame"], w["kind"]] for w in a["works"]]) for a in A.values()]
+           l=min(w["fame"] for w in a["works"]), w=[[w["t"], w["y"], w["place"] or "", w["fame"], w["kind"]] for w in a["works"]]) for a in A.values()]
 CSS = '''.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.9rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}
 .ar{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:6px}.ar h2{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.ar .en{font-family:var(--font-body);font-size:.85rem;color:var(--muted)}
 .ar .meta{display:flex;gap:6px;flex-wrap:wrap;font-size:.85rem;color:var(--muted)}.ar .tag{background:var(--soft);border-radius:999px;padding:2px 10px;color:var(--fg)}.ar .bio{font-size:.95rem;line-height:1.55}
 .ar ul{margin:2px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}.ar li{font-size:.95rem;line-height:1.4}.ar li small{display:block;color:var(--muted);font-size:.8rem}.ar li .st{color:#d89b00}
 .era{font-family:var(--font-display);font-size:1.15rem;margin:8px 0 0;color:var(--accent)}#cnt{text-align:center}'''
-BODY = '''  <div class="card"><div class="chips" id="eras"></div><input type="text" id="q" placeholder="작가·작품·나라·화풍 찾기 (예: 모네, 별, 프랑스, 인상주의)" aria-label="찾기"><p class="muted" id="cnt"></p><a class="btn" id="goq" href="art-quiz.html" style="text-align:center;text-decoration:none">🖼️ 명화 작가 퀴즈 풀기</a></div>
+BODY = '''  <div class="card"><div class="chips" id="eras"></div><div class="chips" id="lvs"></div><p class="muted" id="lvp"></p><input type="text" id="q" placeholder="작가·작품·나라·화풍 찾기 (예: 모네, 별, 프랑스, 인상주의)" aria-label="찾기"><p class="muted" id="cnt"></p><a class="btn" id="goq" href="art-quiz.html" style="text-align:center;text-decoration:none">🖼️ 명화 작가 퀴즈 풀기</a></div>
   <div id="list"></div>'''
 JS = '''const AR = ''' + json.dumps(AR, ensure_ascii=False) + ''', ERAS = ''' + json.dumps(["전체"] + ERAS, ensure_ascii=False) + ''';
-let era = ld(KEY + "-era") || "전체";
+let era = ld(KEY + "-era") || "전체", lvf = +ld(KEY + "-lv") || 0; if (!(lvf >= 0 && lvf <= 3)) lvf = 0;
+const LVN = ["모든 난이도", "🌱 초급", "🌿 중급", "🌳 고급"], LVD = ["", "누구나 아는 대표작(★)이 있는 작가예요.", "알려진 작품이 있는 작가예요.", "마니아가 좋아하는 작가예요."];
 const norm = s => String(s).toLowerCase().replace(/\\s+/g, "");
 function render() {
   const q = norm($("q").value), box = $("list"); let n = 0, w = 0, html = "", last = "";
   AR.forEach(a => {
     if (era !== "전체" && a.g !== era) return;
+    if (lvf && a.l !== lvf) return;
     if (q && !norm([a.n, a.e, a.c, a.s, a.g, a.b, ...a.w.map(x => x[0])].join(" ")).includes(q)) return;
     if (a.g !== last) { last = a.g; html += `<p class="era">${esc(a.g)}</p>`; }
     n++; w += a.w.length;
     html += `<article class="ar"><h2>${esc(a.n)} <span class="en">${esc(a.e)}</span></h2><div class="meta"><span>${esc(a.y)}</span><span>· ${esc(a.c)}</span>${a.s ? `<span class="tag">${esc(a.s)}</span>` : ""}</div><p class="bio">${esc(a.b)}</p><ul>${a.w.map(x => `<li>${x[3] === 1 ? '<span class="st" aria-label="대표작">★</span> ' : ""}<b>${esc(x[0])}</b><small>${esc(x[1])} · ${esc(x[4])}${x[2] ? " · " + esc(x[2]) : ""}</small></li>`).join("")}</ul></article>`;
   });
   box.innerHTML = html || '<p class="muted center">찾는 작가가 없어요</p>';
+  $("lvs").innerHTML = LVN.map((t, k) => `<button type="button" class="chip${k === lvf ? " on" : ""}" data-l="${k}">${t}${k ? ` <small>${AR.filter(a => a.l === k).length}</small>` : ""}</button>`).join(""); $("lvp").textContent = LVD[lvf];
   $("cnt").textContent = n ? `작가 ${n}명 · 작품 ${w}점 (★ = 누구나 아는 대표작)` : "";
 }
 $("eras").innerHTML = ERAS.map(e => `<button type="button" class="chip${e === era ? " on" : ""}" data-e="${esc(e)}">${esc(e)}</button>`).join("");
 $("eras").addEventListener("click", ev => { const b = ev.target.closest("[data-e]"); if (!b) return; era = b.dataset.e; sv(KEY + "-era", era); $("eras").querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c === b)); render(); });
+$("lvs").addEventListener("click", ev => { const b = ev.target.closest("[data-l]"); if (!b) return; lvf = +b.dataset.l; sv(KEY + "-lv", lvf); render(); });
 $("q").addEventListener("input", render); render();'''
 make_page(H + "art-gallery.html", "명화 작가별 모음", "🎨", 20, "art-gallery-v1",
           "그림 이미지는 담지 않고 작가와 대표작의 이름·연도·소장처만 정리했어요. 소장처와 제작 연도는 여러 자료와 달라질 수 있어요. 오래된 작품은 '경'(대략)으로 적었어요.",

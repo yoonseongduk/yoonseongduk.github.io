@@ -58,7 +58,9 @@
   }
   function fromOnline(id) {
     var ins = DATA.I[id]; if (!online()) return Promise.resolve(null);
-    return fgOnline.wikiImage(["en:" + ins.wiki.replace(/ /g, "_")], [ins.tok], "악기", { cc: true }).then(function (r) { return r ? { src: r.src, e: { src: r.src, page: r.filePage || r.page, title: r.title, license: r.license, licenseUrl: r.licenseUrl, artist: r.artist, label: r.label }, online: true } : null; });
+    var keys = ["en:" + ins.wiki.replace(/ /g, "_")], toks = [ins.tok];   // A 영어 위키백과 → B 한국어 → C 독일어 → (이어서 커먼즈 검색·Openverse·클리블랜드)
+    if (ins.ko) { keys.push("ko:" + ins.ko.replace(/ /g, "_")); toks.push(ins.ko); } if (ins.de) { keys.push("de:" + ins.de.replace(/ /g, "_")); toks.push(ins.de); }
+    return fgOnline.wikiImage(keys, toks, "악기", { cc: true }).then(function (r) { return r ? { src: r.src, e: { src: r.src, page: r.filePage || r.page, title: r.title, license: r.license, licenseUrl: r.licenseUrl, artist: r.artist, label: r.label }, online: true } : null; });
   }
   function getPhoto(id) { return fromSaved(id).then(function (r) { return r || fromOnline(id); }); }
   function saveOne(id, r) {

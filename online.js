@@ -71,7 +71,7 @@
       return null;
     });
   }
-  var CHAIN = [srcCommons, srcCMA];   // 시카고 미술관 API는 브라우저(CORS)에서 막혀 쓰지 않아요(2026-11-23 확인)
+  var CHAIN = [srcCommons, srcCMA];   // D 커먼즈 검색 → E 클리블랜드(시카고 미술관·Openverse API는 브라우저 CORS 차단으로 쓰지 않아요, 2026-11-23 확인)   // 시카고 미술관 API는 브라우저(CORS)에서 막혀 쓰지 않아요(2026-11-23 확인)
   function fallback(en, toks, kind, cc) {
     var i = 0; function next() { if (i >= CHAIN.length) return Promise.resolve(null); var f = CHAIN[i++]; return f(en, toks, kind, cc).then(function (r) { return r || next(); }).catch(function () { return next(); }); }
     return next();
@@ -86,7 +86,7 @@
         var en = ((keys.filter(function (k) { return /^en:/.test(k); })[0] || keys[0] || "").replace(/^\w+:/, "")).replace(/_/g, " ");
         return fallback(en, tokens, kind, cc).then(function (r) { cache[id] = r || null; saveCache(); return r || null; });
       }
-      var k = keys[i++], m = /^(en|ko):(.+)$/.exec(k); if (!m) return next();
+      var k = keys[i++], m = /^(en|ko|de):(.+)$/.exec(k); if (!m) return next();
       return json("https://" + m[1] + ".wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(m[2].replace(/ /g, "_"))).then(function (s) {
         if (!s || s.type !== "standard" || !s.thumbnail || !okImg(s.thumbnail.source)) return next();
         var text = norm((s.description || "") + " " + (s.extract || ""));

@@ -24,6 +24,8 @@ CLUE = {
  "tambourine": "둥근 틀에 작은 금속판이 달려 흔들거나 쳐서 '짤랑' 소리를 내는 악기는?", "castanets": "작은 나무 조개 두 짝을 부딪쳐 '딱딱' 소리를 내고 스페인 춤에 쓰는 악기는?",
  "piano": "건반을 누르면 해머가 줄을 치는 악기로, 협주곡의 독주 악기로 자주 나오는 악기는?", "celesta": "작은 피아노처럼 생겼지만 종소리 같은 소리가 나고 '요정의 춤'에 쓰인 악기는?", "organ": "수많은 파이프에 공기를 보내 소리를 내는 건반악기로, 성당에서 자주 보는 악기는?",
 }
+ALT_KO = {"violin": "바이올린", "viola": "비올라", "cello": "첼로", "doublebass": "콘트라베이스", "harp": "하프", "flute": "플루트", "piccolo": "피콜로", "oboe": "오보에", "englishhorn": "잉글리시 호른", "clarinet": "클라리넷", "bassoon": "바순", "contrabassoon": "콘트라바순", "trumpet": "트럼펫", "horn": "호른", "trombone": "트롬본", "tuba": "튜바", "timpani": "팀파니", "snaredrum": "스네어 드럼", "bassdrum": "베이스 드럼", "cymbals": "심벌즈", "triangle": "트라이앵글", "xylophone": "실로폰", "glockenspiel": "글로켄슈필", "gong": "징", "tambourine": "탬버린", "castanets": "캐스터네츠", "piano": "피아노", "celesta": "첼레스타", "organ": "파이프 오르간"}
+ALT_DE = {"violin": "Violine", "viola": "Bratsche", "cello": "Violoncello", "doublebass": "Kontrabass", "harp": "Harfe", "flute": "Querflöte", "piccolo": "Piccoloflöte", "oboe": "Oboe", "englishhorn": "Englischhorn", "clarinet": "Klarinette", "bassoon": "Fagott", "contrabassoon": "Kontrafagott", "trumpet": "Trompete", "horn": "Waldhorn", "trombone": "Posaune", "tuba": "Tuba", "timpani": "Pauke", "snaredrum": "Kleine Trommel", "bassdrum": "Große Trommel", "cymbals": "Becken (Musikinstrument)", "xylophone": "Xylophon", "gong": "Gong", "tambourine": "Tamburin", "castanets": "Kastagnetten", "piano": "Klavier", "celesta": "Celesta", "organ": "Orgel"}
 assert set(CLUE) == set(ORDER), set(ORDER) ^ set(CLUE)
 data, level, seen, IMG, INFO = [], {}, set(), {}, {}
 def add(q, ans, wrong, cat, expl, lv):
@@ -129,7 +131,7 @@ make_quiz(H + "orchestra-quiz.html", "오케스트라 퀴즈", "🎻", 20, "orch
           "오케스트라 악기와 연주 이야기를 맞혀 보세요. 모든 악기는 <a href=\"orchestra-gallery.html\">🎷 오케스트라 악기 도감</a>에서 볼 수 있어요.", data, label="오케스트라 퀴즈")
 
 # ───────── 모드 스크립트 orch-mode.js (그림·사진·정답 카드·힌트)
-INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "how": a["how"], "rng": a["rng"], "desc": a["desc"], "use": a["use"], "wiki": a["wiki"], "tok": a["tok"]} for i, a in I.items()}
+INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "how": a["how"], "rng": a["rng"], "desc": a["desc"], "use": a["use"], "wiki": a["wiki"], "tok": a["tok"], "ko": ALT_KO.get(i), "de": ALT_DE.get(i)} for i, a in I.items()}
 DATA = {"I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO}
 tpl = open("orch_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../orch-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))

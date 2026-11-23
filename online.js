@@ -31,6 +31,9 @@
   function imgUrl(u) { return okImg(u) ? u.replace(/^https:\/\/thumb\.wikimedia\.org\//, "https://upload.wikimedia.org/").replace(/\?.*$/, "") : null; }
   function fileOf(u) { var m = /\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^\/]+)/.exec(u || ""); return m ? decodeURIComponent(m[1]) : null; }
   var PD = /public domain|^pd\b|^pd-|cc0|cc-zero/i;
+  var CCOK = /^cc[ -]by(?:[ -]sa)?[ -][\d.]+/i;   // CC BY·CC BY-SA(저작자·라이선스 표시가 필요, 비영리·변경금지 제한은 제외)
+  function okLic(lic, cc) { return !!lic && (PD.test(lic) || (!!cc && CCOK.test(lic))); }
+  function plain(h) { return String(h || "").replace(/<[^>]*>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/\s+/g, " ").trim().slice(0, 80); }
   function norm(t) { return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }   // 악센트·대소문자를 맞춰서 비교(Cézanne = cezanne)
   // ── 대체 출처(Plan B·C): 위키백과 항목에 그림이 없거나 공개 도메인 표시가 없을 때 차례로 시도해요. 모두 작가 이름 확인 + 공개 도메인·CC0 표시 확인을 거쳐요.
   function words(t) { return String(t || "").replace(/_/g, " ").replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter(function (w) { return w.length > 2 && ["the", "and", "with", "von", "van", "del", "della", "des", "les"].indexOf(w.toLowerCase()) < 0; }); }
@@ -45,14 +48,15 @@
   function hasTok(text, toks) { var t = norm(text); return (toks || []).some(function (k) { return k && t.indexOf(norm(k)) >= 0; }); }
   var KINDRE = { "그림": /painting|oil|tempera|panel|canvas/i, "벽화": /mural|fresco|painting/i, "서화": /painting|scroll|ink/i, "판화": /print|etching|woodcut|engraving/i, "드로잉": /drawing/i, "조각": /sculpture/i };
   function kindOk(kind, type) { return !kind || !KINDRE[kind] || KINDRE[kind].test(String(type || "")); }   // 작품 종류(그림·판화·조각…)가 같아야 같은 작품으로 봐요
-  function srcCommons(en, toks) {   // B: 위키미디어 커먼즈 그림 파일 직접 검색
+  function srcCommons(en, toks, kind, cc) {   // B: 위키미디어 커먼즈 그림 파일 직접 검색
     return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=8&gsrsearch=" + encodeURIComponent(en + " painting filetype:bitmap") + "&prop=imageinfo&iiprop=extmetadata|url&iiurlwidth=330").then(function (d) {
       var pages = (d && d.query && d.query.pages) || {}, ks = Object.keys(pages).sort(function (a, b) { return (pages[a].index || 0) - (pages[b].index || 0); });
       for (var i = 0; i < ks.length; i++) {
         var p = pages[ks[i]], ii = p.imageinfo && p.imageinfo[0]; if (!ii || !okImg(ii.thumburl)) continue;
         var md = ii.extmetadata || {}, lic = md.LicenseShortName && md.LicenseShortName.value, who = ((md.Artist && md.Artist.value) || "") + " " + ((md.ObjectName && md.ObjectName.value) || "") + " " + ((md.ImageDescription && md.ImageDescription.value) || "") + " " + p.title;
-        if (!lic || !PD.test(lic) || !sameTitle(en, p.title + " " + who) || !hasTok(who, toks)) continue;
-        return { src: imgUrl(ii.thumburl), page: ii.descriptionurl, title: p.title.replace(/^File:/, ""), license: lic, label: "위키미디어 커먼즈" };
+        var tt = kind === "악기" ? p.title : p.title + " " + who;   // 악기 사진은 파일 이름에 악기 이름이 있어야 해요(설명문만 맞는 엉뚱한 그림을 막아요)
+        if (!okLic(lic, cc) || !sameTitle(en, tt) || (kind !== "악기" && !hasTok(who, toks)) || (kind === "악기" && !hasTok(p.title, toks))) continue;
+        return { src: imgUrl(ii.thumburl), page: ii.descriptionurl, title: p.title.replace(/^File:/, ""), license: lic, label: "위키미디어 커먼즈", artist: plain(md.Artist && md.Artist.value), licenseUrl: md.LicenseUrl && md.LicenseUrl.value };
       }
       return null;
     });
@@ -68,18 +72,19 @@
     });
   }
   var CHAIN = [srcCommons, srcCMA];   // 시카고 미술관 API는 브라우저(CORS)에서 막혀 쓰지 않아요(2026-11-23 확인)
-  function fallback(en, toks, kind) {
-    var i = 0; function next() { if (i >= CHAIN.length) return Promise.resolve(null); var f = CHAIN[i++]; return f(en, toks, kind).then(function (r) { return r || next(); }).catch(function () { return next(); }); }
+  function fallback(en, toks, kind, cc) {
+    var i = 0; function next() { if (i >= CHAIN.length) return Promise.resolve(null); var f = CHAIN[i++]; return f(en, toks, kind, cc).then(function (r) { return r || next(); }).catch(function () { return next(); }); }
     return next();
   }
   // keys: ["en:Mona_Lisa", ...] 후보를 차례로 시도. tokens: 설명·요약에 하나 이상 들어 있어야 하는 작가 이름(소문자·한글)
-  function wikiImage(keys, tokens, kind) {
-    var id = (keys || []).join("|") + "|" + (kind || ""); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
+  function wikiImage(keys, tokens, kind, opts) {
+    var cc = !!(opts && opts.cc);
+    var id = (keys || []).join("|") + "|" + (kind || "") + (cc ? "|cc" : ""); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
     var i = 0;
     function next() {
       if (i >= keys.length) {
         var en = ((keys.filter(function (k) { return /^en:/.test(k); })[0] || keys[0] || "").replace(/^\w+:/, "")).replace(/_/g, " ");
-        return fallback(en, tokens, kind).then(function (r) { cache[id] = r || null; saveCache(); return r || null; });
+        return fallback(en, tokens, kind, cc).then(function (r) { cache[id] = r || null; saveCache(); return r || null; });
       }
       var k = keys[i++], m = /^(en|ko):(.+)$/.exec(k); if (!m) return next();
       return json("https://" + m[1] + ".wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(m[2].replace(/ /g, "_"))).then(function (s) {
@@ -90,9 +95,9 @@
         return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata&titles=" + encodeURIComponent("File:" + f)).then(function (c) {
           var pages = c && c.query && c.query.pages, p = pages && pages[Object.keys(pages)[0]], md = p && p.imageinfo && p.imageinfo[0] && p.imageinfo[0].extmetadata;
           var lic = md && md.LicenseShortName && md.LicenseShortName.value;
-          if (!lic || !PD.test(lic)) return next();                                                                                 // 공개 도메인 표시가 없으면 버려요
+          if (!okLic(lic, cc)) return next();                                                                                 // 공개 도메인 표시가 없으면 버려요
           var url = s.content_urls && s.content_urls.desktop && s.content_urls.desktop.page || ("https://" + m[1] + ".wikipedia.org/wiki/" + encodeURIComponent(m[2]));
-          var res = { src: src, page: url, title: s.title || m[2], license: lic, label: "위키백과" };
+          var res = { src: src, page: url, title: s.title || m[2], license: lic, label: "위키백과", artist: plain(md && md.Artist && md.Artist.value), licenseUrl: md && md.LicenseUrl && md.LicenseUrl.value, filePage: "https://commons.wikimedia.org/wiki/File:" + encodeURIComponent(f) };
           cache[id] = res; saveCache(); return res;
         });
       });

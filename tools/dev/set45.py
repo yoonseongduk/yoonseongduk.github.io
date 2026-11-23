@@ -138,10 +138,12 @@ def hook(path):
     if 'src="orch-mode.js"' not in t:
         t = t.replace("</body>", '<script src="online.js"></script>\n<script src="orch-mode.js" defer></script>\n</body>', 1); open(path, "w", encoding="utf-8").write(t)
 hook(H + "orchestra-quiz.html")
+def hook_gal():
+    pass
 
 # ───────── 악기 도감 화면
 CSS = re.search(r"CSS = '''(.*?)'''", open("set43.py", encoding="utf-8").read(), re.S).group(1) + '''
-.ar .ic{width:72px;height:72px;flex:none;border-radius:12px;overflow:hidden}.ar .top{display:flex;gap:12px;align-items:center}.ar .top h2{margin:0}.ar dl{margin:4px 0 0;display:grid;grid-template-columns:5.4em 1fr;gap:2px 8px;font-size:.92rem}.ar dt{color:var(--muted)}.ar dd{margin:0}'''
+.ar .ic{width:72px;height:72px;flex:none;border-radius:12px;overflow:hidden;background:#f6efe0}.ar .ic img{width:72px;height:72px;object-fit:cover;display:block}.ar .cr{color:var(--muted);font-size:.74rem;line-height:1.4}.ar .top{display:flex;gap:12px;align-items:center}.ar .top h2{margin:0}.ar dl{margin:4px 0 0;display:grid;grid-template-columns:5.4em 1fr;gap:2px 8px;font-size:.92rem}.ar dt{color:var(--muted)}.ar dd{margin:0}'''
 BODY = '''  <div class="card"><div class="chips" id="eras"></div><div class="chips" id="lvs"></div><p class="muted" id="lvp"></p><input type="text" id="q" placeholder="악기 이름·악기군·소리 찾기 (예: 바이올린, 금관, 낮은)" aria-label="찾기"><p class="muted" id="cnt"></p><a class="btn" id="goq" href="orchestra-quiz.html" style="text-align:center;text-decoration:none">🎻 오케스트라 퀴즈 풀기</a></div>
   <div id="list"></div>'''
 AR = [dict(id=a["id"], n=a["n"], nm=a["name"], e=a["en"], f=a["fam"], h=a["how"], r=a["rng"], d=a["desc"], u=a["use"], l=a["fame"], svg=ICONS[a["id"]] and icon(a["id"])) for a in I.values()]
@@ -157,7 +159,7 @@ function render() {
     if (q && !norm([a.nm, a.e, a.f, a.h, a.r, a.d, a.u].join(" ")).includes(q)) return;
     if (a.f !== last) { last = a.f; html += `<p class="era">${esc(a.f)}</p>`; }
     n++;
-    html += `<article class="ar"><div class="top"><div class="ic">${a.svg}</div><div><h2>${a.l === 1 ? '<span class="st" aria-label="대표 악기">★</span> ' : ""}${esc(a.nm)} <span class="en">${esc(a.e)}</span></h2><div class="meta"><span>도감 ${a.n}번</span><span class="tag">${esc(a.f)}</span></div></div></div><p class="bio">${esc(a.d)}</p><dl><dt>소리 높이</dt><dd>${esc(a.r)} 소리</dd><dt>연주 방법</dt><dd>${esc(a.h)}</dd><dt>쓰임</dt><dd>${esc(a.u)}</dd></dl></article>`;
+    html += `<article class="ar" data-id="${a.id}"><div class="top"><div class="ic">${a.svg}</div><div><h2>${a.l === 1 ? '<span class="st" aria-label="대표 악기">★</span> ' : ""}${esc(a.nm)} <span class="en">${esc(a.e)}</span></h2><div class="meta"><span>도감 ${a.n}번</span><span class="tag">${esc(a.f)}</span></div></div></div><p class="bio">${esc(a.d)}</p><dl><dt>소리 높이</dt><dd>${esc(a.r)} 소리</dd><dt>연주 방법</dt><dd>${esc(a.h)}</dd><dt>쓰임</dt><dd>${esc(a.u)}</dd></dl></article>`;
   });
   box.innerHTML = html || '<p class="muted center">찾는 악기가 없어요</p>';
   $("lvs").innerHTML = LVN.map((t, k) => `<button type="button" class="chip${k === lvf ? " on" : ""}" data-l="${k}">${t}${k ? ` <small>${AR.filter(a => a.l === k).length}</small>` : ""}</button>`).join(""); $("lvp").textContent = LVD[lvf];
@@ -169,3 +171,5 @@ $("lvs").addEventListener("click", ev => { const b = ev.target.closest("[data-l]
 $("q").addEventListener("input", render); render();'''
 make_page(H + "orchestra-gallery.html", "오케스트라 악기 도감", "🎷", 20, "orchestra-gallery-v1",
           "오케스트라에서 만나는 악기를 그림과 함께 정리했어요. 그림은 직접 그린 단순한 그림이에요. 소리 높이는 같은 악기군 안에서의 비교예요.", BODY, JS, CSS)
+
+hook(H + "orchestra-gallery.html")

@@ -69,3 +69,30 @@ def seating(hl):
         on = n == hl
         body += f'<circle cx="{x}" cy="{y}" r="8.5" fill="{"#e8742a" if on else "#d6c9a8"}" stroke="{"#7a3a0c" if on else "#9b8a62"}" stroke-width="{2 if on else 1}"/><text x="{x}" y="{y+3.5}" font-size="10" font-weight="700" text-anchor="middle" fill="{"#fff" if on else "#4a3f27"}">{n}</text>'
     return f'<svg viewBox="0 0 120 126" role="img" aria-label="오케스트라 무대 배치도" xmlns="http://www.w3.org/2000/svg"><rect width="120" height="126" rx="14" fill="#f6efe0"/>{body}</svg>'
+
+
+# ───────── 크기 비교 그림(같은 모양의 악기를 실제 크기 비율로 나란히): 현악기 네 가지 + 사람 키(약 170cm)
+STR_SIZES = [("violin", "바이올린", 60), ("viola", "비올라", 67), ("cello", "첼로", 120), ("doublebass", "콘트라베이스", 180)]   # 전체 길이(cm), 대략
+def size_compare(hl, names=False):
+    """hl: 강조할 악기 id(없으면 모두 같은 색). names=True면 이름과 길이(cm)를 글자로 보여 줘요(문제 풀 때는 정답이 드러나서 False)."""
+    K = 0.52; base = 104; W = 252; Hh = 126 if names else 112
+    body = f'<line x1="6" y1="{base}" x2="{W-6}" y2="{base}" stroke="#b79d6c" stroke-width="1.5"/>'
+    # 사람(170cm): 머리+몸통+다리를 단순하게
+    ph = 170 * K; px = W - 24
+    body += f'<g fill="#9aa4ae"><circle cx="{px}" cy="{base-ph+7}" r="7"/><rect x="{px-8}" y="{base-ph+15}" width="16" height="{ph*0.38:.1f}" rx="5"/><rect x="{px-7}" y="{base-ph+15+ph*0.38-2:.1f}" width="5.5" height="{ph*0.47:.1f}" rx="2"/><rect x="{px+1.5}" y="{base-ph+15+ph*0.38-2:.1f}" width="5.5" height="{ph*0.47:.1f}" rx="2"/></g>'
+    x = 22
+    for iid, nm, cm in STR_SIZES:
+        h = cm * K; on = (hl is None) or iid == hl; col = WOOD if on else "#c9bfae"; edge = WOOD2 if on else "#a89c86"
+        bw = 6 + cm * 0.055                          # 큰 악기일수록 몸통이 조금 넓어요
+        top = base - h; cx = x + bw
+        # 몸통(두 번 불룩), 목, 소용돌이
+        by = base - (0.45 * h)
+        body += (f'<ellipse cx="{cx:.1f}" cy="{base-0.20*h:.1f}" rx="{bw:.1f}" ry="{0.20*h:.1f}" fill="{col}" stroke="{edge}" stroke-width="1.5"/>'
+                 f'<ellipse cx="{cx:.1f}" cy="{base-0.42*h:.1f}" rx="{bw*0.78:.1f}" ry="{0.13*h:.1f}" fill="{col}" stroke="{edge}" stroke-width="1.5"/>'
+                 f'<rect x="{cx-1.6:.1f}" y="{top+2:.1f}" width="3.2" height="{0.62*h:.1f}" rx="1.2" fill="{DARK if on else "#8a8378"}"/>'
+                 f'<circle cx="{cx:.1f}" cy="{top+1:.1f}" r="2.6" fill="{edge}"/>')
+        if on and hl: body += f'<circle cx="{cx:.1f}" cy="{top-6:.1f}" r="3.6" fill="#e8742a"/>'
+        if names: body += f'<text x="{cx:.1f}" y="{base+10}" font-size="7.6" text-anchor="middle" fill="#4a3f27" font-weight="{700 if iid==hl else 400}">{nm}</text><text x="{cx:.1f}" y="{base+19}" font-size="6.8" text-anchor="middle" fill="#7b6a45">약 {cm}cm</text>'
+        x += 2 * bw + 18
+    if names: body += f'<text x="{px}" y="{base+10}" font-size="7.2" text-anchor="middle" fill="#6b747d">사람</text><text x="{px}" y="{base+19}" font-size="6.8" text-anchor="middle" fill="#6b747d">약 170cm</text>'
+    return f'<svg viewBox="0 0 {W} {Hh}" role="img" aria-label="현악기 크기 비교" xmlns="http://www.w3.org/2000/svg"><rect width="{W}" height="{Hh}" rx="14" fill="#f6efe0"/>{body}</svg>'

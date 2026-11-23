@@ -150,7 +150,7 @@ def main():
                 sc[c["f"]] = analyze(c); tried += 1; did += 1; save(SCRF, scr)
                 if good(sc[c["f"]]): picked.append(c)
             if picked: res[t] = [{"f": c["f"], "lic": c["lic"], "kbps": c["kbps"], "scr": sc.get(c["f"])} for c in picked[:2]]
-            else: res.pop(t, None)
+            elif all(sc.get(c["f"]) is not None for c in cands[:4] if c["f"] in sc): res.pop(t, None)   # 분석이 서버 문제로 실패(None)한 곡은 기존 목록을 그대로 둬요
             save(OUT, res)
             if tried: print(f"[{n}/{len(works)}] {'✓' if picked else '✗'} {t}: 후보 {len(cands)}개" + (f" → {picked[0]['f'][:60]} ({picked[0]['kbps']}kbps, {sc.get(picked[0]['f'])})" if picked else " → 쓸 만한 녹음 없음(글로만)"), flush=True)
         ready = all("cands" in st.get(t, {}) and ia.get(t, {}).get("done") for t in works)

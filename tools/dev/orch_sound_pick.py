@@ -51,7 +51,7 @@ PICK = {"viola": ["Viola.ogg", "Viola CGDA.ogg"],                               
         "timpani": ["Timpani 64-c-p5.wav", "Timpani F major triad.ogg"],
         "trumpet": ["Cracow trumpet signal.ogg", "Clarke Trumpet Voluntary.ogg", "Natural trumpet B-flat.ogg"],                # 크라쿠프 성당 탑의 나팔 신호(혼자 부는 곡, 공개 도메인), 클라크 트럼펫 볼런터리(트럼펫·오르간)
                    # 비올라 혼자 연주한 55초 가락(곡명 없음, CC BY-SA 2.5, 여러 위키백과 비올라 항목에 쓰임) 먼저. 비올라 독주곡 녹음은 커먼즈·아카이브에 허용 라이선스로 없음(2026-11-24 확인: 비올라 다 감바·협주곡·피아노 반주뿐)
-        "englishhorn": [],   # 쓸 녹음 없음. 인터넷 아카이브의 특수 주법(플러터 텅잉) 견본은 보통 소리가 아니라 뺌(2026-11-24 사용자 요청)
+        "englishhorn": ["Antonin Dvorak - symphony no. 9 in e minor 'from the new world', op. 95 - ii. largo.ogg"],   # 드보르자크 신세계 2악장(Musopen 관현악, 공개 도메인): 금관 화음 뒤 잉글리시 호른 독주(사용자가 알려 준 곡, 2026-11-24). 특수 주법 견본은 뺌. 시벨리우스 투오넬라의 백조는 커먼즈에 녹음 없음, 힌데미트 소나타는 곡 저작권이 남아 제외. 같은 곡의 Dvorak S9M2 100501.ogg 는 컴퓨터 악기 소리라 제외
         "doublebass": ["Jazz walking bass on double bass.oga"],                       # 콘트라베이스 혼자 워킹 베이스, CC BY 2.5
         "contrabassoon": ["Contra2.ogg"],                                              # 바흐 무반주 첼로 모음곡 일부를 콘트라바순으로, CC BY-SA 3.0
         "castanets": ["Fundación Joaquín Díaz - ATO 00704 17 - Diferentes toques de castañuelas.ogg", "Fundación Joaquín Díaz - ATO 00810 13 - Toques de castañuelas.ogg"],

@@ -39,7 +39,7 @@ BADW2 = re.compile(r"arp-|solina|tr-?\d{3}|\bwave\b|\d+ ?hz|ll-q\d|speaks|spoken
                    r"concerto|airmen of note|brass|meditation|drum roll with|harp'? stud|\.mid$|isrc|macleod|\bhey\b|drum (&|and) bass|basset|backwa|music box|instrumental", re.I)
 LANG = re.compile(r"^[a-z]{2,3}(-[a-z]{2,4})?-")   # 발음 녹음 파일 이름(De-at-…, En-us-…, Ig-…)
 OLDREC = re.compile(r"\b(18\d\d|19[0-4]\d)\b|victor|columbia|edison|gramophone|berliner|\b78 ?rpm\b|cylinder|shellac|vinyl|lp rip|karaoke|\bcover\b|remix|ringtone", re.I)   # 옛 음반·복각(music_pick.BAD 중 녹음 시대 낱말)
-NOPICK = re.compile(r"clarinetreed|horn-bad meinberg|^[a-z]+( [a-z])? 0\d( [lr])?\.wav$", re.I)   # 마지막 꼴: Musopen 「피가로의 결혼」 서곡 악기별 마이크 녹음(Clarinet 03.wav·Bassoon 02.wav·Viola B 03.wav…) — 오케스트라 전체가 들려 악기마다 같은 음원처럼 들림(2026-11-24 사용자 지적)   # 눈으로 본 이름이 악기 연주가 아닌 것(리드만 부는 소리·자동차 경적일 수 있는 것)
+NOPICK = re.compile(r"pararira|arp-solina|horn fifths|clarinetreed|horn-bad meinberg|^[a-z]+( [a-z])? 0\d( [lr])?\.wav$", re.I)   # 마지막 꼴: Musopen 「피가로의 결혼」 서곡 악기별 마이크 녹음(Clarinet 03.wav·Bassoon 02.wav·Viola B 03.wav…) — 오케스트라 전체가 들려 악기마다 같은 음원처럼 들림(2026-11-24 사용자 지적)   # 눈으로 본 이름이 악기 연주가 아닌 것(리드만 부는 소리·자동차 경적일 수 있는 것)
 # 이름 규칙으로는 못 고르거나 엉뚱한 것만 걸리는 악기는 설명(커먼즈 파일 설명)을 읽고 직접 정해요(2026-11-24, CC BY·CC BY-SA 허용 뒤).
 #   글로켄슈필: 독일어 Glockenspiel 은 시청 탑의 종(카리용)이라 후보가 거의 다 탑 종소리 → 연극 음악 한 곡만. 작은북: 효과(리버브·마이크 번짐 시연) 없는 소리 견본.
 #   콘트라베이스·콘트라바순·캐스터네츠: 이름 규칙(jazz·다른 악기 이름·스페인어 이름)에 걸려서 설명으로 확인. 잉글리시 호른은 커먼즈에 쓸 녹음이 없어(발음 녹음·자동차 경적뿐) 인터넷 아카이브에는 특수 주법 견본뿐이라 소리 없음(사용자 결정).

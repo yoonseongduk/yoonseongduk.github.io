@@ -42,7 +42,7 @@ OLDREC = re.compile(r"\b(18\d\d|19[0-4]\d)\b|victor|columbia|edison|gramophone|b
 NOPICK = re.compile(r"clarinetreed|horn-bad meinberg|^[a-z]+( [a-z])? 0\d( [lr])?\.wav$", re.I)   # 마지막 꼴: Musopen 「피가로의 결혼」 서곡 악기별 마이크 녹음(Clarinet 03.wav·Bassoon 02.wav·Viola B 03.wav…) — 오케스트라 전체가 들려 악기마다 같은 음원처럼 들림(2026-11-24 사용자 지적)   # 눈으로 본 이름이 악기 연주가 아닌 것(리드만 부는 소리·자동차 경적일 수 있는 것)
 # 이름 규칙으로는 못 고르거나 엉뚱한 것만 걸리는 악기는 설명(커먼즈 파일 설명)을 읽고 직접 정해요(2026-11-24, CC BY·CC BY-SA 허용 뒤).
 #   글로켄슈필: 독일어 Glockenspiel 은 시청 탑의 종(카리용)이라 후보가 거의 다 탑 종소리 → 연극 음악 한 곡만. 작은북: 효과(리버브·마이크 번짐 시연) 없는 소리 견본.
-#   콘트라베이스·콘트라바순·캐스터네츠: 이름 규칙(jazz·다른 악기 이름·스페인어 이름)에 걸려서 설명으로 확인. 잉글리시 호른은 커먼즈에 쓸 녹음이 없어(발음 녹음·자동차 경적뿐) 인터넷 아카이브의 특수 주법 견본을 써요.
+#   콘트라베이스·콘트라바순·캐스터네츠: 이름 규칙(jazz·다른 악기 이름·스페인어 이름)에 걸려서 설명으로 확인. 잉글리시 호른은 커먼즈에 쓸 녹음이 없어(발음 녹음·자동차 경적뿐) 인터넷 아카이브에는 특수 주법 견본뿐이라 소리 없음(사용자 결정).
 # 2026-11-24 사용자 지적(클라리넷·바순 소리가 같음): Musopen 「피가로의 결혼」 서곡 악기별 마이크 녹음(Clarinet 03.wav 등)은 오케스트라 전체가 들려 모두 빼고(NOPICK), 설명을 읽고 그 악기 독주 부분이 있는 녹음으로 바꿈.
 PICK = {"viola": ["Viola.ogg", "Viola CGDA.ogg"],                                         # 혼자 연주한 55초 가락, 개방현 C·G·D·A
         "clarinet": ["A-Klarinette, Rachmaninov 2 II.ogg", "B-Klarinette, Beeth 8.III.ogg", "Clarinette game chromatique.ogg"],   # 교향곡 속 클라리넷 독주 부분(Richard Haynes 소리 예), 반음계
@@ -51,7 +51,7 @@ PICK = {"viola": ["Viola.ogg", "Viola CGDA.ogg"],                               
         "timpani": ["Timpani 64-c-p5.wav", "Timpani F major triad.ogg"],
         "trumpet": ["Cracow trumpet signal.ogg", "Clarke Trumpet Voluntary.ogg", "Natural trumpet B-flat.ogg"],                # 크라쿠프 성당 탑의 나팔 신호(혼자 부는 곡, 공개 도메인), 클라크 트럼펫 볼런터리(트럼펫·오르간)
                    # 비올라 혼자 연주한 55초 가락(곡명 없음, CC BY-SA 2.5, 여러 위키백과 비올라 항목에 쓰임) 먼저. 비올라 독주곡 녹음은 커먼즈·아카이브에 허용 라이선스로 없음(2026-11-24 확인: 비올라 다 감바·협주곡·피아노 반주뿐)
-        "englishhorn": ["ia:CorAnglais/CorAnglais_AnnabelLovatt/CorAnglais_FlutterTongue.ogg"],   # 인터넷 아카이브 공개 도메인 표시, 특수 주법(플러터 텅잉) 견본뿐이라 곡명 칸에 그렇게 밝혀요
+        "englishhorn": [],   # 쓸 녹음 없음. 인터넷 아카이브의 특수 주법(플러터 텅잉) 견본은 보통 소리가 아니라 뺌(2026-11-24 사용자 요청)
         "doublebass": ["Jazz walking bass on double bass.oga"],                       # 콘트라베이스 혼자 워킹 베이스, CC BY 2.5
         "contrabassoon": ["Contra2.ogg"],                                              # 바흐 무반주 첼로 모음곡 일부를 콘트라바순으로, CC BY-SA 3.0
         "castanets": ["Fundación Joaquín Díaz - ATO 00704 17 - Diferentes toques de castañuelas.ogg", "Fundación Joaquín Díaz - ATO 00810 13 - Toques de castañuelas.ogg"],

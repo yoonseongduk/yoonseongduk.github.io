@@ -128,6 +128,13 @@ for n, name, where in SEATS:
     wrong = [x[1] for x in SEATS if x[0] != n]; lv = 1 if n == 10 else (2 if n in (1, 4, 6) else 3)
     if add(q, name, R.sample(wrong, 3), "무대 배치", f"{n}번 자리는 {where}에 앉는 {name}의 자리가 일반적이에요. 오케스트라마다 조금씩 다를 수 있어요.", lv): IMG[q] = ["s", n]
 
+# ⑥ 소리 듣고 악기 맞히기(소리가 있는 악기만, 인터넷·소리 듣기 동의가 있을 때만 한 판에 섞여요)
+SND0 = json.load(open("orch_sound.json", encoding="utf-8")) if os.path.exists("orch_sound.json") else {}
+SNDQ = {}
+for k, i in enumerate([x for x in ORDER if SND0.get(x)], 1):
+    a = I[i]; lv = max(2, a["fame"]) if a["fam"] in ("현악기", "목관악기", "금관악기") else a["fame"]
+    q = f"🔊 소리 {k}번을 들어 보세요. 어떤 악기 소리일까요? (아래 소리 단추를 눌러요)"
+    if add(q, a["name"], others(i, lv), a["fam"], f"{a['name']}({a['en']})의 소리였어요. {a['desc']}", lv): SNDQ[q] = i; INFO[q] = i
 os.makedirs("qlevel", exist_ok=True); json.dump(level, open("qlevel/orchestra-quiz.json", "w", encoding="utf-8"), ensure_ascii=False)
 cnt = {1: 0, 2: 0, 3: 0}
 for v in level.values(): cnt[v] += 1
@@ -141,7 +148,7 @@ INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "ho
 SND = json.load(open("orch_sound.json", encoding="utf-8")) if os.path.exists("orch_sound.json") else {}
 SNDT = json.load(open("orch_sound_title.json", encoding="utf-8")) if os.path.exists("orch_sound_title.json") else {}   # 독주곡·곡 일부 녹음의 곡명(사용자 요청 2026-11-24), 파일 이름 → 한국어 곡명
 SNDT = {f: t for f, t in SNDT.items() if any(f in v for v in SND.values())}
-DATA = {"SND": {k: v for k, v in SND.items() if v}, "SNDT": SNDT, "I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {**{i: size_compare(i, False) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, False) for i, _, _ in WIND_SIZES}}, "CMPN": {**{i: size_compare(i, True) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, True) for i, _, _ in WIND_SIZES}}}
+DATA = {"SNDQ": SNDQ, "SND": {k: v for k, v in SND.items() if v}, "SNDT": SNDT, "I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {**{i: size_compare(i, False) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, False) for i, _, _ in WIND_SIZES}}, "CMPN": {**{i: size_compare(i, True) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, True) for i, _, _ in WIND_SIZES}}}
 tpl = open("orch_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../orch-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):

@@ -23,6 +23,7 @@
       ".spec{display:grid;grid-template-columns:4.2em 1fr;gap:2px 8px;font-size:.84rem;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line,#ccc);text-align:left}.spec dt{color:var(--muted,#666)}.spec dd{margin:0}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}" +
       ".ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}";
     st.textContent += ".oimg img,.oimg svg,.prow img,.prow svg,.ar .ic img,.ar .ic svg{cursor:zoom-in}" + "#aview{position:fixed;inset:0;z-index:9999;background:#000e;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}#aview .vb{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px}#aview .vb button{border:0;border-radius:999px;padding:8px 13px;font-size:.95rem;background:#fff;color:#111}#aview .vz{color:#fff;font-size:.85rem;min-width:3.2em;text-align:center}#aview .vi{flex:1;overflow:hidden;position:relative;touch-action:none;display:flex;align-items:center;justify-content:center}#aview .vi img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;will-change:transform;cursor:grab}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}#aview .vh{color:#ccc}";
+    st.textContent += ".snq{margin:0 0 10px;text-align:center}.snq .osnd{justify-content:center}.snq.blind .osnd small{display:none!important}.snq .osnd button{font-size:1.05rem;padding:12px 18px}";
     st.textContent += ".osnd{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 0}.osnd button{border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:7px 12px;font-size:.9rem;font-family:inherit}.osnd button.on{background:var(--accent,#3a6);color:#fff;border-color:transparent}.osnd small{font-size:.75rem;color:var(--muted,#666);flex-basis:100%;overflow-wrap:anywhere}.osnd small a{color:inherit}";
     document.head.appendChild(st);
   }
@@ -116,6 +117,8 @@
   var specHtml = function (a) { return a.spec && a.spec.length ? '<dl class="spec">' + a.spec.map(function (x) { return "<dt>" + esc(x[0]) + "</dt><dd>" + esc(x[1]) + "</dd>"; }).join("") + "</dl>" : ""; };
   function decorate() {
     var cur = qs && qs[i]; hintUsed = false; if (!cur) return; var q = document.getElementById("q"), key = cur.d[0], m = DATA.IMG[key], showId = DATA.SHOW[key]; if (!q) return;
+    var sqid = DATA.SNDQ && DATA.SNDQ[key];
+    if (sqid) { var sw = document.createElement("div"); sw.className = "snq blind"; sw.dataset.id = sqid; q.insertBefore(sw, q.firstChild); addSound(sw); if (!sw.querySelector(".osnd")) { sw.innerHTML = "<small>소리 듣기는 인터넷이 연결돼 있고 🌐 온라인을 켠 때만 돼요.</small>"; } }
     if (m && m[0] === "s") { var f0 = document.createElement("div"); f0.className = "oimg"; f0.innerHTML = DATA.SEAT[String(m[1])]; q.insertBefore(f0, q.firstChild); }
     else if (m || showId) {   // 그림 문제(이름 맞히기) 또는 이름이 나온 악기의 그림·사진
       var fig = document.createElement("div"); fig.className = "oimg"; q.insertBefore(fig, q.firstChild);
@@ -137,6 +140,7 @@
     var n = q.querySelector(".note"); if (n) n.remove(); var h = q.querySelector(".ahint"); if (h) h.remove();
     q.insertAdjacentHTML("beforeend", '<div class="acard"><div class="oimg"></div><b>' + esc(a.name) + " <small>(" + esc(a.en) + ")</small></b><span>" + esc(a.fam) + " · " + esc(a.rng) + " 소리 · 도감 " + a.n + "번</span><span>🎼 " + esc(a.how) + "</span><span>" + esc(a.desc) + "</span><span>🎵 " + esc(a.use) + "</span>" + specHtml(a) + (DATA.CMPN[id] ? '<div class="oimg cmp">' + DATA.CMPN[id] + "<small>📏 실제 크기 비교(약 길이)</small></div>" : "") + "</div>");
     if (DATA.CMPN[id] && isStr(id)) { var cardEl = q.querySelector(".acard"); photoRow(id, true, function () { return qs && qs[i] && qs[i].d[0] === key; }).then(function (w) { if (w && cardEl.isConnected) { var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); var lab = document.createElement("small"); lab.textContent = "📷 사진 높이를 실제 길이에 맞춰 보여 줘요(대략)"; box.appendChild(lab); cardEl.appendChild(box); fitRow(w); } }); }
+    var snq0 = q.querySelector(".snq"); if (snq0) snq0.classList.remove("blind");   // 정답 뒤에는 곡 이름·녹음 정보를 보여 줘요
     var cardE = q.querySelector(".acard"); if (cardE) { cardE.dataset.id = id; addSound(cardE); }   // 🔊 소리 듣기(도감과 같은 단추)
     var cf = q.querySelector(".acard .oimg"), already = q.querySelector(":scope > .oimg");
     if (already && DATA.IMG[key] && DATA.IMG[key][0] === "i") cf.remove();   // 그림 문제는 위에 이미 그림이 있어요
@@ -156,6 +160,26 @@
     for (var k = slots.length - 1; k > 0; k--) { var j = Math.floor(Math.random() * (k + 1)), tmp = slots[k]; slots[k] = slots[j]; slots[j] = tmp; }
     for (var k2 = pool.length - 1; k2 > 0; k2--) { var j2 = Math.floor(Math.random() * (k2 + 1)), t2 = pool[k2]; pool[k2] = pool[j2]; pool[j2] = t2; }
     for (var x = 0; x < Math.min(MINIMG - have, pool.length, slots.length); x++) qs[slots[x]] = { d: pool[x], opts: options(pool[x]) };
+    show();
+  }
+
+  // 소리 문제: 소리를 들을 수 있을 때(온라인 기능이 있고 인터넷이 연결돼 있을 때)만 한 판에 최소 2개 섞고, 그렇지 않으면 한 판에서 빼요
+  var MINSND = 2;
+  function biasSounds() {
+    if (!qs || qs.length < 2 || typeof D === "undefined" || !DATA.SNDQ) return;
+    var isSnd = function (d) { return !!DATA.SNDQ[d[0]]; }, isImg = function (d) { var m = DATA.IMG[d[0]]; return !!m && m[0] === "i"; };
+    var can = !!(window.fgOnline && fgOnline.enabled) && navigator.onLine !== false, have = qs.filter(function (x) { return isSnd(x.d); }).length;
+    var used = {}; qs.forEach(function (x) { used[x.d[0]] = 1; });
+    var ok = function (d, n) { return !used[d[0]] && (!lv || lvOf(n) === lv) && !isFlag(d[0]) && (cat === "전체" || d[3] === cat); };
+    var shuffle = function (a) { for (var k = a.length - 1; k > 0; k--) { var j = Math.floor(Math.random() * (k + 1)), t = a[k]; a[k] = a[j]; a[j] = t; } return a; };
+    if (can) {
+      if (have >= MINSND) return; var pool = shuffle(D.filter(function (d, n) { return isSnd(d) && ok(d, n); })); if (!pool.length) return;
+      var slots = shuffle(qs.map(function (x, k) { return k; }).filter(function (k) { return !isSnd(qs[k].d) && !isImg(qs[k].d); }));
+      for (var x = 0; x < Math.min(MINSND - have, pool.length, slots.length); x++) qs[slots[x]] = { d: pool[x], opts: options(pool[x]) };
+    } else {
+      if (!have) return; var pool2 = shuffle(D.filter(function (d, n) { return !isSnd(d) && ok(d, n); })), u = 0;
+      qs.forEach(function (x, k) { if (isSnd(x.d) && pool2[u]) { qs[k] = { d: pool2[u], opts: options(pool2[u]) }; u++; } });
+    }
     show();
   }
 
@@ -182,7 +206,7 @@
     var top = c.querySelector(".top"), spc = c.querySelector(".spec"); if (top) top.insertAdjacentElement("afterend", w); else c.insertBefore(w, spc || null);   // 퀴즈 정답 카드는 사양 표 앞에
   }
   document.addEventListener("click", function (e) {
-    var b = e.target.closest && e.target.closest(".osnd button"); if (!b) return; var c = b.closest(".ar, .acard"), id = c && c.dataset.id, cr = b.parentNode.querySelector("small");
+    var b = e.target.closest && e.target.closest(".osnd button"); if (!b) return; var c = b.closest(".ar, .acard, .snq"), id = c && c.dataset.id, cr = b.parentNode.querySelector("small");
     if (snd && snd.b === b) { if (!snd.a.paused) { snd.a.pause(); b.textContent = "▶ 이어서 듣기"; } else { snd.a.play(); b.textContent = "⏸ 멈추기"; } return; }
     stopSnd(); if (!fgOnline.ask(SCONSENT)) return;
     if (navigator.onLine === false) { b.textContent = "인터넷 없음"; setTimeout(function () { b.textContent = "🔊 소리 듣기"; }, 2500); return; }
@@ -286,13 +310,13 @@
     buildBar();
     if (isGal) { new MutationObserver(function () { decorateGal(false); }).observe(document.getElementById("list"), { childList: true }); decorateGal(false); return; }
     var oShow = show, oPick = pick, oStart = start;
-    start = function () { oStart(); biasImages(); };
+    start = function () { oStart(); biasImages(); biasSounds(); };
     show = function () { oShow(); decorate(); };
     pick = function (k) {
       if (locked) return; var c = qs && qs[i], ok = c && c.opts[k] === c.d[1], hu = hintUsed; oPick(k);
       if (c) { if (ok && hu) { score -= 0.5; document.getElementById("score").textContent = score; } addCard(c); }
     };
-    if (qs && qs.length) { biasImages(); show(); }
+    if (qs && qs.length) { biasImages(); biasSounds(); show(); }
   }
   addEventListener("online", function () { if (bar) drawBar(); }); addEventListener("offline", function () { if (bar) drawBar(); });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();

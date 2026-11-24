@@ -139,7 +139,9 @@ make_quiz(H + "orchestra-quiz.html", "오케스트라 퀴즈", "🎻", 20, "orch
 INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "how": a["how"], "rng": a["rng"], "desc": a["desc"], "use": a["use"], "wiki": a["wiki"], "tok": a["tok"], "ko": ALT_KO.get(i), "de": ALT_DE.get(i), "spec": SPECS[i], "files": PHOTO_FILES.get(i)} for i, a in I.items()}
 # 🔊 악기 소리(도감): orch_sound_pick.py 가 고른 커먼즈 파일(독주곡 우선·공개 도메인·CC0·음질 분석 통과). 소리 파일은 저장소에 두지 않고 폰이 듣기를 누를 때 불러와요.
 SND = json.load(open("orch_sound.json", encoding="utf-8")) if os.path.exists("orch_sound.json") else {}
-DATA = {"SND": {k: v for k, v in SND.items() if v}, "I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {**{i: size_compare(i, False) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, False) for i, _, _ in WIND_SIZES}}, "CMPN": {**{i: size_compare(i, True) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, True) for i, _, _ in WIND_SIZES}}}
+SNDT = json.load(open("orch_sound_title.json", encoding="utf-8")) if os.path.exists("orch_sound_title.json") else {}   # 독주곡·곡 일부 녹음의 곡명(사용자 요청 2026-11-24), 파일 이름 → 한국어 곡명
+SNDT = {f: t for f, t in SNDT.items() if any(f in v for v in SND.values())}
+DATA = {"SND": {k: v for k, v in SND.items() if v}, "SNDT": SNDT, "I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {**{i: size_compare(i, False) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, False) for i, _, _ in WIND_SIZES}}, "CMPN": {**{i: size_compare(i, True) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, True) for i, _, _ in WIND_SIZES}}}
 tpl = open("orch_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../orch-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):

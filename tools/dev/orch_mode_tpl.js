@@ -193,7 +193,7 @@
         var r = list[k++]; if (!r) { b.textContent = "소리를 못 찾았어요"; snd = null; setTimeout(function () { b.textContent = "🔊 소리 듣기"; }, 3000); return; }
         var a = new Audio(); a.preload = "auto"; me.a = a; var started = false, tm = setTimeout(function () { if (!started) { a.src = ""; tryNext(); } }, 12000);
         a.addEventListener("playing", function () { started = true; clearTimeout(tm); if (snd !== me) { a.pause(); return; } b.classList.add("on"); b.textContent = "⏸ 멈추기";
-          cr.hidden = false; var who = r.artist && !/no machine-readable/i.test(r.artist) ? r.artist : ""; cr.innerHTML = "🔊 녹음: " + (who ? esc(who) + " · " : "") + (r.licenseUrl ? '<a href="' + esc(r.licenseUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(r.license) + "</a>" : esc(r.license)) + ' · <a href="' + esc(r.page) + '" target="_blank" rel="noopener noreferrer">원본 보기(위키미디어 커먼즈)</a>'; });
+          cr.hidden = false; var who = r.artist && !/no machine-readable/i.test(r.artist) ? r.artist : ""; var tt = DATA.SNDT && DATA.SNDT[r.title]; cr.innerHTML = (tt ? "<b>🎵 곡: " + esc(tt) + "</b><br>" : "") + "🔊 녹음: " + (who ? esc(who) + " · " : "") + (r.licenseUrl ? '<a href="' + esc(r.licenseUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(r.license) + "</a>" : esc(r.license)) + ' · <a href="' + esc(r.page) + '" target="_blank" rel="noopener noreferrer">원본 보기(위키미디어 커먼즈)</a>'; });
         a.addEventListener("error", function () { if (!started) { clearTimeout(tm); tryNext(); } });
         a.addEventListener("ended", function () { if (snd === me) { b.classList.remove("on"); b.textContent = "🔁 다시 듣기"; snd = null; } });
         a.src = r.src; var p = a.play(); if (p && p.catch) p.catch(function () { if (!started) { clearTimeout(tm); tryNext(); } });

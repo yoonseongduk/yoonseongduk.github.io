@@ -23,6 +23,7 @@
       ".spec{display:grid;grid-template-columns:4.2em 1fr;gap:2px 8px;font-size:.84rem;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line,#ccc);text-align:left}.spec dt{color:var(--muted,#666)}.spec dd{margin:0}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}" +
       ".ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}";
     st.textContent += ".oimg img,.oimg svg,.prow img,.prow svg,.ar .ic img,.ar .ic svg{cursor:zoom-in}" + "#aview{position:fixed;inset:0;z-index:9999;background:#000e;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}#aview .vb{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px}#aview .vb button{border:0;border-radius:999px;padding:8px 13px;font-size:.95rem;background:#fff;color:#111}#aview .vz{color:#fff;font-size:.85rem;min-width:3.2em;text-align:center}#aview .vi{flex:1;overflow:hidden;position:relative;touch-action:none;display:flex;align-items:center;justify-content:center}#aview .vi img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;will-change:transform;cursor:grab}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}#aview .vh{color:#ccc}";
+    st.textContent += ".osnd{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 0}.osnd button{border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:7px 12px;font-size:.9rem;font-family:inherit}.osnd button.on{background:var(--accent,#3a6);color:#fff;border-color:transparent}.osnd small{font-size:.75rem;color:var(--muted,#666);flex-basis:100%;overflow-wrap:anywhere}.osnd small a{color:inherit}";
     document.head.appendChild(st);
   }
   var bar;
@@ -162,12 +163,43 @@
   function decorateGal(reset) {
     var list = document.getElementById("list"); if (!list) return;
     list.querySelectorAll(".ar[data-id]").forEach(function (c) {
+      addSound(c);
       if (reset) { var ic = c.querySelector(".ic"); if (ic) ic.innerHTML = DATA.SVG[c.dataset.id]; var cr = c.querySelector(".cr"); if (cr) cr.remove(); delete c.dataset.ph; }
       if (!photo || c.dataset.ph) return; c.dataset.ph = "1";
       if (!io && "IntersectionObserver" in window) io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { io.unobserve(e.target); fillCard(e.target); } }); }, { rootMargin: "200px" });
       if (io) io.observe(c); else fillCard(c);
     });
   }
+  // ── 🔊 악기 소리 듣기(도감, 2026-11-24 사용자 요청): 악기마다 미리 골라 둔 커먼즈 녹음(그 악기 혼자 연주한 독주곡 우선, 없으면 악기 소리 견본,
+  //    공개 도메인·CC0만, 오래된 녹음 제외·음질 분석 통과)을 누를 때 인터넷에서 불러와 들려줘요. 소리 파일은 저장소·서버에 두지 않아요.
+  var SCONSENT = "🔊 악기 소리를 들어요.\n\n· 인터넷(위키미디어 커먼즈)에서 저작권이 끝난(공개 도메인·CC0) 녹음만 불러와 들려줘요.\n· 듣는 동안 이 기기의 인터넷 주소가 위키미디어 서버에 전달돼요(이 앱은 아무것도 모으지 않아요).\n· 인터넷 데이터를 써요(곡 하나 약 1~5MB).\n\n계속할까요?";
+  var snd = null;
+  function stopSnd() { if (snd) { try { snd.a.pause(); } catch (e) {} if (snd.b) { snd.b.classList.remove("on"); snd.b.textContent = "🔊 소리 듣기"; } snd = null; } }
+  function addSound(c) {
+    var id = c.dataset.id, names = DATA.SND && DATA.SND[id]; if (!names || !names.length || c.querySelector(".osnd") || !(window.fgOnline && fgOnline.enabled)) return;
+    var w = document.createElement("div"); w.className = "osnd"; w.innerHTML = '<button type="button">🔊 소리 듣기</button><small hidden></small>';
+    var top = c.querySelector(".top"); if (top) top.insertAdjacentElement("afterend", w); else c.appendChild(w);
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".osnd button"); if (!b) return; var c = b.closest(".ar"), id = c && c.dataset.id, cr = b.parentNode.querySelector("small");
+    if (snd && snd.b === b) { if (!snd.a.paused) { snd.a.pause(); b.textContent = "▶ 이어서 듣기"; } else { snd.a.play(); b.textContent = "⏸ 멈추기"; } return; }
+    stopSnd(); if (!fgOnline.ask(SCONSENT)) return;
+    if (navigator.onLine === false) { b.textContent = "인터넷 없음"; setTimeout(function () { b.textContent = "🔊 소리 듣기"; }, 2500); return; }
+    b.textContent = "⏳ 찾는 중…"; var me = { b: b, a: new Audio() }; snd = me;
+    fgOnline.audioFiles(DATA.SND[id]).then(function (list) {
+      var k = 0;
+      (function tryNext() {
+        if (snd !== me) return;
+        var r = list[k++]; if (!r) { b.textContent = "소리를 못 찾았어요"; snd = null; setTimeout(function () { b.textContent = "🔊 소리 듣기"; }, 3000); return; }
+        var a = new Audio(); a.preload = "auto"; me.a = a; var started = false, tm = setTimeout(function () { if (!started) { a.src = ""; tryNext(); } }, 12000);
+        a.addEventListener("playing", function () { started = true; clearTimeout(tm); if (snd !== me) { a.pause(); return; } b.classList.add("on"); b.textContent = "⏸ 멈추기";
+          cr.hidden = false; cr.innerHTML = "🔊 녹음: " + esc(r.license) + ' · <a href="' + esc(r.page) + '" target="_blank" rel="noopener noreferrer">원본 보기(위키미디어 커먼즈)</a>'; });
+        a.addEventListener("error", function () { if (!started) { clearTimeout(tm); tryNext(); } });
+        a.addEventListener("ended", function () { if (snd === me) { b.classList.remove("on"); b.textContent = "🔁 다시 듣기"; snd = null; } });
+        a.src = r.src; var p = a.play(); if (p && p.catch) p.catch(function () { if (!started) { clearTimeout(tm); tryNext(); } });
+      })();
+    }).catch(function () { if (snd === me) { b.textContent = "🔊 소리 듣기"; snd = null; } });
+  });
   function fillCard(c) {
     var id = c.dataset.id;
     if (DATA.CMP[id] && isStr(id)) photoRow(id, true, function () { return c.isConnected && photo; }).then(function (w) { if (w && c.isConnected && !c.querySelector(".prows")) { c.appendChild(w); fitRow(w); } }); getPhoto(id).then(function (r) {

@@ -137,6 +137,7 @@
     var n = q.querySelector(".note"); if (n) n.remove(); var h = q.querySelector(".ahint"); if (h) h.remove();
     q.insertAdjacentHTML("beforeend", '<div class="acard"><div class="oimg"></div><b>' + esc(a.name) + " <small>(" + esc(a.en) + ")</small></b><span>" + esc(a.fam) + " · " + esc(a.rng) + " 소리 · 도감 " + a.n + "번</span><span>🎼 " + esc(a.how) + "</span><span>" + esc(a.desc) + "</span><span>🎵 " + esc(a.use) + "</span>" + specHtml(a) + (DATA.CMPN[id] ? '<div class="oimg cmp">' + DATA.CMPN[id] + "<small>📏 실제 크기 비교(약 길이)</small></div>" : "") + "</div>");
     if (DATA.CMPN[id] && isStr(id)) { var cardEl = q.querySelector(".acard"); photoRow(id, true, function () { return qs && qs[i] && qs[i].d[0] === key; }).then(function (w) { if (w && cardEl.isConnected) { var box = document.createElement("div"); box.className = "oimg cmp"; box.appendChild(w); var lab = document.createElement("small"); lab.textContent = "📷 사진 높이를 실제 길이에 맞춰 보여 줘요(대략)"; box.appendChild(lab); cardEl.appendChild(box); fitRow(w); } }); }
+    var cardE = q.querySelector(".acard"); if (cardE) { cardE.dataset.id = id; addSound(cardE); }   // 🔊 소리 듣기(도감과 같은 단추)
     var cf = q.querySelector(".acard .oimg"), already = q.querySelector(":scope > .oimg");
     if (already && DATA.IMG[key] && DATA.IMG[key][0] === "i") cf.remove();   // 그림 문제는 위에 이미 그림이 있어요
     else paint(cf, id, function () { return qs && qs[i] && qs[i].d[0] === key; });
@@ -178,10 +179,10 @@
   function addSound(c) {
     var id = c.dataset.id, names = DATA.SND && DATA.SND[id]; if (!names || !names.length || c.querySelector(".osnd") || !(window.fgOnline && fgOnline.enabled)) return;
     var w = document.createElement("div"); w.className = "osnd"; w.innerHTML = '<button type="button">🔊 소리 듣기</button><small hidden></small>';
-    var top = c.querySelector(".top"); if (top) top.insertAdjacentElement("afterend", w); else c.appendChild(w);
+    var top = c.querySelector(".top"), spc = c.querySelector(".spec"); if (top) top.insertAdjacentElement("afterend", w); else c.insertBefore(w, spc || null);   // 퀴즈 정답 카드는 사양 표 앞에
   }
   document.addEventListener("click", function (e) {
-    var b = e.target.closest && e.target.closest(".osnd button"); if (!b) return; var c = b.closest(".ar"), id = c && c.dataset.id, cr = b.parentNode.querySelector("small");
+    var b = e.target.closest && e.target.closest(".osnd button"); if (!b) return; var c = b.closest(".ar, .acard"), id = c && c.dataset.id, cr = b.parentNode.querySelector("small");
     if (snd && snd.b === b) { if (!snd.a.paused) { snd.a.pause(); b.textContent = "▶ 이어서 듣기"; } else { snd.a.play(); b.textContent = "⏸ 멈추기"; } return; }
     stopSnd(); if (!fgOnline.ask(SCONSENT)) return;
     if (navigator.onLine === false) { b.textContent = "인터넷 없음"; setTimeout(function () { b.textContent = "🔊 소리 듣기"; }, 2500); return; }

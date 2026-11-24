@@ -44,7 +44,8 @@ NOPICK = re.compile(r"pararira|arp-solina|horn fifths|clarinetreed|horn-bad mein
 #   글로켄슈필: 독일어 Glockenspiel 은 시청 탑의 종(카리용)이라 후보가 거의 다 탑 종소리 → 연극 음악 한 곡만. 작은북: 효과(리버브·마이크 번짐 시연) 없는 소리 견본.
 #   콘트라베이스·콘트라바순·캐스터네츠: 이름 규칙(jazz·다른 악기 이름·스페인어 이름)에 걸려서 설명으로 확인. 잉글리시 호른은 커먼즈에 쓸 녹음이 없어(발음 녹음·자동차 경적뿐) 인터넷 아카이브에는 특수 주법 견본뿐이라 소리 없음(사용자 결정).
 # 2026-11-24 사용자 지적(클라리넷·바순 소리가 같음): Musopen 「피가로의 결혼」 서곡 악기별 마이크 녹음(Clarinet 03.wav 등)은 오케스트라 전체가 들려 모두 빼고(NOPICK), 설명을 읽고 그 악기 독주 부분이 있는 녹음으로 바꿈.
-PICK = {"harp": ["Glissando Imprecision for 2 Harps.ogg"],   # 2026-11-24 사용자 지적 "하프 소리가 이상함": 배음(플라제올렛) 시범 대신 하프 두 대의 글리산도 곡(현대 녹음, CC BY-SA 3.0)
+PICK = {"trumpet": ["Trumpet playing short excerpt for comparison with flugelhorn.ogg", "Trompetensolo Ich hatt einen Kameraden.ogg", "Flaggenparade der deutschen Bundeswehr, Trompetensignal (Studio).ogg"],   # 2026-11-24 사용자 확인 요청: 사람이 직접 분 Bb 트럼펫 녹음(보통 트럼펫 가락, 독일 군악 트럼펫 독주 2곡). 이전의 탑 위 신호 나팔·MIDI풍 「트럼펫 볼런터리」·천연 트럼펫 견본은 뺌
+        "harp": ["Glissando Imprecision for 2 Harps.ogg"],   # 2026-11-24 사용자 지적 "하프 소리가 이상함": 배음(플라제올렛) 시범 대신 하프 두 대의 글리산도 곡(현대 녹음, CC BY-SA 3.0)
         "viola": ["Viola.ogg", "Viola CGDA.ogg"],                                         # 혼자 연주한 55초 가락, 개방현 C·G·D·A
         "clarinet": ["A-Klarinette, Rachmaninov 2 II.ogg", "B-Klarinette, Beeth 8.III.ogg", "Clarinette game chromatique.ogg"],   # 교향곡 속 클라리넷 독주 부분(Richard Haynes 소리 예), 반음계
         "bassoon": ["Bassoon rimsky.ogg", "Bassoon beethoven.ogg", "Bassoon-technical-range.ogg"],                               # 셰에라자드·베토벤 4번의 바순 독주 부분, 음역

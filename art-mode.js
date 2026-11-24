@@ -24,7 +24,7 @@
   function fetchOnline(title) { var w = DATA.W[title]; return w && window.fgOnline && fgOnline.on() ? fgOnline.wikiImage(w.k, w.t.map(norm), w.kd) : Promise.resolve(null); }
   function localInfo(title) {   // 오프라인에 있는 그림 정보(없으면 null): 앱에 든 것 → 폰에 저장한 것
     var e = local && local[title]; if (e) return { kind: "file", src: "art-img/" + e.f, page: e.p, title: e.t || title, license: e.l || "공개 도메인" };
-    e = saved && saved[title]; return e ? { kind: "cache", src: e.src, page: e.page, title: e.title || title, license: e.license || "공개 도메인" } : null;
+    e = saved && saved[title]; return e && !e.pending ? { kind: "cache", src: e.src, page: e.page, title: e.title || title, license: e.license || "공개 도메인" } : null;
   }
   function resolveLocal(title) {
     var e = localInfo(title); if (!e) return Promise.resolve(null);
@@ -195,13 +195,25 @@
   }
   function askAutoSave() { if (lsGet(AS) !== null) return; var yes = false; try { yes = window.confirm("📥 본 그림을 이 폰에 저장할까요?\n\n· 저장하면 다음부터 인터넷 없이도 볼 수 있어요(그림 1장 약 50KB).\n· 저장하지 않으면 볼 때마다 인터넷이 필요해요.\n· 나중에 언제든 바꾸거나 지울 수 있어요.\n\n[확인] 저장해요   [취소] 저장하지 않고 보기만 해요"); } catch (e) {} lsSet(AS, yes ? "1" : "0"); if (bar) drawBar(); }
   document.addEventListener("click", function (e) {
-    var b = e.target.closest && e.target.closest(".gview"); if (!b || b.disabled) return; var t = b.dataset.t, p;
-    if (localInfo(t)) p = resolveLocal(t);
-    else if (window.fgOnline && fgOnline.ask(CONSENT)) { if (navigator.onLine === false) { b.textContent = "인터넷 없음"; setTimeout(function () { b.textContent = "🖼️ 보기"; }, 2500); return; } askAutoSave(); if (bar) drawBar(); p = fetchOnline(t); }
-    else return;
+    var b = e.target.closest && e.target.closest(".gview"); if (!b || b.disabled) return; var t = b.dataset.t, canOnline = !!(window.fgOnline && fgOnline.enabled);
+    if (!localInfo(t)) {
+      if (!canOnline || !fgOnline.ask(CONSENT)) return;
+      if (navigator.onLine === false) { b.textContent = "인터넷 없음"; setTimeout(function () { b.textContent = "🖼️ 보기"; }, 2500); return; }
+      askAutoSave(); if (bar) drawBar();
+    }
+    var check = function (r) { return r ? preload(r.src).then(function (ok) { return ok ? r : null; }) : null; };
+    // 이 폰에 저장한 그림 → 없거나 깨졌으면(저장이 아직 안 끝났거나 실패해 '저장됨' 표시만 남은 경우, 2026-11-24 사용자 신고) 인터넷에서 다시 불러와요
+    var viaOnline = function () { return canOnline && fgOnline.on() && navigator.onLine !== false ? fetchOnline(t).then(check) : null; };
+    var viaLocal = function () {
+      var e = localInfo(t); if (!e) return Promise.resolve(null);
+      return resolveLocal(t).then(check).then(function (r) {
+        if (!r && e.kind === "cache" && saved && saved[t] && !saved[t].pending) { delete saved[t]; delete blobUrls[t]; lsSet(SAVED, JSON.stringify(saved)); }   // 깨진 '저장됨' 표시는 지워서 다시 저장되게
+        return r;
+      });
+    };
     b.textContent = "⏳ 찾는 중…";
-    p.then(function (r) { return r ? preload(r.src).then(function (ok) { return ok ? r : null; }) : null; }).then(function (r) {
-      if (!r) { b.textContent = "그림 없음"; b.disabled = true; b.title = "저작권 표시·작가 확인을 통과한 그림을 찾지 못했어요"; return; }
+    viaLocal().then(function (r) { return r || viaOnline(); }).then(function (r) {
+      if (!r) { b.textContent = navigator.onLine === false ? "인터넷 없음" : "그림 없음"; if (navigator.onLine !== false) { b.disabled = true; b.title = "저작권 표시·작가 확인을 통과한 그림을 찾지 못했어요"; } else setTimeout(function () { b.textContent = "🖼️ 보기"; }, 2500); return; }
       b.textContent = "🖼️ 보기"; if (!localInfo(t)) autoSave(t, r); openViewer(r.src, "‘" + esc(t) + "’ · " + credit(r));
     }).catch(function () { b.textContent = "🖼️ 보기"; });
   });

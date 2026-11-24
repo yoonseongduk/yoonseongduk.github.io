@@ -2,7 +2,7 @@
 #   실행(PC, tools\dev): py orch_sound_pick.py  → orch_sound.json({악기id: [커먼즈 파일 이름, …]} 좋은 순서) → py set45.py → ship
 #   독주곡 우선(2026-11-24 사용자 요청): 그 악기 하나로 연주한 곡(solo·suite·partita·sonata·etude…)을 먼저, 없으면 악기 소리 견본(음계·한 음). 합주·반주가 있는 녹음은 빼요.
 #   고르는 기준: ① 커먼즈에서 악기 이름으로 찾은 음원 중 파일 이름에 악기 낱말이 있고 다른 악기·노래·옛 녹음 낱말이 없는 것
-#              ② 라이선스가 공개 도메인·CC0 표시(클래식 음원과 같은 기준)  ③ 올린 날 2005년 이후(오래된 SP판 복각 제외), 길이 2초~3분
+#              ② 라이선스가 공개 도메인·CC0 표시, 없으면 CC BY·CC BY-SA(2026-11-24 사용자 결정, 녹음한 사람·라이선스를 화면에 표시)  ③ 올린 날 2005년 이후(오래된 SP판 복각 제외), 길이 2초~3분
 #              ④ 음질 분석(music_pick.py 의 잡음 분석 v2와 같은 방식, 짧은 소리에 맞게 2초부터): corr >= 0.45, nf <= -4
 #   받은 소리는 메모리에서만 분석하고 디스크에 저장하지 않아요. 남기는 건 숫자뿐이에요(orch_sound_scr.json).
 import json, os, re, sys, time, subprocess, urllib.parse
@@ -11,6 +11,7 @@ from orch_data import INSTR
 import music_pick as mp
 
 PD = re.compile(r"public domain|^pd\b|^pd-|cc0|cc-zero", re.I)
+CCOK = re.compile(r"^cc[ -]by(?:[ -]sa)?[ -][\d.]+", re.I)   # CC BY·CC BY-SA(2026-11-24 사용자 결정: 악기 소리는 녹음한 사람 표시 조건으로 허용, 비영리·변경금지 제외). online.js 의 CCOK 와 같은 규칙
 EXT = (".ogg", ".oga", ".opus", ".mp3", ".flac", ".wav")
 SOLOQ = {"violin": ["violin solo", "partita violin", "caprice violin"], "viola": ["viola solo"], "cello": ["cello solo", "cello suite"], "doublebass": ["double bass solo"],
          "harp": ["harp solo"], "flute": ["flute solo", "syrinx flute"], "piccolo": ["piccolo solo"], "oboe": ["oboe solo"], "englishhorn": ["english horn solo"], "clarinet": ["clarinet solo"],
@@ -39,6 +40,16 @@ BADW2 = re.compile(r"arp-|solina|tr-?\d{3}|\bwave\b|\d+ ?hz|ll-q\d|speaks|spoken
 LANG = re.compile(r"^[a-z]{2,3}(-[a-z]{2,4})?-")   # 발음 녹음 파일 이름(De-at-…, En-us-…, Ig-…)
 OLDREC = re.compile(r"\b(18\d\d|19[0-4]\d)\b|victor|columbia|edison|gramophone|berliner|\b78 ?rpm\b|cylinder|shellac|vinyl|lp rip|karaoke|\bcover\b|remix|ringtone", re.I)   # 옛 음반·복각(music_pick.BAD 중 녹음 시대 낱말)
 NOPICK = re.compile(r"clarinetreed|horn-bad meinberg", re.I)   # 눈으로 본 이름이 악기 연주가 아닌 것(리드만 부는 소리·자동차 경적일 수 있는 것)
+# 이름 규칙으로는 못 고르거나 엉뚱한 것만 걸리는 악기는 설명(커먼즈 파일 설명)을 읽고 직접 정해요(2026-11-24, CC BY·CC BY-SA 허용 뒤).
+#   글로켄슈필: 독일어 Glockenspiel 은 시청 탑의 종(카리용)이라 후보가 거의 다 탑 종소리 → 연극 음악 한 곡만. 작은북: 효과(리버브·마이크 번짐 시연) 없는 소리 견본.
+#   콘트라베이스·콘트라바순·캐스터네츠: 이름 규칙(jazz·다른 악기 이름·스페인어 이름)에 걸려서 설명으로 확인. 잉글리시 호른은 커먼즈에 쓸 녹음이 없어요(발음 녹음·자동차 경적뿐).
+PICK = {"doublebass": ["Jazz walking bass on double bass.oga"],                       # 콘트라베이스 혼자 워킹 베이스, CC BY 2.5
+        "contrabassoon": ["Contra2.ogg"],                                              # 바흐 무반주 첼로 모음곡 일부를 콘트라바순으로, CC BY-SA 3.0
+        "castanets": ["Fundación Joaquín Díaz - ATO 00704 17 - Diferentes toques de castañuelas.ogg", "Fundación Joaquín Díaz - ATO 00810 13 - Toques de castañuelas.ogg"],
+        "snaredrum": ["Snare drum unmuffled.ogg", "Snare drum muffled.ogg", "Snare drum rim.ogg"],
+        "bassdrum": ["Bass drum.ogg"],
+        "xylophone": ["Xylophone jingle.wav"],
+        "glockenspiel": ["Vals folías (Glockenspiel).mp3"]}
 def name_ok(iid, t):
     s = t.lower().replace("_", " ")
     if not any(w.replace("_", " ") in s for w in NEED[iid]): return False
@@ -107,18 +118,19 @@ def main():
         for q in SOLOQ.get(iid, []) + QUERY.get(iid, [x[2]]):
             for t in search(q):
                 if t.lower().endswith(EXT) and t not in names and name_ok(iid, t[5:]): names.append(t)
-        cs = [c for c in info(names) if PD.search(c["lic"]) and c["url"] and c["size"] <= 25_000_000 and (c["dur"] is None or 2 <= c["dur"] <= 900)
+        cs = [c for c in info(names) if (PD.search(c["lic"]) or CCOK.match(c["lic"])) and c["url"] and c["size"] <= 25_000_000 and (c["dur"] is None or 2 <= c["dur"] <= 900)
               and (c["up"] or "9999") >= "2005"]
-        cs.sort(key=lambda c: (0 if SOLO.search(c["f"]) and (c["dur"] or 0) >= 15 else 1, -(c["made"] or 0)))   # 독주곡 먼저, 최근 녹음 먼저
+        cs.sort(key=lambda c: (0 if SOLO.search(c["f"]) and (c["dur"] or 0) >= 15 else 1, 0 if PD.search(c["lic"]) else 1, -(c["made"] or 0)))   # 독주곡 먼저, 공개 도메인·CC0 먼저, 최근 녹음 먼저
         cand[iid] = cs; mp.save("orch_sound_cand.json", cand)
-        print(iid, "후보", len(names), "PD", len(cs), "독주곡 후보", sum(1 for c in cs if SOLO.search(c["f"]) and (c["dur"] or 0) >= 15), flush=True)
+        print(iid, "후보", len(names), "PD·CC", len(cs), "PD", sum(1 for c in cs if PD.search(c["lic"])), "독주곡 후보", sum(1 for c in cs if SOLO.search(c["f"]) and (c["dur"] or 0) >= 15), flush=True)
     if "--cand" in sys.argv: return
     if "--names-only" in sys.argv:   # 소리 서버가 429로 막혔을 때(2026-11-24): 음질 분석 없이 이름 규칙·녹음 연도로만 골라요. 풀리면 옵션 없이 다시 실행해 분석해요.
         for iid in ids:
-            res[iid] = [c["f"] for c in cand.get(iid, []) if not NOPICK.search(c["f"]) and (c["made"] is None or c["made"] >= 1955 or (c["dur"] or 0) < 15)][:3]
+            res[iid] = PICK.get(iid) or [c["f"] for c in cand.get(iid, []) if not NOPICK.search(c["f"]) and (c["made"] is None or c["made"] >= 1955 or (c["dur"] or 0) < 15)][:3]
         mp.save("orch_sound.json", res); print("소리가 있는 악기(분석 전):", sum(1 for v in res.values() if v), "/", len(res)); return
     wait_upload()
     for iid in ids:
+        if iid in PICK: res[iid] = PICK[iid]; mp.save("orch_sound.json", res); continue   # 직접 정한 악기는 분석하지 않고 그대로
         ok = []
         for c in cand.get(iid, [])[:8]:
             a = scr.get(c["f"])

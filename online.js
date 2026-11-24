@@ -125,8 +125,8 @@
     });
   }
   // 미리 골라 둔 커먼즈 음원 파일 이름들(좋은 순서)을 확인: 공개 도메인·CC0 표시가 있는 것만 순서대로 돌려줘요
-  function commonsFiles(names, maxBytes) {
-    var id = "f|" + (names || []).join("|"); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
+  function commonsFiles(names, maxBytes, cc) {   // cc: CC BY·CC BY-SA도 허용(악기 소리만, 2026-11-24 사용자 결정)
+    var id = "f|" + (cc ? "cc|" : "") + (names || []).join("|"); if (cache[id] !== undefined) return Promise.resolve(cache[id]);
     if (!names || !names.length) return Promise.resolve([]);
     return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata|url|size&titles=" + encodeURIComponent(names.map(function (n) { return "File:" + n; }).join("|"))).then(function (c) {
       if (!c) return [];
@@ -134,8 +134,9 @@
       var out = []; names.forEach(function (n) {
         var ii = by["File:" + n] && by["File:" + n].imageinfo && by["File:" + n].imageinfo[0]; if (!ii) return;
         var lic = ii.extmetadata && ii.extmetadata.LicenseShortName && ii.extmetadata.LicenseShortName.value;
-        if (!lic || !PD.test(lic) || !okImg(ii.url) || (ii.size || 0) > (maxBytes || 80000000)) return;
-        out.push({ src: ii.url, page: ii.descriptionurl || ("https://commons.wikimedia.org/wiki/" + encodeURIComponent(("File:" + n).replace(/ /g, "_"))), title: n, license: lic, size: ii.size || 0 });
+        var md = ii.extmetadata || {};
+        if (!okLic(lic, cc) || !okImg(ii.url) || (ii.size || 0) > (maxBytes || 80000000)) return;
+        out.push({ src: ii.url, page: ii.descriptionurl || ("https://commons.wikimedia.org/wiki/" + encodeURIComponent(("File:" + n).replace(/ /g, "_"))), title: n, license: lic, size: ii.size || 0, artist: plain(md.Artist && md.Artist.value), licenseUrl: md.LicenseUrl && md.LicenseUrl.value });
       });
       cache[id] = out; saveCache(); return out;
     });
@@ -154,9 +155,9 @@
     });
   }
   // 미리 골라 둔 음원 이름들(좋은 순서, 커먼즈 파일 이름 또는 "ia:…")을 확인해 순서를 지킨 채 돌려줘요. 한쪽 서버가 느리거나 안 돼도 다른 쪽이 나오게 두 출처를 따로 물어봐요
-  function audioFiles(names, maxBytes) {
+  function audioFiles(names, maxBytes, cc) {
     names = names || []; var com = names.filter(function (n) { return !/^ia:/.test(n); }), ia = names.filter(function (n) { return /^ia:/.test(n); });
-    return Promise.all([com.length ? commonsFiles(com, maxBytes).catch(function () { return []; }) : [], Promise.all(ia.map(function (n) { return iaFile(n, maxBytes).catch(function () { return null; }); }))]).then(function (r) {
+    return Promise.all([com.length ? commonsFiles(com, maxBytes, cc).catch(function () { return []; }) : [], Promise.all(ia.map(function (n) { return iaFile(n, maxBytes).catch(function () { return null; }); }))]).then(function (r) {
       var cm = {}; (r[0] || []).forEach(function (x) { cm[x.title] = x; }); var iam = {}; ia.forEach(function (n, i) { if (r[1][i]) iam[n] = r[1][i]; });
       var out = []; names.forEach(function (n) { var x = /^ia:/.test(n) ? iam[n] : cm[n]; if (x) out.push(x); });
       // 출처가 둘 다 있으면 번갈아 놓아서 첫 후보가 안 나와도 곧바로 다른 서버를 써 보게 해요

@@ -1,6 +1,6 @@
 # 클래식 곡마다 "음질이 괜찮은" 위키미디어 커먼즈 녹음을 골라 music_pick.json 에 파일 이름(글)만 적어요. 음원 파일은 저장소에 두지 않아요(분석용으로 앞부분만 잠깐 받고 지워요).
 #   py music_pick.py              (1단계: 이름·라이선스·길이·비트레이트로 거르고 → 2단계: 앞 20초를 분석해 잡음·옛 녹음 티가 나는 것 제외)
-#   py music_pick.py --no-screen  (1단계만)   --only 곡제목   --limit N
+#   py music_pick.py --no-screen  (1단계만)   --only 곡제목   --limit N   --ia-only (위키가 429로 막혔을 때 아카이브 녹음만 분석)
 # 거르는 기준: 파일 이름에 옛 녹음(1900년대 초 음반·78회전)·MIDI·편곡·피아노 연주 같은 낱말이 없을 것, 공개 도메인·CC0 표시, 길이 25초 이상,
 #   손실 압축(ogg·mp3)은 64kbps 이상, 앞 20초 분석에서 ① 소리 크기 변화폭 22dB 이상 ② 높은 소리(6kHz 이상)가 남아 있을 것(잡음 많은 옛 녹음은 변화폭이 작고 고음이 잘려 있어요).
 import os, re, sys, json, time, subprocess, urllib.request, urllib.error, urllib.parse
@@ -13,6 +13,55 @@ PD = re.compile(r"public domain|^pd\b|^pd-|cc0|cc-zero", re.I)
 BAD = re.compile(r"\b(18\d\d|19[0-4]\d)\b|victor|columbia|edison|gramophone|berliner|\b78 ?rpm\b|cylinder|shellac|vinyl|lp rip|midi|synth|piano performance|piano arrangement|for piano|arrangement|transcription|karaoke|\bcover\b|remix|ringtone|\bdemo\b|sample|loop|8-?bit|music box|fragment", re.I)
 EXT = (".ogg", ".oga", ".opus", ".mp3", ".flac", ".wav"); LOSSY = (".ogg", ".oga", ".opus", ".mp3")
 PACE = float(os.environ.get("MUSIC_PACE", "2.5"))
+# 옛 음반(1900~1940년대 SP판) 상표·옮긴 곳·그 시절 연주자 이름(2026-11-24 사용자 요청: 너무 오래된 음원은 최신 음원으로)
+OLD = re.compile(r"jukebox|\bhmv\b|polydor|odeon|parlophon|brunswick|\bpdp\b|pdp-ch|georgeblood|78rpm|\b78\b|toscanini|stokowski|caruso|godowsky|rethberg|prihoda|schlusnus|sassoli|\bdux\b|melba|kreisler|paderewski|furtw|mengelberg|\bwblp\b|historic", re.I)
+# 클래식이 아닌 편곡(사용자 지적 2026-11-24: 캐논이 댄스 편곡). 곡 검색어에 그 낱말이 들어 있으면(Hungarian Dance 등) 괜찮아요
+STYLE = ["dance", "techno", "rock", "metal", "jazz", "pop", "electro", "edm", "trap", "hip hop", "hiphop", "lofi", "lo-fi", "chill", "ambient", "relax", "sleep", "meditation", "baby", "version", "mix", "mashup", "medley", "tribute", "instrumental", "ukulele", "kalimba", "ocarina", "harmonica", "accordion", "sax", "beatbox", "cappella", "whistl", "chiptune", "ghost", "montesano", "guitar", "harp", "cello suite"]
+# 원곡과 다른 악기로 편곡한 것: 갈래가 이 악기와 맞지 않으면 빼요
+INSTR = {"piano": ("피아노 독주곡", "협주곡", "실내악", "가곡·성악곡"), "organ": ("오르간곡", "종교 음악")}
+MUSOPEN = {   # 인터넷 아카이브의 Musopen 모음집(공개 도메인, 2012년 무렵 현대 연주). 곡이 맞는지 파일 이름으로 확인해 지정했어요
+ "골트베르크 변주곡": "MusopenCollectionAsFlac/Bach_GoldbergVariations/JohannSebastianBach-01-GoldbergVariationsBwv.988-Aria.mp3",
+ "교향곡 3번 '영웅'": "MusopenCollectionAsFlac/Beethoven_SymphonyNo.3Eroica/LudwigVanBeethoven-SymphonyNo.3InEFlatMajorEroicaOp.55-01-AllegroConBrio.mp3",
+ "아침(페르 귄트 중)": "MusopenCollectionAsFlac/Greig_PeerGynt/EdvardGrieg-PeerGyntSuiteNo.1Op.46-01-Morning.mp3",
+ "페르 귄트": "MusopenCollectionAsFlac/Greig_PeerGynt/EdvardGrieg-PeerGyntSuiteNo.1Op.46-04-InTheHallOfTheMountainKing.mp3",
+ "마술피리": "MusopenCollectionAsFlac/Mozart_MagicFluteOverture/WolfgangAmadeusMozart-MagicFluteOverture.mp3",
+ "피가로의 결혼": "MusopenCollectionAsFlac/Mozart_MarriageOfFigaro/WolfgangAmadeusMozart-MarriageOfFigaro.mp3",
+ "교향곡 40번 g단조": "MusopenCollectionAsFlac/Mozart_SymphonyNo.40inGMinor/WolfgangAmadeusMozart-SymphonyNo.40InGMinorK.550-01-MoltoAllegro.mp3",
+ "몰다우": "MusopenCollectionAsFlac/Smetana_Vltava/BedichSmetana-MVlast-Vltava.mp3",
+ "즉흥 환상곡": "musopen-chopin/Fantasie Impromptu Op. 66.mp3",
+ "녹턴 Op.9-2": "musopen-chopin/Nocturne Op. 9 no. 2 in E flat major.mp3",
+ "영웅 폴로네즈": "musopen-chopin/PolonaiseOp.53InAFlatMajorheroic.mp3",
+ "강아지 왈츠": "musopen-chopin/Waltz Op. 64 no. 1 in D flat major.mp3",
+ "빗방울 전주곡": "musopen-chopin/Prelude Op. 28 no. 15.mp3",
+}
+def _genres():
+    import music_data as M; g = {}; sur = set()
+    for c in M.COMPOSERS:
+        sur.add(c[2].split()[-1].lower())
+        for w in c[7]: g[w[0]] = w[2]
+    return g, sur
+GENRE, SURNAMES = _genres()
+def name_ok(c, title):
+    """파일 이름으로 거르기: 옛 음반, 클래식이 아닌 편곡, 다른 악기 편곡, 다른 작곡가의 곡이면 False"""
+    if c.get("musopen") or c["f"] == "ia:" + MUSOPEN.get(title, "-"): return True
+    q = AUDIO[title].split("|")[0].lower(); nm = urllib.parse.unquote(c["f"]).lower().replace("_", " ")
+    if OLD.search(nm): return False
+    if any(w in nm and w not in q for w in STYLE): return False
+    if any(w in nm and w not in q and GENRE.get(title) not in ok for w, ok in INSTR.items()): return False
+    if "piano" in nm and "piano" not in q and GENRE.get(title) == "실내악" and not re.search(r"quintet|quartet|trio|sonata", nm): return False
+    qn = set(re.findall(r"\b(\d+)\b", q)); fn = set(re.findall(r"\bno\.? ?(\d+)", nm))   # 곡 번호가 다르면(헝가리 무곡 5번인데 1번 파일) 빼요
+    if qn and fn and not fn & qn: return False
+    mine = q.split()[0]
+    if any(s in nm for s in SURNAMES if len(s) > 3 and s != mine and s not in q): return False
+    return True
+def _ffmpeg():   # PATH의 ffmpeg → 없으면 파이썬 패키지 imageio-ffmpeg 안의 것(Windows PC용)
+    import shutil
+    f = os.environ.get("FFMPEG") or shutil.which("ffmpeg")
+    if f: return f
+    try:
+        import imageio_ffmpeg; return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception: return "ffmpeg"
+FFMPEG = _ffmpeg()
 def get(u, binary=False, rng=None, tries=7):
     for n in range(tries):
         try:
@@ -87,21 +136,25 @@ def ia_candidates(title):
         if len(out) >= 4: break
     return out
 def analyze(c):
-    """앞부분을 받아 20초를 분석: 소리 크기 변화폭(dB)과 높은 소리가 남아 있는지(98% 에너지 주파수).
-    받은 내용은 디스크에 쓰지 않고 메모리에서 바로 ffmpeg 로 넘겨요(클라우드에 음원 파일이 생기지 않아요). 남기는 건 숫자 두 개뿐이에요."""
+    """앞부분을 받아 30초를 분석해요(v2, 2026-11-24). 받은 내용은 디스크에 쓰지 않고 메모리에서 바로 ffmpeg 로 넘겨요. 남기는 건 숫자뿐이에요.
+    corr = 높은 소리(7~15kHz)가 음악(300Hz~3kHz)을 따라 커지고 작아지는 정도. 판 잡음(쉬익·지직)은 음악과 상관없이 늘 깔려 있어 0에 가까워요.
+    nf   = 조용한 부분에서 높은 소리가 얼마나 줄어드는지(dB). 잡음이 깔려 있으면 거의 안 줄어요(0 근처).
+    옛 녹음 9개·최근 녹음 5개로 맞춰 본 기준: corr >= 0.45 이고 nf <= -4 이면 통과(옛 녹음 8개 제외, 최근 녹음 모두 통과, 남은 1개는 이름 규칙 OLD 로 제외)."""
     ext = os.path.splitext(c["f"].lower())[1]; n = 3_500_000 if ext not in LOSSY else 1_600_000
     d = get(c["url"], binary=True, rng=f"bytes=0-{n - 1}")
     if not d or len(d) < 50_000: return None
-    r = subprocess.run(["ffmpeg", "-v", "error", "-i", "pipe:0", "-t", "20", "-ac", "1", "-ar", "22050", "-f", "s16le", "-"], input=d, capture_output=True); d = None
+    r = subprocess.run([FFMPEG, "-v", "error", "-i", "pipe:0", "-t", "30", "-ac", "1", "-ar", "32000", "-f", "s16le", "-"], input=d, capture_output=True); d = None
     x = np.frombuffer(r.stdout, dtype=np.int16).astype(np.float64) / 32768
-    if len(x) < 22050 * 6: return None
-    fr = 1102; m = len(x) // fr; e = np.sqrt((x[:m * fr].reshape(m, fr) ** 2).mean(1)) + 1e-9; db = 20 * np.log10(e); db = db[db > -80]
-    if len(db) < 20: return None
-    dyn = float(np.percentile(db, 95) - np.percentile(db, 10))
-    seg = x[:len(x) // 2048 * 2048].reshape(-1, 2048) * np.hanning(2048); ps = (np.abs(np.fft.rfft(seg, axis=1)) ** 2).mean(0); cs = np.cumsum(ps) / ps.sum()
-    roll = float(np.searchsorted(cs, 0.98) * 22050 / 2048)
-    return {"dyn": round(dyn, 1), "roll": round(roll)}
-def good(a): return a is not None and a["dyn"] >= 22 and a["roll"] >= 3000
+    if len(x) < 32000 * 6: return None
+    N = 2048; seg = x[:len(x) // N * N].reshape(-1, N) * np.hanning(N); P = np.abs(np.fft.rfft(seg, axis=1)) ** 2; f = np.fft.rfftfreq(N, 1 / 32000)
+    tot = P.sum(1) + 1e-12; hf = P[:, (f >= 7000) & (f < 15000)].sum(1) + 1e-15; mid = P[:, (f >= 300) & (f < 3000)].sum(1) + 1e-15
+    loud = tot >= np.percentile(tot, 70); quiet = tot <= np.percentile(tot, 20)
+    if loud.sum() < 5 or quiet.sum() < 5: return None
+    nf = float(10 * np.log10(np.median(hf[quiet]) / np.median(hf[loud]))); corr = float(np.corrcoef(np.log10(hf), np.log10(mid))[0, 1])
+    db = 10 * np.log10(tot); dyn = float(np.percentile(db, 95) - np.percentile(db, 10))
+    return {"v": 2, "corr": round(corr, 2), "nf": round(nf, 1), "dyn": round(dyn, 1)}
+def good(a): return isinstance(a, dict) and a.get("v") == 2 and a["corr"] >= 0.45 and a["nf"] <= -4
+def done(a): return (isinstance(a, dict) and (a.get("v") == 2 or "old" in a))   # 예전(v1) 숫자·서버 실패(None)는 다시 분석해요
 IAF = os.path.join(HERE, "music_pick_ia.json"); SCRF = os.path.join(HERE, "music_pick_scr.json")
 def load(p): return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}
 def save(p, d): json.dump(d, open(p, "w", encoding="utf-8"), ensure_ascii=False)
@@ -138,21 +191,36 @@ def main():
             print(f"[{n}/{len(works)}] 후보 {len(s['cands'])}개: " + ", ".join(c["f"][:40] for c in s["cands"][:2]), flush=True)
         return
     follow = "--follow" in a   # 3단계: 음질 분석
+    ia_only = "--ia-only" in a   # 위키 서버가 막혔을 때(429): 인터넷 아카이브 녹음만 분석하고, 위키 후보는 다음에(기존 목록은 지우지 않음)
     while True:
         st = load(STATE); ia = load(IAF); scr = load(SCRF); res = load(OUT); did = 0
         for n, t in enumerate(works, 1):
             if "cands" not in st.get(t, {}): continue   # 아직 1단계가 안 한 곡은 다음 바퀴에
             cands = sorted(st[t]["cands"] + [c for c in ia.get(t, {}).get("cands", []) if c["f"] not in {x["f"] for x in st[t]["cands"]}], key=lambda c: -c["score"])
-            sc = scr.setdefault(t, {}); picked = [c for c in cands if c["f"] in sc and good(sc[c["f"]])]; tried = 0
+            if t in MUSOPEN:
+                it, fp = MUSOPEN[t].split("/", 1)
+                cands = [{"f": "ia:" + MUSOPEN[t], "url": "https://archive.org/download/" + it + "/" + urllib.parse.quote(fp), "lic": "공개 도메인·CC0(인터넷 아카이브 표시, Musopen)", "kbps": 192, "score": 999, "musopen": 1}] + cands
+            if ia_only: cands = [c for c in cands if c["f"].startswith("ia:")]
+            cands = [c for c in cands if name_ok(c, t)]
+            sc = scr.setdefault(t, {}); tried = 0
             for c in cands:
-                if len(picked) >= 2 or tried >= 4: break
-                if c["f"] in sc: continue
+                if sum(1 for x in cands if good(sc.get(x["f"]))) >= 2 or tried >= 6: break
+                if c["f"] in sc and done(sc[c["f"]]): continue
+                if c["f"].startswith("ia:") and not c.get("musopen"):   # 아카이브 항목에 적힌 녹음 연도가 1955년 전이면 옛 녹음
+                    md = (get("https://archive.org/metadata/" + urllib.parse.quote(c["f"][3:].split("/")[0])) or {}).get("metadata") or {}
+                    yr = re.search(r"(1[89]\d\d|20\d\d)", str(md.get("date") or md.get("year") or ""))
+                    if yr and int(yr.group(1)) < 1955: sc[c["f"]] = {"old": int(yr.group(1))}; save(SCRF, scr); continue
                 sc[c["f"]] = analyze(c); tried += 1; did += 1; save(SCRF, scr)
-                if good(sc[c["f"]]): picked.append(c)
+            ok_ = lambda c: good(sc.get(c["f"])) or (c.get("musopen") and isinstance(sc.get(c["f"]), dict) and sc[c["f"]].get("v") == 2)   # Musopen 은 출처가 현대 녹음이라 분석만 되면 써요(조용한 피아노곡은 숫자가 낮게 나와요)
+            picked = sorted([c for c in cands if ok_(c)], key=lambda c: (-bool(c.get("musopen")), -(sc[c["f"]]["corr"] - sc[c["f"]]["nf"] / 20)))
             if picked: res[t] = [{"f": c["f"], "lic": c["lic"], "kbps": c["kbps"], "scr": sc.get(c["f"])} for c in picked[:2]]
+            elif ia_only:   # 아카이브만 검사한 경우: 검사에서 떨어진 녹음은 목록에서 빼고, 아직 검사 안 한 위키 녹음만 남겨요
+                keep = [x for x in res.get(t, []) if name_ok(x, t) and not (x["f"] in sc and done(sc[x["f"]]) and not good(sc[x["f"]]))]
+                if keep: res[t] = keep
+                else: res.pop(t, None)
             elif all(sc.get(c["f"]) is not None for c in cands[:4] if c["f"] in sc): res.pop(t, None)   # 분석이 서버 문제로 실패(None)한 곡은 기존 목록을 그대로 둬요
             save(OUT, res)
-            if tried: print(f"[{n}/{len(works)}] {'✓' if picked else '✗'} {t}: 후보 {len(cands)}개" + (f" → {picked[0]['f'][:60]} ({picked[0]['kbps']}kbps, {sc.get(picked[0]['f'])})" if picked else " → 쓸 만한 녹음 없음(글로만)"), flush=True)
+            if tried or t in MUSOPEN: print(f"[{n}/{len(works)}] {'✓' if picked else '✗'} {t}: 후보 {len(cands)}개" + (f" → {picked[0]['f'][:60]} ({sc.get(picked[0]['f'])})" if picked else " → 쓸 만한 녹음 없음(글로만)"), flush=True)
         ready = all("cands" in st.get(t, {}) and ia.get(t, {}).get("done") for t in works)
         if not follow or (ready and did == 0): break
         time.sleep(60 if did == 0 else 1)

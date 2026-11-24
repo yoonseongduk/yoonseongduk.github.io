@@ -56,16 +56,45 @@
   // 처음 들을 때 앞부분만 폰에 저장(mp3·ogg 계열은 앞 900KB, 작은 파일은 통째로, 큰 wav·flac 은 저장하지 않고 들을 때마다 불러와요)
   function saveOne(t, r) {
     if (lsGet(AS) !== "1" || r.kind !== "online" || (saved && saved[t]) || !("caches" in window)) return;   // 저장은 사용자가 고른 경우에만
+    storeOne(t, r);
+  }
+  function storeOne(t, r) {   // 저장에 성공하면 true(약속), 저장할 수 없는 파일이면 false
     var ext = (r.title.match(/\.(\w+)$/) || [, ""])[1].toLowerCase(), full = lsGet(FS) === "1" && r.size && r.size <= FULLMAX, small = full || (r.size && r.size <= 2000000), lossy = /^(ogg|oga|opus|mp3)$/.test(ext);
-    if (!small && !lossy) return;
-    fetch(r.src, { credentials: "omit", referrerPolicy: "no-referrer", headers: small ? {} : { Range: "bytes=0-" + (KEEP - 1) } }).then(function (resp) {
+    if (!small && !lossy) return Promise.resolve(false);
+    return fetch(r.src, { credentials: "omit", referrerPolicy: "no-referrer", headers: small ? {} : { Range: "bytes=0-" + (KEEP - 1) } }).then(function (resp) {
       if (!resp.ok) throw 0; return resp.blob().then(function (b) { return { b: b, type: resp.headers.get("content-type") || "audio/ogg" }; });
     }).then(function (x) {
       if (!x.b.size || x.b.size < 20000) throw 0;
       return inCache(function (c) { return c.put(r.src, new Response(x.b, { status: 200, headers: { "Content-Type": x.type } })); }).then(function () {
-        saved = saved || {}; saved[t] = { src: r.src, page: r.page, title: r.title, license: r.license, label: r.label }; lsSet(SAVED, JSON.stringify(saved)); if (bar) drawBar();
+        saved = saved || {}; saved[t] = { src: r.src, page: r.page, title: r.title, license: r.license, label: r.label }; lsSet(SAVED, JSON.stringify(saved)); if (bar && !dl.running) drawBar(); return true;
       });
-    }).catch(function () {});
+    }).catch(function (e) { if (e && e.name === "QuotaExceededError") dl.full = true; return false; });
+  }
+
+  // ── 📥 모든 곡 저장하기(그림의 '📥 그림 저장하기'와 같은 방식, 2026-11-24 사용자 요청): 듣기 가능한 곡을 한 번에 이 폰에 저장해요.
+  //    저장하는 범위는 '전곡 저장' 설정을 따라요(꺼짐 = 곡마다 앞부분 약 0.9MB). 검증(공개 도메인·CC0 표시)을 통과한 녹음만 저장해요.
+  var dl = { running: false, cancel: false, msg: "", full: false };
+  function pmap(items, fn, limit) { var k = 0; function w() { if (k >= items.length) return Promise.resolve(); var it = items[k++]; return Promise.resolve(fn(it)).then(w); } var ws = []; for (var i = 0; i < Math.min(limit, items.length); i++) ws.push(w()); return Promise.all(ws); }
+  function saveAll() {
+    if (dl.running) { dl.cancel = true; dl.msg = "멈추는 중…"; drawBar(); return; }
+    if (!(window.fgOnline && fgOnline.ask(CONSENT)) || !("caches" in window)) return;
+    if (navigator.onLine === false) { dl.msg = "지금은 인터넷이 없어서 저장할 수 없어요."; drawBar(); return; }
+    var todo = Object.keys(DATA.P).filter(function (t) { return !(saved && saved[t]); });
+    if (!todo.length) { dl.msg = "저장할 곡이 없어요(모두 저장됨)."; drawBar(); return; }
+    var full = lsGet(FS) === "1", mb = full ? "수백 MB까지(곡 전체)" : "약 " + Math.round(todo.length * 0.9) + "MB(곡마다 앞부분)";
+    try { if (!window.confirm("음원 " + todo.length + "곡, " + mb + "을 이 폰에 저장해요. 와이파이에서 몇 분 걸릴 수 있어요.\n저작권이 끝난 녹음만 저장하고, 찾지 못한 곡은 건너뛰어요.\n\n저장할까요?")) return; } catch (e) {}
+    var okc = 0, bad = 0; dl.running = true; dl.cancel = false; dl.full = false; drawBar();
+    pmap(todo, function (t) {
+      if (dl.cancel || dl.full) return null;
+      return fromOnline(t).then(function (r) { return r ? storeOne(t, r) : false; }).catch(function () { return false; }).then(function (ok) {
+        if (ok) okc++; else bad++;
+        dl.msg = "저장 중… " + (okc + bad) + "/" + todo.length + " (저장 " + okc + "곡, 건너뜀 " + bad + ")"; drawBar();
+      });
+    }, 2).then(function () {
+      dl.running = false;
+      dl.msg = (dl.cancel ? "멈췄어요. " : dl.full ? "폰 저장 공간이 모자라 멈췄어요. " : "끝났어요. ") + "저장 " + okc + "곡" + (bad ? ", 건너뜀 " + bad + "곡(검증을 통과한 녹음을 찾지 못했거나 불러오지 못한 곡)" : "") + ".";
+      dl.cancel = false; drawBar();
+    });
   }
   function clearSaved() {
     try { if (!window.confirm("이 폰에 저장한 음원 " + savedCount() + "곡을 지울까요? (다시 들으면 또 저장돼요)")) return; } catch (e) {}
@@ -89,7 +118,7 @@
       ".amode small{color:var(--muted,#666)}.aplay{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 0 10px}.aplay button{border:0;border-radius:999px;background:var(--accent,#c4552b);color:var(--accent-fg,#fff);font-size:1.15rem;font-weight:700;padding:14px 26px;min-width:200px}" +
       ".aplay small{color:var(--muted,#666)}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}" +
       ".row2{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}" +
-      ".cbtn,.gplay{margin-left:6px;border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:2px 10px;font-size:.8rem}.gplay.on,.cbtn.on{background:var(--accent,#c4552b);color:var(--accent-fg,#fff);border-color:transparent}";
+      ".cbtn,.gplay{margin-left:6px;border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:2px 10px;font-size:.8rem}a.cbtn{display:inline-block;text-decoration:none}.ytrow{margin-top:8px;font-weight:400;font-family:var(--font-body,inherit);display:flex;gap:6px;align-items:center;flex-wrap:wrap}.ytrow small{color:var(--muted,#666);font-size:.8rem}.ytrow .cbtn{margin-left:0}.gplay.on,.cbtn.on{background:var(--accent,#c4552b);color:var(--accent-fg,#fff);border-color:transparent}";
     document.head.appendChild(st);
   }
   function askSave() {
@@ -108,7 +137,12 @@
       (on ? "인터넷에서 저작권이 끝난 녹음을 찾아 들려줘요(위키미디어·인터넷 아카이브 서버에 이 기기의 주소가 전달돼요). 선택한 시간(" + LIMIT + "초) 동안 들려요." : (n ? "지금은 인터넷이 없어서 이 폰에 저장된 음원(" + n + "곡)만 나와요." : "지금은 인터넷이 없고 저장된 음원도 없어서 글로만 나와요."))) + " · 저장된 음원 " + n + " / 듣기 가능 " + Object.keys(DATA.P).length + "곡 · <a href=\"offline-media.html\">📊 저장 현황</a></small>";
     h += '<div class="row"><small>듣기 시간:</small>' + [15, 30, 60].map(function (s) { return '<button type="button" class="sm' + (LIMIT === s ? " on" : "") + '" data-m="lim" data-s="' + s + '">' + s + "초</button>"; }).join("") + "<small>(모음 화면과 정답 뒤에는 끝까지 들어요)</small></div>";
     h += '<div class="row"><button type="button" class="sm" data-m="fullsave">📦 전곡 저장: ' + (lsGet(FS) === "1" ? "켜짐" : "꺼짐") + "</button><small>켜면 곡 전체를 저장해요(한 곡 수 MB~수십 MB, 와이파이 권장). 끄면 앞부분만 저장해요.</small></div>";
-    h += '<div class="row"><button type="button" class="sm" data-m="auto">💾 들은 곡 자동 저장: ' + (lsGet(AS) === "1" ? "켜짐" : "꺼짐") + "</button>" + (n ? '<button type="button" class="sm" data-m="clear">🗑️ 저장한 음원 지우기</button>' : "") + "</div>";
+    h += '<div class="row"><button type="button" class="sm" data-m="auto">💾 들은 곡 자동 저장: ' + (lsGet(AS) === "1" ? "켜짐" : "꺼짐") + "</button>" + (n && !dl.running ? '<button type="button" class="sm" data-m="clear">🗑️ 저장한 음원 지우기</button>' : "") + "</div>";
+    if (window.fgOnline && fgOnline.enabled) {
+      var left = Object.keys(DATA.P).length - n;
+      h += '<div class="row">' + ("caches" in window ? '<button type="button" class="sm" data-m="saveall"' + (!dl.running && !left ? " disabled" : "") + ">" + (dl.running ? "⏹ 멈추기" : !left ? "✅ 모두 저장됨" : n ? "📥 남은 곡 저장하기 (" + left + "곡)" : "📥 모든 곡 저장하기(오프라인용)") + "</button>" : "") +
+        "<small>" + esc(dl.msg || "한 번에 저장해 두면 인터넷 없이도 듣기 문제를 풀 수 있어요.") + "</small></div>";
+    }
     if (isQuiz && wrongList.length && mode !== "off") h += '<div class="row"><button type="button" class="sm" id="clsreview" data-m="review">' + reviewLabel() + "</button><small>틀린 곡만 다시 들어요.</small></div>";
     bar.innerHTML = h;
   }
@@ -117,7 +151,7 @@
     var hh = document.querySelector("h1"); if (hh) hh.insertAdjacentElement("afterend", bar); else document.body.insertBefore(bar, document.body.firstChild);
     bar.addEventListener("click", function (e) {
       var b = e.target.closest("button"); if (!b || b.disabled) return; var m = b.dataset.m;
-      if (m === "review") startReview(); else if (m === "clear") clearSaved(); else if (m === "auto") { lsSet(AS, lsGet(AS) === "1" ? "0" : "1"); drawBar(); }
+      if (m === "review") startReview(); else if (m === "saveall") saveAll(); else if (m === "clear") clearSaved(); else if (m === "auto") { lsSet(AS, lsGet(AS) === "1" ? "0" : "1"); drawBar(); }
       else if (m === "lim") { LIMIT = +b.dataset.s; lsSet(LM, String(LIMIT)); drawBar(); }
       else if (m === "fullsave") { if (lsGet(FS) === "1") lsSet(FS, "0"); else { var ok = false; try { ok = window.confirm("📦 곡 전체를 이 폰에 저장할까요?\n\n· 한 곡이 수 MB~수십 MB(길게는 80MB)까지 있어요. 폰 저장 공간과 데이터를 많이 써요.\n· 와이파이에서 쓰는 걸 권해요.\n· 이미 저장한 앞부분은 그대로 두고, 앞으로 저장하는 곡부터 전체를 저장해요.\n· 언제든 끄거나 '저장한 음원 지우기'로 지울 수 있어요."); } catch (x) {} if (ok) lsSet(FS, "1"); } drawBar(); }
       else {
@@ -219,11 +253,25 @@
     });
   }
 
+  // ── 🎧 유튜브에서 듣기: 곡 이름으로 유튜브 검색 결과를 앱 밖(새 창·유튜브 앱)에서 열어요. 앱 안에서 재생하거나 소리를 받아 오지 않아요(유튜브 약관).
+  //    정답을 고른 뒤에만 보여서 정답이 미리 드러나지 않아요. 온라인 기능을 끈 판(fgOnline.enabled=false)에서는 보이지 않아요.
+  var ytOk = function () { return !!window.fgOnline && fgOnline.enabled; };
+  var TITLES = Object.keys(DATA.W).sort(function (a, b) { return b.length - a.length; });
+  function ytUrl(t) { var w = DATA.W[t], q = (w ? w[0] + " " : "") + String(t).replace(/[‘’'"“”]/g, ""); return "https://www.youtube.com/results?search_query=" + encodeURIComponent(q); }
+  function ytLink(t) { return '<a class="cbtn yt" href="' + esc(ytUrl(t)) + '" target="_blank" rel="noopener noreferrer">🎧 유튜브에서 듣기</a>'; }
+  function songOf(d) { if (!d) return null; if (d.tt && DATA.W[d.tt]) return d.tt; var s = [d[0], d[1], d[4]].join(" "); for (var k = 0; k < TITLES.length; k++) if (s.indexOf(TITLES[k]) >= 0) return TITLES[k]; return null; }
+  function addYt() {
+    if (!ytOk()) return; var c = qs && qs[i], t = c && songOf(c.d), q = document.getElementById("q"); if (!t || !q || q.querySelector(".yt")) return;
+    q.insertAdjacentHTML("beforeend", '<div class="row2 ytrow">' + ytLink(t) + '<small>‘' + esc(t) + "’ 연주를 유튜브에서 찾아요(앱 밖에서 열려요)</small></div>");
+  }
+
   // ── 모음: 곡 옆에 ▶ 듣기 단추(눌렀을 때 허락·검색·재생)
   function decorateGal() {
     var list = document.getElementById("list"); if (!list) return;
     list.querySelectorAll("li").forEach(function (li) {
-      if (li.dataset.cls) return; li.dataset.cls = "1"; var b = li.querySelector("b"); if (!b || !DATA.P[b.textContent]) return;
+      if (li.dataset.cls) return; li.dataset.cls = "1"; var b = li.querySelector("b"); if (!b) return;
+      if (ytOk() && DATA.W[b.textContent]) b.insertAdjacentHTML("afterend", ytLink(b.textContent).replace("🎧 유튜브에서 듣기", "🎧 유튜브"));
+      if (!DATA.P[b.textContent]) return;
       var btn = document.createElement("button"); btn.type = "button"; btn.className = "gplay"; btn.textContent = "▶ 듣기"; btn.dataset.t = b.textContent; b.insertAdjacentElement("afterend", btn);
     });
   }
@@ -250,9 +298,10 @@
       var oS = start, oShow = show, oPick = pick;
       start = function () { oS(); if (mode !== "off") mix(); };
       show = function () { oShow(); decorateQ(); };
-      pick = function (k) { if (locked) return; var c = qs && qs[i], ok = c && c.opts[k] === c.d[1], hu = hintUsed; oPick(k); if (c && c.d.aud) { if (ok && hu) { score -= 0.5; document.getElementById("score").textContent = score; } record(c, ok); addCard(); } };
+      pick = function (k) { if (locked) return; var c = qs && qs[i], ok = c && c.opts[k] === c.d[1], hu = hintUsed; oPick(k); if (c && c.d.aud) { if (ok && hu) { score -= 0.5; document.getElementById("score").textContent = score; } record(c, ok); addCard(); } addYt(); };
       var m = lsGet(MK); if ((m === "mix" || m === "only") && (savedCount() || online())) { mode = m; drawBar(); start(); }
     } else if (isGal) {
+      injectCss();
       new MutationObserver(decorateGal).observe(document.getElementById("list"), { childList: true }); decorateGal();
     }
   }

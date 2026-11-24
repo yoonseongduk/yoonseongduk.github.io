@@ -60,7 +60,7 @@
     st.textContent = ".amode{background:var(--surface,#fff);border:1px solid var(--line,#ccc);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}.amode .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}" +
       ".amode button{border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:8px 12px;font-size:.92rem}.amode button.on{background:var(--accent,#c4552b);color:var(--accent-fg,#fff);border-color:transparent;font-weight:700}.amode button:disabled{opacity:.45;cursor:default}" +
       ".amode button.sm{padding:6px 10px;font-size:.85rem}.amode small{color:var(--muted,#666)}.amode .sub{border-top:1px dashed var(--line,#ccc);padding-top:8px;display:flex;flex-direction:column;gap:6px}" +
-      ".aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.aimg img,.gf img{cursor:zoom-in}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}.ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}#aview{position:fixed;inset:0;z-index:9999;background:#000e;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}#aview .vb{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px}#aview .vb button{border:0;border-radius:999px;padding:8px 13px;font-size:.95rem;background:#fff;color:#111}#aview .vz{color:#fff;font-size:.85rem;min-width:3.2em;text-align:center}#aview .vi{flex:1;overflow:hidden;position:relative;touch-action:none;display:flex;align-items:center;justify-content:center}#aview .vi img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;will-change:transform;cursor:grab}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}#aview .vh{color:#ccc}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}";
+      ".aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.aimg img,.gf img{cursor:zoom-in}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}.ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}#aview{position:fixed;inset:0;z-index:9999;background:#000e;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}#aview .vb{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px}#aview .vb button{border:0;border-radius:999px;padding:8px 13px;font-size:.95rem;background:#fff;color:#111}#aview .vz{color:#fff;font-size:.85rem;min-width:3.2em;text-align:center}#aview .vi{flex:1;overflow:hidden;position:relative;touch-action:none;display:flex;align-items:center;justify-content:center}#aview .vi img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;will-change:transform;cursor:grab}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}#aview .vh{color:#ccc}.gview{margin-left:6px;border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:2px 10px;font-size:.8rem}.gview:disabled{opacity:.5}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}";
     document.head.appendChild(st);
   }
   var bar, dl = { running: false, cancel: false, msg: "" };
@@ -184,10 +184,32 @@
   }
 
 
+  // ── 모음: 작품마다 🖼️ 보기 단추(클래식 모음의 ▶ 듣기와 같은 방식). 누르면 저장한 그림 → 없으면 허락을 받고 온라인에서 불러와 크게 보기로 열어요.
+  function decorateBtns() {
+    var list = document.getElementById("list"); if (!list) return;
+    list.querySelectorAll("li").forEach(function (li) {
+      if (li.dataset.gv) return; var b = li.querySelector("b"); if (!b || !DATA.W[b.textContent]) return;
+      if (!localInfo(b.textContent) && !(window.fgOnline && fgOnline.enabled)) return;
+      li.dataset.gv = "1"; var btn = document.createElement("button"); btn.type = "button"; btn.className = "gview"; btn.textContent = "🖼️ 보기"; btn.dataset.t = b.textContent; b.insertAdjacentElement("afterend", btn);
+    });
+  }
+  function askAutoSave() { if (lsGet(AS) !== null) return; var yes = false; try { yes = window.confirm("📥 본 그림을 이 폰에 저장할까요?\n\n· 저장하면 다음부터 인터넷 없이도 볼 수 있어요(그림 1장 약 50KB).\n· 저장하지 않으면 볼 때마다 인터넷이 필요해요.\n· 나중에 언제든 바꾸거나 지울 수 있어요.\n\n[확인] 저장해요   [취소] 저장하지 않고 보기만 해요"); } catch (e) {} lsSet(AS, yes ? "1" : "0"); if (bar) drawBar(); }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".gview"); if (!b || b.disabled) return; var t = b.dataset.t, p;
+    if (localInfo(t)) p = resolveLocal(t);
+    else if (window.fgOnline && fgOnline.ask(CONSENT)) { if (navigator.onLine === false) { b.textContent = "인터넷 없음"; setTimeout(function () { b.textContent = "🖼️ 보기"; }, 2500); return; } askAutoSave(); if (bar) drawBar(); p = fetchOnline(t); }
+    else return;
+    b.textContent = "⏳ 찾는 중…";
+    p.then(function (r) { return r ? preload(r.src).then(function (ok) { return ok ? r : null; }) : null; }).then(function (r) {
+      if (!r) { b.textContent = "그림 없음"; b.disabled = true; b.title = "저작권 표시·작가 확인을 통과한 그림을 찾지 못했어요"; return; }
+      b.textContent = "🖼️ 보기"; if (!localInfo(t)) autoSave(t, r); openViewer(r.src, "‘" + esc(t) + "’ · " + credit(r));
+    }).catch(function () { b.textContent = "🖼️ 보기"; });
+  });
+
   // ── 그림 크게 보기: 전체 화면 + 확대(손가락 두 개로 벌리기·마우스 휠·＋/－·두 번 누르기) + 끌어서 이동. 확대하면 더 큰 그림(1280px)을 불러와 선명하게 보여요(보기를 연 경우에만 인터넷을 써요).
   var ZMAX = 8;
   function bigSrc(src) {
-    if (/\/\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src)) return src.replace(/\/\d+px-([^\/]+)$/, "/1280px-$1");
+    if (/\/(?:lossy-page1-)?\d+px-[^\/]+$/.test(src || "") && /upload\.wikimedia\.org/.test(src)) return src.replace(/\/((?:lossy-page1-)?)\d+px-([^\/]+)$/, "/$11280px-$2");
     if (/^https:\/\/www\.artic\.edu\/iiif\/.*\/full\/\d+,\//.test(src || "")) return src.replace(/\/full\/\d+,\//, "/full/1200,/");
     return null;
   }
@@ -301,13 +323,13 @@
         recordResult(cur, ok); addCard(); creditQ();
       };
     } else if (isGal) {
-      new MutationObserver(function () { decorateAll(false); }).observe(document.getElementById("list"), { childList: true });
+      new MutationObserver(function () { decorateAll(false); decorateBtns(); }).observe(document.getElementById("list"), { childList: true });
     }
     var savedMode = lsGet(MK);
     fetch("art-img/index.json").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (idx) {
       local = idx && typeof idx === "object" && Object.keys(idx).length ? idx : null;
       if (savedMode === "local" && localCount()) mode = "local"; else if (savedMode === "online" && window.fgOnline && fgOnline.on()) mode = "online";
-      drawBar(); if (mode !== "text") { if (isQuiz) start(); else decorateAll(false); }
+      drawBar(); if (isGal) decorateBtns(); if (mode !== "text") { if (isQuiz) start(); else decorateAll(false); }
     });
   }
   addEventListener("online", function () { if (bar) drawBar(); }); addEventListener("offline", function () { if (bar) drawBar(); });   // 인터넷 연결 상태가 바뀌면 안내 문구도 바꿔요

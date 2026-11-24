@@ -397,29 +397,29 @@
  ],
  "라 트라비아타": [
   {
-   "f": "Lucrezia Bori, Giuseppe Verdi, Ah! fors' e lui (La traviata).ogg",
-   "lic": "Public domain",
-   "kbps": 74,
+   "f": "ICBSA Verdi - La traviata, Sempre libera.ogg",
+   "lic": "직접 지정",
+   "kbps": null,
+   "scr": null
+  },
+  {
+   "f": "ICBSA Verdi - La traviata, Preludio parte 1.ogg",
+   "lic": "직접 지정",
+   "kbps": null,
    "scr": null
   }
  ],
  "아이다": [
   {
-   "f": "Musica della R. Marina Italiana Aida (Verdi) Gran Marcia trionfale.mp3",
-   "lic": "Public domain",
-   "kbps": 320,
+   "f": "ICBSA Verdi - Aida, Celeste Aida.ogg",
+   "lic": "직접 지정",
+   "kbps": null,
    "scr": null
   },
   {
-   "f": "Nicola Zerola, Giuseppe Verdi, La fatal pietra (Aida).ogg",
-   "lic": "Public domain",
-   "kbps": 78,
-   "scr": null
-  },
-  {
-   "f": "Nicola Zerola, Giuseppe Verdi, La fatal pietra (Aida) unrestored.ogg",
-   "lic": "Public domain",
-   "kbps": 69,
+   "f": "ICBSA Verdi - Aida, Ritorna vincitor.ogg",
+   "lic": "직접 지정",
+   "kbps": null,
    "scr": null
   }
  ],
@@ -700,9 +700,9 @@
  ],
  "전주곡 c♯단조": [
   {
-   "f": "Sergei Rachmaninoff performs Rachmaninoff's Prelude in C sharp minor, Op. 3.ogg",
-   "lic": "Public domain",
-   "kbps": 66,
+   "f": "Prélude en Do dièse mineur de Rachmaninov op. 3 (Morceaux de fantaisie).ogg",
+   "lic": "직접 지정",
+   "kbps": null,
    "scr": null
   }
  ],
@@ -740,21 +740,9 @@
  ],
  "랩소디 인 블루": [
   {
-   "f": "George Gershwin's \"Rhapsody in Blue\" piano solo.ogg",
-   "lic": "Public domain",
-   "kbps": 216,
-   "scr": null
-  },
-  {
-   "f": "George Gershwin's \"Rhapsody in Blue\" piano solo.mp3",
-   "lic": "Public domain",
-   "kbps": 128,
-   "scr": null
-  },
-  {
-   "f": "George Gershwin playing Rhapsody in Blue.ogg",
-   "lic": "Public domain",
-   "kbps": 65,
+   "f": "US Marine Band Rhapsody in Blue.oga",
+   "lic": "직접 지정",
+   "kbps": null,
    "scr": null
   }
  ],

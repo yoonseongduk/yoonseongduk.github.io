@@ -18,16 +18,16 @@
   var badList = function () { try { var a = JSON.parse(lsGet(BADK) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
   var isBad = function (name) { return badList().indexOf(name) >= 0; };
   var savedCount = function () { return saved ? Object.keys(saved).length : 0; };
-  var credit = function (e) { return '🎧 음원: <a href="' + esc(e.page) + '" target="_blank" rel="noopener noreferrer">' + esc(e.label || '위키미디어 커먼즈') + ' 「' + esc(e.title) + "」</a> (" + esc(e.license) + ")"; };
+  var credit = function (e) { return '🎧 음원: <a href="' + esc(e.page) + '" target="_blank" rel="noopener noreferrer">' + esc(e.label || '위키미디어 커먼즈') + ' 「' + esc(e.title) + "」</a>" + (e.artist && !/no machine-readable/i.test(e.artist) ? " · 녹음: " + esc(e.artist) : "") + " (" + (e.licenseUrl ? '<a href="' + esc(e.licenseUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(e.license) + "</a>" : esc(e.license)) + ")"; };
   var inCache = function (cb) { return "caches" in window ? caches.open(CACHE).then(cb).catch(function () { return null; }) : Promise.resolve(null); };
 
   // ── 음원 하나 얻기: ① 폰에 저장된 것 → ② 온라인에서 찾기 (통과하면 {src, page, title, license, kind}, 아니면 null)
   var blobUrls = {};
   function fromSaved(t) {
     var e = saved && saved[t]; if (!e || isBad(e.title)) return Promise.resolve(null);
-    if (blobUrls[t]) return Promise.resolve({ src: blobUrls[t], page: e.page, title: e.title, license: e.license, kind: "saved", label: e.label, remote: e.src });
+    if (blobUrls[t]) return Promise.resolve({ src: blobUrls[t], page: e.page, title: e.title, license: e.license, kind: "saved", label: e.label, artist: e.artist, licenseUrl: e.licenseUrl, remote: e.src });
     return inCache(function (c) { return c.match(e.src); }).then(function (r) { return r ? r.blob() : null; }).then(function (b) {
-      if (!b) return null; blobUrls[t] = URL.createObjectURL(b); return { src: blobUrls[t], page: e.page, title: e.title, license: e.license, kind: "saved", label: e.label, remote: e.src };
+      if (!b) return null; blobUrls[t] = URL.createObjectURL(b); return { src: blobUrls[t], page: e.page, title: e.title, license: e.license, kind: "saved", label: e.label, artist: e.artist, licenseUrl: e.licenseUrl, remote: e.src };
     }).catch(function () { return null; });
   }
   // 소리가 실제로 나올 수 있는지 잠깐 확인(메타데이터만 받아 봐요). 9초 안에 안 되면 다음 후보(다른 서버)로 넘어가요
@@ -40,13 +40,13 @@
   }
   function fromOnline(t) {
     var names = DATA.P[t]; if (!names || !online()) return Promise.resolve(null);
-    return fgOnline.audioFiles(names, 80000000).then(function (list) {
+    return fgOnline.audioFiles(names, 80000000, true).then(function (list) {
       list = (list || []).filter(function (x) { return !isBad(x.title); }); var k = 0;
       function next() {
         if (k >= list.length) return null; var r = list[k++];
         return playable(r.src).then(function (okp) { return okp ? r : next(); });
       }
-      return next().then(function (r) { r = r || list[0]; return r ? { src: r.src, page: r.page, title: r.title, license: r.license, label: r.label, size: r.size, kind: "online", remote: r.src } : null; });
+      return next().then(function (r) { r = r || list[0]; return r ? { src: r.src, page: r.page, title: r.title, license: r.license, label: r.label, artist: r.artist, licenseUrl: r.licenseUrl, size: r.size, kind: "online", remote: r.src } : null; });
     });
   }
   function getAudio(t) { return fromSaved(t).then(function (r) { return r || fromOnline(t); }); }
@@ -66,7 +66,7 @@
     }).then(function (x) {
       if (!x.b.size || x.b.size < 20000) throw 0;
       return inCache(function (c) { return c.put(r.src, new Response(x.b, { status: 200, headers: { "Content-Type": x.type } })); }).then(function () {
-        saved = saved || {}; saved[t] = { src: r.src, page: r.page, title: r.title, license: r.license, label: r.label }; lsSet(SAVED, JSON.stringify(saved)); if (bar && !dl.running) drawBar(); return true;
+        saved = saved || {}; saved[t] = { src: r.src, page: r.page, title: r.title, license: r.license, label: r.label, artist: r.artist, licenseUrl: r.licenseUrl }; lsSet(SAVED, JSON.stringify(saved)); if (bar && !dl.running) drawBar(); return true;
       });
     }).catch(function (e) { if (e && e.name === "QuotaExceededError") dl.full = true; return false; });
   }

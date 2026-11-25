@@ -123,15 +123,16 @@
  ],
  "캐논 D장조": [
   {
-   "f": "ia:PachelbelCanon_20150702_1819/Pachelbel canon.ogg",
-   "lic": "공개 도메인·CC0(인터넷 아카이브 표시)",
-   "kbps": 68,
-   "scr": {
-    "v": 2,
-    "corr": 0.74,
-    "nf": -17.7,
-    "dyn": 13.0
-   }
+   "f": "Kevin MacLeod - Canon in D Major.ogg",
+   "lic": "직접 지정",
+   "kbps": null,
+   "scr": null
+  },
+  {
+   "f": "Pachelbel's Canon.ogg",
+   "lic": "직접 지정",
+   "kbps": null,
+   "scr": null
   }
  ],
  "교향곡 94번 '놀람'": [

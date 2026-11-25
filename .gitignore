@@ -28,3 +28,6 @@ classic-audio/
 *.flac
 *.wav
 *.m4a
+
+# PC에서 음질 분석할 때 생기는 접속 기록(올리지 않음)
+tools/dev/music_pick_http.log

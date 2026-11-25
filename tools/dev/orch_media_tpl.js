@@ -46,12 +46,44 @@
     if (/그림/.test(q) && id) return { k: "i", id: id };
     return null;
   }
+  // ── 실제 사진(선택, 온라인): 악기 도감·퀴즈와 같은 방법으로 위키백과 사진을 찾아요(이 폰에 저장해 둔 사진이 있으면 그것을 먼저 써요)
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function savedPhoto(id) {
+    try { var sv = JSON.parse(lsGet("orch-saved-v1") || "null"), e = sv && sv[id]; if (!e || !("caches" in window)) return Promise.resolve(null);
+      return caches.open("fg-orch-saved-v1").then(function (c) { return c.match(e.src); }).then(function (r) { return r ? r.blob() : null; }).then(function (b) { return b ? { src: URL.createObjectURL(b), e: e } : null; }).catch(function () { return null; }); } catch (er) { return Promise.resolve(null); }
+  }
+  function onlinePhoto(id) {
+    var ins = M.P[id]; if (!ins || !window.fgOnline || !fgOnline.on() || navigator.onLine === false) return Promise.resolve(null);
+    var probe = function (src) { return new Promise(function (ok) { var im = new Image(), tm = setTimeout(function () { ok(false); }, 15000); im.onload = function () { clearTimeout(tm); ok(true); }; im.onerror = function () { clearTimeout(tm); ok(false); }; im.src = src; }); };
+    var pack = function (r) { return r ? { src: r.src, e: { page: r.filePage || r.page, title: r.title, license: r.license, licenseUrl: r.licenseUrl, artist: r.artist, label: r.label } } : null; };
+    var viaFiles = ins.files && fgOnline.commonsPhoto ? fgOnline.commonsPhoto(ins.files, true).then(function (r) { return r ? probe(r.src).then(function (ok) { return ok ? r : null; }) : null; }).then(pack) : Promise.resolve(null);
+    var keys = ["en:" + (ins.wiki || "").replace(/ /g, "_")], toks = [ins.tok];
+    if (ins.ko) { keys.push("ko:" + ins.ko.replace(/ /g, "_")); toks.push(ins.ko); } if (ins.de) { keys.push("de:" + ins.de.replace(/ /g, "_")); toks.push(ins.de); }
+    return viaFiles.then(function (pin) { if (pin) return pin; if (ins.files) return null; return fgOnline.wikiImage(keys, toks, "악기", { cc: true }).then(pack); });
+  }
+  function creditHtml(e) { var lic = e.licenseUrl ? '<a href="' + esc(e.licenseUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(e.license) + "</a>" : esc(e.license); return "📷 사진: " + (e.artist ? esc(e.artist) + " · " : "") + lic + ' · <a href="' + esc(e.page) + '" target="_blank" rel="noopener noreferrer">원본 보기</a>'; }
+  function addPhoto(box, id, svgHtml) {
+    if (!M.P[id]) return;
+    var bar = document.createElement("div"); bar.className = "wmph"; box.appendChild(bar); var start;
+    var show = function (r) {   // 사진으로 바꿔 보여 줘요(누르면 크게, 단추로 그림과 바꿔 볼 수 있어요)
+      var im = new Image(); im.alt = (M.N[id] || "악기") + " 사진"; im.style.cssText = "width:min(300px,86vw);height:auto;max-height:300px;object-fit:contain;border-radius:12px;display:block;margin:0 auto;cursor:zoom-in";
+      im.onload = function () { var img = box.querySelector(".wmimg"); if (!img) return; img.innerHTML = ""; img.appendChild(im); img.onclick = function (e) { e.stopPropagation(); zoomImg(im.src); };
+        bar.innerHTML = '<small class="wmcr" style="display:block">' + creditHtml(r.e) + '</small><button type="button" class="wmb sm">✏️ 그림으로 보기</button>'; var showing = true;
+        bar.querySelector("button").onclick = function () { showing = !showing; if (showing) { img.innerHTML = ""; img.appendChild(im); this.textContent = "✏️ 그림으로 보기"; } else { img.innerHTML = svgHtml; this.textContent = "📷 사진으로 보기"; } }; };
+      im.onerror = function () { bar.innerHTML = '<small class="wmcr" style="display:block">사진을 불러오지 못했어요(서버가 느리거나 막혔을 수 있어요). 아래 그림은 직접 그린 것이에요.</small><button type="button" class="wmb sm">📷 다시 찾기</button>'; bar.querySelector("button").onclick = start; }; im.src = r.src;
+    };
+    start = function () { bar.innerHTML = '<small class="wmcr" style="display:block">📷 사진을 찾고 있어요…</small>'; savedPhoto(id).then(function (r) { return r || onlinePhoto(id); }).then(function (r) { if (r) show(r); else bar.innerHTML = '<small class="wmcr" style="display:block">알맞은 사진을 못 찾았어요. 아래 그림은 직접 그린 것이에요.</small><button type="button" class="wmb sm">📷 다시 찾기</button>'; if (!r) bar.querySelector("button").onclick = start; }); };
+    if (window.fgOnline && fgOnline.on() && lsGet("orch-photo-v1") !== "0") start();
+    else { bar.innerHTML = '<button type="button" class="wmb sm">📷 실제 사진 보기</button>'; bar.querySelector("button").onclick = function () { if (!window.fgOnline || !fgOnline.enabled) return; if (!fgOnline.on() && !fgOnline.ask("📷 악기 실제 사진을 인터넷에서 불러와요.\n\n· 위키백과·위키미디어 서버에 이 기기의 인터넷 주소가 전달돼요(이 앱은 개인 정보를 보내지 않아요).\n· 사진가와 라이선스를 사진 아래에 보여 줘요. 사진은 저장하지 않아요.\n\n켤까요?")) return; try { localStorage.setItem("orch-photo-v1", "1"); } catch (e) {} start(); }; }
+  }
+  function zoomImg(src) { zoom('<img src="' + esc(src) + '" alt="" style="width:100%;height:auto;max-height:78vh;object-fit:contain;display:block">'); }
+
   window.fgOrchMedia = {
     infer: infer,
     ok: function (m) { return !!m && ((m.k === "i" && !!M.SVG[m.id]) || (m.k === "s" && !!M.SEAT[String(m.n)]) || (m.k === "a" && !!M.SND[m.id])); },
     render: function (box, m, blind) {
       stop(); box.innerHTML = "";
-      if (m.k === "i" || m.k === "s") { var h = m.k === "i" ? M.SVG[m.id] : M.SEAT[String(m.n)]; box.innerHTML = '<div class="wmimg" role="button" tabindex="0" style="cursor:zoom-in">' + h + '</div><small class="muted" style="display:block;margin-top:4px">그림을 누르면 크게 보여요</small>'; box.querySelector(".wmimg").addEventListener("click", function () { zoom(h); }); }
+      if (m.k === "i" || m.k === "s") { var h = m.k === "i" ? M.SVG[m.id] : M.SEAT[String(m.n)]; box.innerHTML = '<div class="wmimg" role="button" tabindex="0" style="cursor:zoom-in">' + h + '</div><small class="muted" style="display:block;margin-top:4px">그림을 누르면 크게 보여요</small>'; var wi = box.querySelector(".wmimg"); wi.onclick = function () { zoom(h); }; if (m.k === "i") addPhoto(box, m.id, h); }
       else if (m.k === "a") sound(box, m.id, !!blind);
     },
     reveal: function (root) { (root || document).querySelectorAll(".wmcr").forEach(function (x) { if (x.textContent) x.hidden = false; }); },

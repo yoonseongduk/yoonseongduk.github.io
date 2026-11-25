@@ -163,7 +163,8 @@ def done(a): return (isinstance(a, dict) and (a.get("v") == 2 or "old" in a))   
 IAF = os.path.join(HERE, "music_pick_ia.json"); SCRF = os.path.join(HERE, "music_pick_scr.json")
 # 사용자 지적으로 소리를 뺀 곡(후보가 전부 1900~1930년대 옛 음반 녹음이라 잡음이 심해요): 글로만 나오게 해요
 # 직접 지정한 녹음(2026-11-24 사용자 결정으로 CC BY·CC BY-SA 허용 → 옛 녹음뿐이던 곡에 현대 녹음을 지정, 앱이 라이선스를 다시 확인하고 녹음한 사람을 화면에 표시)
-PINNED = {"라 트라비아타": ["ICBSA Verdi - La traviata, Sempre libera.ogg", "ICBSA Verdi - La traviata, Preludio parte 1.ogg"],
+PINNED = {"볼레로": ["Bolero-Maurice Ravel-ORTF National Orchestra-Georges Tzipine-23 March 1965.ogg", "Bolero-Maurice Ravel-Paris Orchestra-Charles Munch-1956.ogg"],   # 2026-11-25 사용자 지적 '북소리가 손뼉 소리': 아카이브의 두 파일은 플라멩코 편곡(플루트+손뼉)이라 빼고 실제 관현악 녹음으로(ORTF 국립 관현악단·치핀 1965, 파리 관현악단·뮌시 1956, 공개 도메인)
+          "라 트라비아타": ["ICBSA Verdi - La traviata, Sempre libera.ogg", "ICBSA Verdi - La traviata, Preludio parte 1.ogg"],
           "아이다": ["ICBSA Verdi - Aida, Celeste Aida.ogg", "ICBSA Verdi - Aida, Ritorna vincitor.ogg"],
           "전주곡 c♯단조": ["Prélude en Do dièse mineur de Rachmaninov op. 3 (Morceaux de fantaisie).ogg"],
           "랩소디 인 블루": ["US Marine Band Rhapsody in Blue.oga"]}

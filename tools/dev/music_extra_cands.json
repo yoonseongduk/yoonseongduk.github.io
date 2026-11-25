@@ -729,5 +729,245 @@
  "동물의 사육제": {
   "commons": [],
   "archive": []
+ },
+ "백조(동물의 사육제 중)": {
+  "commons": [
+   {
+    "f": "20091104 Alisa Weilerstein and Jason Yoder - Saint Saëns' The Swan.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/2a/20091104_Alisa_Weilerstein_and_Jason_Yoder_-_Saint_Sa%C3%ABns%27_The_Swan.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 80,
+    "dur": 176,
+    "size": 1770120,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Camille Saint-Saëns - Le Cygne (No. 13) - Matilda Colliard and Stefano Ligoratti.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/fc/Camille_Saint-Sa%C3%ABns_-_Le_Cygne_%28No._13%29_-_Matilda_Colliard_and_Stefano_Ligoratti.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY 4.0",
+    "kbps": 108,
+    "dur": 158,
+    "size": 2142844,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Growth of Swan in eyes of the little girl - Wenxi, Zhang.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Growth_of_Swan_in_eyes_of_the_little_girl_-_Wenxi%2C_Zhang.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 4.0",
+    "kbps": 111,
+    "dur": 209,
+    "size": 2889732,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Le Cygne, by Charles Baudelaire, Audiocité.mp3",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Le_Cygne%2C_by_Charles_Baudelaire%2C_Audiocit%C3%A9.mp3?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 128,
+    "dur": 230,
+    "size": 3674865,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "The Dying Swan - black angel JMC Han.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/51/The_Dying_Swan_-_black_angel_JMC_Han.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 4.0",
+    "kbps": 89,
+    "dur": 176,
+    "size": 1972442,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Swan Song (Fell) LibriVox-EN.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Swan_Song_%28Fell%29_LibriVox-EN.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public Domain",
+    "kbps": 77,
+    "dur": 1106,
+    "size": 10697652,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky - Swan Lake Op.20 - Act III Concl, Allegro.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Tchaikovsky_-_Swan_Lake_Op.20_-_Act_III_Concl%2C_Allegro.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 118,
+    "dur": 1432,
+    "size": 21119847,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky - Swan Lake Op.20 - Act III Pt.1.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Tchaikovsky_-_Swan_Lake_Op.20_-_Act_III_Pt.1.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 116,
+    "dur": 903,
+    "size": 13095486,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky - Swan Lake Op.20 - Act II Concl.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/81/Tchaikovsky_-_Swan_Lake_Op.20_-_Act_II_Concl.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 123,
+    "dur": 369,
+    "size": 5680906,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky - Swan Lake Op.20 - Act IV Intro.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/51/Tchaikovsky_-_Swan_Lake_Op.20_-_Act_IV_Intro.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 124,
+    "dur": 1262,
+    "size": 19508621,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky - Swan Lake Op.20 - Act I Intro.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Tchaikovsky_-_Swan_Lake_Op.20_-_Act_I_Intro.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 122,
+    "dur": 1130,
+    "size": 17219908,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky - Swan Lake Op.20 - Act II Pt.1.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/82/Tchaikovsky_-_Swan_Lake_Op.20_-_Act_II_Pt.1.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 111,
+    "dur": 250,
+    "size": 3468395,
+    "score": 100,
+    "src": "commons"
+   }
+  ],
+  "archive": []
+ },
+ "헝가리 무곡 5번": {
+  "commons": [
+   {
+    "f": "Hungarian Dances - No. 5 in F Sharp Minor (Collections in piano) JMC,Han.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/ea/Hungarian_Dances_-_No._5_in_F_Sharp_Minor_%28Collections_in_piano%29_JMC%2CHan.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 4.0",
+    "kbps": 116,
+    "dur": 70,
+    "size": 1018829,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Ungarischer Tanz Nr. 5 in fis-Moll, Klavier zu 4 Händen.oga",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Ungarischer_Tanz_Nr._5_in_fis-Moll%2C_Klavier_zu_4_H%C3%A4nden.oga?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 4.0",
+    "kbps": 82,
+    "dur": 43,
+    "size": 439914,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Hungarian Dance No. 1 - Strolling Strings - United States Air Force Band.mp3",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/23/Hungarian_Dance_No._1_-_Strolling_Strings_-_United_States_Air_Force_Band.mp3?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 329,
+    "dur": 128,
+    "size": 5242640,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Hungarian Dance No. 1 Brahms US Air Force Bands.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/20/Hungarian_Dance_No._1_Brahms_US_Air_Force_Bands.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 388,
+    "dur": 123,
+    "size": 5969551,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Hungarian Dance No. 4 - Strolling Strings - United States Air Force Band.mp3",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Hungarian_Dance_No._4_-_Strolling_Strings_-_United_States_Air_Force_Band.mp3?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 326,
+    "dur": 201,
+    "size": 8189338,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Hungarian Dance No. 4 Brahms US Air Force Bands.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Hungarian_Dance_No._4_Brahms_US_Air_Force_Bands.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 385,
+    "dur": 199,
+    "size": 9577221,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "The Latsos Piano Duo performs Brahms Hungarian Dance in A major (version for piano four hands).ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/3/3d/The_Latsos_Piano_Duo_performs_Brahms_Hungarian_Dance_in_A_major_%28version_for_piano_four_hands%29.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 4.0",
+    "kbps": 85,
+    "dur": 102,
+    "size": 1085082,
+    "score": 100,
+    "src": "commons"
+   }
+  ],
+  "archive": []
+ },
+ "자장가": {
+  "commons": [
+   {
+    "f": "Lullaby wound up clock guten abend gute nacht.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Lullaby_wound_up_clock_guten_abend_gute_nacht.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 230,
+    "dur": 46,
+    "size": 1336394,
+    "score": 100,
+    "src": "commons"
+   }
+  ],
+  "archive": []
+ },
+ "호두까기 인형": {
+  "commons": [
+   {
+    "f": "Tchaikovsky - Dance of the Sugar Plum Fairy - The Nutcracker.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Tchaikovsky_-_Dance_of_the_Sugar_Plum_Fairy_-_The_Nutcracker.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY 3.0",
+    "kbps": 93,
+    "dur": 108,
+    "size": 1256989,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky - Nutcracker Suite - Russian Dance - Philip Milman - Lud and Schlatts Musical Emporium.wav",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Tchaikovsky_-_Nutcracker_Suite_-_Russian_Dance_-_Philip_Milman_-_Lud_and_Schlatts_Musical_Emporium.wav?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY 3.0",
+    "kbps": 2304,
+    "dur": 74,
+    "size": 21385140,
+    "score": 100,
+    "src": "commons"
+   }
+  ],
+  "archive": []
  }
 }

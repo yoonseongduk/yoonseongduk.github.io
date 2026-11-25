@@ -238,7 +238,7 @@
     bb.addEventListener("click", function () {
       var a = badList(); if (a.indexOf(r.title) < 0) a.push(r.title); lsSet(BADK, JSON.stringify(a.slice(-100)));
       if (saved && saved[c.d.tt]) { delete saved[c.d.tt]; lsSet(SAVED, JSON.stringify(saved)); delete blobUrls[c.d.tt]; }
-      bb.disabled = true; msg.textContent = "알려 줘서 고마워요. 이 녹음은 이제 쓰지 않고 다른 녹음으로 바꿔요(없으면 이 곡은 글로만 나와요).";
+      bb.disabled = true; msg.textContent = "알려 줘서 고마워요. 이 녹음은 이제 쓰지 않고 다른 녹음으로 바꿔요(없으면 이 곡은 글로만 나와요)."; if (ytOk() && !document.getElementById("clsyt")) msg.insertAdjacentHTML("afterend", '<div class="row2" id="clsyt">' + ytLink(c.d.tt).replace("🎧 유튜브에서 듣기", "🎧 유튜브에서 좋은 연주로 듣기") + "</div>");
     });
   }
   // ── 틀린 곡 복습
@@ -276,7 +276,7 @@
     var list = document.getElementById("list"); if (!list) return;
     list.querySelectorAll("li").forEach(function (li) {
       if (li.dataset.cls) return; li.dataset.cls = "1"; var b = li.querySelector("b"); if (!b) return;
-      if (ytOk() && DATA.W[b.textContent]) b.insertAdjacentHTML("afterend", ytLink(b.textContent).replace("🎧 유튜브에서 듣기", "🎧 유튜브"));
+      if (ytOk() && DATA.W[b.textContent]) b.insertAdjacentHTML("afterend", DATA.P[b.textContent] ? ytLink(b.textContent).replace("🎧 유튜브에서 듣기", "🎧 유튜브") : ytLink(b.textContent).replace("🎧 유튜브에서 듣기", "🎧 유튜브에서 듣기(앱 안 소리 없음)"));
       if (!DATA.P[b.textContent]) return;
       var btn = document.createElement("button"); btn.type = "button"; btn.className = "gplay"; btn.textContent = "▶ 듣기"; btn.dataset.t = b.textContent; b.insertAdjacentElement("afterend", btn);
     });
@@ -288,7 +288,7 @@
     if (!(saved && saved[t]) && window.fgOnline && !fgOnline.on() && !fgOnline.ask(CONSENT)) return;
     askSave(); b.textContent = "⏳ 찾는 중…";
     getAudio(t).then(function (r) {
-      if (!r) { b.textContent = "음원 없음"; b.disabled = true; return; }
+      if (!r) { b.textContent = "음원 없음"; b.disabled = true; if (ytOk() && !b.nextElementSibling?.classList?.contains("yt")) b.insertAdjacentHTML("afterend", ytLink(t).replace("🎧 유튜브에서 듣기", "🎧 유튜브에서 듣기")); return; }
       var a = player(r, Infinity); b.classList.add("on"); b.textContent = "⏹ 멈추기"; saveOne(t, r);
       a.addEventListener("ended", function () { b.classList.remove("on"); b.textContent = "▶ 듣기"; });
       a.addEventListener("error", function () { b.classList.remove("on"); b.textContent = "불러오지 못함"; });

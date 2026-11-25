@@ -85,8 +85,9 @@
       stop(); box.innerHTML = "";
       if (m.k === "i" || m.k === "s") { var h = m.k === "i" ? M.SVG[m.id] : M.SEAT[String(m.n)]; box.innerHTML = '<div class="wmimg" role="button" tabindex="0" style="cursor:zoom-in">' + h + '</div><small class="muted" style="display:block;margin-top:4px">그림을 누르면 크게 보여요</small>'; var wi = box.querySelector(".wmimg"); wi.onclick = function () { zoom(h); }; if (m.k === "i") addPhoto(box, m.id, h); }
       else if (m.k === "a") sound(box, m.id, !!blind);
+      var iid = m.k === "s" ? null : m.id; if (iid && M.EN && M.EN[iid]) box.insertAdjacentHTML("beforeend", '<a class="wmyt" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(M.EN[iid] + " solo classical music") + '" target="_blank" rel="noopener noreferrer"' + (blind ? " hidden" : "") + ">🎧 유튜브에서 " + esc(M.N[iid] || "") + " 독주곡 듣기</a>");
     },
-    reveal: function (root) { (root || document).querySelectorAll(".wmcr").forEach(function (x) { if (x.textContent) x.hidden = false; }); },
+    reveal: function (root) { (root || document).querySelectorAll(".wmcr").forEach(function (x) { if (x.textContent) x.hidden = false; }); (root || document).querySelectorAll(".wmyt").forEach(function (x) { x.hidden = false; }); },
     stop: stop
   };
 })();

@@ -152,7 +152,7 @@ DATA = {"SEATW": {str(n): where for n, _, where in SEATS}, "SNDQ": SNDQ, "SND": 
 tpl = open("orch_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../orch-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 # 오답 노트용 작은 모듈(악기 그림·배치도·소리 목록만): wrong-notes.html 이 틀린 그림·소리 문제를 다시 보여 줄 때 써요
-MEDIA = {"P": {i: {k: v for k, v in {"wiki": INFOS[i]["wiki"], "tok": INFOS[i]["tok"], "ko": INFOS[i]["ko"], "de": INFOS[i]["de"], "files": INFOS[i]["files"]}.items() if v} for i in INFOS}, "NAME": {a["name"]: i for i, a in INFOS.items()}, "SVG": DATA["SVG"], "SEAT": DATA["SEAT"], "SND": DATA["SND"], "SNDT": DATA["SNDT"]}
+MEDIA = {"EN": {i: INFOS[i]["en"] for i in INFOS}, "P": {i: {k: v for k, v in {"wiki": INFOS[i]["wiki"], "tok": INFOS[i]["tok"], "ko": INFOS[i]["ko"], "de": INFOS[i]["de"], "files": INFOS[i]["files"]}.items() if v} for i in INFOS}, "NAME": {a["name"]: i for i, a in INFOS.items()}, "SVG": DATA["SVG"], "SEAT": DATA["SEAT"], "SND": DATA["SND"], "SNDT": DATA["SNDT"]}
 mt = open("orch_media_tpl.js", encoding="utf-8").read(); assert "/*MEDIA*/null" in mt
 open("../../orch-media.js", "w", encoding="utf-8").write(mt.replace("/*MEDIA*/null", json.dumps(MEDIA, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):

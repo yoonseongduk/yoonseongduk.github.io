@@ -163,7 +163,8 @@ def done(a): return (isinstance(a, dict) and (a.get("v") == 2 or "old" in a))   
 IAF = os.path.join(HERE, "music_pick_ia.json"); SCRF = os.path.join(HERE, "music_pick_scr.json")
 # 사용자 지적으로 소리를 뺀 곡(후보가 전부 1900~1930년대 옛 음반 녹음이라 잡음이 심해요): 글로만 나오게 해요
 # 직접 지정한 녹음(2026-11-24 사용자 결정으로 CC BY·CC BY-SA 허용 → 옛 녹음뿐이던 곡에 현대 녹음을 지정, 앱이 라이선스를 다시 확인하고 녹음한 사람을 화면에 표시)
-PINNED = {"캐논 D장조": ["Kevin MacLeod - Canon in D Major.ogg", "Pachelbel's Canon.ogg"],   # 2026-11-26 사용자 지적 '하모니카 소리': 아카이브 파일은 하모니카+피아노 편곡(cover)이라 빼고, 현악기 원래 편성(케빈 맥클라우드, 가상 악기 녹음, CC BY 3.0)과 피아노 독주(CC BY-SA 3.0)로. 실제 현악 합주 녹음은 허용 라이선스로 못 찾음
+PINNED = {"교향곡 9번 '합창'": ["PMLP01607-Symphony No.9, Op.125 (Beethoven, Ludwig van), IV Presto.ogg"],   # 2026-11-26 사용자 지적 '합창 음원 이상함': 55초짜리 2악장 조각 대신 「환희의 송가」가 나오는 4악장 전체(IMSLP 녹음, CC BY-SA 3.0, 위키미디어 오늘의 소리). 합창이 나오는 부분부터 재생(set44.py STARTS)
+          "캐논 D장조": ["Kevin MacLeod - Canon in D Major.ogg", "Pachelbel's Canon.ogg"],   # 2026-11-26 사용자 지적 '하모니카 소리': 아카이브 파일은 하모니카+피아노 편곡(cover)이라 빼고, 현악기 원래 편성(케빈 맥클라우드, 가상 악기 녹음, CC BY 3.0)과 피아노 독주(CC BY-SA 3.0)로. 실제 현악 합주 녹음은 허용 라이선스로 못 찾음
           "볼레로": ["Bolero-Maurice Ravel-ORTF National Orchestra-Georges Tzipine-23 March 1965.ogg", "Bolero-Maurice Ravel-Paris Orchestra-Charles Munch-1956.ogg"],   # 2026-11-25 사용자 지적 '북소리가 손뼉 소리': 아카이브의 두 파일은 플라멩코 편곡(플루트+손뼉)이라 빼고 실제 관현악 녹음으로(ORTF 국립 관현악단·치핀 1965, 파리 관현악단·뮌시 1956, 공개 도메인)
           "라 트라비아타": ["ICBSA Verdi - La traviata, Sempre libera.ogg", "ICBSA Verdi - La traviata, Preludio parte 1.ogg"],
           "아이다": ["ICBSA Verdi - Aida, Celeste Aida.ogg", "ICBSA Verdi - Aida, Ritorna vincitor.ogg"],

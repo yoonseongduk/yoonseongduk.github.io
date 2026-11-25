@@ -257,15 +257,10 @@
  ],
  "교향곡 9번 '합창'": [
   {
-   "f": "PMLP01607-Symphony No.9, Op.125 (Beethoven, Ludwig van), II. Scherzo, Molto vivace - Presto.ogg",
-   "lic": "Public domain",
-   "kbps": 187,
-   "scr": {
-    "v": 2,
-    "corr": 0.78,
-    "nf": -14.5,
-    "dyn": 16.4
-   }
+   "f": "PMLP01607-Symphony No.9, Op.125 (Beethoven, Ludwig van), IV Presto.ogg",
+   "lic": "직접 지정",
+   "kbps": null,
+   "scr": null
   }
  ],
  "피아노 소나타 14번 '월광'": [

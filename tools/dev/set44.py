@@ -105,18 +105,20 @@ $("q").addEventListener("input", render); render();'''
 make_page(H + "classic-gallery.html", "클래식 작곡가별 모음", "🎻", 280, "classic-gallery-v1",
           "작곡가와 대표곡의 이름·작곡 연도·갈래를 정리했어요. 작곡 연도는 자료마다 조금 다를 수 있어요(초연·출판 연도와 다를 수 있어요).", BODY, JS, CSS)
 
+# 곡 안에서 그 곡다운 부분부터 들려줄 녹음의 시작 위치(초). 긴 악장 전체 녹음은 앞부분이 다른 분위기라 퀴즈로 알아듣기 어려워요
+STARTS = {"PMLP01607-Symphony No.9, Op.125 (Beethoven, Ludwig van), IV Presto.ogg": 400}   # 베토벤 9번 4악장: 바리톤과 합창이 「환희의 송가」를 부르는 부분(약 6분 40초)
 # ───────── 듣고 맞히기 모드(classic-mode.js) 만들기 + 두 화면에 끼우기
 _pp = os.environ.get("PICK_FILE") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "music_pick.json")
 _pk = json.load(open(_pp, encoding="utf-8")) if os.path.exists(_pp) else {}
 PICK = {t: [x["f"] for x in v] for t, v in _pk.items() if t in AUDIO}   # 음질 선별을 통과한 곡만(파일 이름 목록, 음원 파일은 저장소에 없음)
 W = {w["t"]: [C[w["comp"]]["name"], w["y"], w["g"], C[w["comp"]]["era"], w["fame"], C[w["comp"]]["country"], w["comp"]] for w in ALLW}
 DATA = {"W": W, "C": [[c["name"], c["era"], c["id"]] for c in C.values()], "AMBIG": {t: sorted(s) for t, s in AMBIG.items()},
-        "P": PICK}
+        "P": PICK, "O": STARTS}
 tpl = open("classic_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../classic-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 # 오답 노트용 작은 모듈(곡별 음원 이름만): wrong-notes.html 이 틀린 듣기 문제의 소리를 다시 들려줄 때 써요
 _mt = open("classic_media_tpl.js", encoding="utf-8").read(); assert "/*MEDIA*/null" in _mt
-open("../../classic-media.js", "w", encoding="utf-8").write(_mt.replace("/*MEDIA*/null", json.dumps({"P": DATA["P"], "T": {t: w[0] for t, w in DATA["W"].items()}}, ensure_ascii=False, separators=(",", ":"))))
+open("../../classic-media.js", "w", encoding="utf-8").write(_mt.replace("/*MEDIA*/null", json.dumps({"O": STARTS, "P": DATA["P"], "T": {t: w[0] for t, w in DATA["W"].items()}}, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):
     t = open(path, encoding="utf-8").read()
     if 'src="classic-mode.js"' not in t:

@@ -2,7 +2,7 @@
    음원은 저장소에 없고, 온라인 기능을 켠 폰이 위키미디어·인터넷 아카이브에서 직접 받아 들려줘요(공개 도메인·CC0·CC BY·CC BY-SA만, 녹음한 사람·라이선스를 보여 줘요). */
 (function () {
   "use strict";
-  var MD = /*MEDIA*/null, P = MD.P, T = MD.T, cur = null;   // P: 곡 → 음원 이름들, T: 곡 → 작곡가(유튜브 검색어용)
+  var MD = /*MEDIA*/null, P = MD.P, T = MD.T, O = MD.O || {}, cur = null;   // P: 곡 → 음원 이름들, T: 곡 → 작곡가(유튜브 검색어용)
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var ASK = "🎧 클래식 소리를 인터넷에서 불러와요.\n\n· 위키미디어·인터넷 아카이브 서버에 이 기기의 인터넷 주소가 전달돼요(이 앱은 개인 정보를 보내지 않아요).\n· 저작권이 끝났거나 CC BY·CC BY-SA 표시가 있는 녹음만 쓰고 녹음한 사람과 라이선스를 보여 줘요.\n· 소리 파일은 이 폰에 저장하지 않아요.\n\n켤까요?";
   function stop() { if (cur) { try { cur.a.pause(); } catch (e) {} if (cur.b) cur.b.textContent = "▶ 소리 듣기"; cur = null; } }
@@ -29,7 +29,8 @@
             a.addEventListener("playing", function () { started = true; clearTimeout(tm); b.textContent = "⏸ 멈추기"; var who = r.artist && !/no machine-readable/i.test(r.artist) ? r.artist : "";
               cr.innerHTML = "🎧 녹음: " + (who ? esc(who) + " · " : "") + (r.licenseUrl ? '<a href="' + esc(r.licenseUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(r.license) + "</a>" : esc(r.license)) + ' · <a href="' + esc(r.page) + '" target="_blank" rel="noopener noreferrer">원본(' + esc(r.label || "위키미디어 커먼즈") + ")</a>"; });
             a.addEventListener("error", function () { if (!started) { clearTimeout(tm); next(); } });
-            a.addEventListener("timeupdate", function () { if (a.currentTime >= 40) { a.pause(); a.dispatchEvent(new Event("ended")); } });
+            var st = O[r.title] || 0; if (st) a.addEventListener("loadedmetadata", function () { if (a.currentTime < st) try { a.currentTime = st; } catch (e) {} }, { once: true });
+            a.addEventListener("timeupdate", function () { if (a.currentTime - st >= 40) { a.pause(); a.dispatchEvent(new Event("ended")); } });
             a.addEventListener("ended", function () { if (cur === me) { b.textContent = "🔁 다시 듣기"; cur = null; } });
             a.src = r.src; var p = a.play(); if (p && p.catch) p.catch(function () { if (!started) { clearTimeout(tm); next(); } });
           })();

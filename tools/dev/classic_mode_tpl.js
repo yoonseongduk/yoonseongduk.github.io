@@ -55,7 +55,8 @@
 
   // 처음 들을 때 앞부분만 폰에 저장(mp3·ogg 계열은 앞 900KB, 작은 파일은 통째로, 큰 wav·flac 은 저장하지 않고 들을 때마다 불러와요)
   function saveOne(t, r) {
-    if (lsGet(AS) !== "1" || r.kind !== "online" || (saved && saved[t]) || !("caches" in window)) return;   // 저장은 사용자가 고른 경우에만
+    if (lsGet(AS) !== "1" || r.kind !== "online" || (saved && saved[t]) || !("caches" in window)) return;
+    if (DATA.O && DATA.O[r.title]) return;   // 곡 중간부터 듣는 녹음은 앞부분만 저장하면 들을 부분이 없어서 저장하지 않아요   // 저장은 사용자가 고른 경우에만
     storeOne(t, r);
   }
   function storeOne(t, r) {   // 저장에 성공하면 true(약속), 저장할 수 없는 파일이면 false
@@ -107,7 +108,9 @@
   function stopAudio() { if (cur) { try { cur.pause(); } catch (e) {} } }
   function player(r, lim) {
     stopAudio(); var a = new Audio(r.src); a.preload = "auto"; a._lim = lim === undefined ? LIMIT : lim; cur = a;
-    a.addEventListener("timeupdate", function () { if (a.currentTime >= a._lim) { a.pause(); a.dispatchEvent(new Event("ended")); } });
+    var st = (DATA.O && DATA.O[r.title]) || 0; a._st = st;   // 곡다운 부분부터(긴 악장 녹음)
+    if (st) a.addEventListener("loadedmetadata", function () { if (a.currentTime < st) try { a.currentTime = st; } catch (e) {} }, { once: true });
+    a.addEventListener("timeupdate", function () { if (a.currentTime - a._st >= a._lim) { a.pause(); a.dispatchEvent(new Event("ended")); } });
     return a;
   }
 

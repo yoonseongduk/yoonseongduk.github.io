@@ -148,7 +148,7 @@ INFOS = {i: {"n": a["n"], "name": a["name"], "en": a["en"], "fam": a["fam"], "ho
 SND = json.load(open("orch_sound.json", encoding="utf-8")) if os.path.exists("orch_sound.json") else {}
 SNDT = json.load(open("orch_sound_title.json", encoding="utf-8")) if os.path.exists("orch_sound_title.json") else {}   # 독주곡·곡 일부 녹음의 곡명(사용자 요청 2026-11-24), 파일 이름 → 한국어 곡명
 SNDT = {f: t for f, t in SNDT.items() if any(f in v for v in SND.values())}
-DATA = {"SNDQ": SNDQ, "SND": {k: v for k, v in SND.items() if v}, "SNDT": SNDT, "I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {**{i: size_compare(i, False) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, False) for i, _, _ in WIND_SIZES}}, "CMPN": {**{i: size_compare(i, True) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, True) for i, _, _ in WIND_SIZES}}}
+DATA = {"SEATW": {str(n): where for n, _, where in SEATS}, "SNDQ": SNDQ, "SND": {k: v for k, v in SND.items() if v}, "SNDT": SNDT, "I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {**{i: size_compare(i, False) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, False) for i, _, _ in WIND_SIZES}}, "CMPN": {**{i: size_compare(i, True) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, True) for i, _, _ in WIND_SIZES}}}
 tpl = open("orch_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../orch-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):

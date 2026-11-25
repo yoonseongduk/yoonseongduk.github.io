@@ -56,7 +56,9 @@ const shuf = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j
 const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const KEY = "wrongnotes-ui-v1";
 const KEY2 = "wrongnotes-v1", MKEY = "wrongnotes-mastered-v1";
-const load = () => { try { return JSON.parse(localStorage.getItem(KEY2)) || []; } catch (e) { return []; } }, save = a => { try { localStorage.setItem(KEY2, JSON.stringify(a)); } catch (e) {} }, mastered = () => { try { return +localStorage.getItem(MKEY) || 0; } catch (e) { return 0; } }, addMastered = () => { try { localStorage.setItem(MKEY, String(mastered() + 1)); } catch (e) {} };
+// 예전에 기록된 문제 글 정리: 맨 앞에 붙은 퀴즈 이름·배치도 번호·크기 비교 설명과 뒤의 힌트 단추 글자를 떼어 낸다(새 기록은 wrong-hook.js가 처음부터 깨끗하게 저장)
+const cleanQ = x => { let q = String(x.q || ""); q = q.replace(/^📏[^)]*\)/, "").replace(/^12345678910/, "").replace(/💡 힌트 \(쓰면 맞혀도 0\.5점\)\s*$/, ""); if (x.t && q.startsWith(x.t)) q = q.slice(x.t.length); q = q.trim(); return q === x.q ? x : { ...x, q: q || x.q }; };
+const load = () => { try { return (JSON.parse(localStorage.getItem(KEY2)) || []).map(cleanQ); } catch (e) { return []; } }, save = a => { try { localStorage.setItem(KEY2, JSON.stringify(a)); } catch (e) {} }, mastered = () => { try { return +localStorage.getItem(MKEY) || 0; } catch (e) { return 0; } }, addMastered = () => { try { localStorage.setItem(MKEY, String(mastered() + 1)); } catch (e) {} };
 let items = load(), filt = "전체", q = [], qi = 0, good = 0, locked = false, tempo = 1;
 const kinds = () => [...new Set(items.map(x => x.t))];
 function chips() { const ks = kinds(); $("chips").innerHTML = ["전체", ...ks].map(k => `<button type="button" class="chip${k === filt ? " on" : ""}" data-k="${esc(k)}">${esc(k)} <small>${k === "전체" ? items.length : items.filter(x => x.t === k).length}</small></button>`).join(""); }

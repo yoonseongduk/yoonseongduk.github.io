@@ -27,7 +27,11 @@
     const b = e.target.closest(".opt"); if (!b || b.disabled) { snap = null; return; }
     const qEl = document.getElementById("q"); if (!qEl) { snap = null; return; }
     const c = qEl.cloneNode(true); c.querySelectorAll(".note,.eg,.hanja").forEach(x => x.remove());
-    snap = { q: text(c), o: [...document.querySelectorAll(".opt")].map(text), picked: text(b) };
+    // 그림·소리·단추 같은 꾸밈(svg·img·audio·button이 든 덩어리)과 맨 앞의 퀴즈 이름 표시는 글자만 남기는 노트에서 뺀다(예전엔 "오케스트라 퀴즈도감 4번…💡 힌트…"처럼 뒤섞여 기록됐다)
+    [...c.children].forEach(ch => { if (ch.matches("button,svg,img,audio,figure,canvas") || ch.querySelector("button,svg,img,audio,figure,canvas")) ch.remove(); else if (ch.tagName === "SMALL") { if ([title, text(h1)].includes(text(ch))) ch.remove(); else ch.after(" "); } });   // 분류 표시(<small>)는 문제 글과 붙지 않게 띄어 쓴다
+    c.querySelectorAll("button,svg,img,audio,canvas").forEach(x => x.remove());
+    let qt = text(c); try { const ex = typeof window.fgWrongText === "function" ? window.fgWrongText() : null; if (ex) qt = ex; } catch (er) {}   // 그림·소리 문제는 글로 풀어 쓴 문제로 바꿔 기록(화면 쪽 스크립트가 fgWrongText를 정의)
+    snap = { q: qt, o: [...document.querySelectorAll(".opt")].map(text), picked: text(b) };
   }, true);
   document.addEventListener("click", e => {
     const b = e.target.closest(".opt"); if (!b || !snap) return; const s = snap; snap = null;

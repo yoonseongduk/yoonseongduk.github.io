@@ -147,6 +147,15 @@
     else paint(cf, id, function () { return qs && qs[i] && qs[i].d[0] === key; });
   }
 
+  // ── 오답 노트(wrong-hook.js)용: 그림·소리·배치도 문제는 화면의 그림·소리가 노트에 안 남으므로, 글만으로도 풀 수 있는 문제 글로 바꿔서 기록해요(정답 낱말은 ○○로 가려요)
+  window.fgWrongText = function () {
+    var cur = typeof qs !== "undefined" && qs && qs[i]; if (!cur) return null; var key = cur.d[0], m = DATA.IMG[key], sq = DATA.SNDQ && DATA.SNDQ[key], id = sq || (m && m[0] === "i" ? m[1] : null);
+    var hide = function (t, a) { return String(t).split(a.name).join("○○").split(a.en).join("○○"); };
+    if (id) { var a = DATA.I[id]; return (sq ? "🔊 소리 문제(도감에서 🔊 소리 듣기로 다시 들어요) — " : "🖼 그림 문제(도감 " + a.n + "번 그림) — ") + hide(a.fam + " · " + a.rng + " 소리 · " + a.how + ". " + a.desc, a) + " 이 악기의 이름은?"; }
+    if (m && m[0] === "s") return "배치도 " + m[1] + "번 자리(" + (DATA.SEATW && DATA.SEATW[String(m[1])] || "") + ")에는 보통 누가 앉을까요? (일반적인 배치)";
+    return null;
+  };
+
   // 한 판(10문제)에 그림 문제가 모자라면 그림 문제를 더 섞어 넣어요(최소 4개)
   var MINIMG = 4;
   function biasImages() {

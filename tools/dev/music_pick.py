@@ -75,7 +75,11 @@ def get(u, binary=False, rng=None, tries=7):
             if e.code in (429, 500, 502, 503, 504):
                 try: ra = int(e.headers.get("Retry-After", "10"))
                 except Exception: ra = 10
-                time.sleep(min(ra, 150) + 1 + n); continue
+                wait = min(ra, 150) + 1 + n
+                try:   # 요청 제한·서버 오류 기록(추적용, 주소의 물음표 뒤는 뺌)
+                    with open("music_pick_http.log", "a", encoding="utf-8") as lf: lf.write(time.strftime("%Y-%m-%d %H:%M:%S") + f"\t{e.code}\t재시도{n+1}/{tries}\t대기{wait}s\tRetry-After={e.headers.get('Retry-After', '-')}\t{u.split('?')[0][:120]}\n")
+                except Exception: pass
+                time.sleep(wait); continue
             return None
         except Exception: time.sleep(3 + n)
     return None

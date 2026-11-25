@@ -9,7 +9,7 @@
   const h1 = document.querySelector("h1"), title = h1 ? h1.textContent.replace(/\s+\S+$/, "").trim() || h1.textContent.trim() : file;
   const idOf = (f, q, a) => f + "|" + q + "|" + a;
   function right(id) { const a = load(), k = a.findIndex(x => x.id === id); if (k < 0) return; a[k].s = (a[k].s || 0) + 1; if (a[k].s >= 2) { a.splice(k, 1); addMastered(); } save(a); }
-  function wrong(it) { const a = load(), k = a.findIndex(x => x.id === it.id); if (k >= 0) { a[k].n = (a[k].n || 1) + 1; a[k].s = 0; a[k].d = Date.now(); a[k].o = it.o || a[k].o; } else a.push({ ...it, n: 1, s: 0, d: Date.now() }); save(a); }
+  function wrong(it) { const a = load(), k = a.findIndex(x => x.id === it.id); if (k >= 0) { a[k].n = (a[k].n || 1) + 1; a[k].s = 0; a[k].d = Date.now(); a[k].o = it.o || a[k].o; if (it.m) a[k].m = it.m; } else a.push({ ...it, n: 1, s: 0, d: Date.now() }); save(a); }
   window.WrongNotes = {
     load, save, mastered,
     add(it) { wrong({ id: idOf(it.f || file, it.q, it.a), f: it.f || file, t: it.t || title, q: it.q, a: it.a, o: it.o || null, k: it.k || "mc" }); badge(); },
@@ -31,12 +31,13 @@
     [...c.children].forEach(ch => { if (ch.matches("button,svg,img,audio,figure,canvas") || ch.querySelector("button,svg,img,audio,figure,canvas")) ch.remove(); else if (ch.tagName === "SMALL") { if ([title, text(h1)].includes(text(ch))) ch.remove(); else ch.after(" "); } });   // 분류 표시(<small>)는 문제 글과 붙지 않게 띄어 쓴다
     c.querySelectorAll("button,svg,img,audio,canvas").forEach(x => x.remove());
     let qt = text(c); try { const ex = typeof window.fgWrongText === "function" ? window.fgWrongText() : null; if (ex) qt = ex; } catch (er) {}   // 그림·소리 문제는 글로 풀어 쓴 문제로 바꿔 기록(화면 쪽 스크립트가 fgWrongText를 정의)
-    snap = { q: qt, o: [...document.querySelectorAll(".opt")].map(text), picked: text(b) };
+    let mm = null; try { mm = typeof window.fgWrongMedia === "function" ? window.fgWrongMedia() : null; } catch (er) {}   // 그림·소리·배치도 문제의 다시 보기 정보
+    snap = { m: mm, q: qt, o: [...document.querySelectorAll(".opt")].map(text), picked: text(b) };
   }, true);
   document.addEventListener("click", e => {
     const b = e.target.closest(".opt"); if (!b || !snap) return; const s = snap; snap = null;
     const okEl = document.querySelector(".opt.ok"); if (!okEl) return; const a = text(okEl), id = idOf(file, s.q, a);
-    if (b.classList.contains("bad")) wrong({ id, f: file, t: title, q: s.q, a, o: s.o, k: "mc" }); else if (b.classList.contains("ok")) right(id);
+    if (b.classList.contains("bad")) wrong({ id, f: file, t: title, q: s.q, a, o: s.o, k: "mc", m: s.m || undefined }); else if (b.classList.contains("ok")) right(id);
     badge();
   });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", badge); else badge();

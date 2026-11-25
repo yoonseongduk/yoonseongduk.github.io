@@ -151,6 +151,10 @@ SNDT = {f: t for f, t in SNDT.items() if any(f in v for v in SND.values())}
 DATA = {"SEATW": {str(n): where for n, _, where in SEATS}, "SNDQ": SNDQ, "SND": {k: v for k, v in SND.items() if v}, "SNDT": SNDT, "I": INFOS, "SVG": {i: icon(i) for i in ORDER}, "SEAT": {str(n): seating(n) for n, _, _ in SEATS}, "IMG": IMG, "INFO": INFO, "SHOW": SHOW, "CMP": {**{i: size_compare(i, False) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, False) for i, _, _ in WIND_SIZES}}, "CMPN": {**{i: size_compare(i, True) for i, _, _ in STR_SIZES}, **{i: winds_compare(i, True) for i, _, _ in WIND_SIZES}}}
 tpl = open("orch_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../orch-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
+# 오답 노트용 작은 모듈(악기 그림·배치도·소리 목록만): wrong-notes.html 이 틀린 그림·소리 문제를 다시 보여 줄 때 써요
+MEDIA = {"SVG": DATA["SVG"], "SEAT": DATA["SEAT"], "SND": DATA["SND"], "SNDT": DATA["SNDT"]}
+mt = open("orch_media_tpl.js", encoding="utf-8").read(); assert "/*MEDIA*/null" in mt
+open("../../orch-media.js", "w", encoding="utf-8").write(mt.replace("/*MEDIA*/null", json.dumps(MEDIA, ensure_ascii=False, separators=(",", ":"))))
 def hook(path):
     t = open(path, encoding="utf-8").read()
     if 'src="orch-mode.js"' not in t:

@@ -148,6 +148,10 @@
   }
 
   // ── 오답 노트(wrong-hook.js)용: 그림·소리·배치도 문제는 화면의 그림·소리가 노트에 안 남으므로, 글만으로도 풀 수 있는 문제 글로 바꿔서 기록해요(정답 낱말은 ○○로 가려요)
+  window.fgWrongMedia = function () {   // 오답 노트에서 그림·배치도·소리를 다시 보여 주기 위한 짧은 설명표
+    var cur = typeof qs !== "undefined" && qs && qs[i]; if (!cur) return null; var key = cur.d[0], m = DATA.IMG[key], sq = DATA.SNDQ && DATA.SNDQ[key];
+    if (sq) return { k: "a", id: sq }; if (m && m[0] === "i") return { k: "i", id: m[1] }; if (m && m[0] === "s") return { k: "s", n: m[1] }; return null;
+  };
   window.fgWrongText = function () {
     var cur = typeof qs !== "undefined" && qs && qs[i]; if (!cur) return null; var key = cur.d[0], m = DATA.IMG[key], sq = DATA.SNDQ && DATA.SNDQ[key], id = sq || (m && m[0] === "i" ? m[1] : null);
     var hide = function (t, a) { return String(t).split(a.name).join("○○").split(a.en).join("○○"); };

@@ -310,6 +310,9 @@
     saveWrong(); var b = document.getElementById("artreview"); if (b) b.textContent = reviewLabel();
   }
   var reviewLabel = function () { return "🔁 틀린 그림 복습 (" + wrongList.length + ")"; };
+  // 오답 노트(wrong-hook.js)용: 그림 문제는 작품 이름이 든 글 문제로 바꿔 기록하고, 그림 보기 정보(m)도 함께 남겨요
+  window.fgWrongText = function () { var c = typeof qs !== "undefined" && qs && qs[i]; return c && c.d.img ? c.d.alt : null; };
+  window.fgWrongMedia = function () { var c = typeof qs !== "undefined" && qs && qs[i]; return c && c.d.img ? { k: "w", t: c.d.tt } : null; };
   function mkItem(q) { var d = [q[0], q[1], q[2], q[3], q[6]]; d.alt = "‘" + q[5] + "’의 작가는 누구일까요?"; d.tt = q[5]; d.meta = q[7]; return d; }
   function startReview() {
     if (!wrongList.length) return; var picks = shuffle(wrongList).slice(0, 10);

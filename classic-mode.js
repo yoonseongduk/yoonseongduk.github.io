@@ -175,6 +175,12 @@
     var w = DATA.W[t], ban = (DATA.AMBIG[t] || []);
     return shuffle(Object.keys(DATA.W).filter(function (x) { var v = DATA.W[x]; return x !== t && v[6] !== w[6] && ban.indexOf(v[6]) < 0 && v[4] <= 2 && (DATA.AMBIG[x] || []).indexOf(w[6]) < 0; })).slice(0, 3);
   }
+  // 오답 노트(wrong-hook.js)용: 소리 문제는 글만으로도 풀 수 있는 문제로 바꿔 기록하고, 소리 듣기 정보(m)도 함께 남겨요
+  window.fgWrongText = function () {
+    var c = typeof qs !== "undefined" && qs && qs[i]; if (!c || !c.d.aud) return null; var w = DATA.W[c.d.tt];
+    return c.d.kind === "t" ? "🎧 소리 문제 — " + w[0] + "(" + w[5] + ")의 " + w[2] + ", " + w[1] + "에 만들었어요. 이 곡의 제목은 무엇일까요?" : "🎧 소리 문제 — ‘" + c.d.tt + "’의 작곡가는 누구일까요?";
+  };
+  window.fgWrongMedia = function () { var c = typeof qs !== "undefined" && qs && qs[i]; return c && c.d.aud ? { k: "c", t: c.d.tt } : null; };
   function mkItem(t, kind, r) {
     var w = DATA.W[t], d;
     if (kind === "t") d = ["이 곡의 제목은 무엇일까요?", t, wrongTitles(t), w[3], w[0] + "(" + w[5] + ")의 " + w[2] + "이에요. " + w[1] + "에 만들었어요."];

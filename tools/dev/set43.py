@@ -127,6 +127,9 @@ for a in A.values():
 DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}}
 tpl = open("art_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../art-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
+# 오답 노트용 작은 모듈(명화 그림 찾기 정보만): wrong-notes.html 이 틀린 그림 문제의 그림을 다시 보여 줄 때 써요
+_mt = open("art_media_tpl.js", encoding="utf-8").read(); assert "/*MEDIA*/null" in _mt
+open("../../art-media.js", "w", encoding="utf-8").write(_mt.replace("/*MEDIA*/null", json.dumps(W, ensure_ascii=False, separators=(",", ":"))))
 print("그림 모드: 작품 대응", len(W), "| 그림 문제", len(QI), "| 대표작 있는 작가", len(G), "| 그림 제외 작가", len(NO_IMAGE))
 def hook(path):
     t = open(path, encoding="utf-8").read()

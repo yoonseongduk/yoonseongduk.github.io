@@ -114,6 +114,9 @@ DATA = {"W": W, "C": [[c["name"], c["era"], c["id"]] for c in C.values()], "AMBI
         "P": PICK}
 tpl = open("classic_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../classic-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
+# 오답 노트용 작은 모듈(곡별 음원 이름만): wrong-notes.html 이 틀린 듣기 문제의 소리를 다시 들려줄 때 써요
+_mt = open("classic_media_tpl.js", encoding="utf-8").read(); assert "/*MEDIA*/null" in _mt
+open("../../classic-media.js", "w", encoding="utf-8").write(_mt.replace("/*MEDIA*/null", json.dumps(DATA["P"], ensure_ascii=False, separators=(",", ":"))))
 def hook(path):
     t = open(path, encoding="utf-8").read()
     if 'src="classic-mode.js"' not in t:

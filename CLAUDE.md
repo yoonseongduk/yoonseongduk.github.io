@@ -160,6 +160,7 @@
 
 ## 8. PC·클라우드·폰 동기화 (2026-11-18)
 
+- **PC에서 음질 분석은 더블클릭 한 번**(2026-11-26 사용자 요청: PC 세션 연결이 번거로움): `tools\음질분석.bat` = git pull → `py music_pick.py --follow`(중단돼도 다시 실행하면 이어서) → `py tools\dev\classic_publish.py`(set44 → 클래식 두 화면 ship → 릴리스 → make-sw → featcheck) → 바뀐 파일만 add → commit → push. Claude·Remote Control 없이 PC만 켜 두면 된다. PC 세션(Remote Control)으로 돌리는 중에는 동시에 실행하지 않는다.
 - **클래식 음원 라이선스 확대**(2026-11-24 사용자 결정 2번): `music_pick.py`의 `CC` 정규식으로 CC BY·CC BY-SA 후보도 받고, 앱(`classic_mode_tpl.js`)은 `audioFiles(names, max, true)`로 확인해 **녹음한 사람·라이선스 링크를 곡 아래에 표시**한다(비영리·변경금지 제외). 옛 녹음뿐인 곡은 `music_pick.py`의 `PINNED`(곡 → 현대 녹음 파일 이름, 재실행해도 유지)로 지정하고(라 트라비아타·아이다=ICBSA 오페라 녹음 CC BY-SA, 전주곡 c♯단조, 랩소디 인 블루=미 해병대 밴드), 현대 녹음이 없으면 `NOAUDIO`(라 보엠)로 글로만 둔다.
 
 - 코드는 이 공개 저장소로, 작업 문서(`design\`·`tests\`·`작업상태.md`)는 비공개 저장소로 나눠 동기화한다. 방법은 `비공개_동기화.md`(비공개 저장소에 있음)를 따른다.

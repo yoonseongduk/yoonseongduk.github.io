@@ -1088,5 +1088,104 @@
    }
   ],
   "archive": []
+ },
+ "파반": {
+  "commons": [
+   {
+    "f": "Claude Gervaise - Pavane-M'amye est tant honnest et saige.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Claude_Gervaise_-_Pavane-M%27amye_est_tant_honnest_et_saige.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 217,
+    "dur": 65,
+    "size": 1762330,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Maurice Ravel - Pavane pour une infante défunte.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Maurice_Ravel_-_Pavane_pour_une_infante_d%C3%A9funte.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 110,
+    "dur": 270,
+    "size": 3702044,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Maurice Ravel - Pavane pour une infante défunte - David Hernando Vitores - Kayoko Morimoto (Wasei Duo).oga",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Maurice_Ravel_-_Pavane_pour_une_infante_d%C3%A9funte_-_David_Hernando_Vitores_-_Kayoko_Morimoto_%28Wasei_Duo%29.oga?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 4.0",
+    "kbps": 419,
+    "dur": 332,
+    "size": 17399185,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Maurice Ravel - Thérèse Dussaut - Pavane pour une infante défunte.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Maurice_Ravel_-_Th%C3%A9r%C3%A8se_Dussaut_-_Pavane_pour_une_infante_d%C3%A9funte.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 2.0",
+    "kbps": 150,
+    "dur": 308,
+    "size": 5781065,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Pavane.Thoinot.Arbeau.meantone.temperament.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/46/Pavane.Thoinot.Arbeau.meantone.temperament.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC0",
+    "kbps": 147,
+    "dur": 48,
+    "size": 875293,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Petits Chanteurs de Passy - Pavane de Thoinot Arbeau.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/94/Petits_Chanteurs_de_Passy_-_Pavane_de_Thoinot_Arbeau.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 3.0",
+    "kbps": 334,
+    "dur": 137,
+    "size": 5718196,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Pierre Attaignant-Pavane.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Pierre_Attaignant-Pavane.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 3.0",
+    "kbps": 239,
+    "dur": 56,
+    "size": 1675657,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Ravel's Pavane pour une infante défunte, M. 19 (accordion orchestra) - Paul De Bra.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/8/88/Ravel%27s_Pavane_pour_une_infante_d%C3%A9funte%2C_M._19_%28accordion_orchestra%29_-_Paul_De_Bra.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY 4.0",
+    "kbps": 111,
+    "dur": 329,
+    "size": 4563947,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tielman Susato Battle Pavane.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/cb/Tielman_Susato_Battle_Pavane.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 3.0",
+    "kbps": 170,
+    "dur": 140,
+    "size": 2965914,
+    "score": 100,
+    "src": "commons"
+   }
+  ],
+  "archive": []
+ },
+ "솔베이그의 노래(페르 귄트 중)": {
+  "commons": [],
+  "archive": []
  }
 }

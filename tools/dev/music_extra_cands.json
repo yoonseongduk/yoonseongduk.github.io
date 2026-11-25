@@ -973,5 +973,120 @@
  "1812년 서곡": {
   "commons": [],
   "archive": []
+ },
+ "피아노 협주곡 1번 b♭단조": {
+  "commons": [
+   {
+    "f": "Tchaikovsky, Concerto No.1 in B-flat minor Op.23, I. Allegro.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/48/Tchaikovsky%2C_Concerto_No.1_in_B-flat_minor_Op.23%2C_I._Allegro.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC0",
+    "kbps": 107,
+    "dur": 1127,
+    "size": 15145553,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky, Concerto No.1 in B-flat minor Op.23, II. Andantino.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Tchaikovsky%2C_Concerto_No.1_in_B-flat_minor_Op.23%2C_II._Andantino.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC0",
+    "kbps": 107,
+    "dur": 388,
+    "size": 5168194,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky, Concerto No.1 in B-flat minor Op.23, III. Allegro.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/01/Tchaikovsky%2C_Concerto_No.1_in_B-flat_minor_Op.23%2C_III._Allegro.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC0",
+    "kbps": 107,
+    "dur": 370,
+    "size": 4933984,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky - Piano Concerto No. 1 (first movement cadenza).ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Tchaikovsky_-_Piano_Concerto_No._1_%28first_movement_cadenza%29.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 3.0",
+    "kbps": 128,
+    "dur": 193,
+    "size": 3091495,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Manfred Symphony, Op.58 – Pyotr Ilyich Tchaikovsky.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Manfred_Symphony%2C_Op.58_%E2%80%93_Pyotr_Ilyich_Tchaikovsky.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 4.0",
+    "kbps": 128,
+    "dur": 3205,
+    "size": 51424418,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Serenade For Strings In C Major, Op. 48 - Pyotr Ilyich Tchaikovsky.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/77/Serenade_For_Strings_In_C_Major%2C_Op._48_-_Pyotr_Ilyich_Tchaikovsky.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY 4.0",
+    "kbps": 129,
+    "dur": 1524,
+    "size": 24559899,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Tchaikovsky - Symphony No.5, E minor, Op.64 - van Kempen - Primo movimento.oga",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Tchaikovsky_-_Symphony_No.5%2C_E_minor%2C_Op.64_-_van_Kempen_-_Primo_movimento.oga?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 146,
+    "dur": 821,
+    "size": 15011937,
+    "score": 100,
+    "src": "commons"
+   }
+  ],
+  "archive": []
+ },
+ "유모레스크": {
+  "commons": [
+   {
+    "f": "Dvořák - Humoresque Op. 101 No. 7.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/7b/Dvo%C5%99%C3%A1k_-_Humoresque_Op._101_No._7.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 2.0",
+    "kbps": 153,
+    "dur": 188,
+    "size": 3601739,
+    "score": 100,
+    "src": "commons"
+   },
+   {
+    "f": "Yon 02 Humoresque.ogg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Yon_02_Humoresque.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "CC BY-SA 3.0",
+    "kbps": 209,
+    "dur": 124,
+    "size": 3229022,
+    "score": 100,
+    "src": "commons"
+   }
+  ],
+  "archive": []
+ },
+ "슬라브 무곡": {
+  "commons": [
+   {
+    "f": "Slavonic Dance No. 2 - Strolling Strings - United States Air Force Band.mp3",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/95/Slavonic_Dance_No._2_-_Strolling_Strings_-_United_States_Air_Force_Band.mp3?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "lic": "Public domain",
+    "kbps": 325,
+    "dur": 208,
+    "size": 8465994,
+    "score": 100,
+    "src": "commons"
+   }
+  ],
+  "archive": []
  }
 }

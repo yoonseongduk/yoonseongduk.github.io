@@ -94,6 +94,7 @@
     function next() {
       if (i >= keys.length) {
         var en = ((keys.filter(function (k) { return /^en:/.test(k); })[0] || keys[0] || "").replace(/^\w+:/, "")).replace(/_/g, " ");
+        if (opts && opts.nofb) { cache[id] = null; saveCache(); return Promise.resolve(null); }   // 지정한 파일만 쓰기(저작권이 남은 화가는 검색으로 아무 사진이나 가져오지 않아요)
         return fallback(en, tokens, kind, cc).then(function (r) { cache[id] = r || null; saveCache(); return r || null; });
       }
       var k = keys[i++], fm = /^file:(.+)$/.exec(k);

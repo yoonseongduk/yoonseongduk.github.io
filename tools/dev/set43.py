@@ -189,11 +189,12 @@ W, QI, G = {}, [], {}
 for sid in SETS:
     use(sid)
     for a in A.values():
-        if a["id"] in NO_IMAGE: continue
         tk = _tokens(a["id"], a["en"], a["name"])
         for w in sorted(a["works"], key=lambda z: z["fame"]):
             if w["t"] not in WIKI: continue
-            W[w["t"]] = {"k": WIKI[w["t"]], "a": a["id"], "t": tk, "kd": w["kind"]}
+            cc = a["id"] in NO_IMAGE   # 저작권이 남은 화가: CC BY·CC BY-SA로 공개된 커먼즈 파일(file:)만, 저작자·라이선스를 붙여 보여 줘요(2026-11-26 사용자 결정)
+            if cc and not all(k.startswith("file:") for k in WIKI[w["t"]]): continue
+            W[w["t"]] = {"k": WIKI[w["t"]], "a": a["id"], "t": tk, "kd": w["kind"], **({"cc": 1} if cc else {})}
             G.setdefault(a["id"], w["t"])
             QI.append(["이 그림의 작가는 누구일까요?", a["name"], pick_artists(a, w["fame"], ban=AMBIG.get(w["t"], ())), a["era"], w["fame"], w["t"], f"‘{w['t']}’ — " + info(a, w), [w["y"], w["place"] or "", J[w["kind"]], a["name"], a["years"], a["country"]], sid])
 A, ORDER, ALLW = ALLA, ORDER_ALL, [w for a in ALLA.values() for w in a["works"]]
@@ -202,7 +203,8 @@ LINK = {}
 for a in A.values():
     if a["id"] not in NO_IMAGE: continue
     LINK[a["name"]] = a["name"]
-    for w in a["works"]: LINK[w["t"]] = a["name"]
+    for w in a["works"]:
+        if w["t"] not in W: LINK[w["t"]] = a["name"]   # 앱 안에 보여 줄 수 있는(CC BY 공개) 그림은 링크 대신 그림으로
 DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}, "L": LINK}
 tpl = open("art_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../art-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))

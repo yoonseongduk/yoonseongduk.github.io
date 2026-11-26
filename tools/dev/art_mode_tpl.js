@@ -24,7 +24,7 @@
   // ── 그림 하나 얻기: 통과하면 {src, page, title, license}, 아니면 null
   function preload(src) { return new Promise(function (res) { var im = new Image(), t = setTimeout(function () { res(false); }, 9000); im.onload = function () { clearTimeout(t); res(true); }; im.onerror = function () { clearTimeout(t); res(false); }; im.src = src; }); }
   var blobUrls = {};
-  function fetchOnline(title) { var w = DATA.W[title]; return w && window.fgOnline && fgOnline.on() ? fgOnline.wikiImage(w.k, w.t.map(norm), w.kd) : Promise.resolve(null); }
+  function fetchOnline(title) { var w = DATA.W[title]; return w && window.fgOnline && fgOnline.on() ? fgOnline.wikiImage(w.k, w.t.map(norm), w.kd, { cc: !!w.cc, nofb: !!w.cc }) : Promise.resolve(null); }
   function localInfo(title) {   // 오프라인에 있는 그림 정보(없으면 null): 앱에 든 것 → 폰에 저장한 것
     var e = local && local[title]; if (e) return { kind: "file", src: "art-img/" + e.f, page: e.p, title: e.t || title, license: e.l || "공개 도메인" };
     e = saved && saved[title]; return e && !e.pending ? { kind: "cache", src: e.src, page: e.page, title: e.title || title, license: e.license || "공개 도메인" } : null;
@@ -54,7 +54,7 @@
   var has = function (title) { return !!DATA.W[title] && (mode === "online" || (mode === "local" && !!localInfo(title))); };
   var localCount = function () { return titles.filter(function (t) { return !!localInfo(t); }).length; };
   var savedCount = function () { return saved ? Object.keys(saved).length : 0; };
-  var credit = function (r) { return '🖼️ 그림 출처: <a href="' + esc(r.page) + '" target="_blank" rel="noopener noreferrer">' + esc(r.label || "위키백과") + ' 「' + esc(r.title) + "」</a> (" + esc(r.license) + ")"; };
+  var credit = function (r) { return '🖼️ 그림 출처: <a href="' + esc(r.page) + '" target="_blank" rel="noopener noreferrer">' + esc(r.label || "위키백과") + ' 「' + esc(r.title) + "」</a> (" + (r.licenseUrl && /^https?:/.test(r.licenseUrl) ? '<a href="' + esc(r.licenseUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(r.license) + "</a>" : esc(r.license)) + ")" + (r.artist && !/public domain|cc0/i.test(r.license || "") ? " · 저작자·제공: " + esc(r.artist) : ""); };   // CC BY 그림은 저작자·라이선스 링크를 꼭 보여 줘요
   var CONSENT = "🌐 온라인 그림을 켜요.\n\n· 인터넷에서 저작권이 끝난 명화만 불러와요.\n· 불러올 때 이 기기의 인터넷 주소가 위키백과·위키미디어 서버에 전달돼요(이 앱은 개인 정보를 보내지 않아요).\n· 언제든 '글로만'으로 끌 수 있어요.\n\n켤까요?";
 
   // ── 화면 위 모드 선택
@@ -201,7 +201,9 @@
   function wikiLink(t) {
     var who = DATA.L && DATA.L[t]; if (!who || !(window.fgOnline && fgOnline.enabled)) return "";
     var q = t === who ? who : t.replace(/\(.*?\)/g, "").trim() + " " + who;
-    return '<a class="wlink" href="https://ko.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer">🔗 위키백과에서 ' + esc(t === who ? who + "의 그림" : "‘" + t + "’") + ' 찾아보기</a><small class="wlnote">저작권이 남아 있는 그림이라 앱 안에는 보여 주지 않아요(앱 밖에서 열려요).</small>';
+    return '<a class="wlink" href="https://ko.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer">🔗 위키백과에서 ' + esc(t === who ? who : "‘" + t + "’") + ' 찾아보기</a>' +
+      '<a class="wlink" href="https://commons.wikimedia.org/w/index.php?title=Special:MediaSearch&type=image&search=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer">🖼️ 위키미디어 커먼즈에서 그림 찾아보기</a>' +
+      '<small class="wlnote">저작권이 남아 있고 자유 이용 허락이 확인되지 않은 그림이라 앱 안에는 보여 주지 않아요(앱 밖에서 열려요).</small>';
   }
   function addLinkQ(cur) {
     if (!cur || !DATA.L) return; var keys = Object.keys(DATA.L), txt = cur.d[0] + " " + cur.d[1], hit = null;

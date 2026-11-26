@@ -10,7 +10,7 @@
     try { var sv = JSON.parse(lsGet("art-saved-v1") || "null"), e = sv && sv[t]; if (!e || e.pending || !("caches" in window)) return Promise.resolve(null);
       return caches.open("fg-art-saved-v1").then(function (c) { return c.match(e.src); }).then(function (r) { return r ? r.blob() : null; }).then(function (b) { return b ? { src: URL.createObjectURL(b), page: e.page, title: e.title || t, license: e.license || "공개 도메인" } : null; }).catch(function () { return null; }); } catch (er) { return Promise.resolve(null); }
   }
-  function online(t) { var w = W[t]; return w && window.fgOnline && fgOnline.on() && navigator.onLine !== false ? fgOnline.wikiImage(w.k, w.t.map(norm), w.kd) : Promise.resolve(null); }
+  function online(t) { var w = W[t]; return w && window.fgOnline && fgOnline.on() && navigator.onLine !== false ? fgOnline.wikiImage(w.k, w.t.map(norm), w.kd, { cc: !!w.cc, nofb: !!w.cc }) : Promise.resolve(null); }
   function zoom(src) {
     var v = document.createElement("div"); v.setAttribute("role", "dialog"); v.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:12px";
     v.innerHTML = '<img src="' + esc(src) + '" alt="" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:8px">'; v.addEventListener("click", function () { v.remove(); }); document.body.appendChild(v);

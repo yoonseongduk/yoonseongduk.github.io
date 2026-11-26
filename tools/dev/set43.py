@@ -22,7 +22,7 @@ NO_COUNTRY = {"bruegel", "vaneyck", "rubens", "elgreco", "chagall", "kandinsky",
 COUNTRIES = ["이탈리아", "프랑스", "네덜란드", "스페인", "독일", "영국", "노르웨이", "오스트리아", "일본", "한국(조선)", "멕시코", "미국", "벨기에"]
 STYLES = sorted({a["style"] for a in A.values() if a["style"]})
 PLACES = sorted({w["place"] for w in ALLW if w["place"] and " 등" not in w["place"]})
-J = {"그림": "그림", "조각": "조각", "벽화": "벽화", "판화": "판화", "드로잉": "드로잉", "서화": "서화"}
+J = {"설치": "설치 작품", "그림": "그림", "조각": "조각", "벽화": "벽화", "판화": "판화", "드로잉": "드로잉", "서화": "서화"}
 
 # 같은 제목을 다른 작가도 남긴 작품: 이 작가들은 그 작품 문제의 오답(보기)에 넣지 않아요(정답이 둘이 되지 않게)
 AMBIG = {"키스": {"munch"}, "해바라기": {"monet"}, "그네": {"renoir"}, "꿈": {"picasso"}, "피에타": {"titian", "delacroix", "vangogh"}, "바쿠스": {"titian", "rubens", "velazquez", "leonardo"},
@@ -32,7 +32,7 @@ AMBIG = {"키스": {"munch"}, "해바라기": {"monet"}, "그네": {"renoir"}, "
 # 흔한 제목(여러 화가가 같은 제목으로 그린 것): 다른 화가 문제의 오답 보기와 소장처 문제에 쓰지 않아요
 NODIST = {"자화상", "묵란도", "달마도", "새우", "까치", "황소", "초충도"}
 AMBIG.update({"자화상": {"gangsehwang", "gohuidong", "kimhongdo"}, "묵란도": {"kimjeonghui", "johuiryong"}, "초충도": {"simsajeong"}})
-CONFL = [{"산수화", "진경산수화", "남종화", "문인화", "수묵화", "선종화"}, {"추상미술", "추상표현주의"}, {"인상주의", "후기 인상주의", "신인상주의"}]   # 서로 비슷해서 한 문제의 보기에 같이 두지 않는 화풍
+CONFL = [{"추상미술", "단색화"}, {"산수화", "진경산수화", "남종화", "문인화", "수묵화", "선종화"}, {"추상미술", "추상표현주의"}, {"인상주의", "후기 인상주의", "신인상주의"}]   # 서로 비슷해서 한 문제의 보기에 같이 두지 않는 화풍
 data, level, seen = [], {}, set()
 def add(q, ans, wrong, era, expl, lv):
     if q in seen: return
@@ -131,17 +131,32 @@ def gen(sid):
             add(q, a["name"], pick_artists(a, lv, ban=set().union(*[AMBIG.get(w["t"], set()) for w in sel])), a["era"], f"{a['name']}({a['years']}·{a['country']}) — {a['bio']}", lv)
 
 
-    if sid == "korea":   # ⑦ 호(號) ↔ 화가, ⑧ 화가 → 시대
+    if sid in ("korea", "east"):   # ⑦ 호(號) ↔ 화가 (호가 있는 우리나라 화가만)
         hos = [A[x]["ho"] for x in ORDER if A[x]["ho"]]
+        hoa = [x for x in ORDER if A[x]["ho"]]
         for a in A.values():
             if not a["ho"]: continue
             lv = 1 if a["id"] in HO_EASY else (2 if min(w["fame"] for w in a["works"]) == 1 else 3)
             ex = f"{a['name']}({a['years']})의 호는 '{a['ho']}'예요. {a['bio']}"
-            add(f"호(號)가 ‘{a['ho']}’인 화가는 누구일까요?", a["name"], pick_artists(a, lv), a["era"], ex, lv)
+            add(f"호(號)가 ‘{a['ho']}’인 화가는 누구일까요?", a["name"], [A[x]["name"] for x in R.sample([y for y in hoa if y != a["id"]], 3)], a["era"], ex, lv)
             add(f"화가 ‘{a['name']}’의 호(號)는 무엇일까요?", a["ho"], R.sample([h for h in hos if h != a["ho"]], 3), a["era"], ex, min(3, lv + 1))
+    if sid == "korea":   # ⑧ 작품 → 만든 때(10년 단위), ⑨ 화가 → 살았던 때
+        import re as _re
+        def dec(y):
+            m = _re.fullmatch(r"(\d{3})\d(?:경|~\d{4}경?)?|(\d{3})0년대", y)
+            return (m.group(1) or m.group(2)) + "0년대" if m else None
+        decs = [f"{d}0년대" for d in range(190, 201)]
         for a in A.values():
+            for w in a["works"]:
+                d = dec(w["y"])
+                if not d or (w["y"][:4].isdigit() and "~" in w["y"] and w["y"][:3] != w["y"].split("~")[1][:3]): continue
+                k = decs.index(d); near = [x for x in decs if x != d and abs(decs.index(x) - k) <= 3]
+                add(f"{a['name']}의 ‘{w['t']}’은(는) 언제 만들어졌을까요?", d, R.sample(near, 3), a["era"], info(a, w), min(3, w["fame"] + 1))
+        for a in A.values():
+            if a["years"].endswith("~"): continue   # 살아 있는 화가는 빼요
             lv = min(3, min(w["fame"] for w in a["works"]) + 1)
-            add(f"‘{a['name']}’은(는) 어느 시대에 활동한 화가일까요?", a["era"], [e for e in KOREA_ERAS if e != a["era"]], a["era"], f"{a['name']}({a['years']}) — {a['bio']}", lv)
+            others = [A[x]["years"] for x in ORDER if x != a["id"] and A[x]["years"][:4] != a["years"][:4]]
+            add(f"화가 ‘{a['name']}’이(가) 태어나고 세상을 떠난 해는?", a["years"], R.sample(others, 3), a["era"], f"{a['name']}({a['years']}) — {a['bio']}", lv)
     if sid == "east":   # ⑦ 화가 → 시대(왕조)
         pers = sorted(set(PERIOD.values()))
         for a in A.values():
@@ -200,9 +215,9 @@ def hook(path):
     if 'src="art-mode.js"' not in t:
         t = t.replace("</body>", '<script src="online.js"></script>\n<script src="art-mode.js" defer></script>\n</body>', 1); open(path, "w", encoding="utf-8").write(t)
 
-QTITLE = {"west": ("art-quiz.html", "명화 작가 퀴즈", "🖼️", 20, "세계(서양) 명화의 작가와 작품, 시대·화풍을 맞혀 보세요. 우리나라 화가는 <a href=\"korean-art-quiz.html\">🖌️ 우리나라 화가 퀴즈</a>, 중국·일본 그림은 <a href=\"eastern-art-quiz.html\">🏯 동양화 퀴즈</a>에 있어요."),
-          "korea": ("korean-art-quiz.html", "우리나라 화가 퀴즈", "🖌️", 8, "조선의 안견·정선·김홍도·신윤복·김정희부터 근현대의 이중섭·박수근·김환기까지, 우리나라 화가와 작품·호(號)·시대를 맞혀 보세요."),
-          "east": ("eastern-art-quiz.html", "동양화 퀴즈", "🏯", 150, "중국(고개지·곽희·장택단·황공망…)과 일본(셋슈·소타쓰·호쿠사이·히로시게…)의 그림과 화가, 시대, 동양화 용어를 맞혀 보세요. 우리나라 화가는 <a href=\"korean-art-quiz.html\">🖌️ 우리나라 화가 퀴즈</a>에 있어요.")}
+QTITLE = {"west": ("art-quiz.html", "명화 작가 퀴즈", "🖼️", 20, "세계(서양) 명화의 작가와 작품, 시대·화풍을 맞혀 보세요. 우리나라 근현대 화가는 <a href=\"korean-art-quiz.html\">🖌️ 한국 근현대 화가 퀴즈</a>, 조선·중국·일본 그림은 <a href=\"eastern-art-quiz.html\">🏯 동양화 퀴즈</a>에 있어요."),
+          "korea": ("korean-art-quiz.html", "한국 근현대 화가 퀴즈", "🖌️", 8, "고희동·나혜석부터 이중섭·박수근·김환기·천경자, 백남준·박서보·김창열까지, 우리나라 근대·현대 화가와 작품·호(號)·이야기를 맞혀 보세요. 조선 화가는 <a href=\"eastern-art-quiz.html\">🏯 동양화 퀴즈</a>에 있어요."),
+          "east": ("eastern-art-quiz.html", "동양화 퀴즈", "🏯", 150, "조선(안견·정선·김홍도·신윤복·김정희…)과 중국(고개지·곽희·장택단·황공망…), 일본(셋슈·소타쓰·호쿠사이·히로시게…)의 그림과 화가, 호(號)·시대, 동양화 용어를 맞혀 보세요. 우리나라 근현대 화가는 <a href=\"korean-art-quiz.html\">🖌️ 한국 근현대 화가 퀴즈</a>에 있어요.")}
 for sid, (fn, title, emo, hue, desc) in QTITLE.items():
     make_quiz(H + fn, title, emo, hue, fn[:-5] + "-best-v1", desc + " 모든 화가와 대표작은 <a href=\"art-gallery.html\">🎨 명화 작가별 모음</a>에서 볼 수 있어요.", QUIZ[sid], label=title)
 
@@ -217,8 +232,8 @@ CSS = '''.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surfa
 BODY = '''  <div class="card"><div class="chips" id="sets"></div><div class="chips" id="eras"></div><div class="chips" id="lvs"></div><p class="muted" id="lvp"></p><input type="text" id="q" placeholder="작가·작품·나라·화풍·호 찾기 (예: 모네, 별, 단원, 우키요에)" aria-label="찾기"><p class="muted" id="cnt"></p><a class="btn" id="goq" href="art-quiz.html" style="text-align:center;text-decoration:none">🖼️ 명화 작가 퀴즈 풀기</a></div>
   <div id="list"></div>'''
 JS = '''const AR = ''' + json.dumps(AR, ensure_ascii=False) + ''', SETS = ''' + json.dumps({"west": WEST_ERAS, "korea": KOREA_ERAS, "east": EAST_ERAS}, ensure_ascii=False) + ''';
-// 묶음: 전체 / 서양 명화 / 우리나라 화가 / 동양화(중국·일본). 묶음마다 시대 단추와 '퀴즈 풀기' 단추가 바뀌어요
-const SETN = [["all", "전체"], ["west", "🌍 서양 명화"], ["korea", "🖌️ 우리나라"], ["east", "🏯 동양(중국·일본)"]], QZ = { all: ["art-quiz.html", "🖼️ 명화 작가 퀴즈 풀기"], west: ["art-quiz.html", "🖼️ 명화 작가 퀴즈 풀기"], korea: ["korean-art-quiz.html", "🖌️ 우리나라 화가 퀴즈 풀기"], east: ["eastern-art-quiz.html", "🏯 동양화 퀴즈 풀기"] };
+// 묶음: 전체 / 서양 명화 / 한국 근현대 / 동양화(조선·중국·일본). 묶음마다 시대 단추와 '퀴즈 풀기' 단추가 바뀌어요
+const SETN = [["all", "전체"], ["west", "🌍 서양 명화"], ["korea", "🖌️ 한국 근현대"], ["east", "🏯 동양화(조선·중국·일본)"]], QZ = { all: ["art-quiz.html", "🖼️ 명화 작가 퀴즈 풀기"], west: ["art-quiz.html", "🖼️ 명화 작가 퀴즈 풀기"], korea: ["korean-art-quiz.html", "🖌️ 한국 근현대 화가 퀴즈 풀기"], east: ["eastern-art-quiz.html", "🏯 동양화 퀴즈 풀기"] };
 let set = ld(KEY + "-set") || "all"; if (!QZ[set]) set = "all";
 const ERAS_OF = () => ["전체"].concat(set === "all" ? Object.values(SETS).flat() : SETS[set]);
 let era = ld(KEY + "-era") || "전체", lvf = +ld(KEY + "-lv") || 0; if (!(lvf >= 0 && lvf <= 3)) lvf = 0;
@@ -251,6 +266,6 @@ $("eras").addEventListener("click", ev => { const b = ev.target.closest("[data-e
 $("lvs").addEventListener("click", ev => { const b = ev.target.closest("[data-l]"); if (!b) return; lvf = +b.dataset.l; sv(KEY + "-lv", lvf); render(); });
 $("q").addEventListener("input", render); render();'''
 make_page(H + "art-gallery.html", "명화 작가별 모음", "🎨", 20, "art-gallery-v1",
-          "서양 명화·우리나라 화가·동양화(중국·일본)를 한곳에 모았어요. 그림 이미지는 담지 않고 작가와 대표작의 이름·연도·소장처만 정리했어요. 소장처와 제작 연도는 여러 자료와 달라질 수 있어요. 오래된 작품은 '경'(대략)으로 적었어요.",
+          "서양 명화·한국 근현대 화가·동양화(조선·중국·일본)를 한곳에 모았어요. 그림 이미지는 담지 않고 작가와 대표작의 이름·연도·소장처만 정리했어요. 소장처와 제작 연도는 여러 자료와 달라질 수 있어요. 오래된 작품은 '경'(대략)으로 적었어요.",
           BODY, JS, CSS)
 for _f in ("art-quiz.html", "korean-art-quiz.html", "eastern-art-quiz.html", "art-gallery.html"): hook(H + _f)

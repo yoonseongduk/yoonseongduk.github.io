@@ -22,7 +22,7 @@ NO_COUNTRY = {"bruegel", "vaneyck", "rubens", "elgreco", "chagall", "kandinsky",
 COUNTRIES = ["이탈리아", "프랑스", "네덜란드", "스페인", "독일", "영국", "노르웨이", "오스트리아", "일본", "한국(조선)", "멕시코", "미국", "벨기에"]
 STYLES = sorted({a["style"] for a in A.values() if a["style"]})
 PLACES = sorted({w["place"] for w in ALLW if w["place"] and " 등" not in w["place"]})
-J = {"설치": "설치 작품", "그림": "그림", "조각": "조각", "벽화": "벽화", "판화": "판화", "드로잉": "드로잉", "서화": "서화"}
+J = {"설치": "설치 작품", "영상": "영상 작품","그림": "그림", "조각": "조각", "벽화": "벽화", "판화": "판화", "드로잉": "드로잉", "서화": "서화"}
 
 # 같은 제목을 다른 작가도 남긴 작품: 이 작가들은 그 작품 문제의 오답(보기)에 넣지 않아요(정답이 둘이 되지 않게)
 AMBIG = {"키스": {"munch"}, "해바라기": {"monet"}, "그네": {"renoir"}, "꿈": {"picasso"}, "피에타": {"titian", "delacroix", "vangogh"}, "바쿠스": {"titian", "rubens", "velazquez", "leonardo"},

@@ -201,13 +201,14 @@
   function wikiLink(t, compact) {
     var who = DATA.L && DATA.L[t]; if (!who || !(window.fgOnline && fgOnline.enabled)) return "";
     var q = t === who ? who : t.replace(/\(.*?\)/g, "").trim() + " " + who;
-    var cq = (DATA.E && DATA.E[who]) || who;   // 커먼즈는 화가 영어 이름으로 찾아요(한국어 제목으로는 0건)
+    // 커먼즈 검색 이름: 결과가 더 많은 이름(영어/한국어, art_commons.json). 빈 글자 = 커먼즈에 파일이 없는 화가(장욱진 등) → 🖼️ 없음
+    var cq = DATA.E && who in DATA.E ? DATA.E[who] : who;
     var A = ' target="_blank" rel="noopener noreferrer"';
     // 모음의 작품 줄: 설명 없이 아이콘 단추만(2026-11-26 사용자 요청: 링크 두 줄이 붙어 있어 누르기 어려움)
     if (compact) return '<a class="wicon" href="https://ko.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) + '"' + A + ' title="위키백과에서 찾아보기(앱 밖)" aria-label="‘' + esc(t) + '’ 위키백과에서 찾아보기">🔗</a>' +
-      '<a class="wicon" href="https://commons.wikimedia.org/w/index.php?title=Special:MediaSearch&type=image&search=' + encodeURIComponent(cq) + '"' + A + ' title="위키미디어 커먼즈에서 그림 찾아보기(앱 밖)" aria-label="' + esc(who) + ' 그림 커먼즈에서 찾아보기">🖼️</a>';
+      (cq ? '<a class="wicon" href="https://commons.wikimedia.org/w/index.php?title=Special:MediaSearch&type=image&search=' + encodeURIComponent(cq) + '"' + A + ' title="위키미디어 커먼즈에서 그림 찾아보기(앱 밖)" aria-label="' + esc(who) + ' 그림 커먼즈에서 찾아보기">🖼️</a>' : "");
     return '<a class="wlink" href="https://ko.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer">🔗 위키백과에서 ' + esc(t === who ? who : "‘" + t + "’") + ' 찾아보기</a>' +
-      '<a class="wlink" href="https://commons.wikimedia.org/w/index.php?title=Special:MediaSearch&type=image&search=' + encodeURIComponent(cq) + '" target="_blank" rel="noopener noreferrer">🖼️ 위키미디어 커먼즈에서 ' + esc(who) + ' 그림 찾아보기</a>' +
+      (cq ? '<a class="wlink" href="https://commons.wikimedia.org/w/index.php?title=Special:MediaSearch&type=image&search=' + encodeURIComponent(cq) + '" target="_blank" rel="noopener noreferrer">🖼️ 위키미디어 커먼즈에서 ' + esc(who) + ' 그림 찾아보기</a>' : "") +
       '<small class="wlnote">저작권이 남아 있고 자유 이용 허락이 확인되지 않은 그림이라 앱 안에는 보여 주지 않아요(앱 밖에서 열려요). 커먼즈에는 자유롭게 쓸 수 있는 자료만 있어서 이 작품 자체는 없을 수 있어요.</small>';
   }
   function addLinkQ(cur) {

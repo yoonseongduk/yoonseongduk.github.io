@@ -1,7 +1,9 @@
 # 명화 그림 모드(온라인·내장)용 위키백과 항목 대응표. 작품 제목(art_data.py) → 위키백과 항목 후보(앞에서부터 시도).
 #   "en:" 영어판, "ko:" 한국어판. 후보가 틀려도 안전: 런타임(online.js)·art_fetch.py 가 ① 항목 설명에 작가 이름이 있는지 ② 그림이 공개 도메인인지 확인하고, 아니면 그림 없이 글로만 보여 줘요.
 #   저작권이 남아 있을 수 있는 작가(사후 70년이 안 지났거나 확실하지 않은 작가)는 NO_IMAGE 에 넣어 그림을 아예 쓰지 않아요.
-NO_IMAGE = {"matisse", "picasso", "dali", "magritte", "chagall", "warhol", "pollock", "kahlo", "hopper"}
+NO_IMAGE = {"matisse", "picasso", "dali", "magritte", "chagall", "warhol", "pollock", "kahlo", "hopper",
+            # 우리나라 근현대 화가·중국 근대 화가(2026-11-26 추가)
+            "gohuidong", "ohjiho", "leejungseop", "parksugeun", "kimwhanki", "changucchin", "chunkyungja", "leeungno", "kimkichang", "qibaishi", "xubeihong"}
 WIKI = {
  # (2026-11-23 실제 위키백과로 검증: 사진 저작권이 남은 천지창조·다비드 상·피에타, 그림첩으로 연결되던 한국 풍속화, 대표 그림이 없는 항목은 대응에서 뺌 → 그림 없이 글로만)
  "모나리자": ["en:Mona_Lisa"], "최후의 만찬": ["en:The_Last_Supper_(Leonardo)"], "암굴의 성모": ["en:Virgin_of_the_Rocks"], "흰 담비를 안은 여인": ["en:Lady_with_an_Ermine"],
@@ -52,15 +54,22 @@ WIKI = {
  "회색과 검정의 배열 1번(화가의 어머니)": ["en:Whistler's_Mother"], "마담 X": ["en:Portrait_of_Madame_X"],
  "가나가와 해변의 높은 파도": ["en:The_Great_Wave_off_Kanagawa"], "맑은 날의 남풍(붉은 후지)": ["en:Fine_Wind,_Clear_Morning"],
  
- "인왕제색도": ["ko:인왕제색도"], "금강전도": ["ko:금강전도"], "몽유도원도": ["ko:몽유도원도"], 
+ "인왕제색도": ["ko:인왕제색도"], "금강전도": ["ko:금강전도"], "몽유도원도": ["ko:몽유도원도"], "세한도": ["ko:세한도"],
+ # 동양화(2026-11-26, 영어 위키백과에 항목이 있는 것만 확인해서 넣음)
+ "청명상하도": ["en:Along_the_River_During_the_Qingming_Festival"], "부춘산거도": ["en:Dwelling_in_the_Fuchun_Mountains"], "여사잠도": ["en:Admonitions_Scroll"],
+ "오우도(다섯 마리 소)": ["en:Five_Oxen"], "조춘도(이른 봄)": ["en:Early_Spring_(painting)"], "작화추색도": ["en:Autumn_Colors_on_the_Que_and_Hua_Mountains"], "육시도(여섯 개의 감)": ["en:Six_Persimmons"],
+ "홍백매도 병풍": ["en:Red_and_White_Plum_Blossoms"], "연자화도 병풍": ["en:Irises_screen"], "송림도 병풍": ["en:Shōrin-zu_byōbu"], "파묵산수도": ["en:Haboku_sansui"], "추동산수도": ["en:Autumn_and_Winter_Landscapes"],
+ "오하시 아타케의 소나기": ["en:Sudden_Shower_over_Shin-Ōhashi_bridge_and_Atake"], "도카이도 53역참": ["en:The_Fifty-three_Stations_of_the_Tōkaidō"], "호쿠사이 만화": ["en:Hokusai_Manga"],
+
 }
 # 작가 이름 토큰이 너무 흔한 단어면 따로 지정(예: David 는 다비드 상과 헷갈려요)
-TOKEN_OVERRIDE = {"rembrandt": ["rembrandt"], "david": ["jacques-louis david"], "turner": ["j. m. w. turner", "joseph mallord william turner", "turner"], "constable": ["john constable", "constable"], "hals": ["frans hals"],
+TOKEN_OVERRIDE = {"rembrandt": ["rembrandt"], "hanhuang": [], "david": ["jacques-louis david"], "turner": ["j. m. w. turner", "joseph mallord william turner", "turner"], "constable": ["john constable", "constable"], "hals": ["frans hals"],
                   "manet": ["édouard manet", "edouard manet", "manet"], "monet": ["claude monet", "monet"]}
 
 EXTRA_TOKENS = {"raphael": ["raphael", "raffaello"], "titian": ["titian", "tiziano"], "bruegel": ["bruegel", "brueghel"], "elgreco": ["el greco", "greco"], "vaneyck": ["van eyck"],
                 "lautrec": ["lautrec", "toulouse-lautrec"], "friedrich": ["friedrich"], "michelangelo": ["michelangelo"], "leonardo": ["leonardo"], "holbein": ["holbein"], "durer": ["durer", "dürer"],
-                "velazquez": ["velazquez", "velázquez"], "kimhongdo": ["김홍도", "단원"], "sinyunbok": ["신윤복", "혜원"], "jeongseon": ["정선", "겸재"], "angyeon": ["안견"], "kimjeonghui": ["김정희", "추사"]}
+                "velazquez": ["velazquez", "velázquez"], "kimhongdo": ["김홍도", "단원"], "sinyunbok": ["신윤복", "혜원"], "jeongseon": ["정선", "겸재"], "angyeon": ["안견"], "kimjeonghui": ["김정희", "추사"],
+                "zhangzeduan": ["zhang zeduan"], "hanhuang": ["han huang"], "muqi": ["muqi", "mu qi"], "sesshu": ["sesshu"], "tohaku": ["tohaku"], "korin": ["korin"], "hokusai": ["hokusai"], "hiroshige": ["hiroshige"]}
 def tokens(aid, en, name):
     """위키백과 항목 설명에 하나 이상 들어 있어야 하는 작가 이름(영문·한글). online.js 의 확인과 같은 규칙."""
     if aid in TOKEN_OVERRIDE: t = list(TOKEN_OVERRIDE[aid])

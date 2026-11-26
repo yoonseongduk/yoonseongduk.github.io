@@ -1,4 +1,4 @@
-/* 명화 그림 모드 — 명화 작가 퀴즈(art-quiz.html)와 명화 작가별 모음(art-gallery.html) 공용.
+/* 명화 그림 모드 — 명화 작가 퀴즈(art-quiz.html)·우리나라 화가 퀴즈(korean-art-quiz.html)·동양화 퀴즈(eastern-art-quiz.html)와 명화 작가별 모음(art-gallery.html) 공용.
    그림 보기 3가지: 📴 글로만(기본·오프라인) / 🌐 온라인(저작권이 끝난 명화만 위키백과에서 불러옴) / 📦 저장한 그림(오프라인).
    '저장한 그림' = ① 앱에 들어 있는 art-img/ (tools/dev/art_fetch.py 가 PC에서 받아 둠) + ② 이 폰에 📥 저장한 그림(Cache 저장소, 인터넷이 있을 때 한 번 저장하면 오프라인에서도 보임).
    이 파일은 tools/dev/set43.py 가 만들어요(직접 고치지 말고 tools/dev/art_mode_tpl.js 와 set43.py 를 고치세요).
@@ -9,6 +9,9 @@
   var AS = "art-autosave-v1", MK = "art-img-mode-v1", ONLY = "art-img-only-v1", SAVED = "art-saved-v1", CACHE = "fg-art-saved-v1";
   var mode = "text", local = null, saved = null, onlyImg = false;
   var isQuiz = !!document.getElementById("opts") && typeof start === "function", isGal = !!document.getElementById("list") && !isQuiz;
+  // 퀴즈가 세 개(서양 명화 art-quiz·우리나라 화가 korean-art-quiz·동양화 eastern-art-quiz)라 그림 문제도 그 퀴즈 것만 섞어요(Q의 9번째 칸 = 묶음)
+  var SETQ = isQuiz ? (/korean-art-quiz/.test(location.pathname) ? "korea" : /eastern-art-quiz/.test(location.pathname) ? "east" : "west") : null;
+  if (SETQ) DATA.Q = DATA.Q.filter(function (q) { return (q[8] || "west") === SETQ; });
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };

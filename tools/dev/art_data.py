@@ -224,33 +224,21 @@ ARTISTS = [
  ("sargent", "존 싱어 사전트", "John Singer Sargent", "1856~1925", "미국", None, "근대·현대",
   "우아한 사교계 인물을 대담한 붓질로 그린 초상화가예요.",
   [("마담 X", "1884", "메트로폴리탄 미술관(뉴욕)", 3, "그림")]),
-
- ("hokusai", "가쓰시카 호쿠사이", "Katsushika Hokusai", "1760~1849", "일본", "우키요에", "동양",
-  "일본 에도 시대의 풍속 판화(우키요에) 화가로, 유럽의 인상파에도 큰 영향을 주었어요.",
-  [("가나가와 해변의 높은 파도", "1831경", None, 1, "판화"), ("맑은 날의 남풍(붉은 후지)", "1831경", None, 3, "판화")]),
- ("kimhongdo", "김홍도", "Kim Hong-do", "1745~?", "한국(조선)", "풍속화", "동양",
-  "호는 단원. 서민의 일상을 익살스럽고 따뜻하게 그린 조선 후기의 화가예요.",
-  [("씨름", "18세기 후반", "국립중앙박물관", 1, "그림"), ("서당", "18세기 후반", "국립중앙박물관", 1, "그림"),
-   ("무동", "18세기 후반", "국립중앙박물관", 3, "그림")]),
- ("sinyunbok", "신윤복", "Sin Yun-bok", "1758~?", "한국(조선)", "풍속화", "동양",
-  "호는 혜원. 양반과 기녀의 풍류와 여인의 맵시를 섬세하고 화려하게 그린 화가예요.",
-  [("미인도", "18세기 후반", "간송미술관", 1, "그림"), ("단오풍정", "18세기 후반", "간송미술관", 2, "그림"),
-   ("월하정인", "18세기 후반", "간송미술관", 2, "그림")]),
- ("jeongseon", "정선", "Jeong Seon", "1676~1759", "한국(조선)", "진경산수화", "동양",
-  "호는 겸재. 중국풍이 아니라 우리 땅의 실제 경치를 그린 '진경산수화'를 완성한 화가예요.",
-  [("인왕제색도", "1751", "리움미술관", 2, "그림"), ("금강전도", "1734", "리움미술관", 2, "그림")]),
- ("angyeon", "안견", "An Gyeon", "15세기", "한국(조선)", "산수화", "동양",
-  "조선 초기 최고의 화가예요. 안평대군이 꾼 복숭아꽃 마을의 꿈을 그림으로 옮겼어요.",
-  [("몽유도원도", "1447", "덴리 대학 도서관(일본)", 2, "그림")]),
- ("kimjeonghui", "김정희", "Kim Jeong-hui", "1786~1856", "한국(조선)", None, "동양",
-  "호는 추사. 독특한 글씨체(추사체)와 그림을 남긴 학자이자 서예가예요. 제주도로 유배되었어요.",
-  [("세한도", "1844", "국립중앙박물관", 2, "서화")]),
 ]
+WEST = ARTISTS
+from art_data_asia import KOREA, EAST, KOREA_ERAS, EAST_ERAS, HO, HO_EASY, PERIOD, KOREA_TRIVIA, EAST_TRIVIA
+ARTISTS = WEST + KOREA + EAST
+WEST_ERAS = [e for e in ERAS if e != "동양"]
+ERAS = WEST_ERAS + KOREA_ERAS + EAST_ERAS
+# 묶음: west=서양 명화(art-quiz), korea=우리나라 화가(korean-art-quiz), east=동양화 중국·일본(eastern-art-quiz)
+SET_OF = {**{a[0]: "west" for a in WEST}, **{a[0]: "korea" for a in KOREA}, **{a[0]: "east" for a in EAST}}
+
 
 if __name__ == "__main__":
     n = sum(len(a[8]) for a in ARTISTS)
     print("작가", len(ARTISTS), "작품", n)
     ids = [a[0] for a in ARTISTS]; assert len(ids) == len(set(ids)), "작가 id 중복"
     titles = [w[0] for a in ARTISTS for w in a[8]]; assert len(titles) == len(set(titles)), "작품 제목 중복: " + str([t for t in set(titles) if titles.count(t) > 1])
+    assert not (set(HO) | set(PERIOD)) - set(SET_OF), "HO/PERIOD id"
     eras = {a[6] for a in ARTISTS}; assert eras <= set(ERAS), eras - set(ERAS)
     for e in ERAS: print(e, sum(1 for a in ARTISTS if a[6] == e))

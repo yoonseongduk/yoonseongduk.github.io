@@ -74,6 +74,12 @@ h2 span { font-family: var(--font-body); font-size: .85rem; color: var(--muted);
 .icon .ico.card { height: 4.8rem; border-radius: 5px; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
 .icon .ico { height: 2.8rem; width: auto; display: block; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
 .game { position: relative; }
+.gw { position: relative; min-width: 0; display: flex; }
+.gw > .game { flex: 1; padding-bottom: 30px; }
+.fav { position: absolute; right: 6px; bottom: 6px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; font-size: 1.2rem; line-height: 1; cursor: pointer; color: var(--muted); }
+.fav[aria-pressed="true"] { color: #f2b705; }
+.quick h2 .clr { margin-left: auto; font: inherit; font-size: .78rem; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
+.hint { color: var(--muted); font-size: .82rem; margin: -4px 0 8px; }
 .game .qc { color: var(--c); font-weight: 700; font-size: .78rem; margin-top: auto; }
 .no { position: absolute; top: 8px; right: 10px; font-size: .72rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
 .game h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; margin: 0; line-height: 1.25; overflow-wrap: anywhere; }
@@ -116,7 +122,7 @@ footer { color: var(--muted); font-size: .85rem; }
     <button type="button" id="pwaBtn" hidden>앱으로 설치하기</button>
     <button type="button" id="pwaCopy" hidden>주소 복사하기</button>
   </section>
-  <input type="search" id="q" placeholder="게임 이름·설명·번호(예: 12)로 찾기" autocomplete="off" aria-label="게임 검색">
+  <input type="search" id="q" placeholder="게임 이름·설명·번호·초성(예: 12, ㅇㅁ)으로 찾기" autocomplete="off" aria-label="게임 검색">
   <div class="chips" id="chips" role="group" aria-label="분류"></div>
   <div id="casinoBox"></div>
   <div id="list"></div>
@@ -389,12 +395,22 @@ const $ = id => document.getElementById(id);
 const ico = e => /^img:/.test(e) ? '<img class="ico' + (/cards-trump\//.test(e) ? ' card' : '') + '" src="' + e.slice(4) + '" alt="">' : e;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 let group = "all", query = "";
+// ⭐ 즐겨찾기(fg-favs-v1)와 🕘 최근에 한 게임(fg-recent-v1, 각 화면의 home.js가 기록)은 이 폰에만 저장돼요
+const lsArr = k => { try { const a = JSON.parse(localStorage.getItem(k) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+const lsPut = (k, a) => { try { localStorage.setItem(k, JSON.stringify(a)); } catch (e) {} };
+let FAVS = lsArr("fg-favs-v1");
+// 초성 검색: "ㅂㄹ"로 "볼레로"를 찾아요
+const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+const cho = t => [...t].map(c => { const k = c.charCodeAt(0) - 0xAC00; return k >= 0 && k < 11172 ? CHO[Math.floor(k / 588)] : c; }).join("");
+const isCho = q => /^[ㄱ-ㅎ\s]+$/.test(q);
+const SUBN = Object.fromEntries(Object.values(SUBS).flat().map(x => [x[0], x[2]]));   // 소분류 이름(예: 단어)도 검색에 넣어요
 
 function render() {
   const q = query.trim().toLowerCase(), cOn = fgCasino.on(), G = GAMES.filter(g => fgCasino.show(g[0]));   // 카드·화투 놀이를 끄면 목록·검색·개수에서 빠져요
   if (!cOn && group === "casino") group = "all";
   // 숫자만 넣으면(앞에 # 있어도 돼요) 게임 고유번호로 찾아요
-  const qn = /^#?\d+$/.test(q) ? +q.replace("#", "") : 0, hit = g => qn ? NUM[g[0]] === qn : (g[2] + " " + g[3]).toLowerCase().includes(q);
+  const qn = /^#?\d+$/.test(q) ? +q.replace("#", "") : 0, ch = !qn && isCho(q), gname = g => { const x = GROUPS.find(r => r.id === g[4]); return x ? x.n : ""; };
+  const hit = g => qn ? NUM[g[0]] === qn : ch ? cho(g[2]).replace(/\s/g, "").includes(q.replace(/\s/g, "")) : (g[2] + " " + g[3] + " " + gname(g) + " " + (SUBN[g[5]] || "")).toLowerCase().includes(q);
   const shown = G.filter(g => (group === "all" || g[4] === group) && (!q || hit(g)));
   const net = q && group === "all" ? NETG.filter(g => fgCasino.show(g[0]) && (qn ? g[3] === qn : g[2].toLowerCase().includes(q))) : [];
   $("count").textContent = q || group !== "all" ? `${shown.length + net.length}개를 찾았어요 (전체 ${G.length}개)` : `게임 ${G.length}개`;
@@ -402,7 +418,7 @@ function render() {
     const n = g.id === "all" ? G.length : G.filter(x => x[4] === g.id).length;
     return `<button type="button" class="chip" data-g="${g.id}" aria-pressed="${g.id === group}">${g.e} ${g.n} ${n}</button>`;
   }).join("");
-  const card = (g, gr) => `<a class="game" style="--h:${gr.h}" href="${esc(g[0])}"><span class="icon" aria-hidden="true">${ico(g[1])}</span><span class="no">${BUZZ.includes(g[0]) ? '<span title="같이 하기 퀴즈 버저로도 할 수 있어요">🔔</span> ' : ""}#${NUM[g[0]] || ""}</span><h3>${esc(g[2])}</h3><p>${esc(g[3])}</p>${QCNT[g[0]] ? `<p class="qc">📚 ${QCNT[g[0]]}</p>` : ""}</a>`;
+  const card = (g, gr) => `<div class="gw"><a class="game" style="--h:${gr.h}" href="${esc(g[0])}"><span class="icon" aria-hidden="true">${ico(g[1])}</span><span class="no">${BUZZ.includes(g[0]) ? '<span title="같이 하기 퀴즈 버저로도 할 수 있어요">🔔</span> ' : ""}#${NUM[g[0]] || ""}</span><h3>${esc(g[2])}</h3><p>${esc(g[3])}</p>${QCNT[g[0]] ? `<p class="qc">📚 ${QCNT[g[0]]}</p>` : ""}</a><button type="button" class="fav" data-fav="${esc(g[0])}" aria-pressed="${FAVS.includes(g[0])}" aria-label="${esc(g[2])} 즐겨찾기${FAVS.includes(g[0]) ? " 빼기" : "에 넣기"}">${FAVS.includes(g[0]) ? "⭐" : "☆"}</button></div>`;
   const html = GROUPS.map(gr => {
     const items = shown.filter(g => g[4] === gr.id); if (!items.length) return "";
     const subs = SUBS[gr.id] || [], known = new Set(subs.map(x => x[0])), parts = subs.map(x => [x, items.filter(g => g[5] === x[0])]).filter(x => x[1].length);
@@ -412,12 +428,25 @@ function render() {
     return `<section><h2>${gr.e} ${gr.n}<span>${items.length}개</span></h2>${body}</section>`;
   }).join("") + (net.length ? `<section><h2>👫 같이 하기 게임<span>${net.length}개</span></h2><div class="grid">${net.map(g =>
       `<a class="game" style="--h:205" href="play-together.html"><span class="icon" aria-hidden="true">${ico(g[1])}</span><span class="no">#${g[3]}</span><h3>${esc(g[2])}</h3><p>👫 같이 하기 화면에서 폰을 연결해 함께 해요</p></a>`).join("")}</div></section>` : "");
+  let quick = "";
+  if (!q && group === "all") {
+    const grOf = g => GROUPS.find(r => r.id === g[4]) || { h: 200 }, byF = f => G.find(g => g[0] === f);
+    const favs = FAVS.map(byF).filter(Boolean), rec = lsArr("fg-recent-v1").map(byF).filter(Boolean).slice(0, 6);
+    quick += favs.length ? `<section class="quick"><h2>⭐ 즐겨찾기<span>${favs.length}개</span></h2><div class="grid">${favs.map(g => card(g, grOf(g))).join("")}</div></section>`
+      : `<p class="hint">💡 게임 카드 오른쪽 아래 ☆을 누르면 여기 맨 위 「⭐ 즐겨찾기」에 모여요.</p>`;
+    if (rec.length) quick += `<section class="quick"><h2>🕘 최근에 한 게임<span>${rec.length}개</span><button type="button" class="clr" id="recClr">지우기</button></h2><div class="grid">${rec.map(g => card(g, grOf(g))).join("")}</div></section>`;
+  }
   $("casinoBox").innerHTML = `<label class="cas"><input type="checkbox" id="casChk" ${cOn ? "checked" : ""}> 🃏 카드·화투 놀이 보기 <small>(블랙잭·맞고·포커 등, 놀이용 점수예요)</small></label>`;
-  $("list").innerHTML = html || `<div class="empty">찾는 게임이 없어요. 다른 단어로 찾아보세요.</div>`;
+  $("list").innerHTML = quick + (html || `<div class="empty">찾는 게임이 없어요. 다른 단어로 찾아보세요. (초성으로도 돼요: ㅇㅁ → 오목)</div>`);
 }
 $("casinoBox").addEventListener("change", e => { if (e.target.id === "casChk") { fgCasino.set(e.target.checked); render(); } });
 $("chips").addEventListener("click", e => { const b = e.target.closest("[data-g]"); if (b) { group = b.dataset.g; render(); } });
 $("q").addEventListener("input", e => { query = e.target.value; render(); });
+$("list").addEventListener("click", e => {
+  const f = e.target.closest("[data-fav]");
+  if (f) { e.preventDefault(); const k = f.dataset.fav; FAVS = FAVS.includes(k) ? FAVS.filter(x => x !== k) : [k, ...FAVS]; lsPut("fg-favs-v1", FAVS); render(); return; }
+  if (e.target.id === "recClr") { lsPut("fg-recent-v1", []); render(); }
+});
 render();
 </script>
 <script>

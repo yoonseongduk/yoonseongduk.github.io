@@ -4,6 +4,9 @@
 (function () {
   if (window.parent !== window || location.protocol === "about:") return;
   var isIndex = /\/(index\.html)?$/.test(location.pathname);
+  // 시작 화면의 '🕘 최근에 한 게임'을 위해 지금 연 화면을 기록해요(최근 12개, 시작 화면·같이 하기 게임 제외)
+  (function () { if (isIndex) return; var f = (location.pathname.split("/").pop() || ""); if (!/\.html$/.test(f) || /^net-/.test(f)) return;
+    try { var a = JSON.parse(localStorage.getItem("fg-recent-v1") || "[]"); if (!Array.isArray(a)) a = []; a = [f].concat(a.filter(function (x) { return x !== f; })).slice(0, 12); localStorage.setItem("fg-recent-v1", JSON.stringify(a)); } catch (e) {} })();
   var st = { fam: function () { try { var a = JSON.parse(localStorage.getItem("family-members-v1")); return Array.isArray(a) ? a.filter(function (x) { return typeof x === "string" && x; }) : []; } catch (e) { return []; } } };
   function names() {
     var P = window.fgPerson, o = P ? P.owner() : "", a = st.fam().slice();

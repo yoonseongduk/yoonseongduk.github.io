@@ -14,6 +14,7 @@ CC = re.compile(r"^cc[- ]by(-sa)?[ -]\d", re.I)   # 2026-11-24 사용자 결정:
 BAD = re.compile(r"\b(18\d\d|19[0-4]\d)\b|victor|columbia|edison|gramophone|berliner|\b78 ?rpm\b|cylinder|shellac|vinyl|lp rip|midi|synth|piano performance|piano arrangement|for piano|arrangement|transcription|karaoke|\bcover\b|remix|ringtone|\bdemo\b|sample|loop|8-?bit|music box|fragment", re.I)
 EXT = (".ogg", ".oga", ".opus", ".mp3", ".flac", ".wav"); LOSSY = (".ogg", ".oga", ".opus", ".mp3")
 PACE = float(os.environ.get("MUSIC_PACE", "2.5"))
+GET_DEADLINE = float(os.environ.get("MUSIC_GET_DEADLINE", "240"))   # 한 번 받기에 쓰는 최대 시간(초)
 # 옛 음반(1900~1940년대 SP판) 상표·옮긴 곳·그 시절 연주자 이름(2026-11-24 사용자 요청: 너무 오래된 음원은 최신 음원으로)
 OLD = re.compile(r"jukebox|\bhmv\b|polydor|odeon|parlophon|brunswick|\bpdp\b|pdp-ch|georgeblood|78rpm|\b78\b|toscanini|stokowski|caruso|godowsky|rethberg|prihoda|schlusnus|sassoli|\bdux\b|melba|kreisler|paderewski|furtw|mengelberg|\bwblp\b|historic", re.I)
 # 클래식이 아닌 편곡(사용자 지적 2026-11-24: 캐논이 댄스 편곡). 곡 검색어에 그 낱말이 들어 있으면(Hungarian Dance 등) 괜찮아요
@@ -69,7 +70,20 @@ def get(u, binary=False, rng=None, tries=7):
             h = {"User-Agent": UA};
             if rng: h["Range"] = rng
             with urllib.request.urlopen(urllib.request.Request(u, headers=h), timeout=90) as r:
-                d = r.read(); time.sleep(PACE); return d if binary else json.loads(d.decode("utf-8"))
+                # 서버가 Range 를 무시하고 파일 전체(수백 MB)를 천천히 보내면 r.read() 가 몇 시간 멈춰요(2026-11-26 실제로 겪음).
+                # 그래서 필요한 만큼만, 정해진 시간(GET_DEADLINE초) 안에서만 읽어요.
+                lim = int(rng.split("-")[1]) + 1 if rng else None; t0 = time.time(); buf = bytearray()
+                while True:
+                    ch = r.read(65536)
+                    if not ch: break
+                    buf += ch
+                    if lim and len(buf) >= lim: del buf[lim:]; break
+                    if time.time() - t0 > GET_DEADLINE:
+                        try:
+                            with open("music_pick_http.log", "a", encoding="utf-8") as lf: lf.write(time.strftime("%Y-%m-%d %H:%M:%S") + f"\tslow\t{len(buf)}B/{GET_DEADLINE}s\t{u.split('?')[0][:120]}\n")
+                        except Exception: pass
+                        break
+                d = bytes(buf); time.sleep(PACE); return d if binary else json.loads(d.decode("utf-8"))
         except urllib.error.HTTPError as e:
             if e.code == 404: return None
             if e.code in (429, 500, 502, 503, 504):
@@ -148,7 +162,9 @@ def analyze(c):
     ext = os.path.splitext(c["f"].lower())[1]; n = 3_500_000 if ext not in LOSSY else 1_600_000
     d = get(c["url"], binary=True, rng=f"bytes=0-{n - 1}")
     if not d or len(d) < 50_000: return None
-    r = subprocess.run([FFMPEG, "-v", "error", "-i", "pipe:0", "-t", "30", "-ac", "1", "-ar", "32000", "-f", "s16le", "-"], input=d, capture_output=True); d = None
+    try: r = subprocess.run([FFMPEG, "-v", "error", "-i", "pipe:0", "-t", "30", "-ac", "1", "-ar", "32000", "-f", "s16le", "-"], input=d, capture_output=True, timeout=180)
+    except subprocess.TimeoutExpired: return None
+    d = None
     x = np.frombuffer(r.stdout, dtype=np.int16).astype(np.float64) / 32768
     if len(x) < 32000 * 6: return None
     N = 2048; seg = x[:len(x) // N * N].reshape(-1, N) * np.hanning(N); P = np.abs(np.fft.rfft(seg, axis=1)) ** 2; f = np.fft.rfftfreq(N, 1 / 32000)
@@ -211,6 +227,7 @@ def main():
             print(f"[{n}/{len(works)}] 후보 {len(s['cands'])}개: " + ", ".join(c["f"][:40] for c in s["cands"][:2]), flush=True)
         return
     follow = "--follow" in a   # 3단계: 음질 분석
+    seen = set()
     ia_only = "--ia-only" in a   # 위키 서버가 막혔을 때(429): 인터넷 아카이브 녹음만 분석하고, 위키 후보는 다음에(기존 목록은 지우지 않음)
     while True:
         st = load(STATE); ia = load(IAF); scr = load(SCRF); res = load(OUT); did = 0
@@ -226,6 +243,8 @@ def main():
             for c in cands:
                 if sum(1 for x in cands if good(sc.get(x["f"]))) >= 2 or tried >= 6: break
                 if c["f"] in sc and done(sc[c["f"]]): continue
+                if c["f"] in seen: continue   # 이번 실행에서 이미 시도해 실패(None)한 녹음은 다시 받지 않아요(--follow 가 끝없이 되풀이하던 문제, 2026-11-26)
+                seen.add(c["f"])
                 if c["f"].startswith("ia:") and not c.get("musopen"):   # 아카이브 항목에 적힌 녹음 연도가 1955년 전이면 옛 녹음
                     md = (get("https://archive.org/metadata/" + urllib.parse.quote(c["f"][3:].split("/")[0])) or {}).get("metadata") or {}
                     yr = re.search(r"(1[89]\d\d|20\d\d)", str(md.get("date") or md.get("year") or ""))

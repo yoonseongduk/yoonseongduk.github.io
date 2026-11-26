@@ -206,7 +206,8 @@
     var cq = DATA.E && DATA.E[t] || "";
     var A = ' target="_blank" rel="noopener noreferrer"';
     // 커먼즈에 그 작품 그림이 없으면 구글 이미지 검색 링크(앱 밖에서 열림, 그림을 앱에 띄우거나 저장하지 않음, 2026-11-26 사용자 결정)
-    var gq = t === who ? who + " 그림" : q;
+    // 작품은 앞에 '미술사'를 붙여요(2026-11-26 사용자 확인: '해질녘 김관호'는 그림이 안 나오고 '미술사 해질녘 김관호'는 나옴 — 흔한 낱말 제목이 그림으로 좁혀짐)
+    var gq = t === who ? who + " 그림" : "미술사 " + q;
     var gUrl = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(gq);
     // 모음의 작품 줄: 설명 없이 아이콘 단추만(2026-11-26 사용자 요청: 링크 두 줄이 붙어 있어 누르기 어려움, 단추는 크게·간격을 두고)
     if (compact) return '<a class="wicon" href="https://ko.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) + '"' + A + ' title="위키백과에서 찾아보기(앱 밖)" aria-label="‘' + esc(t) + '’ 위키백과에서 찾아보기">🔗</a>' +

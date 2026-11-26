@@ -212,6 +212,9 @@ _bad = [t0 for t0 in COMMONS_Q if t0 not in LINK]
 if _bad: print("⚠ COMMONS_Q 에 있지만 링크 작품이 아닌 제목:", _bad)
 # 앱이 그림을 보여 줄 수 없는(위키 그림 대응 W 가 없는) 그 밖의 작품: 모음에서 🔗·🔍 아이콘만 달아요(2026-11-26 사용자 요청: 김관호 「해질녘」 등)
 LINK2 = {w["t"]: a["name"] for a in A.values() for w in a["works"] if w["t"] not in W and w["t"] not in LINK}
+# 퀴즈의 화가 문제용: 앱에서 볼 수 있는 그림이 하나도 없는 화가 이름도(김관호·배운성 등)
+for a in A.values():
+    if a["name"] not in LINK and not any(w["t"] in W for w in a["works"]): LINK2[a["name"]] = a["name"]
 DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}, "L": LINK, "E": LINK_EN, "L2": LINK2}
 print("그림 없는 작품(🔗·🔍 아이콘):", len(LINK2))
 tpl = open("art_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl

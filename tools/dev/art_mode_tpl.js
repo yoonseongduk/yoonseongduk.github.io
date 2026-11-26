@@ -199,7 +199,8 @@
   }
   // ── 저작권이 남은 화가의 그림: 앱 안에 띄우지 않고 위키백과 검색 링크(앱 밖에서 열림)만 보여 줘요
   function wikiLink(t, compact) {
-    var who = DATA.L && DATA.L[t] || (compact && DATA.L2 && DATA.L2[t]); if (!who || !(window.fgOnline && fgOnline.enabled)) return "";
+    var cr = !!(DATA.L && DATA.L[t]);   // 저작권이 남은 화가의 작품인지(안내 글이 달라요)
+    var who = DATA.L && DATA.L[t] || (DATA.L2 && DATA.L2[t]); if (!who || !(window.fgOnline && fgOnline.enabled)) return "";
     var q = t === who ? who : t.replace(/\(.*?\)/g, "").trim() + " " + who;
     // 커먼즈 검색어: 커먼즈에 그 작품 파일이 있는 작품만(set43.py 의 COMMONS_Q). 빈 글자(화가 이름·그 밖의 작품) → 🔍 구글 이미지 검색
     var cq = DATA.E && DATA.E[t] || "";
@@ -214,15 +215,22 @@
     return '<a class="wlink" href="https://ko.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer">🔗 위키백과에서 ' + esc(t === who ? who : "‘" + t + "’") + ' 찾아보기</a>' +
       (cq ? '<a class="wlink" href="https://commons.wikimedia.org/w/index.php?title=Special:MediaSearch&type=image&search=' + encodeURIComponent(cq) + '" target="_blank" rel="noopener noreferrer">🖼️ 위키미디어 커먼즈에서 ' + esc(who) + ' 그림 찾아보기</a>'
           : '<a class="wlink" href="' + gUrl + '"' + A + '>🔍 구글 이미지에서 ' + esc(t === who ? who : "‘" + t + "’") + ' 그림 찾아보기</a>') +
-      '<small class="wlnote">저작권이 남아 있고 자유 이용 허락이 확인되지 않은 그림이라 앱 안에는 보여 주지 않아요(앱 밖에서 열려요).' + (cq ? "" : " 구글 결과에는 다른 그림이 섞일 수 있어요.") + '</small>';
+      '<small class="wlnote">' + (cr ? "저작권이 남아 있고 자유 이용 허락이 확인되지 않은 그림이라 앱 안에는 보여 주지 않아요(앱 밖에서 열려요)." : "앱에서 바로 볼 수 있는 그림이 아직 없어요(앱 밖에서 열려요).") + (cq ? "" : " 구글 결과에는 다른 그림이 섞일 수 있어요.") + '</small>';
   }
   function addLinkQ(cur) {
-    if (!cur || !DATA.L) return; var keys = Object.keys(DATA.L), txt = cur.d[0] + " " + cur.d[1], hit = null;
+    if (!cur || !DATA.L) return; var M = {}, k0;
+    for (k0 in DATA.L) M[k0] = DATA.L[k0];
+    if (DATA.L2) for (k0 in DATA.L2) if (!M[k0]) M[k0] = DATA.L2[k0];   // 그림 없는 그 밖의 작품·화가도(2026-11-26 사용자 요청)
+    var keys = Object.keys(M), txt = cur.d[0] + " " + cur.d[1], hit = null;
     // 정답이 작품이면 그 작품 링크가 먼저(답을 고른 뒤에만 보이므로 정답이 새지 않음, 2026-11-26: '박수근의 작품은?' → 빨래터 그림)
-    if (DATA.L[cur.d[1]] && DATA.L[cur.d[1]] !== cur.d[1]) hit = cur.d[1];
-    if (!hit) for (var n = 0; n < keys.length; n++) if (keys[n] !== DATA.L[keys[n]] && txt.indexOf("‘" + keys[n] + "’") >= 0) { hit = keys[n]; break; }   // 작품 제목이 먼저
-    if (!hit) for (n = 0; n < keys.length; n++) if (keys[n] === DATA.L[keys[n]] && (cur.d[1] === keys[n] || txt.indexOf("‘" + keys[n] + "’") >= 0)) { hit = keys[n]; break; }
-    if (!hit && DATA.L[cur.d[1]]) hit = cur.d[1];
+    // 단, 문제 글에 그 작품의 화가 이름이 있을 때만(2026-11-26: '김기창과 박래현은 어떤 사이?' 정답 '부부'가 이중섭 「부부」로 잘못 연결됨)
+    var isWorkAns = function (a) { return M[a] && M[a] !== a && cur.d[0].indexOf(M[a]) >= 0; };
+    if (isWorkAns(cur.d[1])) hit = cur.d[1];
+    if (!hit) for (var n = 0; n < keys.length; n++) if (keys[n] !== M[keys[n]] && txt.indexOf("‘" + keys[n] + "’") >= 0) { hit = keys[n]; break; }   // 작품 제목이 먼저
+    if (!hit) for (n = 0; n < keys.length; n++) if (keys[n] === M[keys[n]] && (cur.d[1] === keys[n] || txt.indexOf("‘" + keys[n] + "’") >= 0)) { hit = keys[n]; break; }
+    if (!hit && M[cur.d[1]] && (M[cur.d[1]] === cur.d[1] || isWorkAns(cur.d[1]))) hit = cur.d[1];
+    // 따옴표 없이 화가 이름만 나오는 문제(예 '화가 김기창과 박래현은…'): 문제 글에서 먼저 나오는 화가(3글자 이상, 짧은 이름은 다른 낱말과 겹칠 수 있어 제외)
+    if (!hit) { var best = -1; for (n = 0; n < keys.length; n++) { var k = keys[n]; if (k !== M[k] || k.length < 3) continue; var at = cur.d[0].indexOf(k); if (at >= 0 && (best < 0 || at < best)) { best = at; hit = k; } } }
     var h = hit && wikiLink(hit); if (h) document.getElementById("q").insertAdjacentHTML("beforeend", '<span class="wlbox">' + h + "</span>");
   }
   function askAutoSave() { if (lsGet(AS) !== null) return; var yes = false; try { yes = window.confirm("📥 본 그림을 이 폰에 저장할까요?\n\n· 저장하면 다음부터 인터넷 없이도 볼 수 있어요(그림 1장 약 50KB).\n· 저장하지 않으면 볼 때마다 인터넷이 필요해요.\n· 나중에 언제든 바꾸거나 지울 수 있어요.\n\n[확인] 저장해요   [취소] 저장하지 않고 보기만 해요"); } catch (e) {} lsSet(AS, yes ? "1" : "0"); if (bar) drawBar(); }

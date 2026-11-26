@@ -218,7 +218,9 @@
   }
   function addLinkQ(cur) {
     if (!cur || !DATA.L) return; var keys = Object.keys(DATA.L), txt = cur.d[0] + " " + cur.d[1], hit = null;
-    for (var n = 0; n < keys.length; n++) if (keys[n] !== DATA.L[keys[n]] && txt.indexOf("‘" + keys[n] + "’") >= 0) { hit = keys[n]; break; }   // 작품 제목이 먼저
+    // 정답이 작품이면 그 작품 링크가 먼저(답을 고른 뒤에만 보이므로 정답이 새지 않음, 2026-11-26: '박수근의 작품은?' → 빨래터 그림)
+    if (DATA.L[cur.d[1]] && DATA.L[cur.d[1]] !== cur.d[1]) hit = cur.d[1];
+    if (!hit) for (var n = 0; n < keys.length; n++) if (keys[n] !== DATA.L[keys[n]] && txt.indexOf("‘" + keys[n] + "’") >= 0) { hit = keys[n]; break; }   // 작품 제목이 먼저
     if (!hit) for (n = 0; n < keys.length; n++) if (keys[n] === DATA.L[keys[n]] && (cur.d[1] === keys[n] || txt.indexOf("‘" + keys[n] + "’") >= 0)) { hit = keys[n]; break; }
     if (!hit && DATA.L[cur.d[1]]) hit = cur.d[1];
     var h = hit && wikiLink(hit); if (h) document.getElementById("q").insertAdjacentHTML("beforeend", '<span class="wlbox">' + h + "</span>");

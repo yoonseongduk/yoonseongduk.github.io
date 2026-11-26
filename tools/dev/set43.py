@@ -205,21 +205,9 @@ for a in A.values():
     LINK[a["name"]] = a["name"]
     for w in a["works"]:
         if w["t"] not in W: LINK[w["t"]] = a["name"]   # 앱 안에 보여 줄 수 있는(CC BY 공개) 그림은 링크 대신 그림으로
-# 커먼즈 검색은 영어 이름으로 해요: 한국어 제목+이름(예 '론도 김환기')은 결과가 0건이라 링크가 쓸모없었어요(2026-11-26 사용자 지적)
-# art_commons.json(art_commons_check.py 가 센 커먼즈 파일 수): 결과가 더 많은 이름으로 찾고, 0건인 화가(장욱진 등)는 🖼️ 단추를 빼요
-try: _CH = json.load(open("art_commons.json", encoding="utf-8"))
-except Exception: _CH = {}
-LINK_EN = {}
-for a in A.values():
-    if a["id"] not in NO_IMAGE: continue
-    c = _CH.get(a["name"]); en = a.get("en") or a["name"]
-    if not c: LINK_EN[a["name"]] = en; continue
-    he, hk = c.get("hits_en"), c.get("hits_ko")
-    if he == 0 and hk == 0: LINK_EN[a["name"]] = ""; continue
-    LINK_EN[a["name"]] = a["name"] if (hk or 0) > (he or 0) and he is not None else en
-# 작품 줄: 커먼즈에 그 작품 파일이 있는 것만 검색어(COMMONS_Q), 없으면 "" → 🖼️ 단추 없음(2026-11-26 전수 조사)
-for t0, w0 in LINK.items():
-    if t0 != w0: LINK_EN[t0] = COMMONS_Q.get(t0, "")
+# 커먼즈 검색어(E): 커먼즈에 그 작품 파일이 있는 작품만(COMMONS_Q, 2026-11-26 전수 조사). 나머지는 "" → 🔍 구글 이미지 검색.
+# 화가 이름 링크도 "" (구글): 화가 이름으로 커먼즈를 찾으면 그림보다 화가 사진·우표·동명이인(오지호 → 아이돌 사진)이 먼저 나와요(2026-11-26 사용자 지적)
+LINK_EN = {t0: (COMMONS_Q.get(t0, "") if t0 != w0 else "") for t0, w0 in LINK.items()}
 _bad = [t0 for t0 in COMMONS_Q if t0 not in LINK]
 if _bad: print("⚠ COMMONS_Q 에 있지만 링크 작품이 아닌 제목:", _bad)
 DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}, "L": LINK, "E": LINK_EN}

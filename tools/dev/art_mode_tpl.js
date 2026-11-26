@@ -201,9 +201,10 @@
   function wikiLink(t) {
     var who = DATA.L && DATA.L[t]; if (!who || !(window.fgOnline && fgOnline.enabled)) return "";
     var q = t === who ? who : t.replace(/\(.*?\)/g, "").trim() + " " + who;
+    var cq = (DATA.E && DATA.E[who]) || who;   // 커먼즈는 화가 영어 이름으로 찾아요(한국어 제목으로는 0건)
     return '<a class="wlink" href="https://ko.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer">🔗 위키백과에서 ' + esc(t === who ? who : "‘" + t + "’") + ' 찾아보기</a>' +
-      '<a class="wlink" href="https://commons.wikimedia.org/w/index.php?title=Special:MediaSearch&type=image&search=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer">🖼️ 위키미디어 커먼즈에서 그림 찾아보기</a>' +
-      '<small class="wlnote">저작권이 남아 있고 자유 이용 허락이 확인되지 않은 그림이라 앱 안에는 보여 주지 않아요(앱 밖에서 열려요).</small>';
+      '<a class="wlink" href="https://commons.wikimedia.org/w/index.php?title=Special:MediaSearch&type=image&search=' + encodeURIComponent(cq) + '" target="_blank" rel="noopener noreferrer">🖼️ 위키미디어 커먼즈에서 ' + esc(who) + ' 그림 찾아보기</a>' +
+      '<small class="wlnote">저작권이 남아 있고 자유 이용 허락이 확인되지 않은 그림이라 앱 안에는 보여 주지 않아요(앱 밖에서 열려요). 커먼즈에는 자유롭게 쓸 수 있는 자료만 있어서 이 작품 자체는 없을 수 있어요.</small>';
   }
   function addLinkQ(cur) {
     if (!cur || !DATA.L) return; var keys = Object.keys(DATA.L), txt = cur.d[0] + " " + cur.d[1], hit = null;

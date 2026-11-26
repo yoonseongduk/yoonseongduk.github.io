@@ -205,7 +205,9 @@ for a in A.values():
     LINK[a["name"]] = a["name"]
     for w in a["works"]:
         if w["t"] not in W: LINK[w["t"]] = a["name"]   # 앱 안에 보여 줄 수 있는(CC BY 공개) 그림은 링크 대신 그림으로
-DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}, "L": LINK}
+# 커먼즈 검색은 영어 이름으로 해요: 한국어 제목+이름(예 '론도 김환기')은 결과가 0건이라 링크가 쓸모없었어요(2026-11-26 사용자 지적)
+LINK_EN = {a["name"]: a["en"] for a in A.values() if a["id"] in NO_IMAGE and a.get("en")}
+DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}, "L": LINK, "E": LINK_EN}
 tpl = open("art_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../art-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 # 오답 노트용 작은 모듈(명화 그림 찾기 정보만): wrong-notes.html 이 틀린 그림 문제의 그림을 다시 보여 줄 때 써요

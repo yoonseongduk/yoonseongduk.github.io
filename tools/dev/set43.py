@@ -6,7 +6,7 @@
 import sys, json, random, os
 sys.path.insert(0, ".")
 from art_data import ARTISTS, ERAS, WEST_ERAS, KOREA_ERAS, EAST_ERAS, SET_OF, HO, HO_EASY, PERIOD, KOREA_TRIVIA, EAST_TRIVIA
-from art_wiki import WIKI, NO_IMAGE, tokens as _tokens
+from art_wiki import WIKI, NO_IMAGE, COMMONS_Q, tokens as _tokens
 from mkquiz import make as make_quiz
 from mkpage import make as make_page
 H = "out/"
@@ -217,6 +217,11 @@ for a in A.values():
     he, hk = c.get("hits_en"), c.get("hits_ko")
     if he == 0 and hk == 0: LINK_EN[a["name"]] = ""; continue
     LINK_EN[a["name"]] = a["name"] if (hk or 0) > (he or 0) and he is not None else en
+# 작품 줄: 커먼즈에 그 작품 파일이 있는 것만 검색어(COMMONS_Q), 없으면 "" → 🖼️ 단추 없음(2026-11-26 전수 조사)
+for t0, w0 in LINK.items():
+    if t0 != w0: LINK_EN[t0] = COMMONS_Q.get(t0, "")
+_bad = [t0 for t0 in COMMONS_Q if t0 not in LINK]
+if _bad: print("⚠ COMMONS_Q 에 있지만 링크 작품이 아닌 제목:", _bad)
 DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}, "L": LINK, "E": LINK_EN}
 tpl = open("art_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../art-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))

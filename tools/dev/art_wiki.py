@@ -104,6 +104,16 @@ EXTRA_TOKENS = {"raphael": ["raphael", "raffaello"], "titian": ["titian", "tizia
                 "lautrec": ["lautrec", "toulouse-lautrec"], "friedrich": ["friedrich"], "michelangelo": ["michelangelo"], "leonardo": ["leonardo"], "holbein": ["holbein"], "durer": ["durer", "dürer"],
                 "velazquez": ["velazquez", "velázquez"], "kimhongdo": ["김홍도", "단원"], "sinyunbok": ["신윤복", "혜원", "hyewon", "shin yunbok"], "jeongseon": ["정선", "겸재"], "angyeon": ["안견"], "kimjeonghui": ["김정희", "추사", "chusa"], "leejungseop": ["이중섭", "lee jung seob", "lee jung-seob"], "gohuidong": ["고희동"], "kanghuian": ["huian", "강희안"], "gangsehwang": ["sehwang", "강세황"], "byeonsangbyeok": ["byeon sang"], "eomongryong": ["어몽룡", "mong-ryong"], "kimmyeongguk": ["김명국"], "yunduseo": ["윤두서", "yun du-seo"], "kimdeuksin": ["김득신", "deuksin"], "jangseungeop": ["장승업", "owon"], "saimdang": ["신사임당", "saimdang"], "liangkai": ["liang kai"], "mayuan": ["ma yuan"], "wangmeng": ["wang meng"], "shenzhou": ["shen zhou"], "sotatsu": ["sotatsu"], "jakuchu": ["jakuchu"], "okyo": ["okyo"], "utamaro": ["utamaro"], "huizong": ["huizong"],
                 "zhangzeduan": ["zhang zeduan"], "hanhuang": ["han huang"], "muqi": ["muqi", "mu qi"], "sesshu": ["sesshu"], "tohaku": ["tohaku"], "korin": ["korin"], "hokusai": ["hokusai"], "hiroshige": ["hiroshige"]}
+# 저작권이 남은 화가(NO_IMAGE)의 작품 → 위키미디어 커먼즈 검색어(모음의 🖼️ 단추, 앱 밖에서 열림).
+# 2026-11-26 전수 조사: 작품마다 커먼즈를 검색해 '그 작품' 파일이 검색 결과 맨 위에 나오는 검색어만 적었어요.
+# 여기에 없는 작품(박수근 4점·김환기·장욱진·천경자 등)은 커먼즈에 그 작품 파일이 없어 🖼️ 단추를 달지 않아요(🔗 위키백과만).
+COMMONS_Q = {
+    "춤": "Henri Matisse Dance", "붉은 방(붉은색의 조화)": "Matisse Harmony in Red", "재즈": "Jazz von Henri Matisse",
+    "게르니카": "Picasso Guernica", "아비뇽의 처녀들": "Demoiselles d'Avignon Picasso",
+    "이미지의 배반": "Treachery of Images Magritte", "나와 마을": "Chagall I and the Village",
+    "캠벨 수프 캔": "Warhol Campbell's Soup Cans", "밤을 새우는 사람들": "Nighthawks Hopper",
+    "황소": "Lee Jung-seob Bull", "새우": "Qi Baishi shrimp", "분마도(달리는 말)": "Xu Beihong horse",
+}
 def tokens(aid, en, name):
     """위키백과 항목 설명에 하나 이상 들어 있어야 하는 작가 이름(영문·한글). online.js 의 확인과 같은 규칙."""
     if aid in TOKEN_OVERRIDE: t = list(TOKEN_OVERRIDE[aid])

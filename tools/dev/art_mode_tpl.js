@@ -202,7 +202,8 @@
     var who = DATA.L && DATA.L[t]; if (!who || !(window.fgOnline && fgOnline.enabled)) return "";
     var q = t === who ? who : t.replace(/\(.*?\)/g, "").trim() + " " + who;
     // 커먼즈 검색 이름: 결과가 더 많은 이름(영어/한국어, art_commons.json). 빈 글자 = 커먼즈에 파일이 없는 화가(장욱진 등) → 🖼️ 없음
-    var cq = DATA.E && who in DATA.E ? DATA.E[who] : who;
+    // 작품은 작품별 검색어(그 작품 파일이 커먼즈에 있을 때만, 없으면 "")
+    var cq = DATA.E && t in DATA.E ? DATA.E[t] : (t === who ? who : "");
     var A = ' target="_blank" rel="noopener noreferrer"';
     // 모음의 작품 줄: 설명 없이 아이콘 단추만(2026-11-26 사용자 요청: 링크 두 줄이 붙어 있어 누르기 어려움)
     if (compact) return '<a class="wicon" href="https://ko.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) + '"' + A + ' title="위키백과에서 찾아보기(앱 밖)" aria-label="‘' + esc(t) + '’ 위키백과에서 찾아보기">🔗</a>' +

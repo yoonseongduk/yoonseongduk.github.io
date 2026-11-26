@@ -210,7 +210,10 @@ for a in A.values():
 LINK_EN = {t0: (COMMONS_Q.get(t0, "") if t0 != w0 else "") for t0, w0 in LINK.items()}
 _bad = [t0 for t0 in COMMONS_Q if t0 not in LINK]
 if _bad: print("⚠ COMMONS_Q 에 있지만 링크 작품이 아닌 제목:", _bad)
-DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}, "L": LINK, "E": LINK_EN}
+# 앱이 그림을 보여 줄 수 없는(위키 그림 대응 W 가 없는) 그 밖의 작품: 모음에서 🔗·🔍 아이콘만 달아요(2026-11-26 사용자 요청: 김관호 「해질녘」 등)
+LINK2 = {w["t"]: a["name"] for a in A.values() for w in a["works"] if w["t"] not in W and w["t"] not in LINK}
+DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}, "L": LINK, "E": LINK_EN, "L2": LINK2}
+print("그림 없는 작품(🔗·🔍 아이콘):", len(LINK2))
 tpl = open("art_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../art-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 # 오답 노트용 작은 모듈(명화 그림 찾기 정보만): wrong-notes.html 이 틀린 그림 문제의 그림을 다시 보여 줄 때 써요

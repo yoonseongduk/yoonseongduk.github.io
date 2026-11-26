@@ -199,7 +199,7 @@
   }
   // ── 저작권이 남은 화가의 그림: 앱 안에 띄우지 않고 위키백과 검색 링크(앱 밖에서 열림)만 보여 줘요
   function wikiLink(t, compact) {
-    var who = DATA.L && DATA.L[t]; if (!who || !(window.fgOnline && fgOnline.enabled)) return "";
+    var who = DATA.L && DATA.L[t] || (compact && DATA.L2 && DATA.L2[t]); if (!who || !(window.fgOnline && fgOnline.enabled)) return "";
     var q = t === who ? who : t.replace(/\(.*?\)/g, "").trim() + " " + who;
     // 커먼즈 검색어: 커먼즈에 그 작품 파일이 있는 작품만(set43.py 의 COMMONS_Q). 빈 글자(화가 이름·그 밖의 작품) → 🔍 구글 이미지 검색
     var cq = DATA.E && DATA.E[t] || "";

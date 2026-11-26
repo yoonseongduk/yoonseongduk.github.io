@@ -106,7 +106,7 @@ make_page(H + "classic-gallery.html", "클래식 작곡가별 모음", "🎻", 2
           "작곡가와 대표곡의 이름·작곡 연도·갈래를 정리했어요. 작곡 연도는 자료마다 조금 다를 수 있어요(초연·출판 연도와 다를 수 있어요).", BODY, JS, CSS)
 
 # 곡 안에서 그 곡다운 부분부터 들려줄 녹음의 시작 위치(초). 긴 악장 전체 녹음은 앞부분이 다른 분위기라 퀴즈로 알아듣기 어려워요
-STARTS = {"PMLP01607-Symphony No.9, Op.125 (Beethoven, Ludwig van), IV Presto.ogg": 400}   # 베토벤 9번 4악장: 바리톤과 합창이 「환희의 송가」를 부르는 부분(약 6분 40초)
+STARTS = {"Guillaume Tell - Overture - (Rossini, Gioacchino) by Fritz Reiner (conductor).mp3": 515, "PMLP01607-Symphony No.9, Op.125 (Beethoven, Ludwig van), IV Presto.ogg": 400}   # 베토벤 9번 4악장: 바리톤과 합창이 「환희의 송가」를 부르는 부분(약 6분 40초)
 # ───────── 듣고 맞히기 모드(classic-mode.js) 만들기 + 두 화면에 끼우기
 _pp = os.environ.get("PICK_FILE") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "music_pick.json")
 _pk = json.load(open(_pp, encoding="utf-8")) if os.path.exists(_pp) else {}

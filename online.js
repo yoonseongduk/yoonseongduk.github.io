@@ -76,6 +76,16 @@
     var i = 0; function next() { if (i >= CHAIN.length) return Promise.resolve(null); var f = CHAIN[i++]; return f(en, toks, kind, cc).then(function (r) { return r || next(); }).catch(function () { return next(); }); }
     return next();
   }
+  // 커먼즈 그림 파일 하나를 직접 확인: ① 공개 도메인·CC0(cc면 CC BY·BY-SA까지) 표시 ② 파일 설명(작가·제목·설명·파일 이름)에 작가 이름이 있을 때만 써요
+  function commonsFile(name, toks, cc) {
+    return json("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=extmetadata|url&iiurlwidth=330&titles=" + encodeURIComponent("File:" + name)).then(function (c) {
+      var pages = (c && c.query && c.query.pages) || {}, p = pages[Object.keys(pages)[0]], ii = p && p.imageinfo && p.imageinfo[0]; if (!ii || !okImg(ii.thumburl)) return null;
+      var md = ii.extmetadata || {}, lic = md.LicenseShortName && md.LicenseShortName.value; if (!okLic(lic, cc)) return null;
+      var who = ((md.Artist && md.Artist.value) || "") + " " + ((md.ObjectName && md.ObjectName.value) || "") + " " + ((md.ImageDescription && md.ImageDescription.value) || "") + " " + name;
+      if (!hasTok(who, toks)) return null;
+      return { src: imgUrl(ii.thumburl), page: ii.descriptionurl, filePage: ii.descriptionurl, title: name.replace(/\.[a-z]+$/i, ""), license: lic, licenseUrl: md.LicenseUrl && md.LicenseUrl.value, artist: plain(md.Artist && md.Artist.value), label: "위키미디어 커먼즈" };
+    }).catch(function () { return null; });
+  }
   // keys: ["en:Mona_Lisa", ...] 후보를 차례로 시도. tokens: 설명·요약에 하나 이상 들어 있어야 하는 작가 이름(소문자·한글)
   function wikiImage(keys, tokens, kind, opts) {
     var cc = !!(opts && opts.cc);
@@ -86,7 +96,9 @@
         var en = ((keys.filter(function (k) { return /^en:/.test(k); })[0] || keys[0] || "").replace(/^\w+:/, "")).replace(/_/g, " ");
         return fallback(en, tokens, kind, cc).then(function (r) { cache[id] = r || null; saveCache(); return r || null; });
       }
-      var k = keys[i++], m = /^(en|ko|de):(.+)$/.exec(k); if (!m) return next();
+      var k = keys[i++], fm = /^file:(.+)$/.exec(k);
+      if (fm) return commonsFile(fm[1], tokens, cc).then(function (r) { if (!r) return next(); cache[id] = r; saveCache(); return r; });   // 커먼즈 그림 파일을 직접 지정한 경우
+      var m = /^(en|ko|de):(.+)$/.exec(k); if (!m) return next();
       return json("https://" + m[1] + ".wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(m[2].replace(/ /g, "_"))).then(function (s) {
         if (!s || s.type !== "standard" || !s.thumbnail || !okImg(s.thumbnail.source)) return next();
         var text = norm((s.description || "") + " " + (s.extract || ""));

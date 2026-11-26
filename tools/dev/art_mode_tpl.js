@@ -63,7 +63,7 @@
     st.textContent = ".amode{background:var(--surface,#fff);border:1px solid var(--line,#ccc);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}.amode .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}" +
       ".amode button{border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:8px 12px;font-size:.92rem}.amode button.on{background:var(--accent,#c4552b);color:var(--accent-fg,#fff);border-color:transparent;font-weight:700}.amode button:disabled{opacity:.45;cursor:default}" +
       ".amode button.sm{padding:6px 10px;font-size:.85rem}.amode small{color:var(--muted,#666)}.amode .sub{border-top:1px dashed var(--line,#ccc);padding-top:8px;display:flex;flex-direction:column;gap:6px}" +
-      ".aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.aimg img,.gf img{cursor:zoom-in}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}.ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}#aview{position:fixed;inset:0;z-index:9999;background:#000e;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}#aview .vb{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px}#aview .vb button{border:0;border-radius:999px;padding:8px 13px;font-size:.95rem;background:#fff;color:#111}#aview .vz{color:#fff;font-size:.85rem;min-width:3.2em;text-align:center}#aview .vi{flex:1;overflow:hidden;position:relative;touch-action:none;display:flex;align-items:center;justify-content:center}#aview .vi img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;will-change:transform;cursor:grab}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}#aview .vh{color:#ccc}.gview{margin-left:6px;border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:2px 10px;font-size:.8rem}.gview:disabled{opacity:.5}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}";
+      ".aimg{margin:0 0 10px}.aimg img,.gf img{display:block;max-width:100%;max-height:300px;margin:0 auto;border-radius:12px;background:#0001}.gf{margin:6px 0 2px}.aimg img,.gf img{cursor:zoom-in}.acard{margin-top:10px;padding:10px 12px;border:1px solid var(--line,#ccc);border-radius:12px;text-align:left;display:flex;flex-direction:column;gap:2px}.acard b{font-size:1.05rem}.acard span{font-size:.88rem;color:var(--muted,#666)}.ahint{margin-top:8px;font-size:.9rem;text-align:center}.ahint button{border:1px dashed var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:6px 12px;font-size:.88rem}.ahint div{margin-top:6px;color:var(--muted,#666)}#aview{position:fixed;inset:0;z-index:9999;background:#000e;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}#aview .vb{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap;padding:8px 10px}#aview .vb button{border:0;border-radius:999px;padding:8px 13px;font-size:.95rem;background:#fff;color:#111}#aview .vz{color:#fff;font-size:.85rem;min-width:3.2em;text-align:center}#aview .vi{flex:1;overflow:hidden;position:relative;touch-action:none;display:flex;align-items:center;justify-content:center}#aview .vi img{max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;will-change:transform;cursor:grab}#aview .vc{color:#fff;font-size:.8rem;padding:8px 12px;text-align:center}#aview .vh{color:#ccc}.gview{margin-left:6px;border:1px solid var(--line,#ccc);background:transparent;color:var(--fg,#222);border-radius:999px;padding:2px 10px;font-size:.8rem}.gview:disabled{opacity:.5}.gf figcaption{font-size:.78rem;color:var(--muted,#666);text-align:center;margin-top:4px}.wlbox{display:flex;flex-direction:column;gap:2px;margin-top:8px;font-size:.88rem}.wlbox .wlink{color:var(--accent,#c4552b);font-weight:700}.wlbox .wlnote{color:var(--muted,#666);font-size:.78rem}";
     document.head.appendChild(st);
   }
   var bar, dl = { running: false, cancel: false, msg: "" };
@@ -191,10 +191,24 @@
   function decorateBtns() {
     var list = document.getElementById("list"); if (!list) return;
     list.querySelectorAll("li").forEach(function (li) {
-      if (li.dataset.gv) return; var b = li.querySelector("b"); if (!b || !DATA.W[b.textContent]) return;
+      if (li.dataset.gv) return; var b = li.querySelector("b"); if (!b) return;
+      if (!DATA.W[b.textContent]) { var h = wikiLink(b.textContent); if (h) { li.dataset.gv = "1"; b.insertAdjacentHTML("afterend", '<span class="wlbox">' + h + "</span>"); } return; }
       if (!localInfo(b.textContent) && !(window.fgOnline && fgOnline.enabled)) return;
       li.dataset.gv = "1"; var btn = document.createElement("button"); btn.type = "button"; btn.className = "gview"; btn.textContent = "🖼️ 보기"; btn.dataset.t = b.textContent; b.insertAdjacentElement("afterend", btn);
     });
+  }
+  // ── 저작권이 남은 화가의 그림: 앱 안에 띄우지 않고 위키백과 검색 링크(앱 밖에서 열림)만 보여 줘요
+  function wikiLink(t) {
+    var who = DATA.L && DATA.L[t]; if (!who || !(window.fgOnline && fgOnline.enabled)) return "";
+    var q = t === who ? who : t.replace(/\(.*?\)/g, "").trim() + " " + who;
+    return '<a class="wlink" href="https://ko.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) + '" target="_blank" rel="noopener noreferrer">🔗 위키백과에서 ' + esc(t === who ? who + "의 그림" : "‘" + t + "’") + ' 찾아보기</a><small class="wlnote">저작권이 남아 있는 그림이라 앱 안에는 보여 주지 않아요(앱 밖에서 열려요).</small>';
+  }
+  function addLinkQ(cur) {
+    if (!cur || !DATA.L) return; var keys = Object.keys(DATA.L), txt = cur.d[0] + " " + cur.d[1], hit = null;
+    for (var n = 0; n < keys.length; n++) if (keys[n] !== DATA.L[keys[n]] && txt.indexOf("‘" + keys[n] + "’") >= 0) { hit = keys[n]; break; }   // 작품 제목이 먼저
+    if (!hit) for (n = 0; n < keys.length; n++) if (keys[n] === DATA.L[keys[n]] && (cur.d[1] === keys[n] || txt.indexOf("‘" + keys[n] + "’") >= 0)) { hit = keys[n]; break; }
+    if (!hit && DATA.L[cur.d[1]]) hit = cur.d[1];
+    var h = hit && wikiLink(hit); if (h) document.getElementById("q").insertAdjacentHTML("beforeend", '<span class="wlbox">' + h + "</span>");
   }
   function askAutoSave() { if (lsGet(AS) !== null) return; var yes = false; try { yes = window.confirm("📥 본 그림을 이 폰에 저장할까요?\n\n· 저장하면 다음부터 인터넷 없이도 볼 수 있어요(그림 1장 약 50KB).\n· 저장하지 않으면 볼 때마다 인터넷이 필요해요.\n· 나중에 언제든 바꾸거나 지울 수 있어요.\n\n[확인] 저장해요   [취소] 저장하지 않고 보기만 해요"); } catch (e) {} lsSet(AS, yes ? "1" : "0"); if (bar) drawBar(); }
   document.addEventListener("click", function (e) {
@@ -338,7 +352,7 @@
       pick = function (k) {
         if (locked) return; var cur = qs && qs[i], ok = cur && cur.opts[k] === cur.d[1], hu = hintUsed; oPick(k);
         if (ok && hu && cur.d.img) { score -= 0.5; document.getElementById("score").textContent = score; }
-        recordResult(cur, ok); addCard(); creditQ();
+        recordResult(cur, ok); addCard(); creditQ(); addLinkQ(cur);
       };
     } else if (isGal) {
       new MutationObserver(function () { decorateAll(false); decorateBtns(); }).observe(document.getElementById("list"), { childList: true });

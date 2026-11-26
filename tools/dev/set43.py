@@ -182,7 +182,13 @@ for sid in SETS:
             G.setdefault(a["id"], w["t"])
             QI.append(["이 그림의 작가는 누구일까요?", a["name"], pick_artists(a, w["fame"], ban=AMBIG.get(w["t"], ())), a["era"], w["fame"], w["t"], f"‘{w['t']}’ — " + info(a, w), [w["y"], w["place"] or "", J[w["kind"]], a["name"], a["years"], a["country"]], sid])
 A, ORDER, ALLW = ALLA, ORDER_ALL, [w for a in ALLA.values() for w in a["works"]]
-DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}}
+# 저작권이 남은 화가(NO_IMAGE)는 앱 안에 그림을 띄우지 않고, 위키백과 검색 링크(앱 밖에서 열림)만 둬요: 작품 제목·화가 이름 → 화가 이름
+LINK = {}
+for a in A.values():
+    if a["id"] not in NO_IMAGE: continue
+    LINK[a["name"]] = a["name"]
+    for w in a["works"]: LINK[w["t"]] = a["name"]
+DATA = {"W": W, "Q": QI, "G": G, "N": {a["name"]: a["id"] for a in A.values()}, "L": LINK}
 tpl = open("art_mode_tpl.js", encoding="utf-8").read(); assert "/*DATA*/null" in tpl
 open("../../art-mode.js", "w", encoding="utf-8").write(tpl.replace("/*DATA*/null", json.dumps(DATA, ensure_ascii=False, separators=(",", ":"))))
 # 오답 노트용 작은 모듈(명화 그림 찾기 정보만): wrong-notes.html 이 틀린 그림 문제의 그림을 다시 보여 줄 때 써요

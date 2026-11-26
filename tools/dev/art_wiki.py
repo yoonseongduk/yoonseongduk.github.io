@@ -55,6 +55,35 @@ WIKI = {
  "가나가와 해변의 높은 파도": ["en:The_Great_Wave_off_Kanagawa"], "맑은 날의 남풍(붉은 후지)": ["en:Fine_Wind,_Clear_Morning"],
  
  "인왕제색도": ["ko:인왕제색도"], "금강전도": ["ko:금강전도"], "몽유도원도": ["ko:몽유도원도"], "세한도": ["ko:세한도"],
+ # 2026-11-26: 위키백과 항목이 없는 옛 그림은 커먼즈 그림 파일을 직접 지정(공개 도메인·CC0, 파일 설명의 작가 이름을 확인한 것만)
+ "고사관수도": ["file:Joseon-Kang Huian-Gosagwansudo.jpg"],
+ "초충도": ["file:초충도(草蟲圖, Chochungdo).jpg"],
+ "월매도": ["file:어몽룡 월매도.jpg"],
+ "달마도": ["file:Dalma, 달마 그림, 달마도.jpg"],
+ "채애도(나물 캐기)": ["file:윤두서 채애도.jpg"],
+ "박연폭포": ["file:Jeong Seon-Bakyeon pokpo.jpg"],
+ "영통동구도(송도기행첩)": ["file:Korea-Kang Sehwang-Yeongtong donggudo.jpg"],
+ "묘작도": ["file:Korean art-Byeon Sangbyeok-Myojakdo-Painting of Cats and Sparrows-01.jpg"],
+ "씨름": ["file:Danwon-Ssireum.jpg"],
+ "서당": ["file:Danwon-Seodang.jpg"],
+ "무동": ["file:Danwon-Mudong.jpg"],
+ "미인도": ["file:Hyewon-Miindo.jpg"],
+ "단오풍정": ["file:Hyewon-Dano.pungjeong.jpg"],
+ "월하정인": ["file:Hyewon-Wolha-jeongin-2.jpg"],
+ "파적도(야묘도추)": ["file:Kim Deuksin - Pajeokdo.jpg"],
+ "불이선란도": ["file:Chusa-Buliseonrando-01.jpg"],
+ "호취도": ["file:Owon-Hochwido.jpg"],
+ "서학도(상서로운 학)": ["file:Auspicious Cranes.jpg"],
+ "답가도": ["file:Ma Yuan - Dancing and Singing- Peasants Returning from Work.jpg"],
+ "이백음행도": ["file:Liang Kai - Li Bai Strolling.jpg"],
+ "발묵선인도": ["file:Immortal in Splashed Ink.jpg"],
+ "청변은거도": ["file:Wang Meng Dwelling in the Qingbian Mountains. ink on paper. 1366. 141x42,2 cm. Shanghai Museum.jpg"],
+ "여산고도": ["file:Lofty Mt.Lu by Shen Zhou.jpg"],
+ "아마노하시다테도": ["file:Sesshu - View of Ama-no-Hashidate.jpg"],
+ "풍신뇌신도 병풍": ["file:Wind God and Thunder God Screens by Tawaraya Sotatsu low-res.png"],
+ "동식채회": ["file:Itō Jakuchū - Black rooster and nandin (Colorful Realm of Living Beings).jpg"],
+ "설송도 병풍": ["file:Okyo Pines right.jpg"],
+ "비드로를 부는 여인": ["file:婦女人相十品 相観歌麿考画-Woman with a Glass Noisemaker (Popen) MET DP135591.jpg"],
  # 동양화(2026-11-26, 영어 위키백과에 항목이 있는 것만 확인해서 넣음)
  "청명상하도": ["en:Along_the_River_During_the_Qingming_Festival"], "부춘산거도": ["en:Dwelling_in_the_Fuchun_Mountains"], "여사잠도": ["en:Admonitions_Scroll"],
  "오우도(다섯 마리 소)": ["en:Five_Oxen"], "조춘도(이른 봄)": ["en:Early_Spring_(painting)"], "작화추색도": ["en:Autumn_Colors_on_the_Que_and_Hua_Mountains"], "육시도(여섯 개의 감)": ["en:Six_Persimmons"],
@@ -68,7 +97,7 @@ TOKEN_OVERRIDE = {"rembrandt": ["rembrandt"], "hanhuang": [], "david": ["jacques
 
 EXTRA_TOKENS = {"raphael": ["raphael", "raffaello"], "titian": ["titian", "tiziano"], "bruegel": ["bruegel", "brueghel"], "elgreco": ["el greco", "greco"], "vaneyck": ["van eyck"],
                 "lautrec": ["lautrec", "toulouse-lautrec"], "friedrich": ["friedrich"], "michelangelo": ["michelangelo"], "leonardo": ["leonardo"], "holbein": ["holbein"], "durer": ["durer", "dürer"],
-                "velazquez": ["velazquez", "velázquez"], "kimhongdo": ["김홍도", "단원"], "sinyunbok": ["신윤복", "혜원"], "jeongseon": ["정선", "겸재"], "angyeon": ["안견"], "kimjeonghui": ["김정희", "추사"],
+                "velazquez": ["velazquez", "velázquez"], "kimhongdo": ["김홍도", "단원"], "sinyunbok": ["신윤복", "혜원", "hyewon", "shin yunbok"], "jeongseon": ["정선", "겸재"], "angyeon": ["안견"], "kimjeonghui": ["김정희", "추사", "chusa"], "kanghuian": ["huian", "강희안"], "gangsehwang": ["sehwang", "강세황"], "byeonsangbyeok": ["byeon sang"], "eomongryong": ["어몽룡", "mong-ryong"], "kimmyeongguk": ["김명국"], "yunduseo": ["윤두서", "yun du-seo"], "kimdeuksin": ["김득신", "deuksin"], "jangseungeop": ["장승업", "owon"], "saimdang": ["신사임당", "saimdang"], "liangkai": ["liang kai"], "mayuan": ["ma yuan"], "wangmeng": ["wang meng"], "shenzhou": ["shen zhou"], "sotatsu": ["sotatsu"], "jakuchu": ["jakuchu"], "okyo": ["okyo"], "utamaro": ["utamaro"], "huizong": ["huizong"],
                 "zhangzeduan": ["zhang zeduan"], "hanhuang": ["han huang"], "muqi": ["muqi", "mu qi"], "sesshu": ["sesshu"], "tohaku": ["tohaku"], "korin": ["korin"], "hokusai": ["hokusai"], "hiroshige": ["hiroshige"]}
 def tokens(aid, en, name):
     """위키백과 항목 설명에 하나 이상 들어 있어야 하는 작가 이름(영문·한글). online.js 의 확인과 같은 규칙."""

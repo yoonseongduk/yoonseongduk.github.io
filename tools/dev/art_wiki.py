@@ -84,6 +84,11 @@ WIKI = {
  "동식채회": ["file:Itō Jakuchū - Black rooster and nandin (Colorful Realm of Living Beings).jpg"],
  "설송도 병풍": ["file:Okyo Pines right.jpg"],
  "비드로를 부는 여인": ["file:婦女人相十品 相観歌麿考画-Woman with a Glass Noisemaker (Popen) MET DP135591.jpg"],
+ # 2026-11-26 사용자 결정: 저작권이 남은 근현대 화가도 커먼즈에 CC BY·CC BY-SA(또는 공개 도메인)로 올라온 파일만 저작자·라이선스를 붙여 표시
+ "부채를 든 자화상": ["file:부채를 든 자화상, 고희동, 1915년, 국립현대미술관.jpg"],
+ "흰 소": ["file:White Ox (1954) - Lee Jung Seob.jpg"],
+ "길 떠나는 가족": ["file:Family leaving the streets(1950s) - Lee Jung-seob.jpg"],
+ "서귀포의 환상": ["file:Fantasy of Seogwipo(1951).jpg"],
  # 동양화(2026-11-26, 영어 위키백과에 항목이 있는 것만 확인해서 넣음)
  "청명상하도": ["en:Along_the_River_During_the_Qingming_Festival"], "부춘산거도": ["en:Dwelling_in_the_Fuchun_Mountains"], "여사잠도": ["en:Admonitions_Scroll"],
  "오우도(다섯 마리 소)": ["en:Five_Oxen"], "조춘도(이른 봄)": ["en:Early_Spring_(painting)"], "작화추색도": ["en:Autumn_Colors_on_the_Que_and_Hua_Mountains"], "육시도(여섯 개의 감)": ["en:Six_Persimmons"],
@@ -97,7 +102,7 @@ TOKEN_OVERRIDE = {"rembrandt": ["rembrandt"], "hanhuang": [], "david": ["jacques
 
 EXTRA_TOKENS = {"raphael": ["raphael", "raffaello"], "titian": ["titian", "tiziano"], "bruegel": ["bruegel", "brueghel"], "elgreco": ["el greco", "greco"], "vaneyck": ["van eyck"],
                 "lautrec": ["lautrec", "toulouse-lautrec"], "friedrich": ["friedrich"], "michelangelo": ["michelangelo"], "leonardo": ["leonardo"], "holbein": ["holbein"], "durer": ["durer", "dürer"],
-                "velazquez": ["velazquez", "velázquez"], "kimhongdo": ["김홍도", "단원"], "sinyunbok": ["신윤복", "혜원", "hyewon", "shin yunbok"], "jeongseon": ["정선", "겸재"], "angyeon": ["안견"], "kimjeonghui": ["김정희", "추사", "chusa"], "kanghuian": ["huian", "강희안"], "gangsehwang": ["sehwang", "강세황"], "byeonsangbyeok": ["byeon sang"], "eomongryong": ["어몽룡", "mong-ryong"], "kimmyeongguk": ["김명국"], "yunduseo": ["윤두서", "yun du-seo"], "kimdeuksin": ["김득신", "deuksin"], "jangseungeop": ["장승업", "owon"], "saimdang": ["신사임당", "saimdang"], "liangkai": ["liang kai"], "mayuan": ["ma yuan"], "wangmeng": ["wang meng"], "shenzhou": ["shen zhou"], "sotatsu": ["sotatsu"], "jakuchu": ["jakuchu"], "okyo": ["okyo"], "utamaro": ["utamaro"], "huizong": ["huizong"],
+                "velazquez": ["velazquez", "velázquez"], "kimhongdo": ["김홍도", "단원"], "sinyunbok": ["신윤복", "혜원", "hyewon", "shin yunbok"], "jeongseon": ["정선", "겸재"], "angyeon": ["안견"], "kimjeonghui": ["김정희", "추사", "chusa"], "leejungseop": ["이중섭", "lee jung seob", "lee jung-seob"], "gohuidong": ["고희동"], "kanghuian": ["huian", "강희안"], "gangsehwang": ["sehwang", "강세황"], "byeonsangbyeok": ["byeon sang"], "eomongryong": ["어몽룡", "mong-ryong"], "kimmyeongguk": ["김명국"], "yunduseo": ["윤두서", "yun du-seo"], "kimdeuksin": ["김득신", "deuksin"], "jangseungeop": ["장승업", "owon"], "saimdang": ["신사임당", "saimdang"], "liangkai": ["liang kai"], "mayuan": ["ma yuan"], "wangmeng": ["wang meng"], "shenzhou": ["shen zhou"], "sotatsu": ["sotatsu"], "jakuchu": ["jakuchu"], "okyo": ["okyo"], "utamaro": ["utamaro"], "huizong": ["huizong"],
                 "zhangzeduan": ["zhang zeduan"], "hanhuang": ["han huang"], "muqi": ["muqi", "mu qi"], "sesshu": ["sesshu"], "tohaku": ["tohaku"], "korin": ["korin"], "hokusai": ["hokusai"], "hiroshige": ["hiroshige"]}
 def tokens(aid, en, name):
     """위키백과 항목 설명에 하나 이상 들어 있어야 하는 작가 이름(영문·한글). online.js 의 확인과 같은 규칙."""

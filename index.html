@@ -79,9 +79,14 @@ h2 span { font-family: var(--font-body); font-size: .85rem; color: var(--muted);
 .fav { position: absolute; right: 6px; bottom: 6px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; font-size: 1.2rem; line-height: 1; cursor: pointer; color: var(--muted); }
 .fav[aria-pressed="true"] { color: #f2b705; }
 .rmv { position: absolute; left: 6px; bottom: 6px; height: 30px; padding: 0 10px; border: 1px solid var(--muted); border-radius: 15px; background: transparent; font: inherit; font-size: .75rem; color: var(--muted); cursor: pointer; }
-.newb { align-self: flex-start; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #e8f5e9; color: #1b5e20; margin: 0 64px 4px 0; }
+.newb { align-self: flex-start; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #e8f5e9; color: #1b5e20; margin: 0 52px 4px 0; white-space: nowrap; }
 .newb.up { background: #e3f2fd; color: #0d47a1; }
 @media (prefers-color-scheme: dark) { .newb { background: #1b3a1f; color: #a5d6a7; } .newb.up { background: #102a43; color: #90caf9; } }
+/* 칸 접기: 제목을 누르면 접히고 펴져요(접은 칸은 fg-fold-v1 에 기억, 검색 중에는 모두 펼쳐 보여요) */
+[data-sec] > h2 { cursor: pointer; user-select: none; }
+[data-sec] > h2::before { content: "▾"; display: inline-block; width: 1.1em; color: var(--muted); font-size: .85em; transition: transform .15s; }
+[data-sec].fold > h2::before { transform: rotate(-90deg); }
+[data-sec].fold > :not(h2) { display: none !important; }
 .quick h2 .clr { margin-left: auto; font: inherit; font-size: .78rem; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
 .hint { color: var(--muted); font-size: .82rem; margin: -4px 0 8px; }
 .game .qc { color: var(--c); font-weight: 700; font-size: .78rem; margin-top: auto; }
@@ -407,6 +412,7 @@ const lsArr = k => { try { const a = JSON.parse(localStorage.getItem(k) || "[]")
 const lsPut = (k, a) => { try { localStorage.setItem(k, JSON.stringify(a)); } catch (e) {} };
 let FAVS = lsArr("fg-favs-v1");
 // 🆕 새로 나오고 바뀐 게임: 날짜는 tools/dev/game_added.py 가 git 기록으로 만들어요(ADDED = 처음 추가된 날, UPDATED = 그 게임만 고친 가장 최근 날)
+const FOLDK = "fg-fold-v1";   // 접어 둔 칸(data-sec) 목록
 const NEW_DAYS = 14, NEW_MAX = 12, HIDEK = "fg-new-hidden-v1";   // 뺀 게임은 "파일@날짜"로 기억해서, 다시 바뀌기 전까지는 안 나와요
 const ago = d => Math.floor((Date.now() - new Date(d + "T00:00:00").getTime()) / 864e5);
 const md = d => +d.slice(5, 7) + "/" + +d.slice(8, 10);
@@ -437,28 +443,29 @@ function render() {
     const rest = items.filter(g => !known.has(g[5])); if (rest.length) parts.push([["new", "✨", "새 게임"], rest]);   // 소분류가 없는 새 게임은 맨 뒤 "새 게임"에
     const body = parts.length === 1 && !rest.length && !subs.length ? `<div class="grid">${items.map(g => card(g, gr)).join("")}</div>`
       : parts.map(([sb, its]) => `<h3 class="subh">${sb[1]} ${sb[2]}<span>${its.length}개</span></h3><div class="grid">${its.map(g => card(g, gr)).join("")}</div>`).join("");
-    return `<section><h2>${gr.e} ${gr.n}<span>${items.length}개</span></h2>${body}</section>`;
-  }).join("") + (net.length ? `<section><h2>👫 같이 하기 게임<span>${net.length}개</span></h2><div class="grid">${net.map(g =>
+    return `<section data-sec="${gr.id}"><h2>${gr.e} ${gr.n}<span>${items.length}개</span></h2>${body}</section>`;
+  }).join("") + (net.length ? `<section data-sec="net"><h2>👫 같이 하기 게임<span>${net.length}개</span></h2><div class="grid">${net.map(g =>
       `<a class="game" style="--h:205" href="play-together.html"><span class="icon" aria-hidden="true">${ico(g[1])}</span><span class="no">#${g[3]}</span><h3>${esc(g[2])}</h3><p>👫 같이 하기 화면에서 폰을 연결해 함께 해요</p></a>`).join("")}</div></section>` : "");
   let quick = "";
   if (!q && group === "all") {
     const grOf = g => GROUPS.find(r => r.id === g[4]) || { h: 200 }, byF = f => G.find(g => g[0] === f);
     const favs = FAVS.map(byF).filter(Boolean), rec = lsArr("fg-recent-v1").map(byF).filter(Boolean).slice(0, 6);
-    quick += favs.length ? `<section class="quick"><h2>⭐ 즐겨찾기<span>${favs.length}개</span></h2><div class="grid">${favs.map(g => card(g, grOf(g))).join("")}</div></section>`
+    quick += favs.length ? `<section class="quick" data-sec="fav"><h2>⭐ 즐겨찾기<span>${favs.length}개</span></h2><div class="grid">${favs.map(g => card(g, grOf(g))).join("")}</div></section>`
       : `<p class="hint">💡 게임 카드 오른쪽 아래 ☆을 누르면 여기 맨 위 「⭐ 즐겨찾기」에 모여요.</p>`;
     const hid = lsArr(HIDEK), fresh = G.map(g => {
       const a = ADDED[g[0]], u = UPDATED[g[0]];
-      const t = a && ago(a) < NEW_DAYS ? { d: a, c: "nw", t: "🆕 신작 " + md(a) } : u && ago(u) < NEW_DAYS ? { d: u, c: "up", t: "🔧 업데이트 " + md(u) } : null;
+      const t = a && ago(a) < NEW_DAYS ? { d: a, c: "nw", t: "🆕 " + md(a) } : u && ago(u) < NEW_DAYS ? { d: u, c: "up", t: "🔧 " + md(u) } : null;
       if (t) t.k = g[0] + "@" + t.d; return t && !hid.includes(t.k) ? [g, t] : null;
     }).filter(Boolean).sort((x, y) => y[1].d.localeCompare(x[1].d)).slice(0, NEW_MAX);
-    if (fresh.length) quick += `<section class="quick"><h2>🆕 새로 나오고 바뀐 게임<span>${fresh.length}개</span><button type="button" class="clr" id="newClr">모두 빼기</button></h2><p class="hint">기준: 시작 화면에 추가된 지 ${NEW_DAYS}일이 안 된 게임은 <b>🆕 신작</b>, ${NEW_DAYS}일 안에 그 게임을 고친 기록이 있으면 <b>🔧 업데이트</b>예요(여러 화면을 한꺼번에 고친 공통 수정은 빼요). 최근 것부터 ${NEW_MAX}개까지 보여요. ✕로 뺀 게임은 다시 새로 바뀌기 전까지 나오지 않아요.</p><div class="grid">${fresh.map(([g, t]) => card(g, grOf(g), 2, t)).join("")}</div></section>`;
-    if (rec.length) quick += `<section class="quick"><h2>🕘 최근에 한 게임<span>${rec.length}개</span><button type="button" class="clr" id="recClr">모두 지우기</button></h2><div class="grid">${rec.map(g => card(g, grOf(g), 1)).join("")}</div></section>`;
+    if (fresh.length) quick += `<section class="quick" data-sec="new"><h2>🆕 새로 나오고 바뀐 게임<span>${fresh.length}개</span><button type="button" class="clr" id="newClr">모두 빼기</button></h2><p class="hint">칸 제목을 누르면 접고 펼 수 있어요. 기준: 시작 화면에 추가된 지 ${NEW_DAYS}일이 안 된 게임은 <b>🆕 신작</b>, ${NEW_DAYS}일 안에 그 게임을 고친 기록이 있으면 <b>🔧 업데이트</b>예요(여러 화면을 한꺼번에 고친 공통 수정은 빼요). 최근 것부터 ${NEW_MAX}개까지 보여요. ✕로 뺀 게임은 다시 새로 바뀌기 전까지 나오지 않아요.</p><div class="grid">${fresh.map(([g, t]) => card(g, grOf(g), 2, t)).join("")}</div></section>`;
+    if (rec.length) quick += `<section class="quick" data-sec="recent"><h2>🕘 최근에 한 게임<span>${rec.length}개</span><button type="button" class="clr" id="recClr">모두 지우기</button></h2><div class="grid">${rec.map(g => card(g, grOf(g), 1)).join("")}</div></section>`;
     // 🖼️🎵 그림·음악 모아 보기: 그림(명화·악기 그림)이나 소리(클래식·악기 소리)가 나오는 화면
     const media = MEDIA_GAMES.map(byF).filter(Boolean);
-    if (media.length) quick += `<section class="quick"><h2>🖼️🎵 그림·음악 모아 보기<span>${media.length}개</span></h2><div class="grid">${media.map(g => card(g, grOf(g))).join("")}</div></section>`;
+    if (media.length) quick += `<section class="quick" data-sec="media"><h2>🖼️🎵 그림·음악 모아 보기<span>${media.length}개</span></h2><div class="grid">${media.map(g => card(g, grOf(g))).join("")}</div></section>`;
   }
   $("casinoBox").innerHTML = `<label class="cas"><input type="checkbox" id="casChk" ${cOn ? "checked" : ""}> 🃏 카드·화투 놀이 보기 <small>(블랙잭·맞고·포커 등, 놀이용 점수예요)</small></label>`;
   $("list").innerHTML = quick + (html || `<div class="empty">찾는 게임이 없어요. 다른 단어로 찾아보세요. (초성으로도 돼요: ㅇㅁ → 오목)</div>`);
+  if (!q) { const fd = lsArr(FOLDK); $("list").querySelectorAll("[data-sec]").forEach(x => { const f = fd.includes(x.dataset.sec); x.classList.toggle("fold", f); x.querySelector("h2").setAttribute("aria-expanded", String(!f)); }); }
 }
 $("casinoBox").addEventListener("change", e => { if (e.target.id === "casChk") { fgCasino.set(e.target.checked); render(); } });
 $("chips").addEventListener("click", e => { const b = e.target.closest("[data-g]"); if (b) { group = b.dataset.g; render(); } });
@@ -466,6 +473,8 @@ $("q").addEventListener("input", e => { query = e.target.value; render(); });
 $("list").addEventListener("click", e => {
   const f = e.target.closest("[data-fav]");
   if (f) { e.preventDefault(); const k = f.dataset.fav; FAVS = FAVS.includes(k) ? FAVS.filter(x => x !== k) : [k, ...FAVS]; lsPut("fg-favs-v1", FAVS); render(); return; }
+  const sh = e.target.closest("[data-sec] > h2");
+  if (sh && !e.target.closest("button") && !query.trim()) { const id = sh.parentNode.dataset.sec, fd = lsArr(FOLDK); lsPut(FOLDK, fd.includes(id) ? fd.filter(x => x !== id) : [...fd, id]); render(); return; }   // 칸 접기·펴기
   const h = e.target.closest("[data-hide]");
   if (h) { e.preventDefault(); lsPut(HIDEK, [...lsArr(HIDEK), h.dataset.hide].slice(-300)); render(); return; }   // 신작·업데이트에서 빼기(그 날짜 것만)
   if (e.target.id === "newClr" && confirm("지금 보이는 신작·업데이트 게임을 모두 뺄까요?\n(나중에 다시 바뀐 게임은 또 나와요)")) { const ks = [...document.querySelectorAll("[data-hide]")].map(b => b.dataset.hide); lsPut(HIDEK, [...lsArr(HIDEK), ...ks].slice(-300)); render(); return; }

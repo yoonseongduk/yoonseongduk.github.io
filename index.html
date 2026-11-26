@@ -78,6 +78,7 @@ h2 span { font-family: var(--font-body); font-size: .85rem; color: var(--muted);
 .gw > .game { flex: 1; padding-bottom: 30px; }
 .fav { position: absolute; right: 6px; bottom: 6px; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; font-size: 1.2rem; line-height: 1; cursor: pointer; color: var(--muted); }
 .fav[aria-pressed="true"] { color: #f2b705; }
+.rmv { position: absolute; left: 6px; bottom: 6px; height: 30px; padding: 0 10px; border: 1px solid var(--muted); border-radius: 15px; background: transparent; font: inherit; font-size: .75rem; color: var(--muted); cursor: pointer; }
 .quick h2 .clr { margin-left: auto; font: inherit; font-size: .78rem; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
 .hint { color: var(--muted); font-size: .82rem; margin: -4px 0 8px; }
 .game .qc { color: var(--c); font-weight: 700; font-size: .78rem; margin-top: auto; }
@@ -399,6 +400,7 @@ let group = "all", query = "";
 const lsArr = k => { try { const a = JSON.parse(localStorage.getItem(k) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
 const lsPut = (k, a) => { try { localStorage.setItem(k, JSON.stringify(a)); } catch (e) {} };
 let FAVS = lsArr("fg-favs-v1");
+const MEDIA_GAMES = ["art-quiz.html", "art-gallery.html", "classic-quiz.html", "classic-gallery.html", "orchestra-quiz.html", "orchestra-gallery.html", "music-quiz.html", "offline-media.html"];   // 그림·음악 묶음(새 그림·음원 화면을 만들면 여기에 추가)
 // 초성 검색: "ㅂㄹ"로 "볼레로"를 찾아요
 const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
 const cho = t => [...t].map(c => { const k = c.charCodeAt(0) - 0xAC00; return k >= 0 && k < 11172 ? CHO[Math.floor(k / 588)] : c; }).join("");
@@ -418,7 +420,7 @@ function render() {
     const n = g.id === "all" ? G.length : G.filter(x => x[4] === g.id).length;
     return `<button type="button" class="chip" data-g="${g.id}" aria-pressed="${g.id === group}">${g.e} ${g.n} ${n}</button>`;
   }).join("");
-  const card = (g, gr) => `<div class="gw"><a class="game" style="--h:${gr.h}" href="${esc(g[0])}"><span class="icon" aria-hidden="true">${ico(g[1])}</span><span class="no">${BUZZ.includes(g[0]) ? '<span title="같이 하기 퀴즈 버저로도 할 수 있어요">🔔</span> ' : ""}#${NUM[g[0]] || ""}</span><h3>${esc(g[2])}</h3><p>${esc(g[3])}</p>${QCNT[g[0]] ? `<p class="qc">📚 ${QCNT[g[0]]}</p>` : ""}</a><button type="button" class="fav" data-fav="${esc(g[0])}" aria-pressed="${FAVS.includes(g[0])}" aria-label="${esc(g[2])} 즐겨찾기${FAVS.includes(g[0]) ? " 빼기" : "에 넣기"}">${FAVS.includes(g[0]) ? "⭐" : "☆"}</button></div>`;
+  const card = (g, gr, rm) => `<div class="gw"><a class="game" style="--h:${gr.h}" href="${esc(g[0])}"><span class="icon" aria-hidden="true">${ico(g[1])}</span><span class="no">${BUZZ.includes(g[0]) ? '<span title="같이 하기 퀴즈 버저로도 할 수 있어요">🔔</span> ' : ""}#${NUM[g[0]] || ""}</span><h3>${esc(g[2])}</h3><p>${esc(g[3])}</p>${QCNT[g[0]] ? `<p class="qc">📚 ${QCNT[g[0]]}</p>` : ""}</a><button type="button" class="fav" data-fav="${esc(g[0])}" aria-pressed="${FAVS.includes(g[0])}" aria-label="${esc(g[2])} 즐겨찾기${FAVS.includes(g[0]) ? " 빼기" : "에 넣기"}">${FAVS.includes(g[0]) ? "⭐" : "☆"}</button>${rm ? `<button type="button" class="rmv" data-rmv="${esc(g[0])}" aria-label="${esc(g[2])} 최근 목록에서 빼기">✕ 빼기</button>` : ""}</div>`;
   const html = GROUPS.map(gr => {
     const items = shown.filter(g => g[4] === gr.id); if (!items.length) return "";
     const subs = SUBS[gr.id] || [], known = new Set(subs.map(x => x[0])), parts = subs.map(x => [x, items.filter(g => g[5] === x[0])]).filter(x => x[1].length);
@@ -434,7 +436,10 @@ function render() {
     const favs = FAVS.map(byF).filter(Boolean), rec = lsArr("fg-recent-v1").map(byF).filter(Boolean).slice(0, 6);
     quick += favs.length ? `<section class="quick"><h2>⭐ 즐겨찾기<span>${favs.length}개</span></h2><div class="grid">${favs.map(g => card(g, grOf(g))).join("")}</div></section>`
       : `<p class="hint">💡 게임 카드 오른쪽 아래 ☆을 누르면 여기 맨 위 「⭐ 즐겨찾기」에 모여요.</p>`;
-    if (rec.length) quick += `<section class="quick"><h2>🕘 최근에 한 게임<span>${rec.length}개</span><button type="button" class="clr" id="recClr">지우기</button></h2><div class="grid">${rec.map(g => card(g, grOf(g))).join("")}</div></section>`;
+    if (rec.length) quick += `<section class="quick"><h2>🕘 최근에 한 게임<span>${rec.length}개</span><button type="button" class="clr" id="recClr">모두 지우기</button></h2><div class="grid">${rec.map(g => card(g, grOf(g), 1)).join("")}</div></section>`;
+    // 🖼️🎵 그림·음악 모아 보기: 그림(명화·악기 그림)이나 소리(클래식·악기 소리)가 나오는 화면
+    const media = MEDIA_GAMES.map(byF).filter(Boolean);
+    if (media.length) quick += `<section class="quick"><h2>🖼️🎵 그림·음악 모아 보기<span>${media.length}개</span></h2><div class="grid">${media.map(g => card(g, grOf(g))).join("")}</div></section>`;
   }
   $("casinoBox").innerHTML = `<label class="cas"><input type="checkbox" id="casChk" ${cOn ? "checked" : ""}> 🃏 카드·화투 놀이 보기 <small>(블랙잭·맞고·포커 등, 놀이용 점수예요)</small></label>`;
   $("list").innerHTML = quick + (html || `<div class="empty">찾는 게임이 없어요. 다른 단어로 찾아보세요. (초성으로도 돼요: ㅇㅁ → 오목)</div>`);
@@ -445,7 +450,9 @@ $("q").addEventListener("input", e => { query = e.target.value; render(); });
 $("list").addEventListener("click", e => {
   const f = e.target.closest("[data-fav]");
   if (f) { e.preventDefault(); const k = f.dataset.fav; FAVS = FAVS.includes(k) ? FAVS.filter(x => x !== k) : [k, ...FAVS]; lsPut("fg-favs-v1", FAVS); render(); return; }
-  if (e.target.id === "recClr") { lsPut("fg-recent-v1", []); render(); }
+  const r = e.target.closest("[data-rmv]");
+  if (r) { e.preventDefault(); lsPut("fg-recent-v1", lsArr("fg-recent-v1").filter(x => x !== r.dataset.rmv)); render(); return; }   // 최근에 한 게임에서 하나만 빼기
+  if (e.target.id === "recClr" && confirm("최근에 한 게임 목록을 모두 지울까요?\n(게임 기록은 지워지지 않아요)")) { lsPut("fg-recent-v1", []); render(); }
 });
 render();
 </script>

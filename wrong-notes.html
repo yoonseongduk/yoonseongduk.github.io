@@ -35,18 +35,31 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .chips{display:flex;gap:6px;flex-wrap:wrap}.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:.88rem}.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg);font-weight:700}.opts{display:grid;gap:8px}.opt{background:var(--surface);border:2px solid var(--line);border-radius:14px;min-height:54px;padding:8px 12px;font-weight:700;font-size:1rem;text-align:left}.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}.wi{padding:10px 0;border-bottom:1px solid var(--line)}.wh{display:flex;justify-content:space-between;align-items:center}.wh button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--soft);padding:0}.wq{margin:4px 0;overflow-wrap:anywhere}details summary{color:var(--accent);cursor:pointer;font-size:.9rem}.wa{color:var(--ok)}
 .wm{margin-top:8px;text-align:center}.wm .wmimg svg{width:min(240px,70vw);height:auto;max-height:230px;display:block;margin:0 auto;border-radius:12px}.wm .wmb{border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;padding:10px 16px;font-size:1rem}.wm .wmb.sm{padding:6px 12px;font-size:.88rem;margin-top:4px}.wm .wmph{margin-top:6px}.wm .wmyt{display:inline-block;margin-top:6px;color:inherit;text-decoration:underline;font-size:.9rem}.wm .wmcr{display:block;margin-top:6px;color:var(--muted);font-size:.78rem;overflow-wrap:anywhere}
+.sumline{color:var(--muted);font-size:.92rem}.sumline b{color:var(--fg)}
+.pickrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}#chips{flex:1;min-width:0;font:inherit;font-weight:700;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.backq{font-size:.9rem;font-weight:700;color:var(--accent);text-decoration:none}.btn.wide{width:100%}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:.88rem;padding:8px}
+.grp{margin:14px 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}.grp b{font-family:var(--font-display);font-weight:400;font-size:1.15rem}.grp button{background:none;border:0;color:var(--accent);font-weight:700;font-size:.85rem;padding:4px 0}
+.wi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.wi .wq{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.45}
+.wi details[open] ~ .wq,.wi.open .wq{-webkit-line-clamp:unset}
+.wi .wf{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:.82rem;color:var(--muted)}
+.wi .wf button{background:none;border:0;color:var(--muted);font-size:.82rem;padding:2px 4px}
+.wi summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.88rem;margin-top:4px}
+.wi .wa{display:block;margin-top:6px;font-size:1.05rem}
+.help summary{cursor:pointer;color:var(--muted);font-size:.9rem}.help p{margin-top:6px}
 </style>
 </head>
 <body>
 <main>
   <h1>오답 노트 📕</h1>
-  <div class="stats"><div class="stat"><small>틀린 문제</small><b id="cnt">0</b></div><div class="stat"><small>익힌 문제</small><b id="mas">0</b></div><div class="stat"><small>퀴즈 종류</small><b id="kinds">0</b></div></div>
-  <div class="chips" id="chips"></div>
+  <p class="sumline">틀린 문제 <b id="cnt">0</b> · 익힌 문제 <b id="mas">0</b> · 퀴즈 <b id="kinds">0</b>종류</p>
+  <div class="pickrow"><select id="chips" aria-label="퀴즈 고르기"></select><a id="back" class="backq" hidden></a></div>
   <div id="rev" hidden><div class="card center"><p class="muted" id="rt"></p><p class="big" id="rq" style="font-size:1.5rem"></p><div class="wm" id="rwm" hidden></div></div><div class="opts" id="ro"></div><p class="center" id="rm" style="min-height:1.4em;font-weight:700"></p><button class="btn" id="rn" type="button" hidden>다음</button></div>
-  <div class="row" id="acts"><button class="btn" id="go" type="button">🔥 집중 복습 (10문제)</button><button class="btn ghost" id="clear" type="button">🗑 모두 지우기</button></div>
+  <div id="acts"><button class="btn wide" id="go" type="button">🔥 집중 복습 (10문제)</button></div>
   <div class="res" id="sum" hidden></div>
-  <div class="card" id="listbox"><b>📋 틀린 문제 목록</b><div id="list"></div></div>
-  <p class="muted">퀴즈에서 <b>틀린 문제</b>가 자동으로 여기에 모여요. <b>집중 복습</b>을 누르면 많이 틀린 문제부터 다시 풀어요. 복습에서 <b>두 번 연속 맞히면</b> 노트에서 사라져요 (익힌 문제로 표시). 퀴즈에서 그 문제를 다시 맞혀도 같은 방식으로 세어져요. 기록은 이 폰에만 저장돼요.</p>
+  <div id="listbox"><div id="list"></div><p class="center"><button class="linkbtn" id="clear" type="button">🗑 목록 모두 지우기</button></p></div>
+  <details class="help"><summary>ℹ️ 오답 노트는 이렇게 써요</summary><p class="muted">퀴즈에서 <b>틀린 문제</b>가 자동으로 여기에 모여요. <b>집중 복습</b>을 누르면 많이 틀린 문제부터 다시 풀어요. 복습에서 <b>두 번 연속 맞히면</b> 노트에서 사라져요 (익힌 문제로 표시). 퀴즈에서 그 문제를 다시 맞혀도 같은 방식으로 세어져요. 기록은 이 폰에만 저장돼요.</p></details>
 </main>
 <script src="online.js"></script>
 <script src="orch-media.js"></script>
@@ -68,17 +81,34 @@ const KEY2 = "wrongnotes-v1", MKEY = "wrongnotes-mastered-v1";
 const cleanQ = x => { let q = String(x.q || ""); q = q.replace(/^📏[^)]*\)/, "").replace(/^12345678910/, "").replace(/💡 힌트 \(쓰면 맞혀도 0\.5점\)\s*$/, ""); { const k = x.t ? q.indexOf(x.t) : -1; if (k >= 0) q = q.slice(k + x.t.length); } q = q.replace(/^[^]*?(원본 보기\([^)]*\))(?=\S)/, "").trim(); return q === x.q ? x : { ...x, q: q || x.q }; };
 const withM = x => { if (!x.m && MODS().length) { const m = WM.infer(x); if (m) return { ...x, m }; } return x; };
 const load = () => { try { return (JSON.parse(localStorage.getItem(KEY2)) || []).map(cleanQ).map(withM); } catch (e) { return []; } }, save = a => { try { localStorage.setItem(KEY2, JSON.stringify(a)); } catch (e) {} }, mastered = () => { try { return +localStorage.getItem(MKEY) || 0; } catch (e) { return 0; } }, addMastered = () => { try { localStorage.setItem(MKEY, String(mastered() + 1)); } catch (e) {} };
-let items = load(), filt = "전체", q = [], qi = 0, good = 0, locked = false, tempo = 1;
-const kinds = () => [...new Set(items.map(x => x.t))];
-function chips() { const ks = kinds(); $("chips").innerHTML = ["전체", ...ks].map(k => `<button type="button" class="chip${k === filt ? " on" : ""}" data-k="${esc(k)}">${esc(k)} <small>${k === "전체" ? items.length : items.filter(x => x.t === k).length}</small></button>`).join(""); }
-const view = () => items.filter(x => filt === "전체" || x.t === filt);
+const QF = (() => { try { return new URLSearchParams(location.search).get("f") || ""; } catch (e) { return ""; } })();   // 게임 화면에서 "이 퀴즈 오답"으로 들어오면 그 퀴즈만
+const keyOf = x => x.f || x.t, nameOf = k => { const x = items.find(y => keyOf(y) === k); return x ? x.t : k; };
+let items = load(), filt = QF || "전체", q = [], qi = 0, good = 0, locked = false, tempo = 1;
+const kinds = () => [...new Set(items.map(keyOf))];
+function chips() {
+  const ks = kinds().sort((a, b) => nameOf(a).localeCompare(nameOf(b), "ko"));
+  $("chips").innerHTML = [`<option value="전체">📚 모든 퀴즈 (${items.length}문제)</option>`, ...ks.map(k => `<option value="${esc(k)}"${k === filt ? " selected" : ""}>${esc(nameOf(k))} (${items.filter(x => keyOf(x) === k).length}문제)</option>`)].join("");
+  $("chips").value = filt;
+  const b = $("back"); if (QF && QF.endsWith(".html")) { b.hidden = false; b.href = QF; b.textContent = "↩ 퀴즈로"; } else b.hidden = true;
+}
+const view = () => items.filter(x => filt === "전체" || keyOf(x) === filt);
+const card = x => `<div class="wi" data-id="${esc(x.id)}"><div class="wq">${esc(x.q)}</div><details><summary>정답${x.m ? "·그림·소리" : ""} 보기</summary>${x.m ? '<div class="wm"></div>' : ""}<b class="wa">✅ ${esc(x.a)}</b>${x.k === "write" ? ' <a href="hanja-write.html">✍️ 쓰기 연습</a>' : ""}</details><div class="wf"><span>${x.n || 1}번 틀림</span><button type="button" data-del="${esc(x.id)}" aria-label="이 문제 지우기">✕ 지우기</button></div></div>`;
 function render() {
-  items = load(); if (filt !== "전체" && !items.some(x => x.t === filt)) filt = "전체"; chips(); $("cnt").textContent = items.length; $("mas").textContent = mastered(); $("kinds").textContent = kinds().length;
+  items = load(); if (filt !== "전체" && !items.some(x => keyOf(x) === filt)) filt = "전체"; chips(); $("cnt").textContent = items.length; $("mas").textContent = mastered(); $("kinds").textContent = kinds().length;
   const v = view().sort((a, b) => (b.n || 1) - (a.n || 1) || b.d - a.d);
-  $("list").innerHTML = v.length ? v.map((x, k) => `<div class="wi"><div class="wh"><span class="muted">${esc(x.t)} · ${x.n || 1}번 틀림</span><button type="button" data-del="${esc(x.id)}" aria-label="삭제">✕</button></div><div class="wq">${esc(x.q)}</div>${x.m ? `<div class="wm" data-w="${k}"></div>` : ""}<details><summary>정답 보기</summary><b class="wa">${esc(x.a)}</b>${x.k === "write" ? ' <a href="hanja-write.html">✍️ 쓰기 연습</a>' : ""}</details></div>`).join("") : '<p class="muted center" style="padding:14px 0">🎉 틀린 문제가 없어요! 퀴즈를 풀다 틀리면 여기에 모여요.</p>';
-  if (MODS().length) $("list").querySelectorAll(".wm").forEach(el => { const x = v[+el.dataset.w]; if (x && x.m && WM.ok(x.m)) WM.render(el, x.m, false); else el.remove(); });
+  let html = "";
+  if (!v.length) html = '<p class="muted center" style="padding:14px 0">🎉 틀린 문제가 없어요! 퀴즈를 풀다 틀리면 여기에 모여요.</p>';
+  else if (filt === "전체") {   // 퀴즈별로 묶고, 묶음마다 처음 2문제만(나머지는 '이 퀴즈만 보기')
+    const g = {}; v.forEach(x => (g[keyOf(x)] = g[keyOf(x)] || []).push(x));
+    html = Object.keys(g).sort((a, b) => g[b].length - g[a].length).map(k => `<div class="grp"><b>${esc(nameOf(k))} <small class="muted">${g[k].length}문제</small></b><button type="button" data-k="${esc(k)}">이 퀴즈만 보기 ›</button></div>` + g[k].slice(0, 2).map(card).join("")).join("");
+  } else html = v.map(card).join("");
+  $("list").innerHTML = html;
+  $("clear").textContent = filt === "전체" ? "🗑 목록 모두 지우기" : "🗑 이 퀴즈 오답 모두 지우기";
+  $("go").textContent = filt === "전체" ? "🔥 집중 복습 (10문제)" : `🔥 ${nameOf(filt)} 복습 (${Math.min(10, v.length)}문제)`;
   $("go").disabled = !v.filter(x => x.k === "write" || (x.o && x.o.length >= 2)).length; $("acts").hidden = false;
 }
+// 정답을 펼칠 때만 그림·소리를 불러와요(목록이 덜 복잡하고 덜 무거워요)
+$("list").addEventListener("toggle", e => { const d = e.target; if (!d.open) return; const w = d.querySelector(".wm"); if (!w || w.dataset.done) return; w.dataset.done = 1; const x = items.find(y => y.id === d.closest(".wi").dataset.id); if (x && x.m && MODS().length && WM.ok(x.m)) WM.render(w, x.m, false); else w.remove(); }, true);
 let HJ = null;
 async function loadHanja() { if (HJ) return HJ; try { HJ = await (await fetch("data/hanja.json")).json(); } catch (e) { HJ = []; } return HJ; }
 // 한자 쓰기에서 틀린 글자는 "뜻과 음 → 알맞은 한자 고르기" 4지선다로 바꿔서 낸다
@@ -104,9 +134,9 @@ function pick(b) {
 }
 function finish() { $("rev").hidden = true; $("acts").hidden = false; $("listbox").hidden = false; render(); $("sum").hidden = false; $("sum").innerHTML = `<b>복습 끝! ${q.length}문제 중 ${good}개 정답</b><p class="muted">${good === q.length ? "완벽해요 🎉" : "틀린 문제는 노트에 남아 있어요. 또 도전해요 💪"}</p>`; }
 $("go").onclick = startReview; $("ro").addEventListener("click", e => { const b = e.target.closest("[data-o]"); if (b) pick(b); }); $("rn").onclick = () => { if (qi === q.length - 1) finish(); else { qi++; showQ(); } };
-$("chips").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) { filt = b.dataset.k; render(); } });
-$("list").addEventListener("click", e => { const d = e.target.closest("[data-del]"); if (d) { save(load().filter(x => x.id !== d.dataset.del)); render(); } });
-$("clear").onclick = () => { if (confirm("오답 노트를 모두 지울까요?")) { save([]); render(); } }; render();
+$("chips").addEventListener("change", e => { filt = e.target.value; render(); scrollTo(0, 0); });
+$("list").addEventListener("click", e => { const d = e.target.closest("[data-del]"); if (d) { save(load().filter(x => x.id !== d.dataset.del)); render(); return; } const k = e.target.closest("[data-k]"); if (k) { filt = k.dataset.k; render(); scrollTo(0, 0); } });
+$("clear").onclick = () => { if (filt === "전체") { if (confirm("오답 노트를 모두 지울까요?")) { save([]); render(); } } else if (confirm(nameOf(filt) + "의 오답을 모두 지울까요?")) { save(load().filter(x => keyOf(x) !== filt)); render(); } }; render();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="wrong-hook.js"></script>

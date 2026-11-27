@@ -16,9 +16,12 @@
     fix(f, q, a) { right(idOf(f, q, a)); right(idOf(f, q, a)); badge(); }
   };
   function badge() {
-    const main = document.querySelector("main"); if (!main) return; let p = document.getElementById("wnLink");
+    const main = document.querySelector("main"); if (!main || file === "wrong-notes.html") return; let p = document.getElementById("wnLink");
     if (!p) { p = document.createElement("p"); p.id = "wnLink"; p.className = "muted"; p.style.textAlign = "center"; main.appendChild(p); }
-    const n = load().length; p.innerHTML = `<a href="wrong-notes.html" style="color:inherit;font-weight:700">📕 오답 노트${n ? " (" + n + "문제)" : ""}</a> — 틀린 문제를 모아서 복습해요`;
+    // 이 퀴즈에서 틀린 문제가 있으면 그 문제만 바로 보는 링크(wrong-notes.html?f=파일), 전체 노트 링크도 함께
+    const all = load(), mine = all.filter(x => x.f === file).length, ls = "color:inherit;font-weight:700";
+    p.innerHTML = mine ? `<a href="wrong-notes.html?f=${encodeURIComponent(file)}" style="${ls}">📕 이 퀴즈 오답 ${mine}문제 보기</a> · <a href="wrong-notes.html" style="color:inherit">전체 오답 노트(${all.length})</a>`
+      : `<a href="wrong-notes.html" style="${ls}">📕 오답 노트${all.length ? " (" + all.length + "문제)" : ""}</a> — 틀린 문제를 모아서 복습해요`;
   }
   const text = el => el ? el.textContent.replace(/\s+/g, " ").trim() : "";
   let snap = null;

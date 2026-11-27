@@ -8,5 +8,9 @@
  "reverse-memory.html": "[\"reverse-memory.html\", \"🔁\", \"거꾸로 기억\", \"숫자를 거꾸로 입력해요\", \"react\", \"memory\"]",
  "reverse-tap.html": "[\"reverse-tap.html\", \"🔙\", \"거꾸로 숫자 터치\", \"큰 수부터 순서대로 터치\", \"react\", \"find\"]",
  "alien-defense.html": "[\"alien-defense.html\", \"👽\", \"외계인 방어\", \"외계인을 모두 물리쳐요\", \"arcade\", \"shoot\"]",
- "link-test.html": "[\"link-test.html\", \"📡\", \"폰 연결 테스트 (QR)\", \"QR로 폰 여러 대를 연결해 틱택토로 확인해요 (같은 와이파이)\", \"together\", \"link\"]"
+ "link-test.html": "[\"link-test.html\", \"📡\", \"폰 연결 테스트 (QR)\", \"QR로 폰 여러 대를 연결해 틱택토로 확인해요 (같은 와이파이)\", \"together\", \"link\"]",
+ "rps-tournament.html": "[\"rps-tournament.html\", \"✌️\", \"가위바위보 대회\", \"4명이 준결승과 결승을 치르고 누적 우승을 기록해요.\", \"together\", \"duel\"]",
+ "tap-duel.html": "[\"tap-duel.html\", \"👆\", \"탭 대결\", \"한 화면에서 둘이 연타 대결 (2인)\", \"together\", \"duel\"]",
+ "reaction-duel.html": "[\"reaction-duel.html\", \"⚡\", \"반응 대결\", \"누가 더 빨리 누를까? (2인)\", \"together\", \"duel\"]",
+ "memory-duel.html": "[\"memory-duel.html\", \"🂠\", \"카드 짝 대결 (2인)\", \"둘이서 번갈아 카드 짝 맞추기\", \"together\", \"duel\"]"
 }

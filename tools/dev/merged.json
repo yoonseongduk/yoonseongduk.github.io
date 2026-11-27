@@ -1,15 +1,145 @@
 {
- "_설명": "비슷한 게임 합치기(2026-11-27 사용자 요청, 1단계). groups 의 첫 파일이 시작 화면에 남는 게임이고, 나머지는 시작 화면 카드에서 빠져 '모드'로 들어가요. 파일·기록은 그대로 두고 각 화면 위에 모드 단추(home.js)가 붙어요. 적용: py merge_apply.py (ship.py 가 자동 실행)",
+ "_설명": "비슷한 게임 합치기(2026-11-27 사용자 요청, 1단계 10묶음 + 2단계 1인·2인 4묶음). groups 의 첫 파일이 시작 화면에 남는 게임이고, 나머지는 시작 화면 카드에서 빠져 '모드'로 들어가요. 파일·기록은 그대로 두고 각 화면 위에 모드 단추(home.js)가 붙어요. 적용: py merge_apply.py (ship.py 가 자동 실행)",
  "groups": [
-  [["color-match.html", "연속 보너스"], ["stroop-color.html", "기본"]],
-  [["number-tap.html", "1부터 순서대로"], ["reverse-tap.html", "큰 수부터 거꾸로"]],
-  [["number-memory.html", "그대로 기억"], ["reverse-memory.html", "거꾸로 입력"]],
-  [["pattern-memory.html", "순서대로 누르기"], ["spot-memory.html", "위치만 기억"]],
-  [["sudoku.html", "9×9"], ["mini-sudoku.html", "4×4·6×6"]],
-  [["space-shooter.html", "우주 슈터"], ["alien-defense.html", "외계인 방어"]],
-  [["quick-math.html", "암산 60초"], ["times-table.html", "구구단 스피드"]],
-  [["stopwatch-timer.html", "스톱워치·타이머"], ["pomodoro.html", "집중 타이머"]],
-  [["play-together.html", "같이 하기"], ["link-test.html", "연결 테스트"]],
-  [["earth-quiz.html", "지구과학"], ["weather-quiz.html", "날씨"]]
+  [
+   [
+    "color-match.html",
+    "연속 보너스"
+   ],
+   [
+    "stroop-color.html",
+    "기본"
+   ]
+  ],
+  [
+   [
+    "number-tap.html",
+    "1부터 순서대로"
+   ],
+   [
+    "reverse-tap.html",
+    "큰 수부터 거꾸로"
+   ]
+  ],
+  [
+   [
+    "number-memory.html",
+    "그대로 기억"
+   ],
+   [
+    "reverse-memory.html",
+    "거꾸로 입력"
+   ]
+  ],
+  [
+   [
+    "pattern-memory.html",
+    "순서대로 누르기"
+   ],
+   [
+    "spot-memory.html",
+    "위치만 기억"
+   ]
+  ],
+  [
+   [
+    "sudoku.html",
+    "9×9"
+   ],
+   [
+    "mini-sudoku.html",
+    "4×4·6×6"
+   ]
+  ],
+  [
+   [
+    "space-shooter.html",
+    "우주 슈터"
+   ],
+   [
+    "alien-defense.html",
+    "외계인 방어"
+   ]
+  ],
+  [
+   [
+    "quick-math.html",
+    "암산 60초"
+   ],
+   [
+    "times-table.html",
+    "구구단 스피드"
+   ]
+  ],
+  [
+   [
+    "stopwatch-timer.html",
+    "스톱워치·타이머"
+   ],
+   [
+    "pomodoro.html",
+    "집중 타이머"
+   ]
+  ],
+  [
+   [
+    "play-together.html",
+    "같이 하기"
+   ],
+   [
+    "link-test.html",
+    "연결 테스트"
+   ]
+  ],
+  [
+   [
+    "earth-quiz.html",
+    "지구과학"
+   ],
+   [
+    "weather-quiz.html",
+    "날씨"
+   ]
+  ],
+  [
+   [
+    "click-speed.html",
+    "혼자 기록 재기"
+   ],
+   [
+    "tap-duel.html",
+    "둘이 대결"
+   ]
+  ],
+  [
+   [
+    "reaction-test.html",
+    "혼자 기록 재기"
+   ],
+   [
+    "reaction-duel.html",
+    "둘이 대결"
+   ]
+  ],
+  [
+   [
+    "memory-match.html",
+    "혼자 하기"
+   ],
+   [
+    "memory-duel.html",
+    "둘이 번갈아"
+   ]
+  ],
+  [
+   [
+    "rps-streak.html",
+    "연승 도전"
+   ],
+   [
+    "rps-tournament.html",
+    "4명 대회"
+   ]
+  ]
  ]
 }

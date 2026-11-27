@@ -7,7 +7,7 @@ import json, os, re
 R = "../../"
 cfg = json.load(open("merged.json", encoding="utf-8"))
 groups = cfg["groups"]
-merged = {f: g[0][0] for g in groups for f, _ in g[1:]}
+merged = {x[0]: g[0][0] for g in groups for x in g[1:]}
 nums = json.load(open("game_numbers.json", encoding="utf-8"))
 P = "merged_cards.json"
 keep = json.load(open(P, encoding="utf-8")) if os.path.exists(P) else {}
@@ -27,9 +27,16 @@ for ln in lines:
     out.append(ln)
 games = "\n".join(out)
 games = re.sub(r",(\s*)$", r"\1", games)   # 마지막 줄 쉼표 정리
-# 남는 게임 설명에 모드 안내 붙이기
+renamed = {}
+# 남는 게임 설명에 모드 안내 붙이기(첫 항목에 세 번째 칸이 있으면 카드 제목도 묶음 이름으로)
 for g in groups:
-    main, others = g[0][0], [l for _, l in g[1:]]
+    main, others = g[0][0], [x[1] for x in g[1:]]
+    if len(g[0]) > 2:
+        om = re.search(r'\["' + re.escape(main) + r'", "[^"]*", "([^"]*)"', games)
+        if om and om.group(1) != g[0][2]: renamed[main] = om.group(1)
+        renamed.setdefault(main, keep.get("_title:" + main, ""))
+        if renamed[main]: keep["_title:" + main] = renamed[main]   # 처음 이름을 기억(여러 번 돌려도 같게)
+        games = re.sub(r'(\["' + re.escape(main) + r'", "[^"]*", ")[^"]*(")', lambda m, t=g[0][2]: m.group(1) + t + m.group(2), games, count=1)
     note = " 🔀 " + "·".join(others) + " 모드도 있어요."
     def fix(m):
         desc = m.group(2)
@@ -40,6 +47,7 @@ alias = []
 for f, to in merged.items():
     t = re.search(r'"[^"]*", "[^"]*", "([^"]*)"', keep.get(f, ""))
     alias.append([t.group(1) if t else f, nums.get(f, 0), to])
+alias += [[t, nums.get(f, 0), f] for f, t in renamed.items() if t]   # 이름이 바뀐 남는 게임의 옛 이름(예: 동물 퀴즈 → 생물 퀴즈)
 block = "/*MERGED*/const MERGED = " + json.dumps(merged, ensure_ascii=False) + ", MALIAS = " + json.dumps(alias, ensure_ascii=False) + ";/*/MERGED*/"
 idx = head + games + tail
 if "/*MERGED*/" in idx: idx = re.sub(r"/\*MERGED\*/.*?/\*/MERGED\*/", lambda m: block, idx, flags=re.S)
@@ -48,7 +56,7 @@ open(R + "index.html", "w", encoding="utf-8").write(idx)
 json.dump(keep, open(P, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 # home.js 모드 묶음
 hj = open(R + "home.js", encoding="utf-8").read()
-mb = "/*MODES*/var MODES = " + json.dumps(groups, ensure_ascii=False) + ";/*/MODES*/"
+mb = "/*MODES*/var MODES = " + json.dumps([[x[:2] for x in g] for g in groups], ensure_ascii=False) + ";/*/MODES*/"
 hj = re.sub(r"/\*MODES\*/.*?/\*/MODES\*/", lambda m: mb, hj, flags=re.S)
 open(R + "home.js", "w", encoding="utf-8").write(hj)
 print("합친 게임:", len(merged), "개 → 시작 화면에서 빠짐, 모드 묶음", len(groups), "개")

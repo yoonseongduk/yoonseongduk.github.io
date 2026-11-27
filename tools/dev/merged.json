@@ -1,5 +1,5 @@
 {
- "_설명": "비슷한 게임 합치기(2026-11-27 사용자 요청, 1단계 10묶음 + 2단계 1인·2인 4묶음). groups 의 첫 파일이 시작 화면에 남는 게임이고, 나머지는 시작 화면 카드에서 빠져 '모드'로 들어가요. 파일·기록은 그대로 두고 각 화면 위에 모드 단추(home.js)가 붙어요. 적용: py merge_apply.py (ship.py 가 자동 실행)",
+ "_설명": "비슷한 게임 합치기(2026-11-27 사용자 요청, 1단계 10묶음 + 2단계 1인·2인 4묶음 + 3단계 주제 퀴즈 8묶음). 첫 항목의 세 번째 칸이 있으면 시작 화면 카드 제목을 그 이름으로 바꿔요(화면 안 제목은 그대로). groups 의 첫 파일이 시작 화면에 남는 게임이고, 나머지는 시작 화면 카드에서 빠져 '모드'로 들어가요. 파일·기록은 그대로 두고 각 화면 위에 모드 단추(home.js)가 붙어요. 적용: py merge_apply.py (ship.py 가 자동 실행)",
  "groups": [
   [
    [
@@ -139,6 +139,110 @@
    [
     "rps-tournament.html",
     "4명 대회"
+   ]
+  ],
+  [
+   [
+    "animal-quiz.html",
+    "동물",
+    "생물 퀴즈"
+   ],
+   [
+    "sea-quiz.html",
+    "바다 생물"
+   ],
+   [
+    "insect-quiz.html",
+    "곤충"
+   ],
+   [
+    "plant-quiz.html",
+    "식물"
+   ],
+   [
+    "dino-quiz.html",
+    "공룡"
+   ]
+  ],
+  [
+   [
+    "hero-quiz.html",
+    "우리나라 인물",
+    "인물 퀴즈"
+   ],
+   [
+    "worldhero-quiz.html",
+    "세계 위인"
+   ]
+  ],
+  [
+   [
+    "korean-food-quiz.html",
+    "우리 음식",
+    "음식 퀴즈"
+   ],
+   [
+    "world-food-quiz.html",
+    "세계 음식"
+   ]
+  ],
+  [
+   [
+    "purekorean-quiz.html",
+    "순우리말",
+    "우리말 퀴즈"
+   ],
+   [
+    "onomatopoeia-quiz.html",
+    "의성어·의태어"
+   ],
+   [
+    "dialect-quiz.html",
+    "사투리"
+   ]
+  ],
+  [
+   [
+    "capital-quiz.html",
+    "세계 수도",
+    "나라 퀴즈"
+   ],
+   [
+    "flag-quiz.html",
+    "국기"
+   ]
+  ],
+  [
+   [
+    "english-quiz.html",
+    "영단어 뜻",
+    "영어 단어 퀴즈"
+   ],
+   [
+    "emoji-english-quiz.html",
+    "그림 보고 영어"
+   ]
+  ],
+  [
+   [
+    "tradition-quiz.html",
+    "우리 전통",
+    "우리 전통·문화재 퀴즈"
+   ],
+   [
+    "heritage-quiz.html",
+    "문화재"
+   ]
+  ],
+  [
+   [
+    "music-quiz.html",
+    "음악 상식",
+    "음악 퀴즈"
+   ],
+   [
+    "orchestra-quiz.html",
+    "오케스트라"
    ]
   ]
  ]

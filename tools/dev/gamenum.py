@@ -10,7 +10,13 @@ JP = os.path.join(DEV, "game_numbers.json")
 def index_games():
     s = open(os.path.join(REPO, "index.html"), encoding="utf-8").read()
     m = re.search(r'const GAMES = \[\n(.*?)\n\];', s, re.S)
-    return [json.loads(row.rstrip(",")) for row in m.group(1).split("\n") if row.strip().startswith("[")]
+    rows = [json.loads(row.rstrip(",")) for row in m.group(1).split("\n") if row.strip().startswith("[")]
+    # 합쳐져 시작 화면 카드에서 빠진 게임(merged_cards.json)도 같이 하기 동시 도전·퀴즈 버저·문제 수 표시에는 계속 넣어요
+    mp = os.path.join(DEV, "merged_cards.json")
+    if os.path.exists(mp):
+        have = {r[0] for r in rows}
+        rows += [json.loads(v) for k, v in json.load(open(mp, encoding="utf-8")).items() if k not in have and not k.startswith("_")]
+    return rows
 
 def net_games():
     s = open(os.path.join(DEV, "set30.py"), encoding="utf-8").read()

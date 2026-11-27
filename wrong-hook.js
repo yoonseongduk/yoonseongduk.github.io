@@ -33,6 +33,7 @@
     // 그림·소리·단추 같은 꾸밈(svg·img·audio·button이 든 덩어리)과 맨 앞의 퀴즈 이름 표시는 글자만 남기는 노트에서 뺀다(예전엔 "오케스트라 퀴즈도감 4번…💡 힌트…"처럼 뒤섞여 기록됐다)
     [...c.children].forEach(ch => { if (ch.matches("button,svg,img,audio,figure,canvas") || ch.querySelector("button,svg,img,audio,figure,canvas")) ch.remove(); else if (ch.tagName === "SMALL") { if ([title, text(h1)].includes(text(ch))) ch.remove(); else ch.after(" "); } });   // 분류 표시(<small>)는 문제 글과 붙지 않게 띄어 쓴다
     c.querySelectorAll("button,svg,img,audio,canvas").forEach(x => x.remove());
+    c.querySelectorAll("br").forEach(x => x.replaceWith(" "));   // 줄바꿈(<br>) 자리를 띄어 써서 "쿠바의수도는"처럼 붙지 않게
     let qt = text(c); try { const ex = typeof window.fgWrongText === "function" ? window.fgWrongText() : null; if (ex) qt = ex; } catch (er) {}   // 그림·소리 문제는 글로 풀어 쓴 문제로 바꿔 기록(화면 쪽 스크립트가 fgWrongText를 정의)
     let mm = null; try { mm = typeof window.fgWrongMedia === "function" ? window.fgWrongMedia() : null; } catch (er) {}   // 그림·소리·배치도 문제의 다시 보기 정보
     snap = { m: mm, q: qt, o: [...document.querySelectorAll(".opt")].map(text), picked: text(b) };

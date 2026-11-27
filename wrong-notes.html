@@ -47,6 +47,8 @@ input[type=text],input[type=number],textarea{width:100%;background:var(--soft);c
 .wi .wf button{background:none;border:0;color:var(--muted);font-size:.82rem;padding:2px 4px}
 .wi summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.88rem;margin-top:4px}
 .wi .wa{display:block;margin-top:6px;font-size:1.05rem}
+.qrows{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}.qrow{display:flex;align-items:center;gap:8px;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 14px;text-align:left;font-size:.98rem}.qrow:last-child{border-bottom:0}.qrow span{flex:1;min-width:0}.qrow b{font-family:var(--font-display);font-weight:400;color:var(--accent);font-size:1.1rem}.qrow i{font-style:normal;color:var(--muted)}
+.wi .wt{font-size:.78rem;color:var(--muted);margin-bottom:2px}
 .help summary{cursor:pointer;color:var(--muted);font-size:.9rem}.help p{margin-top:6px}
 </style>
 </head>
@@ -78,7 +80,7 @@ const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(ra
 const KEY = "wrongnotes-ui-v1";
 const KEY2 = "wrongnotes-v1", MKEY = "wrongnotes-mastered-v1";
 // 예전에 기록된 문제 글 정리: 맨 앞에 붙은 퀴즈 이름·배치도 번호·크기 비교 설명과 뒤의 힌트 단추 글자를 떼어 낸다(새 기록은 wrong-hook.js가 처음부터 깨끗하게 저장)
-const cleanQ = x => { let q = String(x.q || ""); q = q.replace(/^📏[^)]*\)/, "").replace(/^12345678910/, "").replace(/💡 힌트 \(쓰면 맞혀도 0\.5점\)\s*$/, ""); { const k = x.t ? q.indexOf(x.t) : -1; if (k >= 0) q = q.slice(k + x.t.length); } q = q.replace(/^[^]*?(원본 보기\([^)]*\))(?=\S)/, "").trim(); return q === x.q ? x : { ...x, q: q || x.q }; };
+const cleanQ = x => { let q = String(x.q || ""); q = q.replace(/^📏[^)]*\)/, "").replace(/^12345678910/, "").replace(/💡 힌트 \(쓰면 맞혀도 0\.5점\)\s*$/, ""); { const k = x.t ? q.indexOf(x.t) : -1; if (k >= 0) q = q.slice(k + x.t.length); } q = q.replace(/^[^]*?(원본 보기\([^)]*\))(?=\S)/, "").trim(); q = q.replace(/([?？])(?=[^\s?？)』」’”])/g, "$1 ").replace(/의수도는/g, "의 수도는").replace(/은\(는\)어느/g, "은(는) 어느"); return q === x.q ? x : { ...x, q: q || x.q }; };
 const withM = x => { if (!x.m && MODS().length) { const m = WM.infer(x); if (m) return { ...x, m }; } return x; };
 const load = () => { try { return (JSON.parse(localStorage.getItem(KEY2)) || []).map(cleanQ).map(withM); } catch (e) { return []; } }, save = a => { try { localStorage.setItem(KEY2, JSON.stringify(a)); } catch (e) {} }, mastered = () => { try { return +localStorage.getItem(MKEY) || 0; } catch (e) { return 0; } }, addMastered = () => { try { localStorage.setItem(MKEY, String(mastered() + 1)); } catch (e) {} };
 const QF = (() => { try { return new URLSearchParams(location.search).get("f") || ""; } catch (e) { return ""; } })();   // 게임 화면에서 "이 퀴즈 오답"으로 들어오면 그 퀴즈만
@@ -92,15 +94,18 @@ function chips() {
   const b = $("back"); if (QF && QF.endsWith(".html")) { b.hidden = false; b.href = QF; b.textContent = "↩ 퀴즈로"; } else b.hidden = true;
 }
 const view = () => items.filter(x => filt === "전체" || keyOf(x) === filt);
-const card = x => `<div class="wi" data-id="${esc(x.id)}"><div class="wq">${esc(x.q)}</div><details><summary>정답${x.m ? "·그림·소리" : ""} 보기</summary>${x.m ? '<div class="wm"></div>' : ""}<b class="wa">✅ ${esc(x.a)}</b>${x.k === "write" ? ' <a href="hanja-write.html">✍️ 쓰기 연습</a>' : ""}</details><div class="wf"><span>${x.n || 1}번 틀림</span><button type="button" data-del="${esc(x.id)}" aria-label="이 문제 지우기">✕ 지우기</button></div></div>`;
+const card = (x, showName) => `<div class="wi" data-id="${esc(x.id)}">${showName ? `<div class="wt">${esc(x.t)}</div>` : ""}<div class="wq">${esc(x.q)}</div><details><summary>정답${x.m ? (/^(a|c|cy)$/.test(x.m.k) ? "·소리" : "·그림") : ""} 보기</summary>${x.m ? '<div class="wm"></div>' : ""}<b class="wa">✅ ${esc(x.a)}</b>${x.k === "write" ? ' <a href="hanja-write.html">✍️ 쓰기 연습</a>' : ""}</details><div class="wf"><span>${x.n || 1}번 틀림</span><button type="button" data-del="${esc(x.id)}" aria-label="이 문제 지우기">✕ 지우기</button></div></div>`;
 function render() {
   items = load(); if (filt !== "전체" && !items.some(x => keyOf(x) === filt)) filt = "전체"; chips(); $("cnt").textContent = items.length; $("mas").textContent = mastered(); $("kinds").textContent = kinds().length;
   const v = view().sort((a, b) => (b.n || 1) - (a.n || 1) || b.d - a.d);
   let html = "";
   if (!v.length) html = '<p class="muted center" style="padding:14px 0">🎉 틀린 문제가 없어요! 퀴즈를 풀다 틀리면 여기에 모여요.</p>';
-  else if (filt === "전체") {   // 퀴즈별로 묶고, 묶음마다 처음 2문제만(나머지는 '이 퀴즈만 보기')
+  else if (filt === "전체") {   // 한눈에: 많이 틀린 문제 5개 + 퀴즈마다 한 줄(누르면 그 퀴즈 오답만)
     const g = {}; v.forEach(x => (g[keyOf(x)] = g[keyOf(x)] || []).push(x));
-    html = Object.keys(g).sort((a, b) => g[b].length - g[a].length).map(k => `<div class="grp"><b>${esc(nameOf(k))} <small class="muted">${g[k].length}문제</small></b><button type="button" data-k="${esc(k)}">이 퀴즈만 보기 ›</button></div>` + g[k].slice(0, 2).map(card).join("")).join("");
+    const top = v.filter(x => (x.n || 1) >= 2).slice(0, 5);
+    if (top.length) html += `<div class="grp"><b>🔁 자주 틀린 문제</b></div>` + top.map(x => card(x, true)).join("");
+    html += `<div class="grp"><b>📚 퀴즈별 오답</b><small class="muted">누르면 그 퀴즈 문제만 보여요</small></div><div class="qrows">` +
+      Object.keys(g).sort((a, b) => g[b].length - g[a].length).map(k => `<button type="button" class="qrow" data-k="${esc(k)}"><span>${esc(nameOf(k))}</span><b>${g[k].length}</b><i>›</i></button>`).join("") + "</div>";
   } else html = v.map(card).join("");
   $("list").innerHTML = html;
   $("clear").textContent = filt === "전체" ? "🗑 목록 모두 지우기" : "🗑 이 퀴즈 오답 모두 지우기";

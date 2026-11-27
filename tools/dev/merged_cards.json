@@ -32,5 +32,18 @@
  "_title:capital-quiz.html": "세계 수도 퀴즈",
  "_title:english-quiz.html": "영단어 퀴즈",
  "_title:tradition-quiz.html": "우리 전통 퀴즈",
- "_title:music-quiz.html": "음악 퀴즈"
+ "_title:music-quiz.html": "음악 퀴즈",
+ "_title:dice-roller.html": "주사위 굴리기",
+ "_title:decision-roulette.html": "결정 룰렛",
+ "_title:calendar-tools.html": "음양력·시간 도구",
+ "_title:bmr-calc.html": "대사량·칼로리 계산기",
+ "lots.html": "[\"lots.html\", \"🎟️\", \"제비뽑기\", \"카드를 뒤집어 당첨과 꽝을 가려요. 당첨 수도 정해요.\", \"together\", \"pick\"]",
+ "coin-flip.html": "[\"coin-flip.html\", \"🪙\", \"동전 던지기\", \"앞면과 뒷면, 운에 맡겨 보세요.\", \"together\", \"pick\"]",
+ "order-picker.html": "[\"order-picker.html\", \"📋\", \"순서·벌칙 정하기\", \"랜덤 순서와 벌칙자 뽑기\", \"together\", \"pick\"]",
+ "age-calc.html": "[\"age-calc.html\", \"🎂\", \"나이 계산기\", \"만 나이, 띠, 별자리, 다음 생일까지\", \"life\", \"calc\"]",
+ "dday-counter.html": "[\"dday-counter.html\", \"📆\", \"디데이 계산기\", \"기다리는 날까지 며칠? 날짜 차이 계산\", \"life\", \"calc\"]",
+ "bmi-calc.html": "[\"bmi-calc.html\", \"⚖️\", \"BMI 계산기\", \"키와 몸무게로 비만도 확인\", \"life\", \"health\"]",
+ "menu-picker.html": "[\"menu-picker.html\", \"🍽️\", \"오늘 뭐 먹지?\", \"메뉴를 랜덤으로 정해 줘요\", \"life\", \"fun\"]",
+ "exercise-kcal.html": "[\"exercise-kcal.html\", \"🏃\", \"걸음·운동 칼로리\", \"걸음 수나 운동 시간으로 소모 칼로리를 계산해요.\", \"life\", \"health\"]",
+ "family-ranking.html": "[\"family-ranking.html\", \"🏅\", \"가족 순위표\", \"게임별로 가족 중 누가 가장 잘했는지 최고 기록 비교\", \"life\", \"home\"]"
 }

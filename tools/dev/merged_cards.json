@@ -1,0 +1,12 @@
+{
+ "pomodoro.html": "[\"pomodoro.html\", \"🍅\", \"집중 타이머\", \"집중과 휴식을 번갈아 알려 줘요.\", \"life\", \"calc\"]",
+ "mini-sudoku.html": "[\"mini-sudoku.html\", \"🔢\", \"미니 스도쿠\", \"4×4 / 6×6 스도쿠\", \"brain\", \"num\"]",
+ "weather-quiz.html": "[\"weather-quiz.html\", \"⛅\", \"날씨 퀴즈\", \"날씨와 계절 퀴즈\", \"quiz\", \"science\"]",
+ "stroop-color.html": "[\"stroop-color.html\", \"🎨\", \"글자 색깔 맞히기\", \"글자 뜻 말고 색깔을 맞혀요\", \"react\", \"find\"]",
+ "times-table.html": "[\"times-table.html\", \"✖️\", \"구구단 스피드\", \"60초 구구단 빨리 풀기\", \"react\", \"type\"]",
+ "spot-memory.html": "[\"spot-memory.html\", \"🎯\", \"위치 기억\", \"켜졌던 칸의 위치를 기억해요\", \"react\", \"memory\"]",
+ "reverse-memory.html": "[\"reverse-memory.html\", \"🔁\", \"거꾸로 기억\", \"숫자를 거꾸로 입력해요\", \"react\", \"memory\"]",
+ "reverse-tap.html": "[\"reverse-tap.html\", \"🔙\", \"거꾸로 숫자 터치\", \"큰 수부터 순서대로 터치\", \"react\", \"find\"]",
+ "alien-defense.html": "[\"alien-defense.html\", \"👽\", \"외계인 방어\", \"외계인을 모두 물리쳐요\", \"arcade\", \"shoot\"]",
+ "link-test.html": "[\"link-test.html\", \"📡\", \"폰 연결 테스트 (QR)\", \"QR로 폰 여러 대를 연결해 틱택토로 확인해요 (같은 와이파이)\", \"together\", \"link\"]"
+}

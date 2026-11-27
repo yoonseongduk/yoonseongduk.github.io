@@ -77,6 +77,24 @@
     var gp = gamePill(); if (gp) bar.appendChild(gp);
     addEventListener("fgpoints", function () { var w = document.getElementById("fg-who"), P = window.fgPerson; if (w && P) w.textContent = (P.player() ? "👤 " + P.player() : "👤 누가 하나요?") + " · ⭐ " + P.points() + "p"; var g = document.getElementById("fg-gpt"); if (g) g.textContent = gameText(); fillHist(); });
     var m = document.querySelector("main") || document.body; m.insertBefore(bar, m.firstChild);
+    modes();
+  }
+  // 비슷한 게임을 합친 묶음(tools/dev/merged.json → merge_apply.py 가 아래 칸을 채워요): 제목 아래에 모드 단추를 달아 서로 오가요
+  /*MODES*/var MODES = [[["color-match.html", "연속 보너스"], ["stroop-color.html", "기본"]], [["number-tap.html", "1부터 순서대로"], ["reverse-tap.html", "큰 수부터 거꾸로"]], [["number-memory.html", "그대로 기억"], ["reverse-memory.html", "거꾸로 입력"]], [["pattern-memory.html", "순서대로 누르기"], ["spot-memory.html", "위치만 기억"]], [["sudoku.html", "9×9"], ["mini-sudoku.html", "4×4·6×6"]], [["space-shooter.html", "우주 슈터"], ["alien-defense.html", "외계인 방어"]], [["quick-math.html", "암산 60초"], ["times-table.html", "구구단 스피드"]], [["stopwatch-timer.html", "스톱워치·타이머"], ["pomodoro.html", "집중 타이머"]], [["play-together.html", "같이 하기"], ["link-test.html", "연결 테스트"]], [["earth-quiz.html", "지구과학"], ["weather-quiz.html", "날씨"]]];/*/MODES*/
+  function modes() {
+    if (isIndex || document.getElementById("fg-modes")) return;
+    var f = location.pathname.split("/").pop() || "", g = null;
+    MODES.forEach(function (x) { if (x.some(function (y) { return y[0] === f; })) g = x; }); if (!g) return;
+    var nav = document.createElement("nav"); nav.id = "fg-modes"; nav.setAttribute("aria-label", "모드 고르기");
+    nav.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0 4px;font:600 .88rem/1.2 system-ui,sans-serif";
+    var lab = document.createElement("span"); lab.textContent = "🔀 모드"; lab.style.cssText = "color:var(--muted,#667);margin-right:2px"; nav.appendChild(lab);
+    g.forEach(function (y) {
+      var on = y[0] === f, el = document.createElement(on ? "span" : "a"); el.textContent = y[1];
+      if (!on) { el.href = y[0]; el.onclick = function (e) { if (!leaveOk()) e.preventDefault(); }; }
+      el.style.cssText = "padding:6px 12px;border-radius:999px;text-decoration:none;border:1px solid " + (on ? "var(--fg,#1c2233)" : "var(--line,#ccd)") + ";background:" + (on ? "var(--fg,#1c2233)" : "var(--surface,#fff)") + ";color:" + (on ? "var(--bg,#fff)" : "var(--fg,#1c2233)");
+      if (on) el.setAttribute("aria-current", "page"); nav.appendChild(el);
+    });
+    var h = document.querySelector("h1"); if (h && h.parentNode) h.parentNode.insertBefore(nav, h.nextSibling);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", add); else add();
 })();

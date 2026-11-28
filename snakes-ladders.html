@@ -46,7 +46,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
   <section id="setup" class="card">
     <div class="step"><h2>참가 인원</h2><div><button id="minus" type="button" aria-label="한 명 줄이기">−</button><b id="n">2</b><button id="plus" type="button" aria-label="한 명 늘리기">＋</button></div></div>
     <div id="pl"></div>
-    <div class="opt"><h2>판 모양</h2><div id="modes" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><div id="lvs" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><p class="muted" id="layoutInfo" style="margin:4px 0 10px"></p><h2>규칙 켜고 끄기</h2><div id="rules" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><div style="display:flex;gap:6px;margin:4px 0 4px"><button type="button" class="cb" data-all="1">모두 켜기</button><button type="button" class="cb" data-all="0">모두 끄기(기본 규칙만)</button></div></div>
+    <div class="opt"><h2>판 모양</h2><div id="modes" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><div id="lvs" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><p class="muted" id="layoutInfo" style="margin:4px 0 10px"></p><h2>규칙 세트</h2><div id="presets" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div><p class="muted" id="presetInfo" style="margin:0 0 8px"></p><h2>규칙 켜고 끄기</h2><div id="rules" style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"></div></div>
     <button class="btn" id="start" type="button">게임 시작</button>
     <p class="muted">주사위를 굴려 100번 칸에 먼저 도착하면 이겨요. 🪜 사다리 아래칸에 서면 위로 올라가고, 🐍 뱀 꼬리 칸에 서면 뱀을 타고 머리가 있는 아래 칸으로 미끄러져요. 칸 위 그림은 특수 규칙이에요: 🎲 한 번 더 · 💤 한 판 쉬기 · 🔄 <b>1등과 자리 바꾸기</b> · 🎁 앞 3칸/뒤 2칸 · 🛡️ 뱀을 한 번 막는 방패. 6이 나오면 한 번 더, 같은 칸에 도착하면 앞서 있던 <b>상대 말을 잡아서 출발로 돌려보내요</b>. 모든 규칙은 위에서 하나씩 켜고 끌 수 있어요. 100에는 <b>딱 맞게</b> 도착해야 해요. 사람 대신 컴퓨터가 굴리게 정할 수도 있어요.</p>
   </section>
@@ -103,6 +103,12 @@ function applyLayout() {
 const SKCOL = [["#d2452f", "#f2a08f"], ["#e08a1e", "#f8d08a"], ["#8a4fc2", "#d2b6ee"], ["#2e86c1", "#acd5f0"], ["#c23b7a", "#f2b4d2"]]; /* 뱀 색깔(몸, 무늬) */
 const arrow = (c, x, y, ang, sz, col) => { c.save(); c.translate(x, y); c.rotate(ang); c.fillStyle = col; c.strokeStyle = "rgba(40,20,10,.9)"; c.lineWidth = 1.5; c.lineJoin = "round"; c.beginPath(); c.moveTo(sz, 0); c.lineTo(-sz * .6, -sz * .8); c.lineTo(-sz * .6, sz * .8); c.closePath(); c.fill(); c.stroke(); c.restore(); }; /* 가는 방향 화살표 */
 const RULES = [["again", "🎲", "한 번 더"], ["rest", "💤", "한 판 쉬기"], ["swap", "🔄", "1등과 자리 바꾸기"], ["bonus", "🎁", "보너스(앞 3칸·뒤 2칸)"], ["shield", "🛡️", "뱀 방패"], ["six", "🎯", "6이면 한 번 더"], ["cap", "🥊", "잡기(같은 칸 도착)"]]; /* 켜고 끌 수 있는 규칙 전부 */
+/* 규칙 세트: 한 번에 고르기(고른 뒤에도 아래에서 하나씩 바꿀 수 있어요) */
+const PRESETS = [["kids", "🐣 어린이용", ["again", "six", "bonus", "shield"], "좋은 일만 있어요: 한 번 더·6이면 한 번 더·보너스·뱀 방패. 쉬기·자리 바꾸기·잡기는 없어요."],
+  ["all", "🎉 모두 켜기", ["again", "rest", "swap", "bonus", "shield", "six", "cap"], "특수 규칙을 모두 써요(기본)."],
+  ["hard", "🔥 도전용", ["rest", "swap", "six", "cap"], "긴장감 있게: 한 판 쉬기·1등과 자리 바꾸기·잡기·6이면 한 번 더. 도와주는 칸(보너스·방패·한 번 더)은 없어요."],
+  ["none", "🎲 기본 규칙만", [], "사다리와 뱀만 있는 가장 단순한 놀이예요."]];
+const presetOf = () => { const on = RULES.map(([k]) => k).filter(k => cfg.on[k]).sort().join(); const p = PRESETS.find(x => [...x[2]].sort().join() === on); return p ? p[0] : ""; };
 const BG = { ok: false, img: new Image() }; BG.img.onload = () => { BG.ok = true; if (typeof render === "function" && pos.length) render(); }; BG.img.src = "snake-img/board-bg.webp";
 const KEY = "snakes-v1", $ = id => document.getElementById(id);
 const ld = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
@@ -131,6 +137,7 @@ function drawSetup() {
   const bt = (a, k, t, on) => `<button type="button" class="cb ${on ? "on" : ""}" data-${a}="${k}">${t}</button>`;
   $("modes").innerHTML = MODES.map(m => bt("mode", m[0], m[1], cfg.mode === m[0])).join("");
   $("lvs").innerHTML = cfg.mode === "base" ? "" : LVS.map(m => bt("lv", m[0], m[1], cfg.lv === m[0])).join("");
+  { const cur = presetOf(); $("presets").innerHTML = PRESETS.map(p => `<button type="button" class="cb ${p[0] === cur ? "on" : ""}" data-preset="${p[0]}" aria-pressed="${p[0] === cur}">${p[1]}</button>`).join(""); const pp = PRESETS.find(p => p[0] === cur); $("presetInfo").textContent = pp ? pp[3] : "직접 고른 규칙이에요."; }
   $("rules").innerHTML = RULES.map(([k, ic, nm]) => `<button type="button" class="cb ${cfg.on[k] ? "on" : ""}" data-rule="${k}" aria-pressed="${cfg.on[k]}">${ic} ${nm}</button>`).join("");
   const lv = LVS.find(x => x[0] === cfg.lv);
   const cs = cfg.mode === "base" ? Object.values(BASE_P).reduce((o, k) => (o[k] = (o[k] || 0) + 1, o), {}) : lv[4], on = Object.entries(cs).filter(([k]) => cfg.on[k]), spTxt = on.length ? " 특수 칸: " + on.map(([k, n]) => KINDS[k][0] + n).join(" ") + " (칸 위 그림이 뜻이에요)" : "";
@@ -240,7 +247,7 @@ function render() {
 }
 $("minus").onclick = () => { if (cfg.n > 2) { cfg.n--; drawSetup(); } }; $("plus").onclick = () => { if (cfg.n < 4) { cfg.n++; drawSetup(); } };
 
-$("setup").addEventListener("click", e => { const b = e.target.closest("[data-mode],[data-lv],[data-rule],[data-all]"); if (!b) return; if (b.dataset.rule) cfg.on[b.dataset.rule] = !cfg.on[b.dataset.rule]; if (b.dataset.all) for (const [k] of RULES) cfg.on[k] = b.dataset.all === "1"; if (b.dataset.mode) cfg.mode = b.dataset.mode; if (b.dataset.lv) cfg.lv = b.dataset.lv; sv(KEY, cfg); drawSetup(); });
+$("setup").addEventListener("click", e => { const b = e.target.closest("[data-mode],[data-lv],[data-rule],[data-all],[data-preset]"); if (!b) return; if (b.dataset.preset) { const p = PRESETS.find(x => x[0] === b.dataset.preset); for (const [k] of RULES) cfg.on[k] = p[2].includes(k); } if (b.dataset.rule) cfg.on[b.dataset.rule] = !cfg.on[b.dataset.rule]; if (b.dataset.all) for (const [k] of RULES) cfg.on[k] = b.dataset.all === "1"; if (b.dataset.mode) cfg.mode = b.dataset.mode; if (b.dataset.lv) cfg.lv = b.dataset.lv; sv(KEY, cfg); drawSetup(); });
 $("pl").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (b) { cfg.cpu[+b.dataset.i] = !cfg.cpu[+b.dataset.i]; drawSetup(); } });
 $("start").onclick = begin; $("roll").onclick = () => { if (!busy && !over && !cfg.cpu[turn]) roll(); };
 $("home").onclick = () => { over = true; $("game").hidden = true; $("setup").hidden = false; drawSetup(); };

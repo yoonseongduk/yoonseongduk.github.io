@@ -189,8 +189,15 @@ PINNED = {"토카타와 푸가 d단조": ["Bach, Toccata und Fuge d-moll BWV 565
           "아이다": ["Triumphal March from Aida.ogg", "Aida-Trompeten.ogg"],   # 2026-11-27 사용자 지적: ICBSA(옛 음반) 잡음 심함 → 미 해병대 군악대 2002년 녹음 「개선 행진곡」(공개 도메인)
           "전주곡 c♯단조": ["Prélude en Do dièse mineur de Rachmaninov op. 3 (Morceaux de fantaisie).ogg"],
           "짐노페디": ["Satie Gymnopèdie n.1 DariaBaiocchi.wav", "Gymnopedie No. 1 (ISRC USUAN1100787).mp3"],   # 2026-11-27 사용자 확인: 기존 녹음(Michael Laucke)은 기타 편곡 → 피아노 녹음(다리아 바이오키 2021년 스타인웨이, CC BY-SA 4.0 / 케빈 맥클라우드, CC BY 3.0)
+          # 2026-11-28 옛 녹음 점검: 1950년 전 음반·기계 연주·저작권 음반을 빼고 현대 녹음으로(남은 좋은 녹음만 지정)
+          "메시아": ["The National Chorus of Korea - Handel's Messiah, HWV 56 - XLIV. Hallelujah.ogg", "Handel - messiah - 44 hallelujah.ogg"],
+          "피아노 소나타 14번 '월광'": ["Beethoven - Moonlight Sonata Op-27 No-2 (Piano Performance by eldüendesüarez).wav", "Muriel-Nguyen-Xuan-Beethovens-Moonlight-Sonata-mvt-3.oga"],
+          "피아노 협주곡 2번 c단조": ["Sergei Rachmaninoff - piano concerto no. 2 in c minor, op. 18 - i. moderato.ogg", "Sergei Rachmaninoff - piano concerto no. 2 in c minor, op. 18 - ii. adagio sostenuto.ogg"],
+          "죽은 왕녀를 위한 파반느": ["Maurice Ravel - Thérèse Dussaut - Pavane pour une infante défunte.ogg"],
+          "골트베르크 변주곡": ["ia:MusopenCollectionAsFlac/Bach_GoldbergVariations/JohannSebastianBach-01-GoldbergVariationsBwv.988-Aria.mp3"],
+          "아침(페르 귄트 중)": ["ia:MusopenCollectionAsFlac/Greig_PeerGynt/EdvardGrieg-PeerGyntSuiteNo.1Op.46-01-Morning.mp3"],
           "랩소디 인 블루": ["US Marine Band Rhapsody in Blue.oga"]}
-NOAUDIO = {"라 보엠": "후보가 1907~1938년 옛 녹음뿐(2026-11-24 사용자 지적: 잡음이 심함)"}
+NOAUDIO = {"라 보엠": "후보가 1907~1938년 옛 녹음뿐(2026-11-24 사용자 지적: 잡음이 심함)", "교향곡 94번 '놀람'": "남은 녹음이 1929년 옛 음반뿐이고 다른 후보는 악보로 만든 기계 소리(2026-11-28 옛 녹음 점검)", "교향곡 8번 '미완성'": "현대 녹음 후보가 저작권이 있는 음반(2021년 DG)뿐이라 뺌, 다른 것은 1927년 옛 음반(2026-11-28)", "전주곡 c♯단조": "후보가 작곡가 본인의 1919~1920년대 옛 녹음뿐(2026-11-28)", "유모레스크": "후보가 비올라 편곡뿐이라 피아노 독주곡 설명과 안 맞음(2026-11-28)"}
 def load(p): return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}
 def save(p, d): json.dump(d, open(p, "w", encoding="utf-8"), ensure_ascii=False)
 def main():

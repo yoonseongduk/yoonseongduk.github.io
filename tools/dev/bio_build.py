@@ -99,6 +99,10 @@ PIN = {
     "트리케라톱스": "Triceratops_TD.png",
     "플레시오사우루스": "Plesiosaurus_3DB.jpg",   # 2026-11-28 사용자 요청(위키백과 문서 그림): 몸 전체 3D 복원도(CC BY 3.0)
     # 2026-11-28 사용자 확인 화면 지적(부분만 나옴·이상함) → 커먼즈 설명을 읽고 몸 전체가 나온 것으로
+    # 모음 사진(콜라주: 한 장에 여러 장)을 한 마리 사진으로(2026-11-28 사용자: 사진이 여러 가지로 나옴)
+    "박쥐": "Big-eared-townsend-fledermaus.jpg",   # 옛: Wikipedia-Bats-001-v01(모음) → 타운센드큰귀박쥐(공개 도메인)
+    "거미": "Araneus_diadematus_(aka).jpg",   # 옛: Spiders_Diversity(모음) → 유럽정원거미(CC BY-SA 2.5)
+    "고양이": "Cat_November_2010-1a.jpg",   # 옛: Cat_poster_1(모음) → 줄무늬 고양이(CC BY-SA 3.0; Cat03.jpg는 GFDL뿐이라 못 씀)
     "감자": "Solanales_-_Solanum_tuberosum_-_3.jpg",
     "국화": "Chrysanthemum_×_morifolium_flowers.jpg",   # 옛: 08NOV(설명 없음, 사용자: 이상함) → 국화꽃 여러 송이(CC BY-SA 4.0)   # 옛: 싹이 튼 감자 → 감자 덩이줄기들(CC BY-SA 4.0), 문제 "땅속에서 자라는 채소는?"
     "코끼리": "178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg",   # 옛: 숲속 코끼리(나무에 가림)

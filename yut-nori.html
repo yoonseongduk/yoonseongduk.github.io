@@ -119,7 +119,7 @@ function yPanel(sd, mark) { return `${mark} 출발 전 ${sd.w} · 도착 ${sd.do
 const yRules = () => `<details open><summary>📘 윷놀이 규칙 (일반 규칙)</summary><div class="note" style="margin-top:6px">
   <b>목표</b>: 내 말 <b>4개</b>를 먼저 모두 한 바퀴 돌려 <b>도착</b>시키면 이겨요.<br>
   <b>윷 던지기</b>: 가락 4개의 평평한 면(▬)이 몇 개인지 봐요.
-  <table class="tbl"><tbody><tr><td><img class="yth" src="yut-img/yut_do.svg" alt="도"></td><td>평평한 면 1개</td><td><b>도</b> 1칸</td></tr><tr><td><img class="yth" src="yut-img/yut_gae.svg" alt="개"></td><td>2개</td><td><b>개</b> 2칸</td></tr><tr><td><img class="yth" src="yut-img/yut_geol.svg" alt="걸"></td><td>3개</td><td><b>걸</b> 3칸</td></tr><tr><td><img class="yth" src="yut-img/yut_yut.svg" alt="윷"></td><td>4개</td><td><b>윷</b> 4칸 · 한 번 더</td></tr><tr><td><img class="yth" src="yut-img/yut_mo.svg" alt="모"></td><td>0개(모두 둥글어요)</td><td><b>모</b> 5칸 · 한 번 더</td></tr><tr><td><img class="yth" src="yut-img/yut_backdo.svg" alt="빽도"></td><td>도인데 ✖ 표시 가락이 평평</td><td><b>빽도</b> 뒤로 1칸</td></tr></tbody></table>
+  <table class="tbl"><tbody><tr><td><img class="yth" src="yut-img/yut_do.svg" alt="도"></td><td>평평한 면 1개</td><td><b>도</b> 1칸</td></tr><tr><td><img class="yth" src="yut-img/yut_gae.svg" alt="개"></td><td>2개</td><td><b>개</b> 2칸</td></tr><tr><td><img class="yth" src="yut-img/yut_geol.svg" alt="걸"></td><td>3개</td><td><b>걸</b> 3칸</td></tr><tr><td><img class="yth" src="yut-img/yut_yut.svg" alt="윷"></td><td>4개</td><td><b>윷</b> 4칸 · 한 번 더</td></tr><tr><td><img class="yth" src="yut-img/yut_mo.svg" alt="모"></td><td>0개(모두 둥글어요)</td><td><b>모</b> 5칸 · 한 번 더</td></tr><tr><td><img class="yth" src="yut-img/yut_backdo.svg" alt="빽도"></td><td>도인데 ✖ 표시 가락이 평평</td><td><b>빽도</b> 뒤로 1칸 (출발 전 말은 출발·도착 칸에)</td></tr></tbody></table>
   <b>말판</b>: 바깥 길을 반시계 방향으로 출발·도착 칸(0)에서 시작해 한 바퀴 돌아요. 말은 던진 칸 수만큼 움직여요.<br>&nbsp;&nbsp;• <b>출발·도착 칸에 정확히 서면</b> 말은 그 칸에 <b>남아 있어요</b>(상대가 정확히 서면 잡힐 수도 있어요). 다음에 그 말을 움직이면 몇 칸이든 <b>도착</b>이에요.<br>&nbsp;&nbsp;• 그 칸을 <b>넘어가면</b> 바로 도착이에요. (예: 가운데에서 걸=3칸이면 출발·도착 칸에 멈추고, 윷=4칸이면 도착)<br>
   <b>🔀 지름길</b>: 모서리 <b>5번</b>이나 <b>10번</b>에 <b>서 있다가</b> 다음에 움직이면 안쪽 길로 들어가요. 그냥 지나가기만 하면 바깥 길이에요.<br>
   &nbsp;&nbsp;• 5번에서 시작: 20→21→<b>가운데(22)</b>→23→24→15번으로 나와 바깥 길(15 이후)을 이어 가요.<br>
@@ -127,7 +127,7 @@ const yRules = () => `<details open><summary>📘 윷놀이 규칙 (일반 규�
   &nbsp;&nbsp;• 가운데(22)에 서 있다가 움직이면 27→28→출발·도착 칸 쪽으로 나가요.<br>
   <b>🤝 업기</b>: 내 말이 있는 칸에 내 다른 말이 도착하면 한 덩어리가 돼서 <b>함께 움직여요</b>(숫자로 표시). 이동할 때도, 잡힐 때도 같이예요.<br>
   <b>⚔️ 잡기</b>: 상대 말이 있는 칸에 서면 그 칸의 상대 말을 <b>모두 잡아</b> 출발 전으로 돌려보내요. 잡으면 <b>한 번 더</b> 던져요.<br>
-  <b>↩️ 빽도</b>: 뒤로 한 칸(온 길을 따라). 출발 전 말은 움직일 수 없고, 1번 칸의 말은 출발 전으로 돌아가요. 움직일 말이 없으면 차례가 넘어가요.<br>
+  <b>↩️ 빽도</b>: 뒤로 한 칸(온 길을 따라). 1번 칸의 말은 출발 전으로 돌아가요. <b>출발 전 말은 출발·도착 칸에 놓을 수 있어요</b>(다음에 움직이면 몇 칸이든 바로 도착, 또 빽도가 나오면 출발 전으로). 움직일 말이 없으면 차례가 넘어가요.<br>
   <b>한 번 더</b>: 윷·모가 나오거나 상대 말을 잡았을 때예요.<br>
   <b>이 앱의 약속</b>: 던진 결과는 <b>바로 사용</b>해요(모아 두지 않아요). 움직일 수 있는 말이 하나뿐이면 자동으로 움직여요.</div></details>`;
 

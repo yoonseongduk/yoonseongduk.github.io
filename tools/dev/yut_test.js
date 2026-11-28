@@ -24,7 +24,13 @@ r = Y.advance(st(2, "o", 1, [[1, "o"], [2, "o"]]), -1); ok(r.at === 1, "빽도 2
 ok(Y.advance(st(1, "o", 1, [[1, "o"]]), -1).home, "1에서 빽도 → 출발 전");
 r = Y.advance(st(21, "a", 1, [[20, "a"], [21, "a"]]), -1); ok(r.at === 20 && r.lane === "a", "지름길에서 빽도 21→20");
 r = Y.advance(st(15, "o", 1, [[20, "a"], [21, "a"], [22, "a"], [23, "a"], [24, "a"], [15, "o"]]), -1); ok(r.at === 24, "지름길로 온 15에서 빽도 → 24");
-ok(Y.advance(null, -1) === null, "출발 전 말은 빽도로 못 움직임");
+r = Y.advance(null, -1); ok(r && r.at === 0 && r.trail.length === 1, "출발 전 말 빽도 → 출발·도착 칸에 놓기(2026-11-28)");
+ok(Y.advance({ at: 0, lane: "o", n: 1, trail: [[0, "o"]] }, 2).end, "출발 전에서 빽도로 놓은 말은 다음에 움직이면 도착");
+ok(Y.advance({ at: 0, lane: "o", n: 1, trail: [[0, "o"]] }, -1).home, "그 말이 또 빽도면 출발 전으로");
+{ const me = { w: 4, done: 0, stacks: [{ at: 2, lane: "o", n: 1, trail: [[1, "o"], [2, "o"]] }] }, op = { w: 3, done: 0, stacks: [{ at: 0, lane: "o", n: 1, trail: [[19, "o"], [0, "o"]] }] };
+  const os = Y.options(me, op, -1); ok(os.some(m => m.from === -1 && m.to === 0 && m.cap === 1) && os.some(m => m.from === 0 && m.to === 1), "빽도 선택지: 판 위 말 뒤로 + 새 말 출발·도착 칸(상대 말 잡기 포함)");
+  Y.apply(me, op, os.find(m => m.from === -1), -1); ok(me.w === 3 && me.stacks.some(x => x.at === 0) && op.w === 4, "새 말을 놓으면 출발 전 3, 상대 말은 잡혀 출발 전으로"); }
+{ const me = { w: 0, done: 4, stacks: [] }; ok(Y.options(me, { w: 4, done: 0, stacks: [] }, -1).length === 0, "출발 전 말도 판 위 말도 없으면 빽도 선택지 없음"); }
 // 윷가락 확률(통계)
 const cnt = {}; for (let i = 0; i < 160000; i++) { const t = Y.toss(); cnt[t.n] = (cnt[t.n] || 0) + 1; }
 const p = n => cnt[n] / 160000; ok(Math.abs(p(-1) - 1 / 16) < .01 && Math.abs(p(1) - 3 / 16) < .01 && Math.abs(p(2) - 6 / 16) < .01 && Math.abs(p(3) - 4 / 16) < .01 && Math.abs(p(4) - 1 / 16) < .01 && Math.abs(p(5) - 1 / 16) < .01, "확률 " + JSON.stringify(cnt));

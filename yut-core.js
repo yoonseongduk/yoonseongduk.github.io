@@ -27,11 +27,11 @@
     if (n === 19) return END;
     return [n + 1, "o"];
   }
-  // st(없으면 출발 전 말 1개)를 steps칸 움직인 결과. 반환: {end} | {home}(빽도로 출발 전으로) | {at, lane, trail} | null(못 움직임)
+  // st(없으면 출발 전 말 1개)를 steps칸 움직인 결과. 반환: {end} | {home}(빽도로 출발 전으로) | {at, lane, trail} | null(못 움직임). 출발 전 말의 빽도 = 출발·도착 칸(0)에 놓기
   function advance(st, steps) {
     var trail = st ? st.trail.slice() : [], at = st ? st.at : 0, lane = st ? st.lane : "o", i, nx;
     if (steps < 0) {
-      if (!st) return null;
+      if (!st) return { at: 0, lane: "o", trail: [[0, "o"]] };   // 빽도 + 출발 전 말: 새 말을 출발·도착 칸에 놓아요(2026-11-28 사용자 요청). 다음에 움직이면 도착, 또 빽도면 출발 전으로
       trail.pop(); if (!trail.length) return { home: true };
       var t = trail[trail.length - 1]; return { at: t[0], lane: t[1], trail: trail };
     }
@@ -63,7 +63,7 @@
       if (!r.end && !r.home) { opps.forEach(function (op) { op.stacks.forEach(function (o) { if (o.at === r.at) m.cap += o.n; }); }); me.stacks.forEach(function (s, i) { if (s.at === r.at && i !== from) m.stack = true; }); }
       out.push(m);
     }
-    if (roll > 0 && me.w > 0) add(-1, null);
+    if (me.w > 0) add(-1, null);   // 빽도여도 출발 전 말을 출발·도착 칸에 놓을 수 있어요
     me.stacks.forEach(function (s, i) { add(i, s); });
     return out;
   }

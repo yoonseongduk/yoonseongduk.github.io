@@ -216,8 +216,8 @@ def main():
                 if lst: pick.append(lst[0])
             rest = [c for c in com[1:] + iac[1:] if c not in pick]; rest.sort(key=lambda c: -c["score"]); pick += rest[:max(0, 3 - len(pick))]
             if pick: res[t] = [{"f": c["f"], "lic": c["lic"], "kbps": c["kbps"], "scr": None} for c in pick]
-        for t0 in NOAUDIO: res.pop(t0, None)
         for t0, fs in PINNED.items(): res[t0] = [{"f": f, "lic": "직접 지정", "kbps": None, "scr": None} for f in fs]
+        for t0 in NOAUDIO: res.pop(t0, None)   # 소리를 빼기로 한 곡(NOAUDIO)은 직접 지정(PINNED)보다 우선(2026-11-28: 다시 분석하면 뺀 곡이 되살아나던 문제)
         save(OUT, res); print(f"후보만으로 만든 곡 {len(res)} / {len(works)} (음질 분석 전)"); return
     if "--ia" in a:   # 2단계: 인터넷 아카이브 후보(다른 서버라 1단계와 동시에 돌려도 돼요)
         ia = load(IAF)
@@ -266,8 +266,8 @@ def main():
                 if keep: res[t] = keep
                 else: res.pop(t, None)
             elif all(sc.get(c["f"]) is not None for c in cands[:4] if c["f"] in sc): res.pop(t, None)   # 분석이 서버 문제로 실패(None)한 곡은 기존 목록을 그대로 둬요
-            for t0 in NOAUDIO: res.pop(t0, None)
             for t0, fs in PINNED.items(): res[t0] = [{"f": f, "lic": "직접 지정", "kbps": None, "scr": None} for f in fs]
+            for t0 in NOAUDIO: res.pop(t0, None)   # 소리를 빼기로 한 곡(NOAUDIO)은 직접 지정(PINNED)보다 우선(2026-11-28: 다시 분석하면 뺀 곡이 되살아나던 문제)
             save(OUT, res)
             if tried or t in MUSOPEN: print(f"[{n}/{len(works)}] {'✓' if picked else '✗'} {t}: 후보 {len(cands)}개" + (f" → {picked[0]['f'][:60]} ({sc.get(picked[0]['f'])})" if picked else " → 쓸 만한 녹음 없음(글로만)"), flush=True)
         ready = all("cands" in st.get(t, {}) and ia.get(t, {}).get("done") for t in works)

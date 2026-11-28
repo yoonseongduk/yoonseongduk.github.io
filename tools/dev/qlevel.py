@@ -160,5 +160,7 @@ def main(a_):
         if c: print(f"{n:24} 초급 {c[0]:4} 중급 {c[1]:4} 고급 {c[2]:4} 합계 {sum(c)}")
     if not a_ or a_[0] == "check":                      # 공통 틀이 아닌 퀴즈(속담·상식·세계 수도)도 함께
         import qlevel_custom; qlevel_custom.apply_all()
+    if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "bio_wiki.json")):   # 생물 퀴즈 사진(퀴즈를 다시 만들어도 다시 붙여요)
+        import subprocess; subprocess.run([sys.executable, "bio_apply.py"], cwd=os.path.dirname(os.path.abspath(__file__)))
 
 if __name__ == "__main__": main(sys.argv[1:])

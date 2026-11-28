@@ -14,7 +14,16 @@ for f, m in M.items():
         g = grp.setdefault(v[0], [[], [], v[0], v[1]])
         if QN[f] not in g[0]: g[0].append(QN[f])
         if n not in g[1]: g[1].append(n)
-items = [["·".join(g[0]), " · ".join(g[1]), g[2], g[3]] for g in grp.values()]
+# 단추는 '생물 종류'로(2026-11-28 사용자: 동물을 눌렀는데 바다 생물·곤충·식물이 섞여 나옴 — 동물 퀴즈 정답에 고래상어·개미·대나무 등이 있어서).
+#   한 칸은 한 종류에만: 여러 퀴즈에 나오면 식물 > 공룡 > 곤충 > 바다 생물 > 동물 순서로 정하고, 아래 KIND 로 직접 고칠 수 있어요.
+ORDER = ["식물", "공룡", "곤충", "바다 생물", "동물"]
+KIND = {"대나무": "식물", "유칼립투스": "식물", "진딧물": "곤충", "북극곰": "동물", "지렁이": "동물"}
+def kind(qs, names):
+    for n in names:
+        if n in KIND: return KIND[n]
+    return next(k for k in ORDER if k in qs)
+items = [[kind(g[0], g[1]), " · ".join(g[1]), g[2], g[3], "·".join(g[0])] for g in grp.values()]
+items.sort(key=lambda x: ORDER[::-1].index(x[0]))   # 동물 → 바다 생물 → 곤충 → 공룡 → 식물
 nophoto = [[QN[f], n] for f, ns in RJ.items() for n in ns]
 body = """
 <div class="card"><p class="muted" style="margin:0 0 8px">생물 퀴즈에서 정답 뒤에 나오는 사진을 한 번에 확인해요. 사진은 위키미디어 커먼즈에서 불러오고 폰에 저장하지 않아요.</p>
@@ -59,14 +68,14 @@ function fgZoom(small, file, cap) {
 const IT = /*IT*/[]/*/IT*/, NP = /*NP*/[]/*/NP*/, BK = "bio-check-v1";
 let bad = ld(BK) || {}, cat = "전체", on = false;
 const src = f => "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=320";
-const QS = ["전체", ...new Set(IT.flatMap(x => x[0].split("·")))];   // 한 칸이 여러 퀴즈에 속할 수 있어요
-const k = x => x[0] + "|" + x[1] + "|" + x[2];   // 이름·퀴즈 묶음이 바뀌거나 사진을 바꾸면 ❌ 표시가 저절로 풀려요   // 사진 파일까지 기억: 사진을 바꾸면 ❌ 표시가 저절로 풀려요
+const QS = ["전체", ...new Set(IT.map(x => x[0]))];   // 단추 = 생물 종류(한 칸은 한 종류에만)
+const k = x => x[4] + "|" + x[1] + "|" + x[2];   // 이름·퀴즈 묶음이 바뀌거나 사진을 바꾸면 ❌ 표시가 저절로 풀려요   // 사진 파일까지 기억: 사진을 바꾸면 ❌ 표시가 저절로 풀려요
 const lab = s => s.split("|").slice(0, 2).join(": ");
 { const now = new Set(IT.map(k)); let ch = false; for (const key of Object.keys(bad)) if (!now.has(key)) { delete bad[key]; ch = true; } if (ch) sv(BK, bad); }
 function draw() {
-  $("qs").innerHTML = QS.map(q => `<button class="chip ${q === cat ? "on" : ""}" type="button" data-q="${esc(q)}">${esc(q)} ${q === "전체" ? IT.length : IT.filter(x => x[0].split("·").includes(q)).length}</button>`).join("");
-  $("grid").innerHTML = IT.filter(x => cat === "전체" || x[0].split("·").includes(cat)).map(x => { const b = bad[k(x)];
-    return `<div class="it ${b ? "bad" : ""}"><div class="ph">${on ? `<img data-f="${esc(x[2])}" src="${esc(src(x[2]))}" alt="${esc(x[1])}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith('사진 못 받음')">` : "📷"}</div><b>${esc(x[1])}</b><span class="s">${esc(x[0])} · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(x[2])}" target="_blank" rel="noopener">원본</a></span><button type="button" data-b="${esc(k(x))}">${b ? "❌ 이상해요 (취소)" : "❌ 이상해요"}</button></div>`; }).join("");
+  $("qs").innerHTML = QS.map(q => `<button class="chip ${q === cat ? "on" : ""}" type="button" data-q="${esc(q)}">${esc(q)} ${q === "전체" ? IT.length : IT.filter(x => x[0] === q).length}</button>`).join("");
+  $("grid").innerHTML = IT.filter(x => cat === "전체" || x[0] === cat).map(x => { const b = bad[k(x)];
+    return `<div class="it ${b ? "bad" : ""}"><div class="ph">${on ? `<img data-f="${esc(x[2])}" src="${esc(src(x[2]))}" alt="${esc(x[1])}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith('사진 못 받음')">` : "📷"}</div><b>${esc(x[1])}</b><span class="s">${esc(x[4])} 퀴즈 · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(x[2])}" target="_blank" rel="noopener">원본</a></span><button type="button" data-b="${esc(k(x))}">${b ? "❌ 이상해요 (취소)" : "❌ 이상해요"}</button></div>`; }).join("");
   const L = Object.keys(bad); $("bc").textContent = L.length; $("bl").textContent = L.length ? L.map(lab).join(", ") : "없음";
   $("np").innerHTML = QS.slice(1).map(q => `<p style="margin:6px 0 2px"><b>${esc(q)}</b></p>` + NP.filter(x => x[0] === q).map(x => `<span>${esc(x[1])}</span>`).join("")).join("");
 }

@@ -95,6 +95,8 @@ PIN = {
     "하드로사우루스": "Hadrosaurus_TD.png",
     "티라노사우루스": "Tyrannosaurus_TD.png",   # 2026-11-28 사용자 지적 → 몸 전체 복원도(CC BY-SA 4.0, 다른 공룡과 같은 TD 묶음)
     "티라노사우루스 렉스": "Tyrannosaurus_TD.png",
+    "브라키오사우루스": "Brachiosaurus_TD.png",   # 동물 퀴즈(BW 흑백 그림)와 공룡 퀴즈 그림을 하나로(모아 보기에서 한 칸·공룡 단추)
+    "트리케라톱스": "Triceratops_TD.png",
     "플레시오사우루스": "Plesiosaurus_3DB.jpg",   # 2026-11-28 사용자 요청(위키백과 문서 그림): 몸 전체 3D 복원도(CC BY 3.0)
     # 2026-11-28 사용자 확인 화면 지적(부분만 나옴·이상함) → 커먼즈 설명을 읽고 몸 전체가 나온 것으로
     "감자": "Solanales_-_Solanum_tuberosum_-_3.jpg",

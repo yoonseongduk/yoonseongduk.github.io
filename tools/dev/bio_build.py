@@ -51,7 +51,7 @@ def ko_pages(names):
             src = t
             while src in alias: src = alias[src]
             for n in part:
-                if n == src or alias.get(t) == n or n == t: res[n] = (t, pp["wikibase_item"])
+                if n == src or alias.get(t) == n or n == t: res[n] = (t, pp["wikibase_item"], pp["page_image_free"])
     return res
 def claims(qids):
     res = {}; qids = sorted(set(q for q in qids if q))
@@ -68,7 +68,29 @@ def taxa(qids):
         ok |= {q for q, ps in rest.items() if any("P225" in up.get(x, {}) or ids(up.get(x, {}), "P31") & TAXON for x in ps)}
     return ok
 # 빼는 이름: 새끼·애벌레 이름인데 어른 항목으로 넘어가는 것(사진이 정답과 달라 보임), 생물이 아닌 말, 잘못 이어지는 것(2026-11-28 확인)
-EXCLUDE = {"병아리", "망아지", "학배기", "송충이", "렙토세팔루스", "여러해살이", "덩굴", "딱정벌레류", "일본강치"}
+EXCLUDE = {"병아리", "망아지", "학배기", "송충이", "렙토세팔루스", "여러해살이", "덩굴", "딱정벌레류", "일본강치", "수각류", "육식 공룡"}   # 수각류·육식 공룡: 여러 공룡을 묶은 이름이라 그림이 섞여 나옴(2026-11-28 사용자 지적)
+# 사진 고르기(2026-11-28 사용자 지적: '오리' 문서 사진이 청둥오리, '악어' 사진에 다른 동물도 나옴).
+#   여러 종을 묶은 문서는 한 종의 사진을, 어떤 문서는 다른 동물이 함께 찍힌 사진을 대표로 써요. 그래서 위키미디어 커먼즈의
+#   '찍힌 것(depicts, P180)' 기록으로 확인해요: ① 그 생물(위키데이터 항목)이 찍혀 있다고 적혀 있고 ② 다른 생물은 함께 적혀 있지 않은 사진만 써요.
+#   후보는 한국어 위키백과 대표 사진 → 위키데이터 대표 사진(P18) 순서. 기록이 없는 사진은 확인할 수 없어 쓰지 않아요(정확성 우선).
+def depicts(files):
+    res = {}; files = sorted(set(files))
+    for k in range(0, len(files), 50):
+        d = get("https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode({"action": "wbgetentities", "format": "json", "sites": "commonswiki", "props": "info|claims", "titles": "|".join("File:" + f.replace("_", " ") for f in files[k:k + 50])}))
+        for e in d.get("entities", {}).values():
+            t = e.get("title", "").replace("File:", "").replace(" ", "_")
+            st = e.get("statements") or e.get("claims") or {}
+            if t and isinstance(st, dict): res[t] = {x["mainsnak"].get("datavalue", {}).get("value", {}).get("id") for x in st.get("P180", []) if isinstance(x["mainsnak"].get("datavalue", {}).get("value"), dict)}
+    return res
+def is_org(c): return "P225" in c or bool(ids(c, "P31") & TAXON)
+# 뼈·화석 사진은 빼요(2026-11-28 사용자 지적: 스테고사우루스가 뼈만 나옴). 파일 이름 또는 찍힌 것(뼈대 Q7881·화석 Q40614·두개골 Q13147)으로 확인
+BONE_Q = {"Q7881", "Q40614", "Q13147"}
+BONE_RE = re.compile(r"skelet|squelet|skull|cr[aâ]ne|sch[aä]del|fossil|museum|mus[eé]e|holotype|specimen|mount|bones?\b|cast\b|replica|exhibit", re.I)
+def restore_search(sci):   # 공룡: 커먼즈에서 복원도(살아 있을 때 모습) 그림 찾기
+    if not sci: return []
+    d = get("https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode({"action": "query", "format": "json", "list": "search", "srnamespace": 6, "srlimit": 15, "srsearch": sci + " life restoration filetype:bitmap"}))
+    return [r["title"].replace("File:", "").replace(" ", "_") for r in d.get("query", {}).get("search", []) if sci.split()[0].lower() in r["title"].lower()]
+REJECT = {}   # 사진이 맞지 않아 뺀 이름(화면에 보고)
 out = {}
 for f in QUIZ:
     names = answers(f); pg = ko_pages(names)
@@ -77,6 +99,23 @@ for f in QUIZ:
         for x in SUFFIX:
             if n + x in alt: pg[n] = alt[n + x]; break
     tx = taxa([v[1] for v in pg.values()])
-    out[f] = {n: pg[n][0] for n in names if n in pg and pg[n][1] in tx and n not in EXCLUDE}
-    print(f, "정답 후보", len(names), "→ 생물 항목", len(out[f]), "· 빠진 예:", [n for n in names if n not in out[f]][:12])
+    keep = [n for n in names if n in pg and pg[n][1] in tx and n not in EXCLUDE]
+    CL = claims([pg[n][1] for n in keep])
+    cand = {n: [pg[n][2].replace(" ", "_")] + [x["mainsnak"].get("datavalue", {}).get("value", "").replace(" ", "_") for x in CL.get(pg[n][1], {}).get("P18", []) if isinstance(x["mainsnak"].get("datavalue", {}).get("value"), str)] for n in keep}
+    if f == "dino-quiz.html":   # 공룡은 복원도를 먼저(대표 사진은 대부분 뼈 화석)
+        for n in keep:
+            sci = next((x["mainsnak"].get("datavalue", {}).get("value", "") for x in CL.get(pg[n][1], {}).get("P225", []) if isinstance(x["mainsnak"].get("datavalue", {}).get("value"), str)), "")
+            cand[n] = restore_search(sci) + cand[n]
+    DP = depicts([x for v in cand.values() for x in v])
+    other = claims({q for v in DP.values() for q in v if q})
+    out[f] = {}
+    for n in keep:
+        q = pg[n][1]; pick = None
+        for x in dict.fromkeys(cand[n]):
+            dp = DP.get(x, set())
+            if q in dp and not (dp & BONE_Q) and not BONE_RE.search(x) and not any(o != q and is_org(other.get(o, {})) for o in dp): pick = x; break
+        if pick: out[f][n] = [pick, pg[n][0]]
+        else: REJECT.setdefault(f, []).append(n)
+    print(f, "사진 확인 통과", len(out[f]), "/", len(keep))
+print("찍힌 것 기록으로 확인되지 않아 뺀 이름:", json.dumps(REJECT, ensure_ascii=False, indent=0))
 json.dump(out, open("bio_wiki.json", "w", encoding="utf-8"), ensure_ascii=False, indent=0)

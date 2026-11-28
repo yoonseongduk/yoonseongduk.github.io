@@ -13,8 +13,23 @@
   function get() { try { return localStorage.getItem(PK); } catch (e) { return null; } }
   function set(v) { try { if (v) localStorage.setItem(PK, v); else localStorage.removeItem(PK); } catch (e) {} }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  /* 사진 크게 보기(2026-11-28 사용자 요청): 사진을 누르면 화면 전체에 크게. 작은 그림을 먼저 보이고 큰 그림(폭 1280)을 받으면 바꿔요. 화면·✕를 누르거나 뒤로 가기로 닫혀요. */
+  function fgZoom(small, file, cap) {
+    var o = document.createElement("div"); o.className = "fgzoom"; o.setAttribute("role", "dialog"); o.setAttribute("aria-label", "사진 크게 보기");
+    o.innerHTML = '<button type="button" class="fgzx" aria-label="닫기">✕</button><img alt=""><p></p>';
+    var im = o.querySelector("img"); im.src = small; im.alt = cap || ""; o.querySelector("p").textContent = cap || "";
+    if (file) { var big = new Image(); big.referrerPolicy = "no-referrer"; big.onload = function () { im.src = big.src; }; big.src = "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(file) + "?width=1280"; }
+    var closed = false;
+    function close(fromBack) { if (closed) return; closed = true; o.remove(); window.removeEventListener("popstate", onPop); if (!fromBack) try { history.back(); } catch (e) {} }
+    function onPop() { close(true); }
+    o.addEventListener("click", function () { close(false); });
+    document.body.appendChild(o);
+    try { history.pushState({ fgzoom: 1 }, ""); } catch (e) {}
+    window.addEventListener("popstate", onPop);
+  }
+  
   var st = document.createElement("style");
-  st.textContent = ".biop{display:block;margin:10px auto 0;text-align:center;font-size:.8rem;line-height:1.45}.biop img{display:block;max-width:100%;max-height:170px;margin:0 auto 4px;border-radius:10px;object-fit:contain;background:rgba(127,127,127,.12)}.biop .cap{opacity:.8;word-break:break-all}.biop a{color:inherit}.biop button{font:inherit;font-size:.85rem;padding:6px 12px;border-radius:999px;border:1px solid rgba(127,127,127,.45);background:transparent;color:inherit;cursor:pointer}.biop .off{margin-top:4px;font-size:.75rem;opacity:.7;border:0;padding:2px 6px;text-decoration:underline}";
+  st.textContent = ".biop{display:block;margin:10px auto 0;text-align:center;font-size:.8rem;line-height:1.45}.biop img{display:block;max-width:100%;max-height:170px;margin:0 auto 4px;border-radius:10px;object-fit:contain;background:rgba(127,127,127,.12)}.biop .cap{opacity:.8;word-break:break-all}.biop a{color:inherit}.biop button{font:inherit;font-size:.85rem;padding:6px 12px;border-radius:999px;border:1px solid rgba(127,127,127,.45);background:transparent;color:inherit;cursor:pointer}.biop img{cursor:zoom-in}.fgzoom{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;cursor:zoom-out}.fgzoom img{max-width:100%;max-height:calc(100% - 48px);object-fit:contain}.fgzoom p{color:#fff;margin:8px 0 0;font-size:.9rem;text-align:center}.fgzoom .fgzx{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:1.3rem;cursor:pointer}.biop .off{margin-top:4px;font-size:.75rem;opacity:.7;border:0;padding:2px 6px;text-decoration:underline}";
   document.head.appendChild(st);
   var wikiUrl = function (t) { return "https://ko.wikipedia.org/wiki/" + encodeURIComponent(t.replace(/ /g, "_")); };
   function load(box, name, ent, token) {
@@ -28,7 +43,7 @@
         '<span class="cap">📷 ' + esc(name) + (r.artist ? " · 사진: " + esc(r.artist.slice(0, 60)) : "") + " · " + lic +
         ' · <a href="' + esc(r.filePage || r.page) + '" target="_blank" rel="noopener">원본</a> · <a href="' + wikiUrl(title) + '" target="_blank" rel="noopener">위키백과</a></span>' +
         '<button type="button" class="off">사진 자동으로 안 보기</button>';
-      var img = box.querySelector("img"); img.onerror = function () { img.remove(); };
+      var img = box.querySelector("img"); img.onerror = function () { img.remove(); }; img.onclick = function () { fgZoom(img.src, file, "📷 " + name); };
       box.querySelector(".off").onclick = function () { set("off"); button(box, name, title, token); };
     });
   }

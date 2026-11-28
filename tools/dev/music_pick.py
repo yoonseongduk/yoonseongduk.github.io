@@ -188,6 +188,7 @@ PINNED = {"토카타와 푸가 d단조": ["Bach, Toccata und Fuge d-moll BWV 565
           "라 트라비아타": ["ICBSA Verdi - La traviata, Sempre libera.ogg", "ICBSA Verdi - La traviata, Preludio parte 1.ogg"],
           "아이다": ["Triumphal March from Aida.ogg", "Aida-Trompeten.ogg"],   # 2026-11-27 사용자 지적: ICBSA(옛 음반) 잡음 심함 → 미 해병대 군악대 2002년 녹음 「개선 행진곡」(공개 도메인)
           "전주곡 c♯단조": ["Prélude en Do dièse mineur de Rachmaninov op. 3 (Morceaux de fantaisie).ogg"],
+          "짐노페디": ["Satie Gymnopèdie n.1 DariaBaiocchi.wav", "Gymnopedie No. 1 (ISRC USUAN1100787).mp3"],   # 2026-11-27 사용자 확인: 기존 녹음(Michael Laucke)은 기타 편곡 → 피아노 녹음(다리아 바이오키 2021년 스타인웨이, CC BY-SA 4.0 / 케빈 맥클라우드, CC BY 3.0)
           "랩소디 인 블루": ["US Marine Band Rhapsody in Blue.oga"]}
 NOAUDIO = {"라 보엠": "후보가 1907~1938년 옛 녹음뿐(2026-11-24 사용자 지적: 잡음이 심함)"}
 def load(p): return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}

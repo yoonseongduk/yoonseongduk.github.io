@@ -90,6 +90,10 @@ def restore_search(sci):   # 공룡: 커먼즈에서 복원도(살아 있을 때
     if not sci: return []
     d = get("https://commons.wikimedia.org/w/api.php?" + urllib.parse.urlencode({"action": "query", "format": "json", "list": "search", "srnamespace": 6, "srlimit": 15, "srsearch": sci + " life restoration filetype:bitmap"}))
     return [r["title"].replace("File:", "").replace(" ", "_") for r in d.get("query", {}).get("search", []) if sci.split()[0].lower() in r["title"].lower()]
+# 사진 직접 지정(사용자가 확인 화면에서 이상하다고 알려 준 것을 커먼즈 설명을 읽고 바꾼 것): 이름 → 커먼즈 파일 이름
+PIN = {
+    "하드로사우루스": "Hadrosaurus_TD.png",   # 2026-11-28 사용자 지적: 공룡 전체 그림이 아님(옛 그림은 작은 복원도 모음) → 몸 전체 복원도(CC BY 4.0)
+}
 REJECT = {}   # 사진이 맞지 않아 뺀 이름(화면에 보고)
 out = {}
 for f in QUIZ:
@@ -114,6 +118,7 @@ for f in QUIZ:
         for x in dict.fromkeys(cand[n]):
             dp = DP.get(x, set())
             if q in dp and not (dp & BONE_Q) and not BONE_RE.search(x) and not any(o != q and is_org(other.get(o, {})) for o in dp): pick = x; break
+        if n in PIN: pick = PIN[n]
         if pick: out[f][n] = [pick, pg[n][0]]
         else: REJECT.setdefault(f, []).append(n)
     print(f, "사진 확인 통과", len(out[f]), "/", len(keep))

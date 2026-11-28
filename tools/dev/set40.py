@@ -41,7 +41,7 @@ function yOpt(m, sd) { // 움직임 하나를 글로: "3번 칸의 말 2개(업�
 }
 const YIMG = { "-1": "backdo", 1: "do", 2: "gae", 3: "geol", 4: "yut", 5: "mo" };   // 결과 카드 그림: yut-img/yut_*.svg (사용자가 만든 그림)
 Object.values(YIMG).forEach(k => { const im = new Image(); im.src = "yut-img/yut_" + k + ".svg"; });   // 던질 때 늦게 뜨지 않게 미리 불러와요
-const yCard = n => YIMG[n] ? `<img class="ycard" src="yut-img/yut_${YIMG[n]}.svg" alt="${Y.NAMES[n]}" draggable="false">` : `<img class="yready" src="yut-img/yut_ready.svg" alt="윷가락 네 개" draggable="false">`;
+const yCard = n => YIMG[n] ? `<span class="ythrowbox"><span class="ystk k1"></span><span class="ystk k2"></span><span class="ystk k3"></span><span class="ystk k4"></span><img class="ycard" src="yut-img/yut_${YIMG[n]}.svg" alt="${Y.NAMES[n]}" draggable="false"></span>` : `<img class="yready" src="yut-img/yut_ready.svg" alt="윷가락 네 개" draggable="false">`;
 function yPanel(sd, mark) { return `${mark} 출발 전 ${sd.w} · 도착 ${sd.done}/4` + (sd.stacks.length ? " · 판 위 " + sd.stacks.map(s => yNode(s.at) + (s.n > 1 ? " ×" + s.n : "")).join(", ") : ""); }
 const yRules = () => `<details open><summary>📘 윷놀이 규칙 (일반 규칙)</summary><div class="note" style="margin-top:6px">
   <b>목표</b>: 내 말 <b>4개</b>를 먼저 모두 한 바퀴 돌려 <b>도착</b>시키면 이겨요.<br>
@@ -72,7 +72,11 @@ CSS = r'''.modes{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}.modes a,.mo
 .yready{height:130px;width:auto;max-width:100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}.sticks{min-height:0}.ycard{height:190px;width:auto;max-width:100%;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.35);animation:ythrow .65s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes ythrow{0%{transform:translateY(-70px) rotate(-14deg) scale(.55);opacity:0}55%{transform:translateY(8px) rotate(3deg) scale(1.06);opacity:1}100%{transform:none}}
 .yth{height:56px;width:auto;border-radius:6px;display:block}
-@media(prefers-reduced-motion:reduce){.ycard{animation:none}}
+.ythrowbox{position:relative;display:inline-block;min-height:190px;min-width:150px}.ythrowbox .ycard{animation:ythrow .65s .72s cubic-bezier(.2,.9,.3,1.2) both}
+.ystk{position:absolute;left:50%;top:50%;width:14px;height:92px;margin:-46px 0 0 -7px;border-radius:7px;background:linear-gradient(90deg,#f6dfae 0 50%,#a8722f 50% 100%);box-shadow:0 2px 5px rgba(0,0,0,.35);opacity:0;animation:ytoss .78s ease-out both;pointer-events:none}
+.ystk.k1{--x:-58px;--r:560deg}.ystk.k2{--x:-20px;--r:-640deg;animation-delay:.04s}.ystk.k3{--x:20px;--r:700deg;animation-delay:.08s}.ystk.k4{--x:58px;--r:-600deg;animation-delay:.02s}
+@keyframes ytoss{0%{opacity:1;transform:translate(0,50px) rotate(0)}45%{opacity:1;transform:translate(var(--x),-40px) rotate(calc(var(--r) * .55))}82%{opacity:1;transform:translate(var(--x),18px) rotate(var(--r))}100%{opacity:0;transform:translate(var(--x),18px) rotate(var(--r))}}
+@media(prefers-reduced-motion:reduce){.ycard,.ythrowbox .ycard{animation:none}.ystk{display:none}}
 .pcsb{display:grid;gap:6px}.pcsb button{text-align:left;line-height:1.35}
 .tbl{width:100%;border-collapse:collapse;font-size:.85rem;margin:4px 0}.tbl td{padding:3px 4px;border-bottom:1px solid var(--line)}
 details summary{cursor:pointer;font-weight:700}.note{font-size:.85rem;color:var(--muted);line-height:1.6}

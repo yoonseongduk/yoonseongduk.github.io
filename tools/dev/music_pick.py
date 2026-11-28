@@ -185,7 +185,7 @@ PINNED = {"토카타와 푸가 d단조": ["Bach, Toccata und Fuge d-moll BWV 565
           "교향곡 9번 '합창'": ["PMLP01607-Symphony No.9, Op.125 (Beethoven, Ludwig van), IV Presto.ogg"],   # 2026-11-26 사용자 지적 '합창 음원 이상함': 55초짜리 2악장 조각 대신 「환희의 송가」가 나오는 4악장 전체(IMSLP 녹음, CC BY-SA 3.0, 위키미디어 오늘의 소리). 합창이 나오는 부분부터 재생(set44.py STARTS)
           "캐논 D장조": ["Kevin MacLeod - Canon in D Major.ogg", "Pachelbel's Canon.ogg"],   # 2026-11-26 사용자 지적 '하모니카 소리': 아카이브 파일은 하모니카+피아노 편곡(cover)이라 빼고, 현악기 원래 편성(케빈 맥클라우드, 가상 악기 녹음, CC BY 3.0)과 피아노 독주(CC BY-SA 3.0)로. 실제 현악 합주 녹음은 허용 라이선스로 못 찾음
           "볼레로": ["Bolero-Maurice Ravel-ORTF National Orchestra-Georges Tzipine-23 March 1965.ogg", "Bolero-Maurice Ravel-Paris Orchestra-Charles Munch-1956.ogg"],   # 2026-11-25 사용자 지적 '북소리가 손뼉 소리': 아카이브의 두 파일은 플라멩코 편곡(플루트+손뼉)이라 빼고 실제 관현악 녹음으로(ORTF 국립 관현악단·치핀 1965, 파리 관현악단·뮌시 1956, 공개 도메인)
-          "라 트라비아타": ["ICBSA Verdi - La traviata, Sempre libera.ogg", "ICBSA Verdi - La traviata, Preludio parte 1.ogg"],
+          "라 트라비아타": ["\"Brindisi\" from La Traviata - Singing Sergeants - United States Air Force Band.mp3", "La Traviata - Act 1 - Libiamo ne' lieti calici.ogg"],   # 2026-11-28 사용자 지적: ICBSA 옛 음반 잡음 심함 → 미 공군 군악대·합창단 2011년 녹음 「축배의 노래」(공개 도메인), 예비 CC0
           "아이다": ["Triumphal March from Aida.ogg", "Aida-Trompeten.ogg"],   # 2026-11-27 사용자 지적: ICBSA(옛 음반) 잡음 심함 → 미 해병대 군악대 2002년 녹음 「개선 행진곡」(공개 도메인)
           "전주곡 c♯단조": ["Prélude en Do dièse mineur de Rachmaninov op. 3 (Morceaux de fantaisie).ogg"],
           "짐노페디": ["Satie Gymnopèdie n.1 DariaBaiocchi.wav", "Gymnopedie No. 1 (ISRC USUAN1100787).mp3"],   # 2026-11-27 사용자 확인: 기존 녹음(Michael Laucke)은 기타 편곡 → 피아노 녹음(다리아 바이오키 2021년 스타인웨이, CC BY-SA 4.0 / 케빈 맥클라우드, CC BY 3.0)

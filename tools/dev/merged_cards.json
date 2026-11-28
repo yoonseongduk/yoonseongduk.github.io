@@ -45,5 +45,6 @@
  "bmi-calc.html": "[\"bmi-calc.html\", \"⚖️\", \"BMI 계산기\", \"키와 몸무게로 비만도 확인\", \"life\", \"health\"]",
  "menu-picker.html": "[\"menu-picker.html\", \"🍽️\", \"오늘 뭐 먹지?\", \"메뉴를 랜덤으로 정해 줘요\", \"life\", \"fun\"]",
  "exercise-kcal.html": "[\"exercise-kcal.html\", \"🏃\", \"걸음·운동 칼로리\", \"걸음 수나 운동 시간으로 소모 칼로리를 계산해요.\", \"life\", \"health\"]",
- "family-ranking.html": "[\"family-ranking.html\", \"🏅\", \"가족 순위표\", \"게임별로 가족 중 누가 가장 잘했는지 최고 기록 비교\", \"life\", \"home\"]"
+ "family-ranking.html": "[\"family-ranking.html\", \"🏅\", \"가족 순위표\", \"게임별로 가족 중 누가 가장 잘했는지 최고 기록 비교\", \"life\", \"home\"]",
+ "bio-check.html": "[\"bio-check.html\", \"📷\", \"생물 사진 모아 보기\", \"생물 퀴즈 사진을 한 번에 보고 이상한 사진을 표시해요\", \"life\"]"
 }

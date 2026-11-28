@@ -55,7 +55,7 @@ button{font:inherit;cursor:pointer;color:inherit}button:focus-visible{outline:3p
     <div class="wrap" style="margin-top:10px"><canvas id="cv" aria-label="뱀 사다리 판"></canvas></div>
     <p class="muted" id="legend" style="margin:6px 0 0;font-size:.85rem">🪜 올라가요 · 🐍 내려가요 · 🎲 한 번 더 · 💤 한 판 쉬기</p>
     <div class="last" id="last" aria-live="polite"></div>
-    <div class="dice" style="margin-top:10px"><div class="die" id="die" role="img" aria-label="주사위"></div><p class="msg" id="msg" aria-live="polite"></p></div>
+    <div class="dice" style="margin-top:10px"><div class="die" id="die" role="img" aria-label="주사위"></div><p class="msg" id="msg" aria-live="polite"></p><div id="d2" hidden style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:6px"></div></div>
     <button class="btn" id="roll" type="button" style="margin-top:10px;width:100%">주사위 굴리기</button>
     <div class="res" id="res" hidden style="margin-top:10px"></div>
     <button class="btn ghost" id="home" type="button" style="margin-top:10px;width:100%">처음으로</button>
@@ -76,7 +76,7 @@ const MODES = [["base", "📌 기본 판"], ["today", "📅 오늘의 판"], ["r
 const KINDS = { again: ["🎲", "한 번 더", "#ffeaa0"], rest: ["💤", "한 판 쉬기", "#cfe0f6"], swap: ["🔄", "1등과 자리 바꾸기", "#e6d6f6"], bonus: ["🎁", "보너스", "#ffd6e4"], shield: ["🛡️", "뱀 방패", "#c6eceb"] }; /* [그림, 이름, 칸 색] */
 /* 특수 칸: again=🎲 한 번 더(주사위를 한 번 더 굴림), rest=💤 한 판 쉬기(다음 내 차례를 건너뜀). 사다리·뱀 끝 칸과는 겹치지 않는다 */
 const BASE_P = { 12: "again", 36: "again", 47: "again", 69: "again", 22: "rest", 45: "rest", 88: "rest", 15: "swap", 58: "swap", 26: "bonus", 76: "bonus", 33: "shield", 82: "shield" };
-let SPECIAL = {}, rest = [], shield = [], sixRoll = false;
+let SPECIAL = {}, rest = [], shield = [], sixRoll = false, f50 = -1, rounds = 0;
 const rng = a => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 /* 규칙에 맞는 사다리·뱀을 만든다: 같은 칸을 두 번 쓰지 않고, 1·100번 칸은 비우고, 사다리는 1~6줄 위로 · 뱀은 1~5줄 아래로, 뱀 머리가 4칸 이상 연달아 놓이지 않게 */
 function genLayout(seed, nl, ns, cnt = LVS[1][4]) {
@@ -96,17 +96,17 @@ function applyLayout() {
   const lv = LVS.find(x => x[0] === cfg.lv) || LVS[1]; let P = {};
   if (cfg.mode === "today") { const d = new Date(), seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); ({ L: LADDERS, S: SNAKES, P } = genLayout(seed * 7 + lv[2], lv[2], lv[3], lv[4])); }
   else if (cfg.mode === "random") ({ L: LADDERS, S: SNAKES, P } = genLayout((Math.random() * 4294967296) >>> 0, lv[2], lv[3], lv[4]));
-  else { LADDERS = BASE_L; SNAKES = BASE_S; P = BASE_P; }
-  SPECIAL = Object.fromEntries(Object.entries(P).filter(([c, k]) => cfg.on[k])); /* 판 배치는 그대로 두고 켜진 종류만 보여 줌 */ rest = Array(4).fill(0); shield = Array(4).fill(false); sixRoll = false;
-  $("legend").textContent = "🪜 올라가요 · 🐍 내려가요" + Object.entries(KINDS).filter(([k]) => cfg.on[k]).map(([k, v]) => " · " + v[0] + " " + v[1]).join("") + (cfg.on.six ? " · 🎯 6이면 한 번 더" : "") + (cfg.on.cap ? " · 🥊 같은 칸에 도착하면 상대 말을 잡아요" : "");
+  else { LADDERS = { ...BASE_L }; SNAKES = { ...BASE_S }; P = BASE_P; } /* 복사본: 뱀 이동 규칙이 판을 바꿔도 기본 판은 그대로 */
+  SPECIAL = Object.fromEntries(Object.entries(P).filter(([c, k]) => cfg.on[k])); /* 판 배치는 그대로 두고 켜진 종류만 보여 줌 */ rest = Array(4).fill(0); shield = Array(4).fill(false); sixRoll = false; f50 = -1; rounds = 0;
+  $("legend").textContent = "🪜 올라가요 · 🐍 내려가요" + Object.entries(KINDS).filter(([k]) => cfg.on[k]).map(([k, v]) => " · " + v[0] + " " + v[1]).join("") + (cfg.on.six ? " · 🎯 6이면 한 번 더" : "") + (cfg.on.cap ? " · 🥊 같은 칸에 도착하면 상대 말을 잡아요" : "") + (cfg.on.move ? " · 🐍 두 바퀴마다 뱀 한 마리가 움직여요" : "") + (cfg.on.dice2 ? " · 🎲🎲 90번부터 주사위 2개 중 골라요" : "") + (cfg.on.first50 ? " · 🏅 50번을 가장 먼저 넘으면 한 번 더" : "");
 }
 const SKCOL = [["#d2452f", "#f2a08f"], ["#e08a1e", "#f8d08a"], ["#8a4fc2", "#d2b6ee"], ["#2e86c1", "#acd5f0"], ["#c23b7a", "#f2b4d2"]]; /* 뱀 색깔(몸, 무늬) */
 const arrow = (c, x, y, ang, sz, col) => { c.save(); c.translate(x, y); c.rotate(ang); c.fillStyle = col; c.strokeStyle = "rgba(40,20,10,.9)"; c.lineWidth = 1.5; c.lineJoin = "round"; c.beginPath(); c.moveTo(sz, 0); c.lineTo(-sz * .6, -sz * .8); c.lineTo(-sz * .6, sz * .8); c.closePath(); c.fill(); c.stroke(); c.restore(); }; /* 가는 방향 화살표 */
-const RULES = [["again", "🎲", "한 번 더"], ["rest", "💤", "한 판 쉬기"], ["swap", "🔄", "1등과 자리 바꾸기"], ["bonus", "🎁", "보너스(앞 3칸·뒤 2칸)"], ["shield", "🛡️", "뱀 방패"], ["six", "🎯", "6이면 한 번 더"], ["cap", "🥊", "잡기(같은 칸 도착)"]]; /* 켜고 끌 수 있는 규칙 전부 */
+const RULES = [["again", "🎲", "한 번 더"], ["rest", "💤", "한 판 쉬기"], ["swap", "🔄", "1등과 자리 바꾸기"], ["bonus", "🎁", "보너스(앞 3칸·뒤 2칸)"], ["shield", "🛡️", "뱀 방패"], ["six", "🎯", "6이면 한 번 더"], ["cap", "🥊", "잡기(같은 칸 도착)"], ["move", "🐍", "뱀 이동(두 바퀴마다)"], ["dice2", "🎲🎲", "90번부터 주사위 2개"], ["first50", "🏅", "50번 선착순 한 번 더"]]; /* 켜고 끌 수 있는 규칙 전부 */
 /* 규칙 세트: 한 번에 고르기(고른 뒤에도 아래에서 하나씩 바꿀 수 있어요) */
-const PRESETS = [["kids", "🐣 어린이용", ["again", "six", "bonus", "shield"], "좋은 일만 있어요: 한 번 더·6이면 한 번 더·보너스·뱀 방패. 쉬기·자리 바꾸기·잡기는 없어요."],
-  ["all", "🎉 모두 켜기", ["again", "rest", "swap", "bonus", "shield", "six", "cap"], "특수 규칙을 모두 써요(기본)."],
-  ["hard", "🔥 도전용", ["rest", "swap", "six", "cap"], "긴장감 있게: 한 판 쉬기·1등과 자리 바꾸기·잡기·6이면 한 번 더. 도와주는 칸(보너스·방패·한 번 더)은 없어요."],
+const PRESETS = [["kids", "🐣 어린이용", ["again", "six", "bonus", "shield", "dice2", "first50"], "좋은 일만 있어요: 한 번 더·6이면 한 번 더·보너스·뱀 방패·90번부터 주사위 2개·50번 선착순. 쉬기·자리 바꾸기·잡기·뱀 이동은 없어요."],
+  ["all", "🎉 모두 켜기", ["again", "rest", "swap", "bonus", "shield", "six", "cap", "move", "dice2", "first50"], "특수 규칙을 모두 써요(기본)."],
+  ["hard", "🔥 도전용", ["rest", "swap", "six", "cap", "move"], "긴장감 있게: 한 판 쉬기·1등과 자리 바꾸기·잡기·6이면 한 번 더·뱀 이동. 도와주는 규칙(보너스·방패·한 번 더·주사위 2개·50번 선착순)은 없어요."],
   ["none", "🎲 기본 규칙만", [], "사다리와 뱀만 있는 가장 단순한 놀이예요."]];
 const presetOf = () => { const on = RULES.map(([k]) => k).filter(k => cfg.on[k]).sort().join(); const p = PRESETS.find(x => [...x[2]].sort().join() === on); return p ? p[0] : ""; };
 const BG = { ok: false, img: new Image() }; BG.img.onload = () => { BG.ok = true; if (typeof render === "function" && pos.length) render(); }; BG.img.src = "snake-img/board-bg.webp";
@@ -126,6 +126,9 @@ function noteMsg(v) { for (let i = 0; i < NAMES.length; i++) if (v.startsWith(NA
 { const el = document.getElementById("msg"), d = Object.getOwnPropertyDescriptor(Node.prototype, "textContent"); Object.defineProperty(el, "textContent", { configurable: true, get() { return d.get.call(this); }, set(v) { d.set.call(this, v); noteMsg(String(v)); } }); }
 let cfg = ld(KEY) || { n: 2, cpu: [false, true, true, true] }, pos = [], turn = 0, over = false, busy = false, tempo = 1;
 cfg.n = Math.min(4, Math.max(2, cfg.n || 2)); if (!MODES.some(m => m[0] === cfg.mode)) cfg.mode = "base"; if (!LVS.some(m => m[0] === cfg.lv)) cfg.lv = "mid"; if (!cfg.on || typeof cfg.on !== "object") cfg.on = {};
+{ /* 2026-11-28 새 규칙(뱀 이동·주사위 2개·50번 선착순): 예전에 규칙 세트를 골라 둔 사람은 새 세트 정의를 따르고, 직접 고른 사람은 새 규칙을 꺼 둔 채로 시작 */
+  const NEWR = ["move", "dice2", "first50"], OLDP = { kids: "again,bonus,shield,six", all: "again,bonus,cap,rest,shield,six,swap", hard: "cap,rest,six,swap", none: "" };
+  if (Object.keys(cfg.on).length && NEWR.some(k => typeof cfg.on[k] !== "boolean")) { const was = ["again", "rest", "swap", "bonus", "shield", "six", "cap"].filter(k => cfg.on[k]).sort().join(), pk = Object.keys(OLDP).find(k => OLDP[k] === was), np = pk && PRESETS.find(x => x[0] === pk); for (const k of NEWR) if (typeof cfg.on[k] !== "boolean") cfg.on[k] = np ? np[2].includes(k) : false; } }
 for (const [k] of RULES) if (typeof cfg.on[k] !== "boolean") cfg.on[k] = k === "six" ? cfg.six !== false : k === "cap" ? true : cfg.sp !== false; /* 예전 '특수 칸·6 규칙' 설정을 이어받음 */
 
 // 칸 번호 → 판 위의 좌표. 아래줄은 왼쪽→오른쪽, 그다음 줄은 오른쪽→왼쪽 (지그재그)
@@ -144,7 +147,7 @@ function drawSetup() {
   $("layoutInfo").textContent = (cfg.mode === "base" ? "언제나 같은 판이에요. (사다리 8개 · 뱀 8개)" : (cfg.mode === "today" ? "오늘 날짜로 정해져서 하루 동안은 가족 모두 같은 판이에요. " : "게임을 시작할 때마다(한 판 더 포함) 사다리와 뱀 자리가 새로 섞여요. ") + `(사다리 ${lv[2]}개 · 뱀 ${lv[3]}개)`) + spTxt;
   $("pl").innerHTML = Array.from({ length: cfg.n }, (_, i) => `<div class="pl" style="margin:6px 0"><i style="background:${COLORS[i]}"></i><span>${NAMES[i]}</span><button type="button" data-i="${i}" aria-label="${NAMES[i]} 사람 또는 컴퓨터 바꾸기">${cfg.cpu[i] ? "🤖 컴퓨터" : "👤 사람"}</button></div>`).join("");
 }
-function begin() { sv(KEY, cfg); applyLayout(); pos = Array(cfg.n).fill(0); turn = 0; over = false; busy = false; $("setup").hidden = true; $("game").hidden = false; $("res").hidden = true; setDie(0); logE = []; $("msg").textContent = ""; showLast(); render(); next(); }
+function begin() { sv(KEY, cfg); applyLayout(); pos = Array(cfg.n).fill(0); turn = 0; over = false; busy = false; $("setup").hidden = true; $("game").hidden = false; $("res").hidden = true; setDie(0); $("d2").hidden = true; logE = []; $("msg").textContent = ""; showLast(); render(); next(); }
 function next() {
   if (over) return;
   if (rest[turn] > 0) { rest[turn]--; $("msg").textContent = `${NAMES[turn]}: 💤 쉬는 차례예요. 건너뛰어요.`; render(); return setTimeout(endTurn, 1100 * tempo); }
@@ -153,7 +156,21 @@ function next() {
 }
 function roll() {
   if (over) return; busy = true; $("roll").disabled = true;
-  const v = 1 + Math.floor(Math.random() * 6), p = turn; setDie(v, true); setTimeout(() => { if (over) return; moveAfterRoll(p, v); }, 600 * tempo);
+  const v = 1 + Math.floor(Math.random() * 6), p = turn; setDie(v, true);
+  if (cfg.on.dice2 && pos[p] >= 90) { const w = 1 + Math.floor(Math.random() * 6); return setTimeout(() => { if (!over) pick2(p, v, w); }, 600 * tempo); }
+  setTimeout(() => { if (over) return; moveAfterRoll(p, v); }, 600 * tempo);
+}
+/* 🎲🎲 90번부터 주사위 2개: 두 눈 중 하나를 골라 움직인다(100을 넘는 눈은 못 고름). 컴퓨터는 100 도착 > 사다리 > 그냥 칸 > 뱀 순서로, 같으면 큰 눈 */
+const d2score = (p, x) => { const t = pos[p] + x; if (t === 100) return 1000; if (SNAKES[t] && !shield[p]) return -100 + x; return (LADDERS[t] ? 200 : 0) + t; };
+function pick2(p, v, w) {
+  const ok = [...new Set([v, w])].filter(x => pos[p] + x <= 100), nm = NAMES[p];
+  if (!ok.length) { setDie(v); $("msg").textContent = `${nm}: 🎲🎲 ${v}·${w}이(가) 나왔지만 둘 다 100을 넘어서 제자리에 있어요.`; sixRoll = false; return setTimeout(endTurn, 900 * tempo); }
+  const go = x => { $("d2").hidden = true; $("d2").innerHTML = ""; setDie(x); $("msg").textContent = `${nm}: 🎲🎲 ${v}·${w} 중 ${x}을(를) 골랐어요.`; setTimeout(() => { if (!over) moveAfterRoll(p, x); }, 500 * tempo); };
+  if (ok.length === 1 || cfg.cpu[p]) { const best = ok.slice().sort((a, b) => d2score(p, b) - d2score(p, a))[0]; return setTimeout(() => go(best), (cfg.cpu[p] ? 700 : 300) * tempo); }
+  $("msg").textContent = `${nm}: 🎲🎲 90번부터는 주사위가 2개예요! ${v}·${w} 중 하나를 골라요.`;
+  const tag = t => t === 100 ? " 🏁" : LADDERS[t] ? " 🪜" : SNAKES[t] ? " 🐍" : "";
+  $("d2").innerHTML = ok.map(x => `<button type="button" class="cb" data-d2="${x}">${x}칸 → ${pos[p] + x}번${tag(pos[p] + x)}</button>`).join(""); $("d2").hidden = false;
+  $("d2").onclick = e => { const b = e.target.closest("[data-d2]"); if (b) { $("d2").onclick = null; go(+b.dataset.d2); } };
 }
 function moveAfterRoll(p, v) {
   const from = pos[p]; let to = from + v; sixRoll = v === 6;
@@ -187,8 +204,23 @@ function finishOrNext(p, capDone) {
   endOrSix(p);
 }
 /* 차례를 마치는 곳: 설정이 켜져 있고 6이 나왔으면 한 번 더 */
-function endOrSix(p) { if (cfg.on.six && sixRoll) { sixRoll = false; $("msg").textContent = `${NAMES[p]}: 🎯 6이 나왔어요! 한 번 더 굴려요.`; return setTimeout(next, 1000 * tempo); } setTimeout(endTurn, 500 * tempo); }
-function endTurn() { turn = (turn + 1) % cfg.n; next(); }
+function endOrSix(p) {
+  if (cfg.on.first50 && f50 < 0 && pos[p] >= 50) { f50 = p; sixRoll = false; $("msg").textContent = `${NAMES[p]}: 🏅 50번을 가장 먼저 넘었어요! 보너스로 한 번 더 굴려요.`; render(); return setTimeout(next, 1200 * tempo); } /* 선착순 1명만, 한 판에 한 번 */
+  if (cfg.on.six && sixRoll) { sixRoll = false; $("msg").textContent = `${NAMES[p]}: 🎯 6이 나왔어요! 한 번 더 굴려요.`; return setTimeout(next, 1000 * tempo); } setTimeout(endTurn, 500 * tempo); }
+function endTurn() { turn = (turn + 1) % cfg.n; if (turn === 0) { rounds++; if (cfg.on.move && rounds % 2 === 0 && moveSnake()) return setTimeout(next, 1400 * tempo); } next(); }
+/* 🐍 뱀 이동: 두 바퀴(모두 한 번씩 두 번)마다 뱀 한 마리가 몸 전체를 1~2칸 옮긴다. 사다리·다른 뱀·특수 칸·1·100·말이 있는 칸과는 안 겹치고, 맨 위 두 줄(81~)의 뱀은 그 두 줄 안에서만 움직여 '위쪽 뱀 4마리' 규칙이 유지된다 */
+function moveSnake() {
+  const ent = Object.entries(SNAKES).map(([h, t]) => [+h, t]);
+  for (let g = 0; g < 60; g++) {
+    const [h, t] = ent[Math.floor(Math.random() * ent.length)], d = [-2, -1, 1, 2][Math.floor(Math.random() * 4)], nh = h + d, nt = t + d;
+    if (nh > 99 || nt < 2 || nh <= nt || (h >= 81) !== (nh >= 81)) continue;
+    const used = new Set([1, 100, ...Object.keys(LADDERS).map(Number), ...Object.values(LADDERS), ...Object.keys(SPECIAL).map(Number), ...pos]);
+    for (const [a, b] of ent) if (a !== h) { used.add(a); used.add(b); }
+    if (used.has(nh) || used.has(nt)) continue;
+    delete SNAKES[h]; SNAKES[nh] = nt; $("msg").textContent = `🐍 뱀이 움직였어요! ${h}번 뱀이 ${nh}번으로(내려가는 칸 ${t} → ${nt})`; render(); return true;
+  }
+  return false;
+}
 function win(p) { over = true; $("roll").disabled = true; $("res").innerHTML = `<b>🎉 ${NAMES[p]} 승리!</b><p class="muted">${cfg.cpu[p] ? "컴퓨터가" : "사람이"} 가장 먼저 100번 칸에 도착했어요.</p><button class="btn" id="again" type="button" style="margin-top:8px;width:100%">한 판 더</button>`; $("res").hidden = false; $("again").onclick = begin; render(); }
 
 const SLOT = [[-.22, .36], [.22, .36], [-.22, .1], [.22, .1]]; /* 같은 칸에서 말이 서는 자리(칸 중심 기준 비율, 아래쪽이 앞줄) */
@@ -236,6 +268,7 @@ function render() {
     for (const sg of [-1, 1]) { c.fillStyle = "#fff"; c.beginPath(); c.arc(u * .07, sg * u * .075, u * .045, 0, 7); c.fill(); c.fillStyle = "#222"; c.beginPath(); c.arc(u * .085, sg * u * .075, u * .022, 0, 7); c.fill(); }
     c.restore(); });
   c.textAlign = "center"; c.textBaseline = "middle"; c.font = `${Math.max(12, u * .42)}px sans-serif`; for (const n in SPECIAL) { const { r, c: cc } = cell(+n); c.fillText(KINDS[SPECIAL[n]][0], (cc + .62) * u, w - (r + .38) * u); } /* 특수 칸 그림 */
+  if (cfg.on.first50 && f50 < 0) { const { r, c: cc } = cell(50); c.fillText("🏅", (cc + (SPECIAL[50] ? .3 : .62)) * u, w - (r + .38) * u); } /* 50번 선착순 표시(누가 가져가면 사라짐) */
   /* 숫자는 뱀·사다리 위에 그려서 절대 가려지지 않게 */
   for (let n = 1; n <= 100; n++) { const { r, c: cc } = cell(n), x0 = cc * u, y0 = w - (r + 1) * u;
     c.font = `bold ${Math.max(9, u * .26)}px sans-serif`; c.textAlign = "left"; c.textBaseline = "top"; const t = n === 100 ? "🏁100" : n;

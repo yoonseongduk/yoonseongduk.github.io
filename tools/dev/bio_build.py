@@ -94,7 +94,8 @@ def restore_search(sci):   # 공룡: 커먼즈에서 복원도(살아 있을 때
 PIN = {
     "하드로사우루스": "Hadrosaurus_TD.png",
     # 2026-11-28 사용자 확인 화면 지적(부분만 나옴·이상함) → 커먼즈 설명을 읽고 몸 전체가 나온 것으로
-    "감자": "Solanales_-_Solanum_tuberosum_-_3.jpg",   # 옛: 싹이 튼 감자 → 감자 덩이줄기들(CC BY-SA 4.0), 문제 "땅속에서 자라는 채소는?"
+    "감자": "Solanales_-_Solanum_tuberosum_-_3.jpg",
+    "국화": "Chrysanthemum_×_morifolium_flowers.jpg",   # 옛: 08NOV(설명 없음, 사용자: 이상함) → 국화꽃 여러 송이(CC BY-SA 4.0)   # 옛: 싹이 튼 감자 → 감자 덩이줄기들(CC BY-SA 4.0), 문제 "땅속에서 자라는 채소는?"
     "코끼리": "178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg",   # 옛: 숲속 코끼리(나무에 가림)
     "진주조개": "Pinctada_fucata_(Japanese_pearl_oyster)_(Japan).jpg",   # 옛: 양식장 조개 일부
     "개미": "Red_forest_ant_(Formica_rufa)_on_an_alfalfa_flower_(Medicago_sativa).jpg",   # 옛: 얼굴 옆모습만

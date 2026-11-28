@@ -123,5 +123,7 @@
  "fg-favs-v1": "시작 화면 즐겨찾기",
  "fg-recent-v1": "시작 화면 최근에 한 게임",
  "fg-new-hidden-v1": "시작 화면 신작·업데이트에서 뺀 게임",
- "fg-fold-v1": "시작 화면 접어 둔 칸"
+ "fg-fold-v1": "시작 화면 접어 둔 칸",
+ "fg-device-id-v1": "이 기기 고유 번호(백업에서 제외)",
+ "play-together-devices-v1": "같이 하기: 만났던 기기"
 }

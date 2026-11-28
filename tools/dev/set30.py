@@ -73,7 +73,8 @@ HUB_CSS = LINK_CSS + '''
 .kick{border:1px solid var(--line);background:var(--surface);color:var(--bad);border-radius:999px;padding:2px 8px;font-size:.75rem;font-weight:700}
 .tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:.75rem;font-weight:700;background:var(--soft);margin-left:4px}.mini{display:inline-flex;gap:4px;margin-left:6px}.mini button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 8px;font-size:.78rem}'''
 
-HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px"><label class="lb" for="nm">이 기기 이름</label><input type="text" id="nm" maxlength="10"><div class="chips" id="nmc"></div></div></div>
+HUB_BODY = '''  <div class="card" id="namecard"><div style="display:grid;gap:4px"><label class="lb" for="nm">이 기기 이름 <span class="note">(닉네임, 언제든 바꿀 수 있어요)</span></label><input type="text" id="nm" maxlength="10"><div class="chips" id="nmc"></div><p class="note" id="devid"></p><details id="devbox"><summary class="note">📱 만났던 기기</summary><div id="devlist"></div></details></div></div>
+  <script src="device.js"></script>
   <div class="card" id="start">
     <p>QR로 <b>한 번만</b> 연결하면, 방장이 고른 게임이 모든 폰에서 함께 열려요. 게임을 바꿔도 다시 연결할 필요가 없어요.</p>
     <p class="note">폰(또는 PC)을 <b>같은 와이파이</b>나 한 폰의 <b>핫스팟</b>에 연결한 뒤 시작하세요.</p>
@@ -196,13 +197,26 @@ const SOLO_NO = ''' + _json.dumps(SOLO_NO) + r''', SOLO_BOTS = ''' + _json.dumps
 const GAMES = ''' + _json.dumps(GAMES, ensure_ascii=False) + r''', HUB_GROUPS = ''' + _json.dumps(HUB_GROUPS, ensure_ascii=False) + r''';
 const NUMS = ''' + _json.dumps({k: v for k, v in NUMS.items()}, ensure_ascii=False) + r''', RACE = ''' + _json.dumps(RACE, ensure_ascii=False) + r''', RACE_GROUPS = ''' + _json.dumps(RACE_GROUPS, ensure_ascii=False) + r''', BUZZ_OK = ''' + _json.dumps(BUZZ_OK, ensure_ascii=False) + r''', QCNT = ''' + _json.dumps(QCNT, ensure_ascii=False) + r''';
 // ───── 상태 ─────
+// 기기 ID(device.js): 이 폰의 고유 번호. 닉네임(S.name)은 바뀌어도 기기 ID로 같은 폰을 알아봐요. 만났던 기기는 DEVK에 {기기ID: {nick, last, n}}
+const DEV = window.fgDevice ? fgDevice.id() : "", DEVRE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, DEVK = "play-together-devices-v1";
+const devShort = d => String(d || "").replace(/-/g, "").slice(0, 4).toUpperCase();
+const knownAll = () => ld(DEVK) || {}, knownDev = d => knownAll()[d] || null;
+function meetDev(d, nick) { if (!DEVRE.test(d || "") || d === DEV) return; const a = knownAll(), o = a[d] || { n: 0 }; const today = new Date().toISOString().slice(0, 10); if (o.last !== today) o.n = (o.n || 0) + 1; o.nick = String(nick || o.nick || "").slice(0, 10); o.last = today; a[d] = o; sv(DEVK, a); drawDevs(); }
+function rememberRoom() { (roomList || []).forEach(p => { if (p.dev && !p.bot) meetDev(p.dev, p.nm); }); }
+function drawDevs() {
+  const el = document.getElementById("devlist"); if (!el) return; const a = knownAll(), ks = Object.keys(a).sort((x, y) => (a[y].last || "").localeCompare(a[x].last || ""));
+  document.getElementById("devid").textContent = DEV ? `🆔 이 기기 번호: #${devShort(DEV)} (이 폰에서 처음 만든 고유 번호라 바뀌지 않아요)` : "";
+  el.innerHTML = ks.length ? ks.map(k => `<div class="li"><span>${esc(a[k].nick || "이름 없음")} <span class="note">#${devShort(k)}</span></span><span class="note">${esc(a[k].last || "")} · ${a[k].n || 1}번<button type="button" data-devdel="${k}" aria-label="지우기" style="margin-left:6px">✕</button></span></div>`).join("") + '<p class="note">같은 기기는 이름을 바꿔도 같은 번호(#)로 알아봐요. 목록은 이 폰에만 저장돼요.</p>' : '<p class="note">아직 같이 해 본 기기가 없어요. 연결하면 여기에 남아요.</p>';
+}
+document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-devdel]"); if (!b) return; const a = knownAll(); delete a[b.dataset.devdel]; sv(DEVK, a); drawDevs(); });
 let S = Object.assign({ name: "" }, ld(KEY) || {});
 if (!S.name) { const old = ld("link-test-v1"), mine = window.FAMILY && FAMILY.me ? FAMILY.me.get() : ""; S.name = mine || (old && old.name) || "기기" + ri(100, 999); sv(KEY, S); }
 $("nm").value = S.name;
+setTimeout(drawDevs, 0);
 // 손님: 게임만 함께 하고 명단은 주고받지 않아요(이번 연결에서만, 저장 안 함)
 let asGuest = false;
 $("gst").onchange = () => { asGuest = $("gst").checked; };
-function setName(v) { S.name = String(v || "").trim().slice(0, 10) || S.name; $("nm").value = S.name; sv(KEY, S); if (role === "guest") gsend({ t: "name", name: S.name, gst: asGuest }); else if (role === "host") roster(); nameChips(); }
+function setName(v) { S.name = String(v || "").trim().slice(0, 10) || S.name; $("nm").value = S.name; sv(KEY, S); if (role === "guest") gsend({ t: "name", name: S.name, gst: asGuest, dev: DEV }); else if (role === "host") roster(); nameChips(); }
 $("nm").onchange = () => setName($("nm").value);
 // ───── 가족·친구 명단 (공용 FAMILY·FRIENDS): 이름만 주고받고, 받은 쪽이 "추가"를 눌러야 저장돼요
 const famL = () => window.FAMILY ? FAMILY.get() : [], frL = () => window.FRIENDS ? FRIENDS.get() : [];
@@ -295,7 +309,7 @@ const send = (p, m) => { try { if (p.dc.readyState === "open") p.dc.send(JSON.st
 const bcast = (m, except) => peers.forEach(p => { if (p !== except) send(p, m); });
 function hostMsg(p, m) {
   if (m.t === "pong") { p.rtt = Math.round(performance.now() - m.ts); renderRoom(); }
-  else if (m.t === "name") { if (m.gst) p.gst = true; const n0 = String(m.name || "").slice(0, 10) || "손님", used = [S.name, ...peers.filter(x => x !== p).map(x => x.name)]; let n = n0, k = 2; while (used.includes(n)) n = n0 + "-" + k++; p.name = n; roster(); }
+  else if (m.t === "name") { if (m.gst) p.gst = true; if (DEVRE.test(m.dev || "")) { const dup = peers.find(x => x !== p && x.dev === m.dev); if (dup) { try { dup.pc.close(); } catch (e) {} drop(dup); } const was = knownDev(m.dev); p.dev = m.dev; if (was && !p.met) { p.met = 1; flash("👋 다시 만났어요: " + (was.nick !== String(m.name || "").slice(0, 10) ? was.nick + " → " : "") + String(m.name || "").slice(0, 10) + " #" + devShort(m.dev)); } } const n0 = String(m.name || "").slice(0, 10) || "손님", used = [S.name, ...peers.filter(x => x !== p).map(x => x.name)]; let n = n0, k = 2; while (used.includes(n)) n = n0 + "-" + k++; p.name = n; roster(); }
   else if (m.t === "buzz") { flash("📳 " + p.name); bcast({ t: "buzz", from: p.name }, p); }
   else if (m.t === "bye") { try { p.pc.close(); } catch (e) {} drop(p); }
   else if (m.t === "g") route(p.id, m.to, m.d);
@@ -311,11 +325,11 @@ function route(from, to, d) {
   if (solo) bots.forEach(b => { if (b.id !== from && (to === "*" || to === b.id)) toBot(b, { fg: "msg", from, d }); });
 }
 // 게임에 넘길 참가자 목록: 연결된 기기만(신호 약한 기기도 포함해 판이 깨지지 않게)
-const players = () => roomList.filter(p => p.ok || p.weak).map(p => ({ id: p.id, name: p.nm }));
+const players = () => roomList.filter(p => p.ok || p.weak).map(p => ({ id: p.id, name: p.nm, dev: p.dev || "" }));
 function roster() {
   if (role !== "host") return;
-  roomList = [{ id: "host", nm: S.name, name: S.name + " (방장)", rtt: 0, ok: true }, ...peers.map(p => ({ id: p.id, nm: p.name, name: p.name, rtt: p.rtt, ok: !!p.open && !p.weak, weak: !!p.weak, gst: !!p.gst })), ...(solo ? bots.map(b => ({ id: b.id, nm: b.name, name: b.name, rtt: 0, ok: true, bot: true })) : [])];
-  bcast({ t: "room", list: roomList }); renderRoom(); toFrameRoster(); if (R) { const was = R.ph; raceCheck(); if (R.ph !== was) pushR(); else renderRace(); }
+  roomList = [{ id: "host", nm: S.name, name: S.name + " (방장)", rtt: 0, ok: true, dev: DEV }, ...peers.map(p => ({ id: p.id, nm: p.name, name: p.name, rtt: p.rtt, ok: !!p.open && !p.weak, weak: !!p.weak, gst: !!p.gst, dev: p.dev || "" })), ...(solo ? bots.map(b => ({ id: b.id, nm: b.name, name: b.name, rtt: 0, ok: true, bot: true })) : [])];
+  rememberRoom(); bcast({ t: "room", list: roomList }); renderRoom(); toFrameRoster(); if (R) { const was = R.ph; raceCheck(); if (R.ph !== was) pushR(); else renderRace(); }
   note("rmsg", peers.some(p => p.weak) ? "⚠️ 신호가 약해진 기기가 있어요. 그 폰의 화면을 켜 두면 잠시 뒤 다시 붙어요. 1분 넘게 안 붙으면 ➕ 한 명 더 연결로 다시 들어오게 해 주세요." : "");
 }
 
@@ -326,7 +340,7 @@ async function join(code) {
   guestStart(); note("gmsg", "답장 QR을 만드는 중…");
   const pc = newPc(); upl = { pc, dc: null };
   pc.ondatachannel = e => { const dc = upl.dc = e.channel;
-    dc.onopen = () => { armBack(); wake(); $("pplb").hidden = asGuest; gsend({ t: "name", name: S.name, gst: asGuest }); $("guestbox").hidden = true; $("room").hidden = false; $("wait").hidden = !!game; flash("✅ 연결됐어요!"); };
+    dc.onopen = () => { armBack(); wake(); $("pplb").hidden = asGuest; gsend({ t: "name", name: S.name, gst: asGuest, dev: DEV }); $("guestbox").hidden = true; $("room").hidden = false; $("wait").hidden = !!game; flash("✅ 연결됐어요!"); };
     dc.onmessage = e2 => { let m; try { m = JSON.parse(e2.data); } catch (x) { return; } guestMsg(m); };
     dc.onclose = () => { $("guestbox").hidden = false; $("gjoin").hidden = true; $("gans").hidden = true; $("gre").hidden = false; note("gmsg", "⚠️ 방과 연결이 끊겼어요. '처음부터 다시'를 누르고, 방 만든 폰에서 '➕ 한 명 더 연결'로 다시 들어와 주세요."); roomList = []; renderRoom(); loadGame(null); $("wait").hidden = true; };
   };
@@ -340,7 +354,7 @@ const gsend = m => { try { if (upl && upl.dc && upl.dc.readyState === "open") up
 function guestMsg(m) {
   if (m.t === "ping") gsend({ t: "pong", ts: m.ts });
   else if (m.t === "hi") myId = m.id;
-  else if (m.t === "room") { roomList = m.list; renderRoom(); toFrameRoster(); renderRace(); }
+  else if (m.t === "room") { roomList = m.list; rememberRoom(); renderRoom(); toFrameRoster(); renderRace(); }
   else if (m.t === "buzz") flash("📳 " + m.from);
   else if (m.t === "load") { loadGame(m.game); $("wait").hidden = !!m.game; }
   else if (m.t === "g") toFrame(m.from, m.d);
@@ -491,7 +505,7 @@ $("rhome").onclick = () => { if (R && R.ph === "run" && !confirm("동시 도전�
 function renderRoom() {
   $("leave").textContent = role === "host" ? "🔌 방 닫기 (모두 연결 끊기)" : "🔌 연결 끊기 (방에서 나가기)";
   const n = roomList.filter(p => p.ok || p.weak).length; $("rsum").textContent = `📶 연결된 기기 ${n}대`;
-  $("list").innerHTML = roomList.length ? roomList.map(p => `<div class="li"><span><span class="dot ${p.ok ? "ok" : "bad"}"></span>${esc(p.name)}${(p.id === myId && role === "guest") || (p.id === "host" && role === "host") ? " (나)" : p.gst ? '<span class="tag">🙋 손님</span>' : groupOf(p.nm) ? `<span class="tag">${groupOf(p.nm)}</span>` : window.FAMILY && p.ok && p.nm && !asGuest ? `<span class="mini"><button type="button" data-addf="${esc(p.nm)}">+가족</button><button type="button" data-addr="${esc(p.nm)}">+친구</button>${role === "host" ? `<button type="button" data-gstp="${p.id}">손님</button>` : ""}</span>` : ""}</span><span class="note">${role === "host" && p.id !== "host" ? `<button type="button" class="kick" data-kick="${p.id}">끊기</button> ` : ""}${p.id === "host" ? "" : p.weak ? "⚠️ 신호 약함 · 다시 붙는 중" : !p.ok ? "연결 중…" : p.rtt == null ? "…" : p.rtt + " ms"}</span></div>`).join("") : '<p class="note">연결된 기기가 없어요.</p>';
+  $("list").innerHTML = roomList.length ? roomList.map(p => `<div class="li"><span><span class="dot ${p.ok ? "ok" : "bad"}"></span>${esc(p.name)}${p.dev ? ` <span class="note">#${devShort(p.dev)}</span>` : ""}${(p.id === myId && role === "guest") || (p.id === "host" && role === "host") ? " (나)" : p.gst ? '<span class="tag">🙋 손님</span>' : groupOf(p.nm) ? `<span class="tag">${groupOf(p.nm)}</span>` : window.FAMILY && p.ok && p.nm && !asGuest ? `<span class="mini"><button type="button" data-addf="${esc(p.nm)}">+가족</button><button type="button" data-addr="${esc(p.nm)}">+친구</button>${role === "host" ? `<button type="button" data-gstp="${p.id}">손님</button>` : ""}</span>` : ""}</span><span class="note">${role === "host" && p.id !== "host" ? `<button type="button" class="kick" data-kick="${p.id}">끊기</button> ` : ""}${p.id === "host" ? "" : p.weak ? "⚠️ 신호 약함 · 다시 붙는 중" : !p.ok ? "연결 중…" : p.rtt == null ? "…" : p.rtt + " ms"}</span></div>`).join("") : '<p class="note">연결된 기기가 없어요.</p>';
 }
 
 $("bh").onclick = hostStart;

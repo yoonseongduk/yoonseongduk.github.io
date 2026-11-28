@@ -14,7 +14,7 @@
   window.FRIENDS = { key: KF, get: function () { return getK(KF); }, set: function (a) { setK(KF, a); } };
 
   // 백업 상태(모든 화면에서 쓸 수 있게 먼저 만든다): 마지막 백업, 알림 주기, 백업 뒤 바뀐 기록
-  var META = ["fg-first-seen", "fg-backup-last", "fg-backup-snooze", "fg-backup-every", "fg-backup-sig"], DAY = 86400000;
+  var META = ["fg-first-seen", "fg-backup-last", "fg-backup-snooze", "fg-backup-every", "fg-backup-sig", "fg-device-id-v1"], DAY = 86400000;
   function lget(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function num(k) { return +lget(k) || 0; }
   function put(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {} }

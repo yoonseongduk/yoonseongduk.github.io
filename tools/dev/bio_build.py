@@ -118,4 +118,5 @@ for f in QUIZ:
         else: REJECT.setdefault(f, []).append(n)
     print(f, "사진 확인 통과", len(out[f]), "/", len(keep))
 print("찍힌 것 기록으로 확인되지 않아 뺀 이름:", json.dumps(REJECT, ensure_ascii=False, indent=0))
+json.dump(REJECT, open("bio_reject.json", "w", encoding="utf-8"), ensure_ascii=False, indent=0)   # 사진이 없는 이름(확인 화면 bio-check.html 에 보여 줌)
 json.dump(out, open("bio_wiki.json", "w", encoding="utf-8"), ensure_ascii=False, indent=0)

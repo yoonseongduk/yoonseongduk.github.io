@@ -92,7 +92,12 @@ def restore_search(sci):   # 공룡: 커먼즈에서 복원도(살아 있을 때
     return [r["title"].replace("File:", "").replace(" ", "_") for r in d.get("query", {}).get("search", []) if sci.split()[0].lower() in r["title"].lower()]
 # 사진 직접 지정(사용자가 확인 화면에서 이상하다고 알려 준 것을 커먼즈 설명을 읽고 바꾼 것): 이름 → 커먼즈 파일 이름
 PIN = {
-    "하드로사우루스": "Hadrosaurus_TD.png",   # 2026-11-28 사용자 지적: 공룡 전체 그림이 아님(옛 그림은 작은 복원도 모음) → 몸 전체 복원도(CC BY 4.0)
+    "하드로사우루스": "Hadrosaurus_TD.png",
+    # 2026-11-28 사용자 확인 화면 지적(부분만 나옴·이상함) → 커먼즈 설명을 읽고 몸 전체가 나온 것으로
+    "코끼리": "178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg",   # 옛: 숲속 코끼리(나무에 가림)
+    "진주조개": "Pinctada_fucata_(Japanese_pearl_oyster)_(Japan).jpg",   # 옛: 양식장 조개 일부
+    "개미": "Red_forest_ant_(Formica_rufa)_on_an_alfalfa_flower_(Medicago_sativa).jpg",   # 옛: 얼굴 옆모습만
+    "전기가오리": "Naturalis_Biodiversity_Center_-_RMNH.ART.52_-_Narke_japonica_(Temminck_and_Schlegel)_-_Kawahara_Keiga_-_1823_-_1829_-_Siebold_Collection_-_pencil_drawing_-_water_colour.jpeg",   # 옛: Narke_japonica.jpg(이상함) → 시볼트 일본 동물지 원화(공개 도메인, 몸 전체)   # 2026-11-28 사용자 지적: 공룡 전체 그림이 아님(옛 그림은 작은 복원도 모음) → 몸 전체 복원도(CC BY 4.0)
 }
 REJECT = {}   # 사진이 맞지 않아 뺀 이름(화면에 보고)
 out = {}

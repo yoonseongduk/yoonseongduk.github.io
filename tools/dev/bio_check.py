@@ -53,18 +53,20 @@ const IT = /*IT*/[]/*/IT*/, NP = /*NP*/[]/*/NP*/, BK = "bio-check-v1";
 let bad = ld(BK) || {}, cat = "전체", on = false;
 const src = f => "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=320";
 const QS = ["전체", ...new Set(IT.map(x => x[0]))];
-const k = x => x[0] + "|" + x[1];
+const k = x => x[0] + "|" + x[1] + "|" + x[2];   // 사진 파일까지 기억: 사진을 바꾸면 ❌ 표시가 저절로 풀려요
+const lab = s => s.split("|").slice(0, 2).join(": ");
+{ const now = new Set(IT.map(k)); let ch = false; for (const key of Object.keys(bad)) if (!now.has(key)) { delete bad[key]; ch = true; } if (ch) sv(BK, bad); }
 function draw() {
   $("qs").innerHTML = QS.map(q => `<button class="chip ${q === cat ? "on" : ""}" type="button" data-q="${esc(q)}">${esc(q)} ${q === "전체" ? IT.length : IT.filter(x => x[0] === q).length}</button>`).join("");
   $("grid").innerHTML = IT.filter(x => cat === "전체" || x[0] === cat).map(x => { const b = bad[k(x)];
     return `<div class="it ${b ? "bad" : ""}"><div class="ph">${on ? `<img data-f="${esc(x[2])}" src="${esc(src(x[2]))}" alt="${esc(x[1])}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith('사진 못 받음')">` : "📷"}</div><b>${esc(x[1])}</b><span class="s">${esc(x[0])} · <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(x[2])}" target="_blank" rel="noopener">원본</a></span><button type="button" data-b="${esc(k(x))}">${b ? "❌ 이상해요 (취소)" : "❌ 이상해요"}</button></div>`; }).join("");
-  const L = Object.keys(bad); $("bc").textContent = L.length; $("bl").textContent = L.length ? L.map(s => s.replace("|", ": ")).join(", ") : "없음";
+  const L = Object.keys(bad); $("bc").textContent = L.length; $("bl").textContent = L.length ? L.map(lab).join(", ") : "없음";
   $("np").innerHTML = QS.slice(1).map(q => `<p style="margin:6px 0 2px"><b>${esc(q)}</b></p>` + NP.filter(x => x[0] === q).map(x => `<span>${esc(x[1])}</span>`).join("")).join("");
 }
 $("qs").addEventListener("click", e => { const b = e.target.closest("[data-q]"); if (b) { cat = b.dataset.q; draw(); } });
 $("grid").addEventListener("click", e => { const im = e.target.closest(".it img"); if (im) { const x = IT.find(x => im.dataset.f === x[2]); return fgZoom(im.src, im.dataset.f, x ? x[1] + " · " + x[0] : ""); } const b = e.target.closest("[data-b]"); if (!b) return; if (bad[b.dataset.b]) delete bad[b.dataset.b]; else bad[b.dataset.b] = 1; sv(BK, bad); draw(); });
 $("clr").onclick = () => { if (confirm("표시를 모두 지울까요?")) { bad = {}; sv(BK, bad); draw(); } };
-$("copy").onclick = () => { const t = "[생물 사진 이상] " + (Object.keys(bad).map(s => s.replace("|", ": ")).join(", ") || "없음"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => alert("복사했어요. 대화창에 붙여 넣어 보내 주세요."), () => prompt("아래 글을 복사해 주세요", t)); };
+$("copy").onclick = () => { const t = "[생물 사진 이상] " + (Object.keys(bad).map(lab).join(", ") || "없음"); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => alert("복사했어요. 대화창에 붙여 넣어 보내 주세요."), () => prompt("아래 글을 복사해 주세요", t)); };
 $("load").onclick = () => { on = true; draw(); $("st").textContent = "사진은 화면을 내리면 차례로 나와요. 이상한 사진은 ❌를 눌러 표시해 주세요."; $("load").hidden = true; };
 draw();
 """

@@ -93,6 +93,7 @@ def restore_search(sci):   # 공룡: 커먼즈에서 복원도(살아 있을 때
 # 사진 직접 지정(사용자가 확인 화면에서 이상하다고 알려 준 것을 커먼즈 설명을 읽고 바꾼 것): 이름 → 커먼즈 파일 이름
 PIN = {
     "하드로사우루스": "Hadrosaurus_TD.png",
+    "플레시오사우루스": "Plesiosaurus_3DB.jpg",   # 2026-11-28 사용자 요청(위키백과 문서 그림): 몸 전체 3D 복원도(CC BY 3.0)
     # 2026-11-28 사용자 확인 화면 지적(부분만 나옴·이상함) → 커먼즈 설명을 읽고 몸 전체가 나온 것으로
     "감자": "Solanales_-_Solanum_tuberosum_-_3.jpg",
     "국화": "Chrysanthemum_×_morifolium_flowers.jpg",   # 옛: 08NOV(설명 없음, 사용자: 이상함) → 국화꽃 여러 송이(CC BY-SA 4.0)   # 옛: 싹이 튼 감자 → 감자 덩이줄기들(CC BY-SA 4.0), 문제 "땅속에서 자라는 채소는?"

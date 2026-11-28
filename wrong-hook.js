@@ -28,7 +28,7 @@
   // 눌리기 직전(캡처 단계)에 문제와 보기를 저장해 둔다 — 정답이 공개되기 전 모습
   document.addEventListener("click", e => {
     const b = e.target.closest(".opt"); if (!b || b.disabled) { snap = null; return; }
-    const qEl = document.getElementById("q"); if (!qEl) { snap = null; return; }
+    const qEl = document.getElementById("q"); if (!qEl) { snap = { q: "", o: [...document.querySelectorAll(".opt")].map(text), picked: text(b), noq: 1 }; return; }   // 문제 글이 없는 화면(예: 시계 그림)은 신고 단추만
     const c = qEl.cloneNode(true); c.querySelectorAll(".note,.eg,.hanja").forEach(x => x.remove());
     // 그림·소리·단추 같은 꾸밈(svg·img·audio·button이 든 덩어리)과 맨 앞의 퀴즈 이름 표시는 글자만 남기는 노트에서 뺀다(예전엔 "오케스트라 퀴즈도감 4번…💡 힌트…"처럼 뒤섞여 기록됐다)
     [...c.children].forEach(ch => { if (ch.matches("button,svg,img,audio,figure,canvas") || ch.querySelector("button,svg,img,audio,figure,canvas")) ch.remove(); else if (ch.tagName === "SMALL") { if ([title, text(h1)].includes(text(ch))) ch.remove(); else ch.after(" "); } });   // 분류 표시(<small>)는 문제 글과 붙지 않게 띄어 쓴다
@@ -41,8 +41,23 @@
   document.addEventListener("click", e => {
     const b = e.target.closest(".opt"); if (!b || !snap) return; const s = snap; snap = null;
     const okEl = document.querySelector(".opt.ok"); if (!okEl) return; const a = text(okEl), id = idOf(file, s.q, a);
-    if (b.classList.contains("bad")) wrong({ id, f: file, t: title, q: s.q, a, o: s.o, k: "mc", m: s.m || undefined }); else if (b.classList.contains("ok")) right(id);
+    if (!s.noq) { if (b.classList.contains("bad")) wrong({ id, f: file, t: title, q: s.q, a, o: s.o, k: "mc", m: s.m || undefined }); else if (b.classList.contains("ok")) right(id); }
     badge();
+    // 🚩 문제 신고: 공통 틀 퀴즈는 자기 단추(data-flag)가 있고, 없는 퀴즈(속담·상식·세계 수도·시계 등)는 여기서 붙여요
+    const anchor = document.getElementById("q") || b.parentNode;
+    setTimeout(() => { if (!document.querySelector("[data-flag]")) window.fgFlag(anchor, s.q || "(그림 문제) 정답: " + a, a, s.picked); }, 0);
   });
+  // 공용 신고 단추: quiz-flags-v1 = {퀴즈 파일: {문제: {a 정답, p 고른 답, t 시각}}} (quiz-flags.html 이 모아 보여 줘요)
+  const FLK = "quiz-flags-v1";
+  const flAll = () => { try { const v = JSON.parse(localStorage.getItem(FLK)); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; } };
+  window.fgFlag = function (after, q, a, picked) {
+    if (!after || !q) return; const old = document.getElementById("fgFlagB"); if (old) old.remove();
+    const btn = document.createElement("button"); btn.type = "button"; btn.id = "fgFlagB";
+    const on = () => !!(flAll()[file] || {})[q];
+    const draw = () => { const o = on(); btn.textContent = o ? "🚩 신고했어요 (누르면 취소)" : "🚩 문제가 이상해요"; btn.style.cssText = "display:block;margin:8px auto 0;background:transparent;border:1px " + (o ? "solid var(--bad,#d6453a)" : "dashed var(--line,#ccc)") + ";border-radius:999px;padding:4px 12px;font-size:.85rem;color:" + (o ? "var(--bad,#d6453a)" : "var(--muted,#666)"); };
+    btn.onclick = () => { const all = flAll(), m = all[file] || (all[file] = {}); if (m[q]) delete m[q]; else m[q] = { a: String(a), p: String(picked || ""), t: Date.now() }; if (!Object.keys(m).length) delete all[file]; try { localStorage.setItem(FLK, JSON.stringify(all)); } catch (e) {} draw(); };
+    draw(); after.insertAdjacentElement(after.id === "q" ? "beforeend" : "afterend", btn);
+    try { const mo = new MutationObserver(() => { btn.remove(); mo.disconnect(); }); mo.observe(after, { childList: true, characterData: true, subtree: after.id !== "q" }); } catch (e) {}   // 다음 문제로 바뀌면 단추도 치워요
+  };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", badge); else badge();
 })();

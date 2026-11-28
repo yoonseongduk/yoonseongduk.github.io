@@ -91,6 +91,7 @@ function check() {
   answered = true; $("ans").disabled = true;
   if (ok) { score += hinted ? .5 : 1; $("fb").textContent = "🎉 정답! " + v; $("fb").className = "fb ok"; }
   else { $("fb").textContent = "아쉬워요. 정답은 " + q.w; $("fb").className = "fb bad"; }
+  if (window.fgFlag) fgFlag($("fb"), q.c + " (" + q.cat + ")", q.w, v);   // 🚩 문제가 이상해요
   $("score").textContent = score; $("ok").textContent = i === 9 ? "결과 보기" : "다음 문제";
 }
 function next() { $("ok").textContent = "확인"; if (i === 9) return finish(); i++; show(); }
@@ -101,12 +102,13 @@ function finish() {
 $("ok").onclick = check;
 $("ans").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); check(); } });
 $("hint").onclick = () => { if (answered) return; const q = qs[i]; hinted = true; $("fb").textContent = `💡 첫 글자는 "${q.w[0]}" (이 문제는 0.5점)`; $("fb").className = "fb"; $("ans").focus(); };
-$("skip").onclick = () => { if (answered) return next(); const q = qs[i]; answered = true; $("ans").disabled = true; $("fb").textContent = "정답은 " + q.w; $("fb").className = "fb bad"; $("ok").textContent = i === 9 ? "결과 보기" : "다음 문제"; };
+$("skip").onclick = () => { if (answered) return next(); const q = qs[i]; answered = true; $("ans").disabled = true; $("fb").textContent = "정답은 " + q.w; $("fb").className = "fb bad"; if (window.fgFlag) fgFlag($("fb"), q.c + " (" + q.cat + ")", q.w, "넘김"); $("ok").textContent = i === 9 ? "결과 보기" : "다음 문제"; };
 $("again").onclick = start;
 start();
 </script>
 <script>if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
 <script src="med-notify.js" defer></script>
+<script src="wrong-hook.js"></script>
 <script src="home.js" defer></script>
 </body>
 </html>
